@@ -17,6 +17,7 @@ const projectFormSchema = z.object({
   deadline: z.string().optional(),
   value: z.string().optional(),
   notes: z.string().optional(),
+  site_url: z.string().optional(),
 });
 
 function toDbPayload(input: ProjectFormInput) {
@@ -28,6 +29,7 @@ function toDbPayload(input: ProjectFormInput) {
     deadline: emptyToNull(input.deadline),
     value: parseProjectValue(input.value),
     notes: emptyToNull(input.notes),
+    site_url: emptyToNull(input.site_url),
   };
 }
 

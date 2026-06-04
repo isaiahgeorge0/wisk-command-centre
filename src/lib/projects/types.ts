@@ -17,6 +17,7 @@ export type Project = {
   deadline: string | null;
   value: number | null;
   notes: string | null;
+  site_url: string | null;
   created_at: string;
 };
 
@@ -28,6 +29,7 @@ export type ProjectFormInput = {
   deadline?: string;
   value?: string;
   notes?: string;
+  site_url?: string;
 };
 
 export type ActionResult<T = void> =

@@ -1,5 +1,8 @@
-import { SectionHeading } from "@/components/section-heading";
+import { getIdeas } from "@/app/ideas/actions";
+import { IdeasPageClient } from "@/components/ideas/ideas-page-client";
 
-export default function IdeasPage() {
-  return <SectionHeading title="Ideas" />;
+export default async function IdeasPage() {
+  const ideas = await getIdeas();
+
+  return <IdeasPageClient initialIdeas={ideas} />;
 }

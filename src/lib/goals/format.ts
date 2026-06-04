@@ -50,14 +50,35 @@ export function formatGoalDeadline(
   }).format(new Date(`${deadline}T00:00:00`));
 }
 
+const PREFIX_CURRENCY_UNITS = new Set(["£", "$", "€"]);
+
+function isPrefixUnit(unit: string | null | undefined): boolean {
+  const trimmed = unit?.trim();
+  return trimmed ? PREFIX_CURRENCY_UNITS.has(trimmed) : false;
+}
+
+export function formatGoalValue(value: number, unit: string | null): string {
+  const trimmedUnit = unit?.trim() ?? "";
+  const formatted = formatNumber(value);
+
+  if (!trimmedUnit) {
+    return formatted;
+  }
+
+  if (isPrefixUnit(trimmedUnit)) {
+    return `${trimmedUnit}${formatted}`;
+  }
+
+  return `${formatted} ${trimmedUnit}`;
+}
+
 export function formatGoalProgressLabel(
   current: number,
   target: number | null,
   unit: string | null
 ): string {
-  const unitSuffix = unit?.trim() ? ` ${unit.trim()}` : "";
   const targetVal = target ?? 0;
-  return `${formatNumber(current)}${unitSuffix} / ${formatNumber(targetVal)}${unitSuffix}`;
+  return `${formatGoalValue(current, unit)} / ${formatGoalValue(targetVal, unit)}`;
 }
 
 function formatNumber(value: number): string {

@@ -90,6 +90,18 @@ export function ProjectForm({
       </div>
 
       <div className="grid gap-2">
+        <Label htmlFor={`${formId}-site_url`}>Site URL</Label>
+        <Input
+          id={`${formId}-site_url`}
+          type="url"
+          placeholder="https://your-site.com"
+          value={values.site_url ?? ""}
+          onChange={(e) => setField("site_url", e.target.value)}
+          disabled={disabled}
+        />
+      </div>
+
+      <div className="grid gap-2">
         <Label htmlFor={`${formId}-next_action`}>Next action</Label>
         <Input
           id={`${formId}-next_action`}

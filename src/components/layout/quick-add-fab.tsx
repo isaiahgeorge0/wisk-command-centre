@@ -8,16 +8,19 @@ import { useQuickAdd } from "@/components/quick-add/quick-add-context";
 
 export function QuickAddFab() {
   const pathname = usePathname();
-  const { openProjectAdd, openTaskAdd, openGoalAdd } = useQuickAdd();
+  const { openProjectAdd, openTaskAdd, openGoalAdd, openIdeaAdd } =
+    useQuickAdd();
 
   const handleClick = () => {
-    // TODO(auth): Route FAB action by section; extend for ideas, AI digest, etc.
+    // TODO(auth): Route FAB action by section; extend for AI digest, etc.
     if (pathname === "/projects") {
       openProjectAdd();
     } else if (pathname === "/tasks") {
       openTaskAdd();
     } else if (pathname === "/goals") {
       openGoalAdd();
+    } else if (pathname === "/ideas") {
+      openIdeaAdd();
     }
   };
 

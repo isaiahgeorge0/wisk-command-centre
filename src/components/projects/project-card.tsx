@@ -147,6 +147,25 @@ export function ProjectCard({ project, onDelete }: ProjectCardProps) {
             className="mt-3 space-y-2 border-t border-border/50 pt-3"
             onClick={(e) => e.stopPropagation()}
           >
+            {project.site_url?.trim() ? (
+              <div>
+                <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                  Site URL
+                </p>
+                <a
+                  href={
+                    project.site_url.startsWith("http")
+                      ? project.site_url
+                      : `https://${project.site_url}`
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 block truncate text-sm text-wisk-teal hover:underline"
+                >
+                  {project.site_url}
+                </a>
+              </div>
+            ) : null}
             <div>
               <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
                 Notes

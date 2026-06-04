@@ -9,6 +9,7 @@ export const EMPTY_PROJECT_FORM: ProjectFormInput = {
   deadline: "",
   value: "",
   notes: "",
+  site_url: "",
 };
 
 export function projectToFormInput(project: Project): ProjectFormInput {
@@ -20,6 +21,7 @@ export function projectToFormInput(project: Project): ProjectFormInput {
     deadline: project.deadline ?? "",
     value: project.value != null ? String(project.value) : "",
     notes: project.notes ?? "",
+    site_url: project.site_url ?? "",
   };
 }
 
