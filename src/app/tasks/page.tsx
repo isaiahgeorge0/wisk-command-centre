@@ -1,5 +1,11 @@
-import { SectionHeading } from "@/components/section-heading";
+import { getProjectsForSelect, getTasks } from "@/app/tasks/actions";
+import { TasksPageClient } from "@/components/tasks/tasks-page-client";
 
-export default function TasksPage() {
-  return <SectionHeading title="Tasks" />;
+export default async function TasksPage() {
+  const [tasks, projects] = await Promise.all([
+    getTasks(),
+    getProjectsForSelect(),
+  ]);
+
+  return <TasksPageClient initialTasks={tasks} projects={projects} />;
 }
