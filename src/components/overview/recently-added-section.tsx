@@ -1,0 +1,79 @@
+import Link from "next/link";
+
+import { IdeaCategoryTag } from "@/components/ideas/idea-category-tag";
+import { IdeaStatusBadge } from "@/components/ideas/idea-status-badge";
+import { ProjectStatusBadge } from "@/components/projects/project-status-badge";
+import type { OverviewSnapshot } from "@/lib/overview/selectors";
+
+type RecentlyAddedSectionProps = {
+  snapshot: OverviewSnapshot;
+};
+
+export function RecentlyAddedSection({ snapshot }: RecentlyAddedSectionProps) {
+  // TODO: Once updated_at is added to the projects table, display and sort recent projects by last updated instead of created_at (see selectors.ts recentProjects).
+  const { recentIdeas, recentProjects } = snapshot;
+
+  return (
+    <section className="mt-10">
+      <h2 className="mb-4 text-sm font-medium tracking-wide text-muted-foreground uppercase">
+        Recently added
+      </h2>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="rounded-xl border border-border/60 bg-card/40 p-4">
+          <h3 className="mb-3 text-sm font-medium text-foreground">Latest ideas</h3>
+          {recentIdeas.length > 0 ? (
+            <ul className="space-y-3">
+              {recentIdeas.map((idea) => (
+                <li key={idea.id}>
+                  <Link
+                    href="/ideas"
+                    className="block rounded-lg px-2 py-1.5 transition-colors hover:bg-muted/50"
+                  >
+                    <p className="font-medium text-foreground">{idea.title}</p>
+                    <div className="mt-1.5 flex flex-wrap gap-2">
+                      <IdeaCategoryTag category={idea.category} />
+                      <IdeaStatusBadge status={idea.status} />
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">No ideas yet.</p>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-border/60 bg-card/40 p-4">
+          <h3 className="mb-3 text-sm font-medium text-foreground">
+            Latest projects
+          </h3>
+          {recentProjects.length > 0 ? (
+            <ul className="space-y-3">
+              {recentProjects.map((project) => (
+                <li key={project.id}>
+                  <Link
+                    href="/projects"
+                    className="block rounded-lg px-2 py-1.5 transition-colors hover:bg-muted/50"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-medium text-foreground">
+                        {project.client_name}
+                      </p>
+                      <ProjectStatusBadge status={project.status} />
+                    </div>
+                    <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">
+                      {project.next_action?.trim() || "No next action set"}
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">No projects yet.</p>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
