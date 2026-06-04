@@ -1,5 +1,7 @@
 "use client";
 
+import { motion, useReducedMotion } from "framer-motion";
+
 import {
   PROGRESS_BAR_FILL_CLASS,
 } from "@/lib/goals/constants";
@@ -7,6 +9,7 @@ import {
   getProgressPercent,
   getProgressTone,
 } from "@/lib/goals/format";
+import { useMotionSafe } from "@/lib/motion/use-motion-safe";
 import { cn } from "@/lib/utils";
 
 type GoalProgressBarProps = {
@@ -22,6 +25,8 @@ export function GoalProgressBar({
   className,
   onClick,
 }: GoalProgressBarProps) {
+  const reduced = useReducedMotion();
+  const { progressTransition } = useMotionSafe();
   const percent = getProgressPercent(current, target);
   const tone = getProgressTone(percent);
 
@@ -47,12 +52,14 @@ export function GoalProgressBar({
         tabIndex={onClick ? 0 : undefined}
         aria-label={onClick ? `Update progress, currently ${percent}%` : undefined}
       >
-        <div
+        <motion.div
           className={cn(
-            "h-full rounded-full transition-all duration-300",
+            "h-full rounded-full",
             PROGRESS_BAR_FILL_CLASS[tone]
           )}
-          style={{ width: `${percent}%` }}
+          initial={reduced ? false : { width: 0 }}
+          animate={{ width: `${percent}%` }}
+          transition={progressTransition}
         />
         {percent > 12 ? (
           <span className="absolute inset-y-0 left-2 flex items-center text-[10px] font-semibold text-white/95 drop-shadow-sm">

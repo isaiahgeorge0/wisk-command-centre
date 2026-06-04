@@ -52,7 +52,7 @@ function AlertDialogContent({
         data-slot="alert-dialog-content"
         data-size={size}
         className={cn(
-          "group/alert-dialog-content fixed top-1/2 left-1/2 z-50 grid w-full -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-popover p-4 text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          "group/alert-dialog-content fixed z-50 grid w-full gap-4 bg-popover p-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-popover-foreground ring-1 ring-foreground/10 outline-none duration-200 inset-x-0 bottom-0 top-auto max-h-[90dvh] translate-x-0 translate-y-0 overflow-y-auto rounded-t-2xl border-t data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-bottom data-closed:animate-out data-closed:fade-out-0 data-closed:slide-out-to-bottom md:inset-x-auto md:bottom-auto md:top-1/2 md:left-1/2 md:max-h-none md:-translate-x-1/2 md:-translate-y-1/2 md:overflow-visible md:rounded-xl md:border md:pb-4 md:data-open:slide-in-from-bottom-0 md:data-open:zoom-in-95 md:data-closed:slide-out-to-bottom-0 md:data-closed:zoom-out-95 data-[size=default]:max-w-none data-[size=sm]:max-w-none md:data-[size=default]:max-w-xs md:data-[size=sm]:max-w-xs md:data-[size=default]:sm:max-w-sm",
           className
         )}
         {...props}
@@ -85,7 +85,7 @@ function AlertDialogFooter({
     <div
       data-slot="alert-dialog-footer"
       className={cn(
-        "-mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl border-t bg-muted/50 p-4 group-data-[size=sm]/alert-dialog-content:grid group-data-[size=sm]/alert-dialog-content:grid-cols-2 sm:flex-row sm:justify-end",
+        "-mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl border-t bg-muted/50 p-4 group-data-[size=sm]/alert-dialog-content:grid group-data-[size=sm]/alert-dialog-content:grid-cols-2 sm:flex-row sm:justify-end [&_button]:min-h-11 md:[&_button]:min-h-8",
         className
       )}
       {...props}

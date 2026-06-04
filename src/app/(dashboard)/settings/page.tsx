@@ -1,4 +1,4 @@
-import { SettingsPageClient } from "@/components/settings/settings-page-client";
+import { SettingsPageShell } from "@/components/settings/settings-page-shell";
 import { getUserProfile } from "@/lib/auth/get-user-profile";
 import { getOrCreateUserPreferences } from "@/lib/preferences/get-user-preferences";
 
@@ -14,22 +14,11 @@ export default async function SettingsPage() {
     "User";
 
   return (
-    <>
-      <div className="mb-8">
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-          Settings
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Profile, display preferences, and project service types.
-        </p>
-      </div>
-
-      <SettingsPageClient
-        email={profile.email}
-        displayName={displayName}
-        fieldVisibility={preferences.fieldVisibility}
-        serviceTypes={preferences.serviceTypes}
-      />
-    </>
+    <SettingsPageShell
+      email={profile.email}
+      displayName={displayName}
+      fieldVisibility={preferences.fieldVisibility}
+      serviceTypes={preferences.serviceTypes}
+    />
   );
 }

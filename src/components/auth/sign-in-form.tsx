@@ -4,6 +4,10 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
+import {
+  SignInEntrance,
+  SignInEntranceItem,
+} from "@/components/auth/sign-in-entrance";
 import { AccessRequestDialog } from "@/components/auth/access-request-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -79,18 +83,22 @@ export function SignInForm() {
   };
 
   return (
-    <div className="flex w-full max-w-md flex-col items-center text-center">
-      <Link
-        href="/sign-in"
-        className="bg-gradient-to-r from-wisk-purple to-wisk-teal bg-clip-text text-3xl font-bold tracking-[0.28em] text-transparent uppercase sm:text-4xl"
-      >
-        WISK
-      </Link>
-      <p className="mt-4 text-sm text-muted-foreground sm:text-base">
-        Your business. Centralised.
-      </p>
+    <SignInEntrance>
+      <SignInEntranceItem>
+        <Link
+          href="/sign-in"
+          className="bg-gradient-to-r from-wisk-purple to-wisk-teal bg-clip-text text-3xl font-bold tracking-[0.28em] text-transparent uppercase sm:text-4xl"
+        >
+          WISK
+        </Link>
+      </SignInEntranceItem>
+      <SignInEntranceItem className="mt-4">
+        <p className="text-sm text-muted-foreground sm:text-base">
+          Your business. Centralised.
+        </p>
+      </SignInEntranceItem>
 
-      <div className="mt-10 flex w-full flex-col gap-3 sm:flex-row sm:justify-center">
+      <SignInEntranceItem className="mt-10 flex w-full flex-col gap-3 sm:flex-row sm:justify-center">
         <Button
           type="button"
           className="w-full sm:w-auto"
@@ -109,12 +117,13 @@ export function SignInForm() {
         >
           Request access
         </Button>
-      </div>
+      </SignInEntranceItem>
 
       {showForm ? (
+        <SignInEntranceItem className="mt-8 w-full">
         <form
           onSubmit={handleSignIn}
-          className="mt-8 w-full rounded-xl border border-border/60 bg-card/50 p-6 text-left"
+          className="w-full rounded-xl border border-border/60 bg-card/50 p-6 text-left"
         >
           <div className="grid gap-4">
             <div className="grid gap-2">
@@ -168,9 +177,10 @@ export function SignInForm() {
             Forgot password?
           </button>
         </form>
+        </SignInEntranceItem>
       ) : null}
 
       <AccessRequestDialog open={accessOpen} onOpenChange={setAccessOpen} />
-    </div>
+    </SignInEntrance>
   );
 }

@@ -4,12 +4,14 @@ import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
+import { PageTransition } from "@/components/layout/page-transition";
 import { DeleteIdeaDialog } from "@/components/ideas/delete-idea-dialog";
 import { IdeaFormDialog } from "@/components/ideas/idea-form-dialog";
 import { IdeasEmptyState } from "@/components/ideas/ideas-empty-state";
 import { IdeasList } from "@/components/ideas/ideas-list";
 import { useQuickAdd } from "@/components/quick-add/quick-add-context";
 import { Button } from "@/components/ui/button";
+import { PAGE_SUBTITLE_CLASS, PAGE_TITLE_CLASS } from "@/lib/navigation";
 import type { Idea } from "@/lib/ideas/types";
 
 type IdeasPageClientProps = {
@@ -42,13 +44,11 @@ export function IdeasPageClient({ initialIdeas }: IdeasPageClientProps) {
   }, []);
 
   return (
-    <>
+    <PageTransition>
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-            Ideas
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h1 className={PAGE_TITLE_CLASS}>Ideas</h1>
+          <p className={PAGE_SUBTITLE_CLASS}>
             A scratchpad for what to build, test, or explore next.
           </p>
         </div>
@@ -75,6 +75,6 @@ export function IdeasPageClient({ initialIdeas }: IdeasPageClientProps) {
         }}
         onDeleted={handleDeleted}
       />
-    </>
+    </PageTransition>
   );
 }

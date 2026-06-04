@@ -2,6 +2,7 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ResponsiveSelect } from "@/components/ui/responsive-select";
 import {
   Select,
   SelectContent,
@@ -69,7 +70,7 @@ export function GoalForm({
 
       <div
         className={
-          compact ? "grid gap-3 sm:grid-cols-2" : "grid gap-4 sm:grid-cols-2"
+          compact ? "grid gap-3 md:grid-cols-2" : "grid gap-4 md:grid-cols-2"
         }
       >
         <div className="grid gap-2">
@@ -115,7 +116,7 @@ export function GoalForm({
 
       <div
         className={
-          compact ? "grid gap-3 sm:grid-cols-2" : "grid gap-4 sm:grid-cols-2"
+          compact ? "grid gap-3 md:grid-cols-2" : "grid gap-4 md:grid-cols-2"
         }
       >
         <div className="grid gap-2">
@@ -130,24 +131,37 @@ export function GoalForm({
         </div>
         <div className="grid gap-2">
           <Label htmlFor={`${formId}-status`}>Status</Label>
-          <Select
+          <ResponsiveSelect
+            id={`${formId}-status`}
             value={values.status ?? "active"}
             onValueChange={(value) =>
               setField("status", (value ?? "active") as GoalStatus)
             }
             disabled={disabled}
+            options={GOAL_STATUSES.map((status) => ({
+              value: status,
+              label: GOAL_STATUS_LABELS[status],
+            }))}
           >
-            <SelectTrigger id={`${formId}-status`} className="w-full">
-              <SelectValue placeholder="Select status" />
-            </SelectTrigger>
-            <SelectContent>
-              {GOAL_STATUSES.map((status) => (
-                <SelectItem key={status} value={status}>
-                  {GOAL_STATUS_LABELS[status]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <Select
+              value={values.status ?? "active"}
+              onValueChange={(value) =>
+                setField("status", (value ?? "active") as GoalStatus)
+              }
+              disabled={disabled}
+            >
+              <SelectTrigger id={`${formId}-status`} className="w-full">
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                {GOAL_STATUSES.map((status) => (
+                  <SelectItem key={status} value={status}>
+                    {GOAL_STATUS_LABELS[status]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </ResponsiveSelect>
         </div>
       </div>
     </div>

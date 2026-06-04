@@ -3,8 +3,11 @@
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { StaggerItem } from "@/components/motion/stagger-item";
+import { StaggerList } from "@/components/motion/stagger-list";
 import { GoalCard } from "@/components/goals/goal-card";
 import { Button } from "@/components/ui/button";
+import { useStaggerOnce } from "@/lib/motion/use-stagger-once";
 import type { Goal } from "@/lib/goals/types";
 import type { GoalStatus } from "@/lib/goals/types";
 
@@ -23,28 +26,34 @@ function GoalGrid({
   showProgressAccent,
   onGoalUpdate,
   onGoalDelete,
+  stagger,
 }: {
   goals: Goal[];
   showProgressAccent?: boolean;
   onGoalUpdate: (goal: Goal) => void;
   onGoalDelete: (goal: Goal) => void;
+  stagger: boolean;
 }) {
   if (goals.length === 0) {
     return null;
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <StaggerList
+      className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
+      stagger={stagger}
+    >
       {goals.map((goal) => (
-        <GoalCard
-          key={goal.id}
-          goal={goal}
-          showProgressAccent={showProgressAccent}
-          onUpdate={onGoalUpdate}
-          onDelete={onGoalDelete}
-        />
+        <StaggerItem key={goal.id} stagger={stagger}>
+          <GoalCard
+            goal={goal}
+            showProgressAccent={showProgressAccent}
+            onUpdate={onGoalUpdate}
+            onDelete={onGoalDelete}
+          />
+        </StaggerItem>
       ))}
-    </div>
+    </StaggerList>
   );
 }
 
@@ -53,6 +62,9 @@ export function GoalsList({
   onGoalUpdate,
   onGoalDelete,
 }: GoalsListProps) {
+  const activeStagger = useStaggerOnce();
+  const pausedStagger = useStaggerOnce();
+  const archivedStagger = useStaggerOnce();
   const [archivedExpanded, setArchivedExpanded] = useState(false);
 
   const { active, paused, completedArchived } = useMemo(() => {
@@ -94,6 +106,7 @@ export function GoalsList({
             showProgressAccent
             onGoalUpdate={onGoalUpdate}
             onGoalDelete={onGoalDelete}
+            stagger={activeStagger}
           />
         ) : (
           <p className="text-sm text-muted-foreground">No active goals right now.</p>
@@ -109,6 +122,7 @@ export function GoalsList({
             goals={paused}
             onGoalUpdate={onGoalUpdate}
             onGoalDelete={onGoalDelete}
+            stagger={pausedStagger}
           />
         </section>
       ) : null}
@@ -137,6 +151,7 @@ export function GoalsList({
               goals={completedArchived}
               onGoalUpdate={onGoalUpdate}
               onGoalDelete={onGoalDelete}
+              stagger={archivedStagger}
             />
           ) : null}
         </section>

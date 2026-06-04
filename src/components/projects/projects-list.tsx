@@ -1,6 +1,9 @@
 "use client";
 
+import { StaggerItem } from "@/components/motion/stagger-item";
+import { StaggerList } from "@/components/motion/stagger-list";
 import { ProjectCard } from "@/components/projects/project-card";
+import { useStaggerOnce } from "@/lib/motion/use-stagger-once";
 import type { Project } from "@/lib/projects/types";
 
 type ProjectsListProps = {
@@ -9,15 +12,18 @@ type ProjectsListProps = {
 };
 
 export function ProjectsList({ projects, onDelete }: ProjectsListProps) {
+  const stagger = useStaggerOnce();
+
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <StaggerList
+      className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
+      stagger={stagger}
+    >
       {projects.map((project) => (
-        <ProjectCard
-          key={project.id}
-          project={project}
-          onDelete={onDelete}
-        />
+        <StaggerItem key={project.id} stagger={stagger}>
+          <ProjectCard project={project} onDelete={onDelete} />
+        </StaggerItem>
       ))}
-    </div>
+    </StaggerList>
   );
 }

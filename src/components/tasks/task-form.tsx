@@ -2,6 +2,7 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ResponsiveSelect } from "@/components/ui/responsive-select";
 import {
   Select,
   SelectContent,
@@ -40,6 +41,8 @@ export function TaskForm({
     onChange({ ...values, [key]: value });
   };
 
+  const projectValue = values.project_id ?? NO_PROJECT_VALUE;
+
   return (
     <div className={compact ? "grid gap-3" : "grid gap-4"}>
       <div className="grid gap-2">
@@ -53,50 +56,87 @@ export function TaskForm({
         />
       </div>
 
-      <div className={compact ? "grid gap-3 sm:grid-cols-2" : "grid gap-4 sm:grid-cols-2"}>
+      <div className={compact ? "grid gap-3 md:grid-cols-2" : "grid gap-4 md:grid-cols-2"}>
         <div className="grid gap-2">
           <Label htmlFor={`${formId}-priority`}>Priority *</Label>
-          <Select
+          <ResponsiveSelect
+            id={`${formId}-priority`}
             value={values.priority}
             onValueChange={(value) =>
               setField("priority", value as TaskPriority)
             }
             disabled={disabled}
+            options={TASK_PRIORITIES.map((priority) => ({
+              value: priority,
+              label: TASK_PRIORITY_LABELS[priority],
+            }))}
           >
-            <SelectTrigger id={`${formId}-priority`} className="w-full">
-              <SelectValue placeholder="Select priority" />
-            </SelectTrigger>
-            <SelectContent>
-              {TASK_PRIORITIES.map((priority) => (
-                <SelectItem key={priority} value={priority}>
-                  {TASK_PRIORITY_LABELS[priority]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <Select
+              value={values.priority}
+              onValueChange={(value) =>
+                setField("priority", value as TaskPriority)
+              }
+              disabled={disabled}
+            >
+              <SelectTrigger id={`${formId}-priority`} className="w-full">
+                <SelectValue placeholder="Select priority" />
+              </SelectTrigger>
+              <SelectContent>
+                {TASK_PRIORITIES.map((priority) => (
+                  <SelectItem key={priority} value={priority}>
+                    {TASK_PRIORITY_LABELS[priority]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </ResponsiveSelect>
         </div>
 
         <div className="grid gap-2">
           <Label htmlFor={`${formId}-project`}>Project</Label>
-          <Select
-            value={values.project_id ?? NO_PROJECT_VALUE}
+          <ResponsiveSelect
+            id={`${formId}-project`}
+            value={projectValue}
             onValueChange={(value) =>
               setField("project_id", value ?? NO_PROJECT_VALUE)
             }
             disabled={disabled}
+            options={[
+              { value: NO_PROJECT_VALUE, label: "No project" },
+              ...projects.map((project) => ({
+                value: project.id,
+                label: project.client_name,
+              })),
+            ]}
           >
-            <SelectTrigger id={`${formId}-project`} className="w-full">
-              <SelectValue placeholder="No project" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={NO_PROJECT_VALUE}>No project</SelectItem>
-              {projects.map((project) => (
-                <SelectItem key={project.id} value={project.id}>
-                  {project.client_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <Select
+              value={projectValue}
+              onValueChange={(value) =>
+                setField("project_id", value ?? NO_PROJECT_VALUE)
+              }
+              disabled={disabled}
+            >
+              <SelectTrigger id={`${formId}-project`} className="w-full">
+                <SelectValue placeholder="No project">
+                  {(value) => {
+                    if (value == null || value === NO_PROJECT_VALUE) {
+                      return "No project";
+                    }
+                    const project = projects.find((p) => p.id === value);
+                    return project?.client_name ?? String(value);
+                  }}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NO_PROJECT_VALUE}>No project</SelectItem>
+                {projects.map((project) => (
+                  <SelectItem key={project.id} value={project.id}>
+                    {project.client_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </ResponsiveSelect>
         </div>
       </div>
 

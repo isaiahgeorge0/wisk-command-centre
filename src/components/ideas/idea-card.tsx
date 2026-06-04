@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { updateIdea } from "@/app/(dashboard)/ideas/actions";
+import { ExpandableSection } from "@/components/motion/expandable-section";
 import { usePreferences } from "@/components/preferences/preferences-context";
 import { IdeaCategoryTag } from "@/components/ideas/idea-category-tag";
 import { IdeaForm } from "@/components/ideas/idea-form";
@@ -127,7 +128,19 @@ export function IdeaCard({ idea, onDelete }: IdeaCardProps) {
       </CardHeader>
 
       <CardContent className="pt-0">
-        {expanded ? (
+        {!expanded ? (
+          <p
+            className={cn(
+              "line-clamp-2 text-sm",
+              descriptionPreview
+                ? "text-muted-foreground"
+                : "text-muted-foreground/70 italic"
+            )}
+          >
+            {descriptionPreview || "No description yet."}
+          </p>
+        ) : null}
+        <ExpandableSection open={expanded}>
           <div onClick={(e) => e.stopPropagation()}>
             <p className="whitespace-pre-wrap text-sm text-foreground">
               {descriptionPreview || "No description yet."}
@@ -154,18 +167,7 @@ export function IdeaCard({ idea, onDelete }: IdeaCardProps) {
               </Button>
             </div>
           </div>
-        ) : (
-          <p
-            className={cn(
-              "line-clamp-2 text-sm",
-              descriptionPreview
-                ? "text-muted-foreground"
-                : "text-muted-foreground/70 italic"
-            )}
-          >
-            {descriptionPreview || "No description yet."}
-          </p>
-        )}
+        </ExpandableSection>
       </CardContent>
 
       {!expanded ? (

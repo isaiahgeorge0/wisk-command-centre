@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 
+import { StaggerItem } from "@/components/motion/stagger-item";
+import { StaggerList } from "@/components/motion/stagger-list";
 import { usePreferences } from "@/components/preferences/preferences-context";
+import { useStaggerOnce } from "@/lib/motion/use-stagger-once";
 import { ProjectStatusBadge } from "@/components/projects/project-status-badge";
 import { TaskPriorityBadge } from "@/components/tasks/task-priority-badge";
 import { TaskProjectTag } from "@/components/tasks/task-project-tag";
@@ -18,6 +21,8 @@ export function ThisWeekSection({ snapshot }: ThisWeekSectionProps) {
   const { fieldVisibility } = usePreferences();
   const projectsVis = fieldVisibility.projects;
   const tasksVis = fieldVisibility.tasks;
+  const taskStagger = useStaggerOnce();
+  const projectStagger = useStaggerOnce();
   const hasTasks = snapshot.tasksDueThisWeekGrouped.length > 0;
   const hasProjects = snapshot.projectDeadlinesThisWeek.length > 0;
 
@@ -39,9 +44,9 @@ export function ThisWeekSection({ snapshot }: ThisWeekSectionProps) {
                   <p className="mb-2 text-xs font-medium text-muted-foreground">
                     {formatShortDueDate(group.date)}
                   </p>
-                  <ul className="space-y-2">
+                  <StaggerList stagger={taskStagger} as="ul" className="space-y-2">
                     {group.tasks.map((task) => (
-                      <li key={task.id}>
+                      <StaggerItem key={task.id} stagger={taskStagger} as="li">
                         <Link
                           href="/tasks"
                           className="flex flex-wrap items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted/50"
@@ -56,9 +61,9 @@ export function ThisWeekSection({ snapshot }: ThisWeekSectionProps) {
                             <TaskProjectTag projectName={task.project_name} />
                           ) : null}
                         </Link>
-                      </li>
+                      </StaggerItem>
                     ))}
-                  </ul>
+                  </StaggerList>
                 </div>
               ))}
             </div>
@@ -74,9 +79,9 @@ export function ThisWeekSection({ snapshot }: ThisWeekSectionProps) {
             Project deadlines
           </h3>
           {hasProjects ? (
-            <ul className="space-y-2">
+            <StaggerList stagger={projectStagger} as="ul" className="space-y-2">
               {snapshot.projectDeadlinesThisWeek.map((project) => (
-                <li key={project.id}>
+                <StaggerItem key={project.id} stagger={projectStagger} as="li">
                   <Link
                     href="/projects"
                     className="flex items-start justify-between gap-3 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted/50"
@@ -93,9 +98,9 @@ export function ThisWeekSection({ snapshot }: ThisWeekSectionProps) {
                     </div>
                     <ProjectStatusBadge status={project.status} />
                   </Link>
-                </li>
+                </StaggerItem>
               ))}
-            </ul>
+            </StaggerList>
           ) : (
             <p className="text-sm text-muted-foreground">
               No project deadlines in the next 7 days.

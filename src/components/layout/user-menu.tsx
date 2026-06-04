@@ -26,7 +26,7 @@ export function UserMenu({ userEmail, userName }: UserMenuProps) {
           <Button
             variant="ghost"
             size="sm"
-            className="max-w-[180px] gap-1.5 text-muted-foreground hover:text-foreground"
+            className="max-w-[140px] min-h-11 gap-1.5 text-muted-foreground hover:text-foreground md:max-w-[180px] md:min-h-8"
           />
         }
       >

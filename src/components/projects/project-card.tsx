@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { updateProject } from "@/app/(dashboard)/projects/actions";
+import { ExpandableSection } from "@/components/motion/expandable-section";
 import { usePreferences } from "@/components/preferences/preferences-context";
 import { ProjectForm } from "@/components/projects/project-form";
 import { ProjectStatusBadge } from "@/components/projects/project-status-badge";
@@ -154,11 +155,11 @@ export function ProjectCard({ project, onDelete }: ProjectCardProps) {
           </div>
         ) : null}
 
-        {expanded ? (
-          <div
-            className="mt-3 space-y-2 border-t border-border/50 pt-3"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <ExpandableSection
+          open={expanded}
+          className="mt-3 space-y-2 border-t border-border/50 pt-3"
+        >
+          <div onClick={(e) => e.stopPropagation()}>
             {vis.siteUrl && project.site_url?.trim() ? (
               <div>
                 <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
@@ -210,11 +211,12 @@ export function ProjectCard({ project, onDelete }: ProjectCardProps) {
               </Button>
             </div>
           </div>
-        ) : (
+        </ExpandableSection>
+        {!expanded ? (
           <p className="pt-1 text-xs text-muted-foreground">
             Click to expand details
           </p>
-        )}
+        ) : null}
       </CardContent>
     </Card>
   );

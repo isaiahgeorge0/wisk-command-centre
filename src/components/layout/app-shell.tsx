@@ -1,5 +1,6 @@
 "use client";
 
+import { BottomNav } from "@/components/layout/bottom-nav";
 import { QuickAddFab } from "@/components/layout/quick-add-fab";
 import { TopNav } from "@/components/layout/top-nav";
 import { PreferencesProvider } from "@/components/preferences/preferences-context";
@@ -24,12 +25,13 @@ export function AppShell({
   return (
     <PreferencesProvider value={{ fieldVisibility, serviceTypes }}>
       <QuickAddProvider>
-        <div className="min-h-screen">
+        <div className="min-h-screen overflow-x-hidden">
           <TopNav userEmail={userEmail} userName={userName} />
-          <main className="mx-auto max-w-7xl px-6 pt-16 pb-24 lg:px-8">
+          <main className="mx-auto max-w-7xl px-4 pt-16 pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:px-6 md:pb-24 lg:px-8">
             {children}
           </main>
           <QuickAddFab />
+          <BottomNav />
         </div>
       </QuickAddProvider>
     </PreferencesProvider>

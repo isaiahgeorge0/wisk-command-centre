@@ -3,6 +3,7 @@
 import { SettingsPreferencesSection } from "@/components/settings/settings-preferences-section";
 import { SettingsProfileSection } from "@/components/settings/settings-profile-section";
 import { SettingsServiceTypesSection } from "@/components/settings/settings-service-types-section";
+import { SettingsToolsSection } from "@/components/settings/settings-tools-section";
 import type { FieldVisibility } from "@/lib/preferences/types";
 
 type SettingsPageClientProps = {
@@ -23,6 +24,7 @@ export function SettingsPageClient({
       <SettingsProfileSection email={email} initialName={displayName} />
       <SettingsPreferencesSection fieldVisibility={fieldVisibility} />
       <SettingsServiceTypesSection serviceTypes={serviceTypes} />
+      <SettingsToolsSection />
     </div>
   );
 }

@@ -3,8 +3,11 @@
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { StaggerItem } from "@/components/motion/stagger-item";
+import { StaggerList } from "@/components/motion/stagger-list";
 import { TaskRow } from "@/components/tasks/task-row";
 import { Button } from "@/components/ui/button";
+import { useStaggerOnce } from "@/lib/motion/use-stagger-once";
 import type { ProjectOption, TaskWithProject } from "@/lib/tasks/types";
 
 type TasksListProps = {
@@ -20,6 +23,7 @@ export function TasksList({
   onTaskUpdate,
   onTaskDelete,
 }: TasksListProps) {
+  const stagger = useStaggerOnce();
   const [completedExpanded, setCompletedExpanded] = useState(false);
 
   const { incomplete, completed } = useMemo(() => {
@@ -40,17 +44,18 @@ export function TasksList({
   return (
     <div className="overflow-hidden rounded-xl border border-border/60 bg-card/40">
       {incomplete.length > 0 ? (
-        <div>
+        <StaggerList stagger={stagger}>
           {incomplete.map((task) => (
-            <TaskRow
-              key={task.id}
-              task={task}
-              projects={projects}
-              onUpdate={onTaskUpdate}
-              onDelete={onTaskDelete}
-            />
+            <StaggerItem key={task.id} stagger={stagger} as="div">
+              <TaskRow
+                task={task}
+                projects={projects}
+                onUpdate={onTaskUpdate}
+                onDelete={onTaskDelete}
+              />
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerList>
       ) : (
         <p className="px-4 py-6 text-center text-sm text-muted-foreground">
           No open tasks — you&apos;re all caught up.

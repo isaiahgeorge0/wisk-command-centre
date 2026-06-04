@@ -108,7 +108,7 @@ export function TaskRow({ task, projects, onDelete, onUpdate }: TaskRowProps) {
 
   return (
     <div
-      className="group flex cursor-pointer items-center gap-3 border-b border-border/50 px-4 py-3 transition-colors hover:bg-card/50"
+      className="group flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-2 border-b border-border/50 px-4 py-3 transition-colors hover:bg-card/50 sm:flex-nowrap"
       onClick={() => setEditing(true)}
     >
       <Checkbox
@@ -143,14 +143,14 @@ export function TaskRow({ task, projects, onDelete, onUpdate }: TaskRowProps) {
       ) : null}
 
       <div
-        className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100"
+        className="flex shrink-0 items-center gap-1 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100"
         onClick={(e) => e.stopPropagation()}
       >
         <Button
           type="button"
           variant="ghost"
           size="sm"
-          className="h-8 px-2 text-xs"
+          className="h-11 px-2 text-xs md:h-8"
           onClick={() => setEditing(true)}
         >
           Edit
@@ -159,7 +159,7 @@ export function TaskRow({ task, projects, onDelete, onUpdate }: TaskRowProps) {
           type="button"
           variant="ghost"
           size="sm"
-          className="h-8 px-2 text-xs text-destructive hover:text-destructive"
+          className="h-11 px-2 text-xs text-destructive hover:text-destructive md:h-8"
           onClick={() => onDelete(task)}
         >
           Delete

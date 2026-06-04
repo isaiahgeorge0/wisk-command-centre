@@ -4,12 +4,14 @@ import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
+import { PageTransition } from "@/components/layout/page-transition";
 import { DeleteProjectDialog } from "@/components/projects/delete-project-dialog";
 import { ProjectFormDialog } from "@/components/projects/project-form-dialog";
 import { ProjectsEmptyState } from "@/components/projects/projects-empty-state";
 import { ProjectsList } from "@/components/projects/projects-list";
 import { useQuickAdd } from "@/components/quick-add/quick-add-context";
 import { Button } from "@/components/ui/button";
+import { PAGE_SUBTITLE_CLASS, PAGE_TITLE_CLASS } from "@/lib/navigation";
 import type { Project } from "@/lib/projects/types";
 
 type ProjectsPageClientProps = {
@@ -44,13 +46,11 @@ export function ProjectsPageClient({
   }, []);
 
   return (
-    <>
+    <PageTransition>
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-            Projects
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h1 className={PAGE_TITLE_CLASS}>Projects</h1>
+          <p className={PAGE_SUBTITLE_CLASS}>
             Client work, status, and next actions at a glance.
           </p>
         </div>
@@ -80,6 +80,6 @@ export function ProjectsPageClient({
         }}
         onDeleted={handleDeleted}
       />
-    </>
+    </PageTransition>
   );
 }

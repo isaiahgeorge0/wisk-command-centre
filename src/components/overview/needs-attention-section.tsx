@@ -2,8 +2,11 @@
 
 import Link from "next/link";
 
+import { StaggerItem } from "@/components/motion/stagger-item";
+import { StaggerList } from "@/components/motion/stagger-list";
 import { OverviewEmptyPositive } from "@/components/overview/overview-empty-positive";
 import { usePreferences } from "@/components/preferences/preferences-context";
+import { useStaggerOnce } from "@/lib/motion/use-stagger-once";
 import { TaskPriorityBadge } from "@/components/tasks/task-priority-badge";
 import { TaskProjectTag } from "@/components/tasks/task-project-tag";
 import { formatGoalDeadline } from "@/lib/goals/format";
@@ -42,6 +45,7 @@ export function NeedsAttentionSection({ snapshot }: NeedsAttentionSectionProps) 
   const projectsVis = fieldVisibility.projects;
   const tasksVis = fieldVisibility.tasks;
   const goalsVis = fieldVisibility.goals;
+  const stagger = useStaggerOnce();
 
   if (!hasNeedsAttention(snapshot)) {
     return (
@@ -66,28 +70,33 @@ export function NeedsAttentionSection({ snapshot }: NeedsAttentionSectionProps) 
             <p className="border-b border-border/50 px-4 py-2 text-xs font-medium text-red-400">
               Overdue tasks
             </p>
-            <div className="divide-y divide-border/40">
+            <StaggerList
+              stagger={stagger}
+              className="divide-y divide-border/40"
+            >
               {snapshot.overdueTasks.map((task) => (
-                <AttentionRow key={task.id} href="/tasks">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium text-foreground">
-                      {task.title}
-                    </span>
-                    {tasksVis.priorityBadge ? (
-                      <TaskPriorityBadge priority={task.priority} />
+                <StaggerItem key={task.id} stagger={stagger} as="div">
+                  <AttentionRow href="/tasks">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-medium text-foreground">
+                        {task.title}
+                      </span>
+                      {tasksVis.priorityBadge ? (
+                        <TaskPriorityBadge priority={task.priority} />
+                      ) : null}
+                      {tasksVis.projectTag ? (
+                        <TaskProjectTag projectName={task.project_name} />
+                      ) : null}
+                    </div>
+                    {tasksVis.dueDate ? (
+                      <p className="mt-1 text-xs text-red-400/90">
+                        Due {formatShortDueDate(task.due_date!)}
+                      </p>
                     ) : null}
-                    {tasksVis.projectTag ? (
-                      <TaskProjectTag projectName={task.project_name} />
-                    ) : null}
-                  </div>
-                  {tasksVis.dueDate ? (
-                    <p className="mt-1 text-xs text-red-400/90">
-                      Due {formatShortDueDate(task.due_date!)}
-                    </p>
-                  ) : null}
-                </AttentionRow>
+                  </AttentionRow>
+                </StaggerItem>
               ))}
-            </div>
+            </StaggerList>
           </div>
         ) : null}
 
@@ -96,20 +105,25 @@ export function NeedsAttentionSection({ snapshot }: NeedsAttentionSectionProps) 
             <p className="border-b border-border/50 px-4 py-2 text-xs font-medium text-red-400">
               Projects missing next action
             </p>
-            <div className="divide-y divide-border/40">
+            <StaggerList
+              stagger={stagger}
+              className="divide-y divide-border/40"
+            >
               {snapshot.projectsMissingNextAction.map((project) => (
-                <AttentionRow key={project.id} href="/projects">
-                  <span className="font-medium text-foreground">
-                    {project.client_name}
-                  </span>
-                  {projectsVis.serviceType ? (
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {project.service_type ?? "No service type"}
-                    </p>
-                  ) : null}
-                </AttentionRow>
+                <StaggerItem key={project.id} stagger={stagger} as="div">
+                  <AttentionRow href="/projects">
+                    <span className="font-medium text-foreground">
+                      {project.client_name}
+                    </span>
+                    {projectsVis.serviceType ? (
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {project.service_type ?? "No service type"}
+                      </p>
+                    ) : null}
+                  </AttentionRow>
+                </StaggerItem>
               ))}
-            </div>
+            </StaggerList>
           </div>
         ) : null}
 
@@ -118,19 +132,26 @@ export function NeedsAttentionSection({ snapshot }: NeedsAttentionSectionProps) 
             <p className="border-b border-border/50 px-4 py-2 text-xs font-medium text-red-400">
               Goals at 0% with a deadline
             </p>
-            <div className="divide-y divide-border/40">
+            <StaggerList
+              stagger={stagger}
+              className="divide-y divide-border/40"
+            >
               {snapshot.goalsAtZeroWithDeadline.map((goal) => (
-                <AttentionRow key={goal.id} href="/goals">
-                  <span className="font-medium text-foreground">{goal.title}</span>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    0% progress
-                    {goalsVis.deadline
-                      ? ` · Deadline ${formatGoalDeadline(goal.deadline)}`
-                      : null}
-                  </p>
-                </AttentionRow>
+                <StaggerItem key={goal.id} stagger={stagger} as="div">
+                  <AttentionRow href="/goals">
+                    <span className="font-medium text-foreground">
+                      {goal.title}
+                    </span>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      0% progress
+                      {goalsVis.deadline
+                        ? ` · Deadline ${formatGoalDeadline(goal.deadline)}`
+                        : null}
+                    </p>
+                  </AttentionRow>
+                </StaggerItem>
               ))}
-            </div>
+            </StaggerList>
           </div>
         ) : null}
       </div>

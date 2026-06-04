@@ -4,12 +4,14 @@ import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
+import { PageTransition } from "@/components/layout/page-transition";
 import { DeleteGoalDialog } from "@/components/goals/delete-goal-dialog";
 import { GoalFormDialog } from "@/components/goals/goal-form-dialog";
 import { GoalsEmptyState } from "@/components/goals/goals-empty-state";
 import { GoalsList } from "@/components/goals/goals-list";
 import { useQuickAdd } from "@/components/quick-add/quick-add-context";
 import { Button } from "@/components/ui/button";
+import { PAGE_SUBTITLE_CLASS, PAGE_TITLE_CLASS } from "@/lib/navigation";
 import type { Goal } from "@/lib/goals/types";
 
 type GoalsPageClientProps = {
@@ -46,13 +48,11 @@ export function GoalsPageClient({ initialGoals }: GoalsPageClientProps) {
   }, []);
 
   return (
-    <>
+    <PageTransition>
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-            Goals
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h1 className={PAGE_TITLE_CLASS}>Goals</h1>
+          <p className={PAGE_SUBTITLE_CLASS}>
             Targets you are building toward — revenue, delivery, and growth.
           </p>
         </div>
@@ -83,6 +83,6 @@ export function GoalsPageClient({ initialGoals }: GoalsPageClientProps) {
         }}
         onDeleted={handleDeleted}
       />
-    </>
+    </PageTransition>
   );
 }

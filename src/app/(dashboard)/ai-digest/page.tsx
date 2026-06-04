@@ -1,5 +1,5 @@
-import { SectionHeading } from "@/components/section-heading";
+import { AiDigestPageClient } from "@/components/ai-digest/ai-digest-page-client";
 
 export default function AiDigestPage() {
-  return <SectionHeading title="AI Digest" />;
+  return <AiDigestPageClient />;
 }

@@ -2,6 +2,7 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ResponsiveSelect } from "@/components/ui/responsive-select";
 import {
   Select,
   SelectContent,
@@ -68,24 +69,37 @@ export function ProjectForm({
 
       <div className="grid gap-2">
         <Label htmlFor={`${formId}-status`}>Status *</Label>
-        <Select
+        <ResponsiveSelect
+          id={`${formId}-status`}
           value={values.status}
           onValueChange={(value) =>
             setField("status", value as ProjectStatus)
           }
           disabled={disabled}
+          options={PROJECT_STATUSES.map((status) => ({
+            value: status,
+            label: PROJECT_STATUS_LABELS[status],
+          }))}
         >
-          <SelectTrigger id={`${formId}-status`} className="w-full">
-            <SelectValue placeholder="Select status" />
-          </SelectTrigger>
-          <SelectContent>
-            {PROJECT_STATUSES.map((status) => (
-              <SelectItem key={status} value={status}>
-                {PROJECT_STATUS_LABELS[status]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          <Select
+            value={values.status}
+            onValueChange={(value) =>
+              setField("status", value as ProjectStatus)
+            }
+            disabled={disabled}
+          >
+            <SelectTrigger id={`${formId}-status`} className="w-full">
+              <SelectValue placeholder="Select status" />
+            </SelectTrigger>
+            <SelectContent>
+              {PROJECT_STATUSES.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {PROJECT_STATUS_LABELS[status]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </ResponsiveSelect>
       </div>
 
       <div className="grid gap-2">
@@ -110,7 +124,7 @@ export function ProjectForm({
         />
       </div>
 
-      <div className="grid gap-2 sm:grid-cols-2 sm:gap-4">
+      <div className="grid gap-2 md:grid-cols-2 md:gap-4">
         <div className="grid gap-2">
           <Label htmlFor={`${formId}-deadline`}>Deadline</Label>
           <Input

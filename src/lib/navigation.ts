@@ -9,9 +9,24 @@ export const NAV_ITEMS = [
 
 export type NavItem = (typeof NAV_ITEMS)[number];
 
+/** Bottom nav routes (subset of NAV_ITEMS — no AI Digest). */
+export const MOBILE_NAV_ITEMS = [
+  { label: "Overview", href: "/" },
+  { label: "Projects", href: "/projects" },
+  { label: "Tasks", href: "/tasks" },
+  { label: "Goals", href: "/goals" },
+  { label: "Ideas", href: "/ideas" },
+] as const;
+
 export function isNavActive(pathname: string, href: string): boolean {
   if (href === "/") {
     return pathname === "/";
   }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
+
+export const PAGE_TITLE_CLASS =
+  "text-2xl font-semibold tracking-tight leading-tight text-foreground md:text-3xl";
+
+export const PAGE_SUBTITLE_CLASS =
+  "mt-1 text-sm leading-relaxed text-muted-foreground";

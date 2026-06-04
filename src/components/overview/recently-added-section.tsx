@@ -2,8 +2,11 @@
 
 import Link from "next/link";
 
+import { StaggerItem } from "@/components/motion/stagger-item";
+import { StaggerList } from "@/components/motion/stagger-list";
 import { IdeaCategoryTag } from "@/components/ideas/idea-category-tag";
 import { usePreferences } from "@/components/preferences/preferences-context";
+import { useStaggerOnce } from "@/lib/motion/use-stagger-once";
 import { IdeaStatusBadge } from "@/components/ideas/idea-status-badge";
 import { ProjectStatusBadge } from "@/components/projects/project-status-badge";
 import type { OverviewSnapshot } from "@/lib/overview/selectors";
@@ -17,6 +20,8 @@ export function RecentlyAddedSection({ snapshot }: RecentlyAddedSectionProps) {
   const projectsVis = fieldVisibility.projects;
   const ideasVis = fieldVisibility.ideas;
   // TODO: Once updated_at is added to the projects table, display and sort recent projects by last updated instead of created_at (see selectors.ts recentProjects).
+  const ideasStagger = useStaggerOnce();
+  const projectsStagger = useStaggerOnce();
   const { recentIdeas, recentProjects } = snapshot;
 
   return (
@@ -29,9 +34,9 @@ export function RecentlyAddedSection({ snapshot }: RecentlyAddedSectionProps) {
         <div className="rounded-xl border border-border/60 bg-card/40 p-4">
           <h3 className="mb-3 text-sm font-medium text-foreground">Latest ideas</h3>
           {recentIdeas.length > 0 ? (
-            <ul className="space-y-3">
+            <StaggerList stagger={ideasStagger} as="ul" className="space-y-3">
               {recentIdeas.map((idea) => (
-                <li key={idea.id}>
+                <StaggerItem key={idea.id} stagger={ideasStagger} as="li">
                   <Link
                     href="/ideas"
                     className="block rounded-lg px-2 py-1.5 transition-colors hover:bg-muted/50"
@@ -48,9 +53,9 @@ export function RecentlyAddedSection({ snapshot }: RecentlyAddedSectionProps) {
                       </div>
                     ) : null}
                   </Link>
-                </li>
+                </StaggerItem>
               ))}
-            </ul>
+            </StaggerList>
           ) : (
             <p className="text-sm text-muted-foreground">No ideas yet.</p>
           )}
@@ -61,9 +66,9 @@ export function RecentlyAddedSection({ snapshot }: RecentlyAddedSectionProps) {
             Latest projects
           </h3>
           {recentProjects.length > 0 ? (
-            <ul className="space-y-3">
+            <StaggerList stagger={projectsStagger} as="ul" className="space-y-3">
               {recentProjects.map((project) => (
-                <li key={project.id}>
+                <StaggerItem key={project.id} stagger={projectsStagger} as="li">
                   <Link
                     href="/projects"
                     className="block rounded-lg px-2 py-1.5 transition-colors hover:bg-muted/50"
@@ -80,9 +85,9 @@ export function RecentlyAddedSection({ snapshot }: RecentlyAddedSectionProps) {
                       </p>
                     ) : null}
                   </Link>
-                </li>
+                </StaggerItem>
               ))}
-            </ul>
+            </StaggerList>
           ) : (
             <p className="text-sm text-muted-foreground">No projects yet.</p>
           )}

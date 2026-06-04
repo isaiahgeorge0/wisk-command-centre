@@ -2,6 +2,7 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ResponsiveSelect } from "@/components/ui/responsive-select";
 import {
   Select,
   SelectContent,
@@ -65,7 +66,7 @@ export function IdeaForm({
 
       <div
         className={
-          compact ? "grid gap-3 sm:grid-cols-2" : "grid gap-4 sm:grid-cols-2"
+          compact ? "grid gap-3 md:grid-cols-2" : "grid gap-4 md:grid-cols-2"
         }
       >
         <div className="grid gap-2">
@@ -86,24 +87,37 @@ export function IdeaForm({
 
         <div className="grid gap-2">
           <Label htmlFor={`${formId}-status`}>Status</Label>
-          <Select
+          <ResponsiveSelect
+            id={`${formId}-status`}
             value={values.status ?? "new"}
             onValueChange={(value) =>
               setField("status", (value ?? "new") as IdeaStatus)
             }
             disabled={disabled}
+            options={IDEA_STATUSES.map((status) => ({
+              value: status,
+              label: IDEA_STATUS_LABELS[status],
+            }))}
           >
-            <SelectTrigger id={`${formId}-status`} className="w-full">
-              <SelectValue placeholder="Select status" />
-            </SelectTrigger>
-            <SelectContent>
-              {IDEA_STATUSES.map((status) => (
-                <SelectItem key={status} value={status}>
-                  {IDEA_STATUS_LABELS[status]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <Select
+              value={values.status ?? "new"}
+              onValueChange={(value) =>
+                setField("status", (value ?? "new") as IdeaStatus)
+              }
+              disabled={disabled}
+            >
+              <SelectTrigger id={`${formId}-status`} className="w-full">
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                {IDEA_STATUSES.map((status) => (
+                  <SelectItem key={status} value={status}>
+                    {IDEA_STATUS_LABELS[status]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </ResponsiveSelect>
         </div>
       </div>
     </div>

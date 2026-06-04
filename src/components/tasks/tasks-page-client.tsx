@@ -4,12 +4,14 @@ import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
+import { PageTransition } from "@/components/layout/page-transition";
 import { DeleteTaskDialog } from "@/components/tasks/delete-task-dialog";
 import { TaskFormDialog } from "@/components/tasks/task-form-dialog";
 import { TasksEmptyState } from "@/components/tasks/tasks-empty-state";
 import { TasksList } from "@/components/tasks/tasks-list";
 import { useQuickAdd } from "@/components/quick-add/quick-add-context";
 import { Button } from "@/components/ui/button";
+import { PAGE_SUBTITLE_CLASS, PAGE_TITLE_CLASS } from "@/lib/navigation";
 import type { ProjectOption, TaskWithProject } from "@/lib/tasks/types";
 
 type TasksPageClientProps = {
@@ -52,13 +54,11 @@ export function TasksPageClient({
   }, []);
 
   return (
-    <>
+    <PageTransition>
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-            Tasks
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h1 className={PAGE_TITLE_CLASS}>Tasks</h1>
+          <p className={PAGE_SUBTITLE_CLASS}>
             What needs doing, by when, and for which client.
           </p>
         </div>
@@ -94,6 +94,6 @@ export function TasksPageClient({
         }}
         onDeleted={handleDeleted}
       />
-    </>
+    </PageTransition>
   );
 }
