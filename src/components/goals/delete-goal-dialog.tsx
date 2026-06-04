@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 
-import { deleteGoal } from "@/app/goals/actions";
+import { deleteGoal } from "@/app/(dashboard)/goals/actions";
 import {
   AlertDialog,
   AlertDialogAction,

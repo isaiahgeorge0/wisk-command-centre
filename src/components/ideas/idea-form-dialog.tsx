@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { createIdea } from "@/app/ideas/actions";
+import { createIdea } from "@/app/(dashboard)/ideas/actions";
 import { IdeaForm } from "@/components/ideas/idea-form";
 import { Button } from "@/components/ui/button";
 import {

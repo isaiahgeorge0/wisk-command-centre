@@ -1,12 +1,5 @@
 import type { ProjectStatus } from "@/lib/projects/types";
 
-export const SERVICE_TYPE_SUGGESTIONS = [
-  "Web Development",
-  "Social Media",
-  "Branding",
-  "App Development",
-] as const;
-
 export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
   active: "Active",
   paused: "Paused",

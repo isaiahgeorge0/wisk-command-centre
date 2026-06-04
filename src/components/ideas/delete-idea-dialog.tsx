@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 
-import { deleteIdea } from "@/app/ideas/actions";
+import { deleteIdea } from "@/app/(dashboard)/ideas/actions";
 import {
   AlertDialog,
   AlertDialogAction,

@@ -1,7 +1,7 @@
-import { getIdeas } from "@/app/ideas/actions";
-import { getGoals } from "@/app/goals/actions";
-import { getProjects } from "@/app/projects/actions";
-import { getTasks } from "@/app/tasks/actions";
+import { getIdeas } from "@/app/(dashboard)/ideas/actions";
+import { getGoals } from "@/app/(dashboard)/goals/actions";
+import { getProjects } from "@/app/(dashboard)/projects/actions";
+import { getTasks } from "@/app/(dashboard)/tasks/actions";
 import { OverviewPageClient } from "@/components/overview/overview-page-client";
 import { buildOverviewSnapshot } from "@/lib/overview/selectors";
 

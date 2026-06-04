@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 
-import { deleteTask } from "@/app/tasks/actions";
+import { deleteTask } from "@/app/(dashboard)/tasks/actions";
 import {
   AlertDialog,
   AlertDialogAction,

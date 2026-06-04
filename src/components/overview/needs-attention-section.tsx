@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 
 import { OverviewEmptyPositive } from "@/components/overview/overview-empty-positive";
+import { usePreferences } from "@/components/preferences/preferences-context";
 import { TaskPriorityBadge } from "@/components/tasks/task-priority-badge";
 import { TaskProjectTag } from "@/components/tasks/task-project-tag";
 import { formatGoalDeadline } from "@/lib/goals/format";
@@ -35,6 +38,11 @@ function AttentionRow({
 }
 
 export function NeedsAttentionSection({ snapshot }: NeedsAttentionSectionProps) {
+  const { fieldVisibility } = usePreferences();
+  const projectsVis = fieldVisibility.projects;
+  const tasksVis = fieldVisibility.tasks;
+  const goalsVis = fieldVisibility.goals;
+
   if (!hasNeedsAttention(snapshot)) {
     return (
       <section className="mt-10">
@@ -65,12 +73,18 @@ export function NeedsAttentionSection({ snapshot }: NeedsAttentionSectionProps) 
                     <span className="font-medium text-foreground">
                       {task.title}
                     </span>
-                    <TaskPriorityBadge priority={task.priority} />
-                    <TaskProjectTag projectName={task.project_name} />
+                    {tasksVis.priorityBadge ? (
+                      <TaskPriorityBadge priority={task.priority} />
+                    ) : null}
+                    {tasksVis.projectTag ? (
+                      <TaskProjectTag projectName={task.project_name} />
+                    ) : null}
                   </div>
-                  <p className="mt-1 text-xs text-red-400/90">
-                    Due {formatShortDueDate(task.due_date!)}
-                  </p>
+                  {tasksVis.dueDate ? (
+                    <p className="mt-1 text-xs text-red-400/90">
+                      Due {formatShortDueDate(task.due_date!)}
+                    </p>
+                  ) : null}
                 </AttentionRow>
               ))}
             </div>
@@ -88,9 +102,11 @@ export function NeedsAttentionSection({ snapshot }: NeedsAttentionSectionProps) 
                   <span className="font-medium text-foreground">
                     {project.client_name}
                   </span>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {project.service_type ?? "No service type"}
-                  </p>
+                  {projectsVis.serviceType ? (
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {project.service_type ?? "No service type"}
+                    </p>
+                  ) : null}
                 </AttentionRow>
               ))}
             </div>
@@ -107,7 +123,10 @@ export function NeedsAttentionSection({ snapshot }: NeedsAttentionSectionProps) 
                 <AttentionRow key={goal.id} href="/goals">
                   <span className="font-medium text-foreground">{goal.title}</span>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    0% progress · Deadline {formatGoalDeadline(goal.deadline)}
+                    0% progress
+                    {goalsVis.deadline
+                      ? ` · Deadline ${formatGoalDeadline(goal.deadline)}`
+                      : null}
                   </p>
                 </AttentionRow>
               ))}

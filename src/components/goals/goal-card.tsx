@@ -4,7 +4,8 @@ import { Minus, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { updateGoal, updateGoalCurrent } from "@/app/goals/actions";
+import { updateGoal, updateGoalCurrent } from "@/app/(dashboard)/goals/actions";
+import { usePreferences } from "@/components/preferences/preferences-context";
 import { GoalCategoryTag } from "@/components/goals/goal-category-tag";
 import { GoalForm } from "@/components/goals/goal-form";
 import { GoalProgressBar, useGoalProgress } from "@/components/goals/goal-progress-bar";
@@ -47,6 +48,8 @@ export function GoalCard({
   onUpdate,
   onDelete,
 }: GoalCardProps) {
+  const { fieldVisibility } = usePreferences();
+  const vis = fieldVisibility.goals;
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [values, setValues] = useState<GoalFormInput>(goalToFormInput(goal));
@@ -169,7 +172,9 @@ export function GoalCard({
           <div className="min-w-0 flex-1">
             <h3 className="text-base font-semibold text-foreground">{goal.title}</h3>
             <div className="mt-1.5 flex flex-wrap items-center gap-2">
-              <GoalCategoryTag category={goal.category} />
+              {vis.categoryTag ? (
+                <GoalCategoryTag category={goal.category} />
+              ) : null}
               <GoalStatusBadge status={goal.status} />
             </div>
           </div>
@@ -225,33 +230,41 @@ export function GoalCard({
           {formatGoalProgressLabel(goal.current, goal.target, goal.unit)}
         </p>
 
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-xs text-muted-foreground">
-            Deadline: {formatGoalDeadline(goal.deadline)}
-          </span>
-          <div className="flex items-center gap-1">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon-xs"
-              onClick={() => handleStep(-1)}
-              disabled={isPending || goal.current <= 0}
-              aria-label="Decrease progress"
-            >
-              <Minus className="size-3" />
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon-xs"
-              onClick={() => handleStep(1)}
-              disabled={isPending}
-              aria-label="Increase progress"
-            >
-              <Plus className="size-3" />
-            </Button>
+        {vis.deadline || vis.quickControls ? (
+          <div className="flex items-center justify-between gap-2">
+            {vis.deadline ? (
+              <span className="text-xs text-muted-foreground">
+                Deadline: {formatGoalDeadline(goal.deadline)}
+              </span>
+            ) : (
+              <span />
+            )}
+            {vis.quickControls ? (
+              <div className="flex items-center gap-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon-xs"
+                  onClick={() => handleStep(-1)}
+                  disabled={isPending || goal.current <= 0}
+                  aria-label="Decrease progress"
+                >
+                  <Minus className="size-3" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon-xs"
+                  onClick={() => handleStep(1)}
+                  disabled={isPending}
+                  aria-label="Increase progress"
+                >
+                  <Plus className="size-3" />
+                </Button>
+              </div>
+            ) : null}
           </div>
-        </div>
+        ) : null}
       </CardContent>
 
       <CardFooter

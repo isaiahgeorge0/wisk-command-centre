@@ -3,7 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { toggleTaskCompleted, updateTask } from "@/app/tasks/actions";
+import { toggleTaskCompleted, updateTask } from "@/app/(dashboard)/tasks/actions";
+import { usePreferences } from "@/components/preferences/preferences-context";
 import { TaskDueDate } from "@/components/tasks/task-due-date";
 import { TaskForm } from "@/components/tasks/task-form";
 import { TaskPriorityBadge } from "@/components/tasks/task-priority-badge";
@@ -22,6 +23,8 @@ type TaskRowProps = {
 };
 
 export function TaskRow({ task, projects, onDelete, onUpdate }: TaskRowProps) {
+  const { fieldVisibility } = usePreferences();
+  const vis = fieldVisibility.tasks;
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [values, setValues] = useState<TaskFormInput>(taskToFormInput(task));
@@ -126,12 +129,18 @@ export function TaskRow({ task, projects, onDelete, onUpdate }: TaskRowProps) {
           >
             {task.title}
           </span>
-          <TaskPriorityBadge priority={task.priority} />
-          <TaskProjectTag projectName={task.project_name} />
+          {vis.priorityBadge ? (
+            <TaskPriorityBadge priority={task.priority} />
+          ) : null}
+          {vis.projectTag ? (
+            <TaskProjectTag projectName={task.project_name} />
+          ) : null}
         </div>
       </div>
 
-      <TaskDueDate dueDate={task.due_date} completed={task.completed} />
+      {vis.dueDate ? (
+        <TaskDueDate dueDate={task.due_date} completed={task.completed} />
+      ) : null}
 
       <div
         className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100"

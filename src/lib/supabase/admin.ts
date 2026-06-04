@@ -1,9 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 
 /**
- * TODO(auth): Remove this service-role client once real auth is in place.
- * Use `createClient()` from `@/lib/supabase/server` in server actions so RLS
- * enforces access via `auth.uid()` instead of manual user_id scoping.
+ * Service-role client — use only for operations that must work without a session
+ * (e.g. access_requests insert). All app data should use createClient() from server.ts.
  */
 export function createAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

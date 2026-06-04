@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 
+import { usePreferences } from "@/components/preferences/preferences-context";
 import { ProjectStatusBadge } from "@/components/projects/project-status-badge";
 import { TaskPriorityBadge } from "@/components/tasks/task-priority-badge";
 import { TaskProjectTag } from "@/components/tasks/task-project-tag";
@@ -12,6 +15,9 @@ type ThisWeekSectionProps = {
 };
 
 export function ThisWeekSection({ snapshot }: ThisWeekSectionProps) {
+  const { fieldVisibility } = usePreferences();
+  const projectsVis = fieldVisibility.projects;
+  const tasksVis = fieldVisibility.tasks;
   const hasTasks = snapshot.tasksDueThisWeekGrouped.length > 0;
   const hasProjects = snapshot.projectDeadlinesThisWeek.length > 0;
 
@@ -43,8 +49,12 @@ export function ThisWeekSection({ snapshot }: ThisWeekSectionProps) {
                           <span className="text-sm text-foreground">
                             {task.title}
                           </span>
-                          <TaskPriorityBadge priority={task.priority} />
-                          <TaskProjectTag projectName={task.project_name} />
+                          {tasksVis.priorityBadge ? (
+                            <TaskPriorityBadge priority={task.priority} />
+                          ) : null}
+                          {tasksVis.projectTag ? (
+                            <TaskProjectTag projectName={task.project_name} />
+                          ) : null}
                         </Link>
                       </li>
                     ))}
@@ -75,9 +85,11 @@ export function ThisWeekSection({ snapshot }: ThisWeekSectionProps) {
                       <p className="text-sm font-medium text-foreground">
                         {project.client_name}
                       </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatProjectDeadline(project.deadline)}
-                      </p>
+                      {projectsVis.deadline ? (
+                        <p className="text-xs text-muted-foreground">
+                          {formatProjectDeadline(project.deadline)}
+                        </p>
+                      ) : null}
                     </div>
                     <ProjectStatusBadge status={project.status} />
                   </Link>

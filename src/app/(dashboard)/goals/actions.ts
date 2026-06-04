@@ -3,8 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { getActorUserId } from "@/lib/auth/get-user-id";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { emptyToNull, parseGoalNumber } from "@/lib/goals/format";
 import type { ActionResult, Goal, GoalFormInput } from "@/lib/goals/types";
 import { GOAL_STATUSES } from "@/lib/goals/types";
@@ -42,15 +41,8 @@ function toDbPayload(input: GoalFormInput, includeCurrent = true) {
   return payload;
 }
 
-// TODO(auth): Use session-scoped Supabase client; remove manual user_id filters.
-async function scopedClient() {
-  const supabase = createAdminClient();
-  const userId = await getActorUserId();
-  return { supabase, userId };
-}
-
 export async function getGoals(): Promise<Goal[]> {
-  const { supabase, userId } = await scopedClient();
+  const { supabase, userId } = await getScopedSupabase();
 
   const { data, error } = await supabase
     .from("goals")
@@ -77,7 +69,7 @@ export async function createGoal(
     };
   }
 
-  const { supabase, userId } = await scopedClient();
+  const { supabase, userId } = await getScopedSupabase();
 
   const { data, error } = await supabase
     .from("goals")
@@ -110,7 +102,7 @@ export async function updateGoal(
     };
   }
 
-  const { supabase, userId } = await scopedClient();
+  const { supabase, userId } = await getScopedSupabase();
 
   const { data, error } = await supabase
     .from("goals")
@@ -137,7 +129,7 @@ export async function updateGoalCurrent(
     return { success: false, error: "Current must be a valid non-negative number" };
   }
 
-  const { supabase, userId } = await scopedClient();
+  const { supabase, userId } = await getScopedSupabase();
 
   const { data, error } = await supabase
     .from("goals")
@@ -157,7 +149,7 @@ export async function updateGoalCurrent(
 }
 
 export async function deleteGoal(id: string): Promise<ActionResult> {
-  const { supabase, userId } = await scopedClient();
+  const { supabase, userId } = await getScopedSupabase();
 
   const { error } = await supabase
     .from("goals")

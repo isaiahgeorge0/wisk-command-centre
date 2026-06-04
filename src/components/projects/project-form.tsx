@@ -10,10 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  PROJECT_STATUS_LABELS,
-  SERVICE_TYPE_SUGGESTIONS,
-} from "@/lib/projects/constants";
+import { PROJECT_STATUS_LABELS } from "@/lib/projects/constants";
 import type { ProjectFormInput, ProjectStatus } from "@/lib/projects/types";
 import { PROJECT_STATUSES } from "@/lib/projects/types";
 
@@ -21,6 +18,7 @@ type ProjectFormProps = {
   formId: string;
   values: ProjectFormInput;
   onChange: (values: ProjectFormInput) => void;
+  serviceTypeOptions: string[];
   disabled?: boolean;
 };
 
@@ -28,6 +26,7 @@ export function ProjectForm({
   formId,
   values,
   onChange,
+  serviceTypeOptions,
   disabled,
 }: ProjectFormProps) {
   const setField = <K extends keyof ProjectFormInput>(
@@ -61,7 +60,7 @@ export function ProjectForm({
           required
         />
         <datalist id={`${formId}-service-types`}>
-          {SERVICE_TYPE_SUGGESTIONS.map((type) => (
+          {serviceTypeOptions.map((type) => (
             <option key={type} value={type} />
           ))}
         </datalist>

@@ -3,7 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { updateProject } from "@/app/projects/actions";
+import { updateProject } from "@/app/(dashboard)/projects/actions";
+import { usePreferences } from "@/components/preferences/preferences-context";
 import { ProjectForm } from "@/components/projects/project-form";
 import { ProjectStatusBadge } from "@/components/projects/project-status-badge";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,8 @@ type ProjectCardProps = {
 };
 
 export function ProjectCard({ project, onDelete }: ProjectCardProps) {
+  const { fieldVisibility, serviceTypes } = usePreferences();
+  const vis = fieldVisibility.projects;
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -77,6 +80,7 @@ export function ProjectCard({ project, onDelete }: ProjectCardProps) {
               formId={formId}
               values={values}
               onChange={setValues}
+              serviceTypeOptions={serviceTypes}
               disabled={isPending}
             />
             {error ? (
@@ -116,38 +120,46 @@ export function ProjectCard({ project, onDelete }: ProjectCardProps) {
             <h3 className="truncate text-base font-semibold text-foreground">
               {project.client_name}
             </h3>
-            <p className="truncate text-sm text-muted-foreground">
-              {project.service_type ?? "—"}
-            </p>
+            {vis.serviceType ? (
+              <p className="truncate text-sm text-muted-foreground">
+                {project.service_type ?? "—"}
+              </p>
+            ) : null}
           </div>
           <ProjectStatusBadge status={project.status} />
         </div>
       </CardHeader>
 
       <CardContent className="space-y-2 text-sm">
-        <div className="flex justify-between gap-2">
-          <span className="text-muted-foreground">Next</span>
-          <span className="line-clamp-2 text-right text-foreground">
-            {project.next_action?.trim() || "—"}
-          </span>
-        </div>
-        <div className="flex justify-between gap-2">
-          <span className="text-muted-foreground">Deadline</span>
-          <span>{formatProjectDeadline(project.deadline)}</span>
-        </div>
-        <div className="flex justify-between gap-2">
-          <span className="text-muted-foreground">Value</span>
-          <span className="font-medium tabular-nums">
-            {formatProjectValue(project.value)}
-          </span>
-        </div>
+        {vis.nextAction ? (
+          <div className="flex justify-between gap-2">
+            <span className="text-muted-foreground">Next</span>
+            <span className="line-clamp-2 text-right text-foreground">
+              {project.next_action?.trim() || "—"}
+            </span>
+          </div>
+        ) : null}
+        {vis.deadline ? (
+          <div className="flex justify-between gap-2">
+            <span className="text-muted-foreground">Deadline</span>
+            <span>{formatProjectDeadline(project.deadline)}</span>
+          </div>
+        ) : null}
+        {vis.value ? (
+          <div className="flex justify-between gap-2">
+            <span className="text-muted-foreground">Value</span>
+            <span className="font-medium tabular-nums">
+              {formatProjectValue(project.value)}
+            </span>
+          </div>
+        ) : null}
 
         {expanded ? (
           <div
             className="mt-3 space-y-2 border-t border-border/50 pt-3"
             onClick={(e) => e.stopPropagation()}
           >
-            {project.site_url?.trim() ? (
+            {vis.siteUrl && project.site_url?.trim() ? (
               <div>
                 <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
                   Site URL
@@ -166,14 +178,16 @@ export function ProjectCard({ project, onDelete }: ProjectCardProps) {
                 </a>
               </div>
             ) : null}
-            <div>
-              <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                Notes
-              </p>
-              <p className="mt-1 whitespace-pre-wrap text-foreground">
-                {project.notes?.trim() || "No notes yet."}
-              </p>
-            </div>
+            {vis.notes ? (
+              <div>
+                <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                  Notes
+                </p>
+                <p className="mt-1 whitespace-pre-wrap text-foreground">
+                  {project.notes?.trim() || "No notes yet."}
+                </p>
+              </div>
+            ) : null}
             <div className="flex flex-wrap gap-2 pt-1">
               <Button
                 type="button"

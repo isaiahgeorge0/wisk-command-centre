@@ -1,4 +1,4 @@
-import { getProjects } from "@/app/projects/actions";
+import { getProjects } from "@/app/(dashboard)/projects/actions";
 import { ProjectsPageClient } from "@/components/projects/projects-page-client";
 
 export default async function ProjectsPage() {

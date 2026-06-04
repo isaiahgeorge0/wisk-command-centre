@@ -3,9 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { getProjects } from "@/app/projects/actions";
-import { getActorUserId } from "@/lib/auth/get-user-id";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getProjects } from "@/app/(dashboard)/projects/actions";
+import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { projectIdToDb } from "@/lib/tasks/form";
 import { emptyToNull } from "@/lib/tasks/format";
 import type {
@@ -44,15 +43,8 @@ function toDbPayload(input: TaskFormInput) {
   };
 }
 
-// TODO(auth): Use session-scoped Supabase client; remove manual user_id filters.
-async function scopedClient() {
-  const supabase = createAdminClient();
-  const userId = await getActorUserId();
-  return { supabase, userId };
-}
-
 export async function getTasks(): Promise<TaskWithProject[]> {
-  const { supabase, userId } = await scopedClient();
+  const { supabase, userId } = await getScopedSupabase();
 
   const { data, error } = await supabase
     .from("tasks")
@@ -89,7 +81,7 @@ export async function createTask(
     };
   }
 
-  const { supabase, userId } = await scopedClient();
+  const { supabase, userId } = await getScopedSupabase();
 
   const { data, error } = await supabase
     .from("tasks")
@@ -122,7 +114,7 @@ export async function updateTask(
     };
   }
 
-  const { supabase, userId } = await scopedClient();
+  const { supabase, userId } = await getScopedSupabase();
 
   const { data, error } = await supabase
     .from("tasks")
@@ -145,7 +137,7 @@ export async function toggleTaskCompleted(
   id: string,
   completed: boolean
 ): Promise<ActionResult<TaskWithProject>> {
-  const { supabase, userId } = await scopedClient();
+  const { supabase, userId } = await getScopedSupabase();
 
   const { data, error } = await supabase
     .from("tasks")
@@ -165,7 +157,7 @@ export async function toggleTaskCompleted(
 }
 
 export async function deleteTask(id: string): Promise<ActionResult> {
-  const { supabase, userId } = await scopedClient();
+  const { supabase, userId } = await getScopedSupabase();
 
   const { error } = await supabase
     .from("tasks")

@@ -3,8 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { getActorUserId } from "@/lib/auth/get-user-id";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import type { ActionResult, Idea, IdeaFormInput } from "@/lib/ideas/types";
 import { IDEA_STATUSES } from "@/lib/ideas/types";
 
@@ -29,15 +28,8 @@ function toDbPayload(input: IdeaFormInput) {
   };
 }
 
-// TODO(auth): Use session-scoped Supabase client; remove manual user_id filters.
-async function scopedClient() {
-  const supabase = createAdminClient();
-  const userId = await getActorUserId();
-  return { supabase, userId };
-}
-
 export async function getIdeas(): Promise<Idea[]> {
-  const { supabase, userId } = await scopedClient();
+  const { supabase, userId } = await getScopedSupabase();
 
   const { data, error } = await supabase
     .from("ideas")
@@ -64,7 +56,7 @@ export async function createIdea(
     };
   }
 
-  const { supabase, userId } = await scopedClient();
+  const { supabase, userId } = await getScopedSupabase();
 
   const { data, error } = await supabase
     .from("ideas")
@@ -96,7 +88,7 @@ export async function updateIdea(
     };
   }
 
-  const { supabase, userId } = await scopedClient();
+  const { supabase, userId } = await getScopedSupabase();
 
   const { data, error } = await supabase
     .from("ideas")
@@ -116,7 +108,7 @@ export async function updateIdea(
 }
 
 export async function deleteIdea(id: string): Promise<ActionResult> {
-  const { supabase, userId } = await scopedClient();
+  const { supabase, userId } = await getScopedSupabase();
 
   const { error } = await supabase
     .from("ideas")

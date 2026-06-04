@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { createTask } from "@/app/tasks/actions";
+import { createTask } from "@/app/(dashboard)/tasks/actions";
 import { TaskForm } from "@/components/tasks/task-form";
 import { Button } from "@/components/ui/button";
 import {

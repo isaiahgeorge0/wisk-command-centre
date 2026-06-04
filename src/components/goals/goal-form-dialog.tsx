@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { createGoal } from "@/app/goals/actions";
+import { createGoal } from "@/app/(dashboard)/goals/actions";
 import { GoalForm } from "@/components/goals/goal-form";
 import { Button } from "@/components/ui/button";
 import {

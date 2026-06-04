@@ -1,4 +1,4 @@
-import { getIdeas } from "@/app/ideas/actions";
+import { getIdeas } from "@/app/(dashboard)/ideas/actions";
 import { IdeasPageClient } from "@/components/ideas/ideas-page-client";
 
 export default async function IdeasPage() {

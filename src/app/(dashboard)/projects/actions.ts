@@ -3,11 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { getActorUserId } from "@/lib/auth/get-user-id";
+import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { emptyToNull, parseProjectValue } from "@/lib/projects/format";
 import type { ActionResult, Project, ProjectFormInput } from "@/lib/projects/types";
 import { PROJECT_STATUSES } from "@/lib/projects/types";
-import { createAdminClient } from "@/lib/supabase/admin";
 
 const projectFormSchema = z.object({
   client_name: z.string().trim().min(1, "Client name is required"),
@@ -33,15 +32,9 @@ function toDbPayload(input: ProjectFormInput) {
   };
 }
 
-// TODO(auth): Use session-scoped Supabase client; remove manual user_id filters.
-async function scopedClient() {
-  const supabase = createAdminClient();
-  const userId = await getActorUserId();
-  return { supabase, userId };
-}
 
 export async function getProjects(): Promise<Project[]> {
-  const { supabase, userId } = await scopedClient();
+  const { supabase, userId } = await getScopedSupabase();
 
   const { data, error } = await supabase
     .from("projects")
@@ -68,7 +61,7 @@ export async function createProject(
     };
   }
 
-  const { supabase, userId } = await scopedClient();
+  const { supabase, userId } = await getScopedSupabase();
 
   const { data, error } = await supabase
     .from("projects")
@@ -100,7 +93,7 @@ export async function updateProject(
     };
   }
 
-  const { supabase, userId } = await scopedClient();
+  const { supabase, userId } = await getScopedSupabase();
 
   const { data, error } = await supabase
     .from("projects")
@@ -120,7 +113,7 @@ export async function updateProject(
 }
 
 export async function deleteProject(id: string): Promise<ActionResult> {
-  const { supabase, userId } = await scopedClient();
+  const { supabase, userId } = await getScopedSupabase();
 
   const { error } = await supabase
     .from("projects")

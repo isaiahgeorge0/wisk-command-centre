@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 
 import { IdeaCategoryTag } from "@/components/ideas/idea-category-tag";
+import { usePreferences } from "@/components/preferences/preferences-context";
 import { IdeaStatusBadge } from "@/components/ideas/idea-status-badge";
 import { ProjectStatusBadge } from "@/components/projects/project-status-badge";
 import type { OverviewSnapshot } from "@/lib/overview/selectors";
@@ -10,6 +13,9 @@ type RecentlyAddedSectionProps = {
 };
 
 export function RecentlyAddedSection({ snapshot }: RecentlyAddedSectionProps) {
+  const { fieldVisibility } = usePreferences();
+  const projectsVis = fieldVisibility.projects;
+  const ideasVis = fieldVisibility.ideas;
   // TODO: Once updated_at is added to the projects table, display and sort recent projects by last updated instead of created_at (see selectors.ts recentProjects).
   const { recentIdeas, recentProjects } = snapshot;
 
@@ -31,10 +37,16 @@ export function RecentlyAddedSection({ snapshot }: RecentlyAddedSectionProps) {
                     className="block rounded-lg px-2 py-1.5 transition-colors hover:bg-muted/50"
                   >
                     <p className="font-medium text-foreground">{idea.title}</p>
-                    <div className="mt-1.5 flex flex-wrap gap-2">
-                      <IdeaCategoryTag category={idea.category} />
-                      <IdeaStatusBadge status={idea.status} />
-                    </div>
+                    {(ideasVis.categoryTag || ideasVis.statusBadge) ? (
+                      <div className="mt-1.5 flex flex-wrap gap-2">
+                        {ideasVis.categoryTag ? (
+                          <IdeaCategoryTag category={idea.category} />
+                        ) : null}
+                        {ideasVis.statusBadge ? (
+                          <IdeaStatusBadge status={idea.status} />
+                        ) : null}
+                      </div>
+                    ) : null}
                   </Link>
                 </li>
               ))}
@@ -62,9 +74,11 @@ export function RecentlyAddedSection({ snapshot }: RecentlyAddedSectionProps) {
                       </p>
                       <ProjectStatusBadge status={project.status} />
                     </div>
-                    <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">
-                      {project.next_action?.trim() || "No next action set"}
-                    </p>
+                    {projectsVis.nextAction ? (
+                      <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">
+                        {project.next_action?.trim() || "No next action set"}
+                      </p>
+                    ) : null}
                   </Link>
                 </li>
               ))}

@@ -3,7 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { updateIdea } from "@/app/ideas/actions";
+import { updateIdea } from "@/app/(dashboard)/ideas/actions";
+import { usePreferences } from "@/components/preferences/preferences-context";
 import { IdeaCategoryTag } from "@/components/ideas/idea-category-tag";
 import { IdeaForm } from "@/components/ideas/idea-form";
 import { IdeaStatusBadge } from "@/components/ideas/idea-status-badge";
@@ -24,6 +25,8 @@ type IdeaCardProps = {
 };
 
 export function IdeaCard({ idea, onDelete }: IdeaCardProps) {
+  const { fieldVisibility } = usePreferences();
+  const vis = fieldVisibility.ideas;
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -111,10 +114,16 @@ export function IdeaCard({ idea, onDelete }: IdeaCardProps) {
         <h3 className="line-clamp-1 text-base font-semibold text-foreground">
           {idea.title}
         </h3>
-        <div className="flex flex-wrap items-center gap-2">
-          <IdeaCategoryTag category={idea.category} />
-          <IdeaStatusBadge status={idea.status} />
-        </div>
+        {(vis.categoryTag || vis.statusBadge) ? (
+          <div className="flex flex-wrap items-center gap-2">
+            {vis.categoryTag ? (
+              <IdeaCategoryTag category={idea.category} />
+            ) : null}
+            {vis.statusBadge ? (
+              <IdeaStatusBadge status={idea.status} />
+            ) : null}
+          </div>
+        ) : null}
       </CardHeader>
 
       <CardContent className="pt-0">

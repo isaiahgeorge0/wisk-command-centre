@@ -1,4 +1,4 @@
-import { getProjectsForSelect, getTasks } from "@/app/tasks/actions";
+import { getProjectsForSelect, getTasks } from "@/app/(dashboard)/tasks/actions";
 import { TasksPageClient } from "@/components/tasks/tasks-page-client";
 
 export default async function TasksPage() {

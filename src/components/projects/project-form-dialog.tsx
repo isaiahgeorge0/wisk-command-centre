@@ -3,7 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { createProject } from "@/app/projects/actions";
+import { createProject } from "@/app/(dashboard)/projects/actions";
+import { usePreferences } from "@/components/preferences/preferences-context";
 import { ProjectForm } from "@/components/projects/project-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +24,7 @@ type ProjectFormDialogProps = {
 };
 
 export function ProjectFormDialog({ open, onOpenChange }: ProjectFormDialogProps) {
+  const { serviceTypes } = usePreferences();
   const router = useRouter();
   const [values, setValues] = useState<ProjectFormInput>(EMPTY_PROJECT_FORM);
   const [error, setError] = useState<string | null>(null);
@@ -67,6 +69,7 @@ export function ProjectFormDialog({ open, onOpenChange }: ProjectFormDialogProps
             formId={formId}
             values={values}
             onChange={setValues}
+            serviceTypeOptions={serviceTypes}
             disabled={isPending}
           />
           {error ? (
