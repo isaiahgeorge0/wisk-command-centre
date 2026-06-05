@@ -4,6 +4,7 @@ export const NAV_ITEMS = [
   { label: "Tasks", href: "/tasks" },
   { label: "Goals", href: "/goals" },
   { label: "Ideas", href: "/ideas" },
+  { label: "Calendar", href: "/calendar" },
   { label: "AI Digest", href: "/ai-digest" },
 ] as const;
 
@@ -16,6 +17,7 @@ export const MOBILE_NAV_ITEMS = [
   { label: "Tasks", href: "/tasks" },
   { label: "Goals", href: "/goals" },
   { label: "Ideas", href: "/ideas" },
+  { label: "Calendar", href: "/calendar" },
 ] as const;
 
 export function isNavActive(pathname: string, href: string): boolean {

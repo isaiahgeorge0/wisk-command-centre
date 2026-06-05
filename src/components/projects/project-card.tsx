@@ -1,13 +1,18 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 
 import { updateProject } from "@/app/(dashboard)/projects/actions";
 import { ExpandableSection } from "@/components/motion/expandable-section";
 import { usePreferences } from "@/components/preferences/preferences-context";
+import { ProjectCardTabs, type ProjectCardTab } from "@/components/projects/project-card-tabs";
+import { ProjectDetailsTab } from "@/components/projects/project-details-tab";
 import { ProjectForm } from "@/components/projects/project-form";
+import { ProjectMilestonesTab } from "@/components/projects/project-milestones-tab";
 import { ProjectStatusBadge } from "@/components/projects/project-status-badge";
+import { ProjectTaskProgressBar } from "@/components/projects/project-task-progress-bar";
+import { ProjectTasksTab } from "@/components/projects/project-tasks-tab";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,19 +25,35 @@ import {
   formatProjectValue,
 } from "@/lib/projects/format";
 import { projectToFormInput } from "@/lib/projects/form";
+import { getProjectTaskStats } from "@/lib/projects/progress";
 import type { Project, ProjectFormInput } from "@/lib/projects/types";
+import type { TaskWithProject } from "@/lib/tasks/types";
 import { cn } from "@/lib/utils";
 
 type ProjectCardProps = {
   project: Project;
+  tasks: TaskWithProject[];
   onDelete: (project: Project) => void;
+  onTaskUpdate: (task: TaskWithProject) => void;
+  onTaskCreated: (task: TaskWithProject) => void;
+  onTaskCreateFailed: (taskId: string) => void;
+  onTaskCreateConfirmed: (tempId: string, task: TaskWithProject) => void;
 };
 
-export function ProjectCard({ project, onDelete }: ProjectCardProps) {
+export function ProjectCard({
+  project,
+  tasks,
+  onDelete,
+  onTaskUpdate,
+  onTaskCreated,
+  onTaskCreateFailed,
+  onTaskCreateConfirmed,
+}: ProjectCardProps) {
   const { fieldVisibility, serviceTypes } = usePreferences();
   const vis = fieldVisibility.projects;
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
+  const [activeTab, setActiveTab] = useState<ProjectCardTab>("details");
   const [editing, setEditing] = useState(false);
   const [values, setValues] = useState<ProjectFormInput>(
     projectToFormInput(project)
@@ -40,6 +61,16 @@ export function ProjectCard({ project, onDelete }: ProjectCardProps) {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const formId = `edit-project-${project.id}`;
+
+  const projectTasks = useMemo(
+    () => tasks.filter((task) => task.project_id === project.id),
+    [tasks, project.id]
+  );
+
+  const taskStats = useMemo(
+    () => getProjectTaskStats(tasks, project.id),
+    [tasks, project.id]
+  );
 
   const cancelEdit = () => {
     setValues(projectToFormInput(project));
@@ -155,61 +186,50 @@ export function ProjectCard({ project, onDelete }: ProjectCardProps) {
           </div>
         ) : null}
 
+        {taskStats.total >= 1 ? (
+          <ProjectTaskProgressBar
+            completed={taskStats.completed}
+            total={taskStats.total}
+          />
+        ) : null}
+
         <ExpandableSection
           open={expanded}
-          className="mt-3 space-y-2 border-t border-border/50 pt-3"
+          className="mt-3 space-y-3 border-t border-border/50 pt-3"
         >
           <div onClick={(e) => e.stopPropagation()}>
-            {vis.siteUrl && project.site_url?.trim() ? (
-              <div>
-                <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                  Site URL
-                </p>
-                <a
-                  href={
-                    project.site_url.startsWith("http")
-                      ? project.site_url
-                      : `https://${project.site_url}`
-                  }
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-1 block truncate text-sm text-wisk-teal hover:underline"
-                >
-                  {project.site_url}
-                </a>
-              </div>
+            <ProjectCardTabs
+              activeTab={activeTab}
+              onChange={setActiveTab}
+            />
+
+            {activeTab === "details" ? (
+              <ProjectDetailsTab
+                project={project}
+                showSiteUrl={vis.siteUrl}
+                showNotes={vis.notes}
+                onEdit={() => setEditing(true)}
+                onDelete={() => onDelete(project)}
+              />
             ) : null}
-            {vis.notes ? (
-              <div>
-                <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                  Notes
-                </p>
-                <p className="mt-1 whitespace-pre-wrap text-foreground">
-                  {project.notes?.trim() || "No notes yet."}
-                </p>
-              </div>
+
+            {activeTab === "tasks" ? (
+              <ProjectTasksTab
+                projectId={project.id}
+                tasks={projectTasks}
+                onTaskUpdate={onTaskUpdate}
+                onTaskCreated={onTaskCreated}
+                onTaskCreateFailed={onTaskCreateFailed}
+                onTaskCreateConfirmed={onTaskCreateConfirmed}
+              />
             ) : null}
-            <div className="flex flex-wrap gap-2 pt-1">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setExpanded(true);
-                  setEditing(true);
-                }}
-              >
-                Edit
-              </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                onClick={() => onDelete(project)}
-              >
-                Delete
-              </Button>
-            </div>
+
+            {activeTab === "milestones" ? (
+              <ProjectMilestonesTab
+                projectId={project.id}
+                active={activeTab === "milestones"}
+              />
+            ) : null}
           </div>
         </ExpandableSection>
         {!expanded ? (

@@ -5,13 +5,27 @@ import { StaggerList } from "@/components/motion/stagger-list";
 import { ProjectCard } from "@/components/projects/project-card";
 import { useStaggerOnce } from "@/lib/motion/use-stagger-once";
 import type { Project } from "@/lib/projects/types";
+import type { TaskWithProject } from "@/lib/tasks/types";
 
 type ProjectsListProps = {
   projects: Project[];
+  tasks: TaskWithProject[];
   onDelete: (project: Project) => void;
+  onTaskUpdate: (task: TaskWithProject) => void;
+  onTaskCreated: (task: TaskWithProject) => void;
+  onTaskCreateFailed: (taskId: string) => void;
+  onTaskCreateConfirmed: (tempId: string, task: TaskWithProject) => void;
 };
 
-export function ProjectsList({ projects, onDelete }: ProjectsListProps) {
+export function ProjectsList({
+  projects,
+  tasks,
+  onDelete,
+  onTaskUpdate,
+  onTaskCreated,
+  onTaskCreateFailed,
+  onTaskCreateConfirmed,
+}: ProjectsListProps) {
   const stagger = useStaggerOnce();
 
   return (
@@ -21,7 +35,15 @@ export function ProjectsList({ projects, onDelete }: ProjectsListProps) {
     >
       {projects.map((project) => (
         <StaggerItem key={project.id} stagger={stagger}>
-          <ProjectCard project={project} onDelete={onDelete} />
+          <ProjectCard
+            project={project}
+            tasks={tasks}
+            onDelete={onDelete}
+            onTaskUpdate={onTaskUpdate}
+            onTaskCreated={onTaskCreated}
+            onTaskCreateFailed={onTaskCreateFailed}
+            onTaskCreateConfirmed={onTaskCreateConfirmed}
+          />
         </StaggerItem>
       ))}
     </StaggerList>

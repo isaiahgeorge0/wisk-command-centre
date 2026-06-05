@@ -9,6 +9,7 @@ import { usePreferences } from "@/components/preferences/preferences-context";
 import { useStaggerOnce } from "@/lib/motion/use-stagger-once";
 import { IdeaStatusBadge } from "@/components/ideas/idea-status-badge";
 import { ProjectStatusBadge } from "@/components/projects/project-status-badge";
+import { ProjectTaskProgressBar } from "@/components/projects/project-task-progress-bar";
 import type { OverviewSnapshot } from "@/lib/overview/selectors";
 
 type RecentlyAddedSectionProps = {
@@ -84,6 +85,19 @@ export function RecentlyAddedSection({ snapshot }: RecentlyAddedSectionProps) {
                         {project.next_action?.trim() || "No next action set"}
                       </p>
                     ) : null}
+                    {(() => {
+                      const stats = snapshot.projectTaskStats[project.id];
+                      if (!stats || stats.total < 1) return null;
+                      return (
+                        <div className="mt-2" onClick={(e) => e.preventDefault()}>
+                          <ProjectTaskProgressBar
+                            completed={stats.completed}
+                            total={stats.total}
+                            compact
+                          />
+                        </div>
+                      );
+                    })()}
                   </Link>
                 </StaggerItem>
               ))}

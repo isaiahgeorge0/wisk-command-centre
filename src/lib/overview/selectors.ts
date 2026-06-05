@@ -9,6 +9,7 @@ import {
 } from "@/lib/overview/date";
 import type { Goal } from "@/lib/goals/types";
 import type { Idea } from "@/lib/ideas/types";
+import { getProjectTaskStatsMap, type ProjectTaskStats } from "@/lib/projects/progress";
 import type { Project } from "@/lib/projects/types";
 import type { TaskWithProject } from "@/lib/tasks/types";
 
@@ -30,6 +31,7 @@ export type OverviewSnapshot = {
   projectDeadlinesThisWeek: Project[];
   recentIdeas: Idea[];
   recentProjects: Project[];
+  projectTaskStats: Record<string, ProjectTaskStats>;
 };
 
 function isActiveProject(project: Project): boolean {
@@ -117,6 +119,7 @@ export function buildOverviewSnapshot(
     projectDeadlinesThisWeek,
     recentIdeas,
     recentProjects,
+    projectTaskStats: getProjectTaskStatsMap(tasks),
   };
 }
 

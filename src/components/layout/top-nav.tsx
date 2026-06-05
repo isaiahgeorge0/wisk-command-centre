@@ -6,17 +6,26 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { NavLink } from "@/components/layout/nav-link";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { UserMenu } from "@/components/layout/user-menu";
 import { cn } from "@/lib/utils";
+import type { Notification } from "@/lib/notifications/types";
 import { isNavActive, NAV_ITEMS } from "@/lib/navigation";
 
 type TopNavProps = {
   userEmail: string;
   userName: string | null;
+  notifications: Notification[];
+  unreadNotificationCount: number;
 };
 
-export function TopNav({ userEmail, userName }: TopNavProps) {
+export function TopNav({
+  userEmail,
+  userName,
+  notifications,
+  unreadNotificationCount,
+}: TopNavProps) {
   const pathname = usePathname();
   const reduced = useReducedMotion();
   const settingsActive =
@@ -45,6 +54,10 @@ export function TopNav({ userEmail, userName }: TopNavProps) {
 
         <div className="flex shrink-0 items-center gap-0.5 md:gap-1">
           <ThemeToggle />
+          <NotificationBell
+            notifications={notifications}
+            unreadCount={unreadNotificationCount}
+          />
           <motion.div
             whileHover={reduced ? undefined : { scale: 1.05 }}
             whileTap={reduced ? undefined : { scale: 0.95 }}

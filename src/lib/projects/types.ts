@@ -19,6 +19,7 @@ export type Project = {
   notes: string | null;
   site_url: string | null;
   created_at: string;
+  updated_at: string;
 };
 
 export type ProjectFormInput = {

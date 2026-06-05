@@ -99,6 +99,8 @@ export async function createTask(
   }
 
   revalidatePath("/tasks");
+  revalidatePath("/projects");
+  revalidatePath("/");
   return { success: true, data: mapTaskRow(data as TaskRow) };
 }
 
@@ -130,6 +132,8 @@ export async function updateTask(
   }
 
   revalidatePath("/tasks");
+  revalidatePath("/projects");
+  revalidatePath("/");
   return { success: true, data: mapTaskRow(data as TaskRow) };
 }
 
@@ -153,6 +157,8 @@ export async function toggleTaskCompleted(
   }
 
   revalidatePath("/tasks");
+  revalidatePath("/projects");
+  revalidatePath("/");
   return { success: true, data: mapTaskRow(data as TaskRow) };
 }
 
@@ -171,5 +177,7 @@ export async function deleteTask(id: string): Promise<ActionResult> {
   }
 
   revalidatePath("/tasks");
+  revalidatePath("/projects");
+  revalidatePath("/");
   return { success: true };
 }

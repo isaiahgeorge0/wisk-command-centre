@@ -10,6 +10,7 @@
   --color-surface: var(--surface);
   --color-wisk-purple: var(--wisk-purple);
   --color-wisk-teal: var(--wisk-teal);
+  --color-wisk-coral: var(--wisk-coral);
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
@@ -74,6 +75,7 @@
   --ring: oklch(0.52 0.19 300);
   --wisk-purple: oklch(0.52 0.19 300);
   --wisk-teal: oklch(0.58 0.12 180);
+  --wisk-coral: oklch(0.68 0.17 25);
   --chart-1: oklch(0.52 0.19 300);
   --chart-2: oklch(0.58 0.12 180);
   --chart-3: oklch(0.48 0.02 260);
@@ -112,6 +114,7 @@
   --ring: oklch(0.62 0.2 300);
   --wisk-purple: oklch(0.68 0.18 300);
   --wisk-teal: oklch(0.78 0.1 180);
+  --wisk-coral: oklch(0.72 0.15 25);
   --chart-1: oklch(0.68 0.18 300);
   --chart-2: oklch(0.78 0.1 180);
   --chart-3: oklch(0.68 0.02 265);

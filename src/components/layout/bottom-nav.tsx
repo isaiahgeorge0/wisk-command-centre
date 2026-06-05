@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  CalendarDays,
   CheckSquare,
   FolderKanban,
   LayoutDashboard,
@@ -19,6 +20,7 @@ const MOBILE_NAV_ICONS = {
   "/tasks": CheckSquare,
   "/goals": Target,
   "/ideas": Lightbulb,
+  "/calendar": CalendarDays,
 } as const;
 
 export function BottomNav() {

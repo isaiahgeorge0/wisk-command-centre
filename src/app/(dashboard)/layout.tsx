@@ -1,3 +1,7 @@
+import {
+  generateNotifications,
+  getNotifications,
+} from "@/app/(dashboard)/notifications/actions";
 import { AppShell } from "@/components/layout/app-shell";
 import { getAuthContext } from "@/lib/auth/get-auth-context";
 import { getUserProfile } from "@/lib/auth/get-user-profile";
@@ -9,9 +13,11 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   await getAuthContext();
-  const [profile, preferences] = await Promise.all([
+  await generateNotifications();
+  const [profile, preferences, notificationSnapshot] = await Promise.all([
     getUserProfile(),
     getOrCreateUserPreferences(),
+    getNotifications(),
   ]);
 
   const displayName =
@@ -25,6 +31,8 @@ export default async function DashboardLayout({
       userName={displayName}
       fieldVisibility={preferences.fieldVisibility}
       serviceTypes={preferences.serviceTypes}
+      notifications={notificationSnapshot.notifications}
+      unreadNotificationCount={notificationSnapshot.unreadCount}
     >
       {children}
     </AppShell>
