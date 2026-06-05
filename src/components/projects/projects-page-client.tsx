@@ -10,6 +10,7 @@ import { ProjectFormDialog } from "@/components/projects/project-form-dialog";
 import { ProjectsEmptyState } from "@/components/projects/projects-empty-state";
 import { ProjectsList } from "@/components/projects/projects-list";
 import { useQuickAdd } from "@/components/quick-add/quick-add-context";
+import { useSpotlightTour } from "@/components/spotlight-tour/spotlight-tour-context";
 import { Button } from "@/components/ui/button";
 import { PAGE_SUBTITLE_CLASS, PAGE_TITLE_CLASS } from "@/lib/navigation";
 import type { SafeIntegration } from "@/lib/integrations/types";
@@ -29,12 +30,17 @@ export function ProjectsPageClient({
 }: ProjectsPageClientProps) {
   const router = useRouter();
   const { projectAddOpen, setProjectAddOpen, openProjectAdd } = useQuickAdd();
+  const { consumePendingStart } = useSpotlightTour();
   const [projects, setProjects] = useState(initialProjects);
   const [tasks, setTasks] = useState(initialTasks);
   const [deleteTarget, setDeleteTarget] = useState<{
     id: string;
     clientName: string;
   } | null>(null);
+
+  useEffect(() => {
+    consumePendingStart();
+  }, [consumePendingStart]);
 
   useEffect(() => {
     setProjects(initialProjects);
@@ -99,7 +105,7 @@ export function ProjectsPageClient({
             Client work, status, and next actions at a glance.
           </p>
         </div>
-        <Button className="shrink-0 gap-2" onClick={openProjectAdd}>
+        <Button className="shrink-0 gap-2" onClick={openProjectAdd} data-tour="add-project">
           <Plus className="size-4" />
           Add project
         </Button>

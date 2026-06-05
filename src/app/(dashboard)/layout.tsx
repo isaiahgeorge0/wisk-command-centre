@@ -1,3 +1,4 @@
+import { getProjects } from "@/app/(dashboard)/projects/actions";
 import {
   generateNotifications,
   getNotifications,
@@ -14,11 +15,13 @@ export default async function DashboardLayout({
 }) {
   await getAuthContext();
   await generateNotifications();
-  const [profile, preferences, notificationSnapshot] = await Promise.all([
-    getUserProfile(),
-    getOrCreateUserPreferences(),
-    getNotifications(),
-  ]);
+  const [profile, preferences, notificationSnapshot, projects] =
+    await Promise.all([
+      getUserProfile(),
+      getOrCreateUserPreferences(),
+      getNotifications(),
+      getProjects(),
+    ]);
 
   const displayName =
     profile.name?.trim() ||
@@ -32,6 +35,8 @@ export default async function DashboardLayout({
       fieldVisibility={preferences.fieldVisibility}
       serviceTypes={preferences.serviceTypes}
       onboardingCompleted={preferences.onboardingCompleted}
+      hasProjects={projects.length > 0}
+      projectTourCompleted={preferences.projectTourCompleted}
       notifications={notificationSnapshot.notifications}
       unreadNotificationCount={notificationSnapshot.unreadCount}
     >

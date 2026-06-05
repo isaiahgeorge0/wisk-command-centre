@@ -1,11 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 import { createProject } from "@/app/(dashboard)/projects/actions";
 import { usePreferences } from "@/components/preferences/preferences-context";
 import { ProjectForm } from "@/components/projects/project-form";
+import { useSpotlightTour } from "@/components/spotlight-tour/spotlight-tour-context";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,13 +26,24 @@ type ProjectFormDialogProps = {
 
 export function ProjectFormDialog({ open, onOpenChange }: ProjectFormDialogProps) {
   const { serviceTypes } = usePreferences();
+  const { isActive: tourActive, handleProjectCreated } = useSpotlightTour();
   const router = useRouter();
   const [values, setValues] = useState<ProjectFormInput>(EMPTY_PROJECT_FORM);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const formId = "add-project-form";
 
+  useEffect(() => {
+    if (!open) {
+      setValues(EMPTY_PROJECT_FORM);
+      setError(null);
+    }
+  }, [open]);
+
   const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && tourActive) {
+      return;
+    }
     if (!nextOpen) {
       setValues(EMPTY_PROJECT_FORM);
       setError(null);
@@ -50,6 +62,9 @@ export function ProjectFormDialog({ open, onOpenChange }: ProjectFormDialogProps
         return;
       }
       handleOpenChange(false);
+      if (tourActive) {
+        handleProjectCreated();
+      }
       router.refresh();
     });
   };

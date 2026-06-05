@@ -17,7 +17,7 @@ type OnboardingContextValue = {
   setSlide: (index: number) => void;
   nextSlide: () => void;
   prevSlide: () => void;
-  complete: () => Promise<void>;
+  complete: () => Promise<boolean>;
   restart: () => void;
   close: () => void;
 };
@@ -64,7 +64,9 @@ export function OnboardingProvider({
     const result = await completeOnboarding();
     if (result.success) {
       close();
+      return true;
     }
+    return false;
   }, [close]);
 
   const restart = useCallback(() => {

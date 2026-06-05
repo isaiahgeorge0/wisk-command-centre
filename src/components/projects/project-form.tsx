@@ -39,7 +39,7 @@ export function ProjectForm({
 
   return (
     <div className="grid gap-4">
-      <div className="grid gap-2">
+      <div className="grid gap-2" data-tour="client-name">
         <Label htmlFor={`${formId}-client_name`}>Client name *</Label>
         <Input
           id={`${formId}-client_name`}
@@ -50,7 +50,7 @@ export function ProjectForm({
         />
       </div>
 
-      <div className="grid gap-2">
+      <div className="grid gap-2" data-tour="service-type">
         <Label htmlFor={`${formId}-service_type`}>Service type *</Label>
         <Input
           id={`${formId}-service_type`}
@@ -67,7 +67,7 @@ export function ProjectForm({
         </datalist>
       </div>
 
-      <div className="grid gap-2">
+      <div className="grid gap-2" data-tour="status">
         <Label htmlFor={`${formId}-status`}>Status *</Label>
         <ResponsiveSelect
           id={`${formId}-status`}
@@ -125,7 +125,7 @@ export function ProjectForm({
         />
       </div>
 
-      <div className="grid gap-2">
+      <div className="grid gap-2" data-tour="next-action">
         <Label htmlFor={`${formId}-next_action`}>Next action</Label>
         <Input
           id={`${formId}-next_action`}
@@ -135,7 +135,7 @@ export function ProjectForm({
         />
       </div>
 
-      <div className="grid gap-2 md:grid-cols-2 md:gap-4">
+      <div className="grid gap-2 md:grid-cols-2 md:gap-4" data-tour="deadline-value">
         <div className="grid gap-2">
           <Label htmlFor={`${formId}-deadline`}>Deadline</Label>
           <Input

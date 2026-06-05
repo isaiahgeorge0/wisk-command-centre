@@ -1,11 +1,13 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import { useOnboarding } from "@/components/onboarding/onboarding-context";
 import { OnboardingProgressDots } from "@/components/onboarding/onboarding-progress-dots";
 import { OnboardingSlideContent } from "@/components/onboarding/onboarding-slide-content";
+import { useSpotlightTour } from "@/components/spotlight-tour/spotlight-tour-context";
 import { Button } from "@/components/ui/button";
 import { MOTION_DURATION, MOTION_EASE } from "@/lib/motion/config";
 import {
@@ -14,6 +16,7 @@ import {
 } from "@/lib/onboarding/slides";
 
 export function OnboardingOverlay() {
+  const router = useRouter();
   const reduced = useReducedMotion();
   const {
     isOpen,
@@ -23,6 +26,11 @@ export function OnboardingOverlay() {
     prevSlide,
     complete,
   } = useOnboarding();
+  const {
+    canStartTour,
+    requestProjectTourStart,
+    preventProjectTour,
+  } = useSpotlightTour();
 
   const slide = ONBOARDING_SLIDES[currentSlide];
   const isFirst = currentSlide === 0;
@@ -51,7 +59,11 @@ export function OnboardingOverlay() {
 
   const handlePrimary = async () => {
     if (isLast) {
-      await complete();
+      const success = await complete();
+      if (success && canStartTour) {
+        requestProjectTourStart();
+        router.push("/projects");
+      }
       return;
     }
     nextSlide();
@@ -59,6 +71,13 @@ export function OnboardingOverlay() {
 
   const handleSkip = async () => {
     await complete();
+  };
+
+  const handleExploreOnOwn = async () => {
+    const success = await complete();
+    if (success) {
+      await preventProjectTour();
+    }
   };
 
   const slideVariants = {
@@ -153,7 +172,7 @@ export function OnboardingOverlay() {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={complete}
+                    onClick={handleExploreOnOwn}
                   >
                     {slide.secondaryCta}
                   </Button>
