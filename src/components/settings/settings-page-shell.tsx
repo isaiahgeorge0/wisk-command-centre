@@ -20,7 +20,7 @@ export function SettingsPageShell(props: SettingsPageShellProps) {
       <div className="mb-8">
         <h1 className={PAGE_TITLE_CLASS}>Settings</h1>
         <p className={PAGE_SUBTITLE_CLASS}>
-          Profile, display preferences, service types, and integrations.
+          Profile, display preferences, project types, and integrations.
         </p>
       </div>
       <SettingsPageClient {...props} />

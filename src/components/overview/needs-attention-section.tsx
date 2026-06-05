@@ -117,7 +117,7 @@ export function NeedsAttentionSection({ snapshot }: NeedsAttentionSectionProps) 
                     </span>
                     {projectsVis.serviceType ? (
                       <p className="mt-1 text-sm text-muted-foreground">
-                        {project.service_type ?? "No service type"}
+                        {project.service_type ?? "No project type"}
                       </p>
                     ) : null}
                   </AttentionRow>

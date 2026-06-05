@@ -140,7 +140,7 @@ export async function updateServiceTypes(
 ): Promise<SettingsActionResult> {
   const normalized = normalizeServiceTypes(types);
   if (normalized.length === 0) {
-    return { success: false, error: "Keep at least one service type" };
+    return { success: false, error: "Keep at least one project type" };
   }
 
   const { supabase, userId } = await getScopedSupabase();
@@ -209,7 +209,7 @@ export async function removeServiceType(
   );
 
   if (next.length === prefs.serviceTypes.length) {
-    return { success: false, error: "Service type not found" };
+    return { success: false, error: "Project type not found" };
   }
 
   return updateServiceTypes(next);
@@ -220,7 +220,7 @@ export async function addServiceType(
 ): Promise<SettingsActionResult> {
   const trimmed = serviceType.trim();
   if (!trimmed) {
-    return { success: false, error: "Enter a service type name" };
+    return { success: false, error: "Enter a project type name" };
   }
 
   const prefs = await getOrCreateUserPreferences();
@@ -228,7 +228,7 @@ export async function addServiceType(
     (t) => t.toLowerCase() === trimmed.toLowerCase()
   );
   if (exists) {
-    return { success: false, error: "That service type already exists" };
+    return { success: false, error: "That project type already exists" };
   }
 
   return updateServiceTypes([...prefs.serviceTypes, trimmed]);
@@ -244,7 +244,7 @@ export async function reorderServiceType(
   );
 
   if (index < 0) {
-    return { success: false, error: "Service type not found" };
+    return { success: false, error: "Project type not found" };
   }
 
   const nextIndex = direction === "up" ? index - 1 : index + 1;

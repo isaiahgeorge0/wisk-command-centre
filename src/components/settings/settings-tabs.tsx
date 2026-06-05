@@ -12,7 +12,7 @@ export type SettingsTab =
 const TABS: { id: SettingsTab; label: string }[] = [
   { id: "profile", label: "Profile" },
   { id: "preferences", label: "Preferences" },
-  { id: "service-types", label: "Service types" },
+  { id: "service-types", label: "Project types" },
   { id: "integrations", label: "Integrations" },
   { id: "help", label: "Help" },
 ];

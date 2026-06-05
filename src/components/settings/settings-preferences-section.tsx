@@ -23,7 +23,7 @@ type ToggleDef = {
 };
 
 const TOGGLES: ToggleDef[] = [
-  { section: "projects", field: "serviceType", key: "projects-serviceType", label: "Show service type" },
+  { section: "projects", field: "serviceType", key: "projects-serviceType", label: "Show project type" },
   { section: "projects", field: "deadline", key: "projects-deadline", label: "Show deadline" },
   { section: "projects", field: "value", key: "projects-value", label: "Show value" },
   { section: "projects", field: "nextAction", key: "projects-nextAction", label: "Show next action" },

@@ -54,10 +54,10 @@ export function SettingsServiceTypesSection({
   return (
     <Card className="border-border/60 bg-card/80">
       <CardHeader>
-        <CardTitle>Service types</CardTitle>
+        <CardTitle>Project types</CardTitle>
         <CardDescription>
-          Options shown when adding or editing projects. Reorder to match how you
-          work.
+          Autocomplete suggestions when adding or editing projects. Reorder to
+          match how you work.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -111,7 +111,7 @@ export function SettingsServiceTypesSection({
           <Input
             value={newType}
             onChange={(e) => setNewType(e.target.value)}
-            placeholder="New service type"
+            placeholder="New project type"
             disabled={isPending}
             className="flex-1"
           />

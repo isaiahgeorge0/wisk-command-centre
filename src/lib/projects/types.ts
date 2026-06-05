@@ -11,6 +11,7 @@ export type Project = {
   id: string;
   user_id: string;
   client_name: string;
+  /** Project type (stored in DB column `service_type`). */
   service_type: string | null;
   status: ProjectStatus | string | null;
   next_action: string | null;
@@ -26,6 +27,7 @@ export type Project = {
 
 export type ProjectFormInput = {
   client_name: string;
+  /** Project type (stored in DB column `service_type`). */
   service_type: string;
   status: ProjectStatus;
   next_action?: string;

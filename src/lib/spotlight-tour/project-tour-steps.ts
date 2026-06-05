@@ -21,7 +21,7 @@ export const PROJECT_TOUR_STEPS: ProjectTourStep[] = [
   {
     target: "service-type",
     title: "What type of work?",
-    body: "Choose the service you are providing. You can add your own service types in Settings at any time.",
+    body: "Choose the project type you are providing. You can add your own project types in Settings at any time.",
     cta: "Next",
   },
   {

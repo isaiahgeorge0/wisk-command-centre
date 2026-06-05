@@ -1,5 +1,6 @@
 "use client";
 
+import { ExpandableSection } from "@/components/motion/expandable-section";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ResponsiveSelect } from "@/components/ui/responsive-select";
@@ -19,15 +20,33 @@ type ProjectFormProps = {
   formId: string;
   values: ProjectFormInput;
   onChange: (values: ProjectFormInput) => void;
-  serviceTypeOptions: string[];
+  projectTypeOptions: string[];
   disabled?: boolean;
 };
+
+function shouldShowDevFields(
+  projectType: string,
+  siteUrl?: string,
+  githubRepo?: string
+): boolean {
+  const hasStored =
+    Boolean(siteUrl?.trim()) || Boolean(githubRepo?.trim());
+  if (hasStored) {
+    return true;
+  }
+
+  const normalized = projectType.toLowerCase();
+  return (
+    normalized.includes("web development") ||
+    normalized.includes("app development")
+  );
+}
 
 export function ProjectForm({
   formId,
   values,
   onChange,
-  serviceTypeOptions,
+  projectTypeOptions,
   disabled,
 }: ProjectFormProps) {
   const setField = <K extends keyof ProjectFormInput>(
@@ -36,6 +55,12 @@ export function ProjectForm({
   ) => {
     onChange({ ...values, [key]: value });
   };
+
+  const showDevFields = shouldShowDevFields(
+    values.service_type,
+    values.site_url,
+    values.github_repo
+  );
 
   return (
     <div className="grid gap-4">
@@ -51,17 +76,17 @@ export function ProjectForm({
       </div>
 
       <div className="grid gap-2" data-tour="service-type">
-        <Label htmlFor={`${formId}-service_type`}>Service type *</Label>
+        <Label htmlFor={`${formId}-service_type`}>Project type *</Label>
         <Input
           id={`${formId}-service_type`}
-          list={`${formId}-service-types`}
+          list={`${formId}-project-types`}
           value={values.service_type}
           onChange={(e) => setField("service_type", e.target.value)}
           disabled={disabled}
           required
         />
-        <datalist id={`${formId}-service-types`}>
-          {serviceTypeOptions.map((type) => (
+        <datalist id={`${formId}-project-types`}>
+          {projectTypeOptions.map((type) => (
             <option key={type} value={type} />
           ))}
         </datalist>
@@ -102,28 +127,36 @@ export function ProjectForm({
         </ResponsiveSelect>
       </div>
 
-      <div className="grid gap-2">
-        <Label htmlFor={`${formId}-site_url`}>Site URL</Label>
-        <Input
-          id={`${formId}-site_url`}
-          type="url"
-          placeholder="https://your-site.com"
-          value={values.site_url ?? ""}
-          onChange={(e) => setField("site_url", e.target.value)}
-          disabled={disabled}
-        />
-      </div>
+      <ExpandableSection open={showDevFields} className="grid gap-4">
+        <div className="grid gap-2">
+          <Label htmlFor={`${formId}-site_url`}>Site URL</Label>
+          <Input
+            id={`${formId}-site_url`}
+            type="url"
+            placeholder="https://your-site.com"
+            value={values.site_url ?? ""}
+            onChange={(e) => setField("site_url", e.target.value)}
+            disabled={disabled}
+          />
+          <p className="text-xs text-muted-foreground">
+            Used to monitor deployment health via your Vercel integration
+          </p>
+        </div>
 
-      <div className="grid gap-2">
-        <Label htmlFor={`${formId}-github_repo`}>GitHub repo</Label>
-        <Input
-          id={`${formId}-github_repo`}
-          placeholder="owner/repo or https://github.com/owner/repo"
-          value={values.github_repo ?? ""}
-          onChange={(e) => setField("github_repo", e.target.value)}
-          disabled={disabled}
-        />
-      </div>
+        <div className="grid gap-2">
+          <Label htmlFor={`${formId}-github_repo`}>GitHub repo</Label>
+          <Input
+            id={`${formId}-github_repo`}
+            placeholder="owner/repo or https://github.com/owner/repo"
+            value={values.github_repo ?? ""}
+            onChange={(e) => setField("github_repo", e.target.value)}
+            disabled={disabled}
+          />
+          <p className="text-xs text-muted-foreground">
+            Format: username/repo-name or full GitHub URL
+          </p>
+        </div>
+      </ExpandableSection>
 
       <div className="grid gap-2" data-tour="next-action">
         <Label htmlFor={`${formId}-next_action`}>Next action</Label>

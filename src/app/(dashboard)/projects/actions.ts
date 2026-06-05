@@ -10,7 +10,7 @@ import { PROJECT_STATUSES } from "@/lib/projects/types";
 
 const projectFormSchema = z.object({
   client_name: z.string().trim().min(1, "Client name is required"),
-  service_type: z.string().trim().min(1, "Service type is required"),
+  service_type: z.string().trim().min(1, "Project type is required"),
   status: z.enum(PROJECT_STATUSES),
   next_action: z.string().optional(),
   deadline: z.string().optional(),

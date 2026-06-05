@@ -87,7 +87,7 @@ export function VercelImportDialog({
           <DialogTitle>Import Vercel projects</DialogTitle>
           <DialogDescription>
             Selected projects will be added as active WISK projects with Web
-            Development service type and production URLs when available.
+            Development project type and production URLs when available.
           </DialogDescription>
         </DialogHeader>
 

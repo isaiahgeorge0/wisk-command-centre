@@ -116,7 +116,7 @@ export function ProjectCard({
               formId={formId}
               values={values}
               onChange={setValues}
-              serviceTypeOptions={serviceTypes}
+              projectTypeOptions={serviceTypes}
               disabled={isPending}
             />
             {error ? (
@@ -156,17 +156,20 @@ export function ProjectCard({
             <h3 className="truncate text-base font-semibold text-foreground">
               {project.client_name}
             </h3>
-            {vis.serviceType ? (
-              <p className="truncate text-sm text-muted-foreground">
-                {project.service_type ?? "—"}
-              </p>
-            ) : null}
           </div>
           <ProjectStatusBadge status={project.status} />
         </div>
       </CardHeader>
 
       <CardContent className="space-y-2 text-sm">
+        {vis.serviceType ? (
+          <div className="flex justify-between gap-2">
+            <span className="text-muted-foreground">Project type</span>
+            <span className="truncate text-right text-foreground">
+              {project.service_type ?? "—"}
+            </span>
+          </div>
+        ) : null}
         {vis.nextAction ? (
           <div className="flex justify-between gap-2">
             <span className="text-muted-foreground">Next</span>

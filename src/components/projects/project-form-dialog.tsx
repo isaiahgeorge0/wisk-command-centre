@@ -84,7 +84,7 @@ export function ProjectFormDialog({ open, onOpenChange }: ProjectFormDialogProps
             formId={formId}
             values={values}
             onChange={setValues}
-            serviceTypeOptions={serviceTypes}
+            projectTypeOptions={serviceTypes}
             disabled={isPending}
           />
           {error ? (
