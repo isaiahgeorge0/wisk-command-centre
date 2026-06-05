@@ -1,16 +1,21 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useCallback, useEffect, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { useSpotlightTour } from "@/components/spotlight-tour/spotlight-tour-context";
 import { Button } from "@/components/ui/button";
-import { MOTION_DURATION, MOTION_EASE } from "@/lib/motion/config";
+import { MOTION_DURATION } from "@/lib/motion/config";
 
 const SPOTLIGHT_PADDING = 8;
-const RING_SETTLE_MS = 300;
 const TOUR_LAYER_CLASS = "spotlight-tour-target";
+const LARGE_JUMP_THRESHOLD_PX = 200;
+const TOOLTIP_FADE_OUT_MS = 100;
+const TOOLTIP_SETTLE_DELAY_MS = 300;
+
+const SPRING_DEFAULT = { type: "spring" as const, stiffness: 300, damping: 30 };
+const SPRING_SOFT = { type: "spring" as const, stiffness: 250, damping: 28 };
 
 type TargetRect = {
   top: number;
@@ -18,6 +23,13 @@ type TargetRect = {
   width: number;
   height: number;
 };
+
+type TooltipPhase = "visible" | "exiting" | "hidden" | "entering";
+
+type SpringTransition =
+  | typeof SPRING_DEFAULT
+  | typeof SPRING_SOFT
+  | { duration: number };
 
 function measureTarget(selector: string): TargetRect | null {
   const element = document.querySelector(`[data-tour="${selector}"]`);
@@ -34,129 +46,181 @@ function measureTarget(selector: string): TargetRect | null {
   };
 }
 
-function SpotlightPanels({ rect }: { rect: TargetRect }) {
-  const viewportWidth = typeof window !== "undefined" ? window.innerWidth : 0;
-  const viewportHeight = typeof window !== "undefined" ? window.innerHeight : 0;
+function rectCenter(rect: TargetRect) {
+  return {
+    x: rect.left + rect.width / 2,
+    y: rect.top + rect.height / 2,
+  };
+}
+
+function centerDistance(from: TargetRect, to: TargetRect): number {
+  const a = rectCenter(from);
+  const b = rectCenter(to);
+  const dx = a.x - b.x;
+  const dy = a.y - b.y;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+function getSpringTransition(
+  from: TargetRect | null,
+  to: TargetRect,
+  reduced: boolean
+): SpringTransition {
+  if (reduced) {
+    return { duration: 0 };
+  }
+  if (from && centerDistance(from, to) > LARGE_JUMP_THRESHOLD_PX) {
+    return SPRING_SOFT;
+  }
+  return SPRING_DEFAULT;
+}
+
+function toRingBounds(rect: TargetRect) {
+  const diameter = Math.max(rect.width, rect.height);
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+  return {
+    left: centerX - diameter / 2,
+    top: centerY - diameter / 2,
+    width: diameter,
+    height: diameter,
+  };
+}
+
+function getPanelDimensions(rect: TargetRect, viewportWidth: number, viewportHeight: number) {
   const bottom = rect.top + rect.height;
   const right = rect.left + rect.width;
 
+  return {
+    top: { height: Math.max(0, rect.top) },
+    left: {
+      top: rect.top,
+      width: Math.max(0, rect.left),
+      height: rect.height,
+    },
+    right: {
+      top: rect.top,
+      left: right,
+      width: Math.max(0, viewportWidth - right),
+      height: rect.height,
+    },
+    bottom: {
+      top: bottom,
+      height: Math.max(0, viewportHeight - bottom),
+    },
+  };
+}
+
+function AnimatedSpotlightPanels({
+  rect,
+  viewportWidth,
+  viewportHeight,
+  transition,
+}: {
+  rect: TargetRect;
+  viewportWidth: number;
+  viewportHeight: number;
+  transition: SpringTransition;
+}) {
+  const panels = getPanelDimensions(rect, viewportWidth, viewportHeight);
   const panelClassName = "fixed bg-black/50";
 
   return (
     <>
-      <div
+      <motion.div
         className={panelClassName}
-        style={{ top: 0, left: 0, right: 0, height: Math.max(0, rect.top) }}
+        style={{ top: 0, left: 0, right: 0 }}
+        animate={panels.top}
+        transition={transition}
         aria-hidden
       />
-      <div
+      <motion.div
         className={panelClassName}
-        style={{
-          top: rect.top,
-          left: 0,
-          width: Math.max(0, rect.left),
-          height: rect.height,
-        }}
+        style={{ left: 0 }}
+        animate={panels.left}
+        transition={transition}
         aria-hidden
       />
-      <div
+      <motion.div
         className={panelClassName}
-        style={{
-          top: rect.top,
-          left: right,
-          width: Math.max(0, viewportWidth - right),
-          height: rect.height,
-        }}
+        animate={panels.right}
+        transition={transition}
         aria-hidden
       />
-      <div
+      <motion.div
         className={panelClassName}
-        style={{
-          top: bottom,
-          left: 0,
-          right: 0,
-          height: Math.max(0, viewportHeight - bottom),
-        }}
+        style={{ left: 0, right: 0 }}
+        animate={panels.bottom}
+        transition={transition}
         aria-hidden
       />
     </>
   );
 }
 
-function FocusRing({
+function AnimatedFocusRing({
   rect,
-  visible,
+  transition,
   pulse,
+  entrance,
 }: {
   rect: TargetRect;
-  visible: boolean;
+  transition: SpringTransition;
   pulse: boolean;
+  entrance: boolean;
 }) {
   const reduced = useReducedMotion();
-  const diameter = Math.max(rect.width, rect.height);
-  const centerX = rect.left + rect.width / 2;
-  const centerY = rect.top + rect.height / 2;
-
-  if (!visible) return null;
+  const ring = toRingBounds(rect);
 
   return (
     <motion.div
       className="pointer-events-none fixed rounded-full border-2 border-wisk-teal/80 shadow-[0_0_24px_rgba(45,212,191,0.35)]"
-      style={{
-        width: diameter,
-        height: diameter,
-        left: centerX - diameter / 2,
-        top: centerY - diameter / 2,
-      }}
-      initial={reduced ? false : { scale: 0.8, opacity: 0 }}
-      animate={
-        reduced
-          ? { opacity: 1 }
-          : pulse
-            ? {
-                scale: [1, 1.03, 1],
-                opacity: 1,
-              }
-            : {
-                scale: [0.8, 1, 1.03, 1],
-                opacity: 1,
-              }
-      }
-      transition={
-        reduced
-          ? { duration: 0 }
-          : pulse
-            ? {
-                scale: {
-                  duration: 1.6,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                },
-                opacity: {
-                  duration: RING_SETTLE_MS / 1000,
-                  ease: "easeOut",
-                },
-              }
-            : {
-                scale: {
-                  duration: RING_SETTLE_MS / 1000,
-                  ease: MOTION_EASE.easeOut,
-                  times: [0, 0.7, 0.85, 1],
-                },
-                opacity: {
-                  duration: RING_SETTLE_MS / 1000,
-                  ease: "easeOut",
-                },
-              }
-      }
+      animate={ring}
+      transition={transition}
       aria-hidden
-    />
+    >
+      <motion.div
+        className="size-full rounded-full"
+        initial={entrance && !reduced ? { scale: 0.8, opacity: 0 } : false}
+        animate={
+          reduced
+            ? { opacity: 1, scale: 1 }
+            : pulse
+              ? { scale: [1, 1.03, 1], opacity: 1 }
+              : { scale: 1, opacity: 1 }
+        }
+        transition={
+          reduced
+            ? { duration: 0 }
+            : entrance
+              ? {
+                  scale: {
+                    duration: TOOLTIP_SETTLE_DELAY_MS / 1000,
+                    ease: [0.22, 1, 0.36, 1],
+                  },
+                  opacity: {
+                    duration: TOOLTIP_SETTLE_DELAY_MS / 1000,
+                    ease: "easeOut",
+                  },
+                }
+              : pulse
+                ? {
+                    scale: {
+                      duration: 1.6,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    },
+                  }
+                : { duration: 0 }
+        }
+      />
+    </motion.div>
   );
 }
 
 function SpotlightTooltip({
   rect,
-  visible,
+  phase,
   stepIndex,
   stepCount,
   title,
@@ -166,7 +230,7 @@ function SpotlightTooltip({
   onSkip,
 }: {
   rect: TargetRect;
-  visible: boolean;
+  phase: TooltipPhase;
   stepIndex: number;
   stepCount: number;
   title: string;
@@ -197,21 +261,32 @@ function SpotlightTooltip({
           transform: "translateX(-50%)",
         };
 
-  if (!visible) return null;
+  const isInteractive = phase === "visible" || phase === "entering";
 
   return (
     <motion.div
       className="fixed z-[202] w-[min(calc(100vw-2rem),22rem)] rounded-xl border border-border/60 bg-surface p-4 shadow-2xl"
-      style={tooltipStyle}
-      initial={reduced ? false : { opacity: 0, y: placement === "below" ? 10 : -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        duration: reduced ? 0 : MOTION_DURATION.normal,
-        delay: reduced ? 0 : RING_SETTLE_MS / 1000,
-        ease: MOTION_EASE.smooth,
+      style={{
+        ...tooltipStyle,
+        pointerEvents: isInteractive ? "auto" : "none",
       }}
+      animate={{ opacity: phase === "visible" || phase === "entering" ? 1 : 0 }}
+      transition={
+        reduced
+          ? { duration: 0 }
+          : phase === "exiting"
+            ? { duration: TOOLTIP_FADE_OUT_MS / 1000, ease: "easeOut" }
+            : phase === "entering"
+              ? {
+                  duration: MOTION_DURATION.fast,
+                  delay: TOOLTIP_SETTLE_DELAY_MS / 1000,
+                  ease: "easeOut",
+                }
+              : { duration: 0 }
+      }
       role="dialog"
       aria-label={title}
+      aria-hidden={!isInteractive}
     >
       <p className="text-right text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
         {stepIndex + 1} of {stepCount}
@@ -248,27 +323,76 @@ export function SpotlightTourOverlay() {
   } = useSpotlightTour();
 
   const [mounted, setMounted] = useState(false);
-  const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
-  const [ringVisible, setRingVisible] = useState(false);
-  const [tooltipVisible, setTooltipVisible] = useState(false);
+  const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
+  const [renderRect, setRenderRect] = useState<TargetRect | null>(null);
+  const [springTransition, setSpringTransition] = useState<SpringTransition>(
+    reduced ? { duration: 0 } : SPRING_DEFAULT
+  );
+  const [tooltipPhase, setTooltipPhase] = useState<TooltipPhase>("hidden");
+  const [displayedStep, setDisplayedStep] = useState(step);
+  const [showRingEntrance, setShowRingEntrance] = useState(true);
+
+  const previousRectRef = useRef<TargetRect | null>(null);
+  const previousStepIndexRef = useRef<number | null>(null);
+  const tooltipTimerRef = useRef<number | null>(null);
+
+  const clearTooltipTimer = useCallback(() => {
+    if (tooltipTimerRef.current !== null) {
+      window.clearTimeout(tooltipTimerRef.current);
+      tooltipTimerRef.current = null;
+    }
+  }, []);
+
+  const scheduleTooltipReveal = useCallback(() => {
+    clearTooltipTimer();
+    if (reduced) {
+      setTooltipPhase("visible");
+      return;
+    }
+    setTooltipPhase("entering");
+    tooltipTimerRef.current = window.setTimeout(() => {
+      setTooltipPhase("visible");
+      tooltipTimerRef.current = null;
+    }, TOOLTIP_SETTLE_DELAY_MS + MOTION_DURATION.fast * 1000);
+  }, [clearTooltipTimer, reduced]);
+
+  const applyMeasuredRect = useCallback(
+    (nextRect: TargetRect) => {
+      setSpringTransition(
+        getSpringTransition(previousRectRef.current, nextRect, !!reduced)
+      );
+      previousRectRef.current = nextRect;
+      setRenderRect(nextRect);
+    },
+    [reduced]
+  );
 
   const updateRect = useCallback(() => {
     if (!step?.target) {
-      setTargetRect(null);
       return;
     }
-    setTargetRect(measureTarget(step.target));
-  }, [step?.target]);
+    const measured = measureTarget(step.target);
+    if (measured) {
+      applyMeasuredRect(measured);
+    }
+  }, [applyMeasuredRect, step?.target]);
 
   useEffect(() => {
     setMounted(true);
+    setViewportSize({
+      width: window.innerWidth,
+      height: window.innerHeight,
+    });
   }, []);
 
   useEffect(() => {
     if (!isActive || !step) {
-      setTargetRect(null);
-      setRingVisible(false);
-      setTooltipVisible(false);
+      clearTooltipTimer();
+      setRenderRect(null);
+      setTooltipPhase("hidden");
+      previousRectRef.current = null;
+      previousStepIndexRef.current = null;
+      setShowRingEntrance(true);
       return;
     }
 
@@ -278,15 +402,23 @@ export function SpotlightTourOverlay() {
       window.setTimeout(updateRect, delay)
     );
 
-    window.addEventListener("resize", updateRect);
+    const handleViewportChange = () => {
+      setViewportSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+      updateRect();
+    };
+
+    window.addEventListener("resize", handleViewportChange);
     window.addEventListener("scroll", updateRect, true);
 
     return () => {
       retryTimers.forEach((timer) => window.clearTimeout(timer));
-      window.removeEventListener("resize", updateRect);
+      window.removeEventListener("resize", handleViewportChange);
       window.removeEventListener("scroll", updateRect, true);
     };
-  }, [isActive, step, stepIndex, updateRect]);
+  }, [clearTooltipTimer, isActive, step, stepIndex, updateRect]);
 
   useEffect(() => {
     if (!isActive || !step) return;
@@ -306,19 +438,45 @@ export function SpotlightTourOverlay() {
   }, [isActive, step, stepIndex, updateRect]);
 
   useEffect(() => {
-    if (!isActive || isTransitioning || !targetRect) {
-      setRingVisible(false);
-      setTooltipVisible(false);
-      return;
+    if (!isActive) return;
+
+    if (isTransitioning) {
+      setTooltipPhase("exiting");
+    }
+  }, [isActive, isTransitioning]);
+
+  useEffect(() => {
+    if (!isActive || isTransitioning) return;
+
+    if (tooltipPhase === "exiting") {
+      setTooltipPhase("hidden");
+    }
+  }, [isActive, isTransitioning, tooltipPhase]);
+
+  useEffect(() => {
+    if (!isActive || !step || !renderRect) return;
+
+    const isFirstStep = previousStepIndexRef.current === null;
+    const stepChanged =
+      previousStepIndexRef.current !== null &&
+      previousStepIndexRef.current !== stepIndex;
+
+    previousStepIndexRef.current = stepIndex;
+
+    if (stepChanged) {
+      setShowRingEntrance(false);
     }
 
-    setRingVisible(true);
-    const timer = window.setTimeout(() => {
-      setTooltipVisible(true);
-    }, reduced ? 0 : RING_SETTLE_MS);
+    if (isFirstStep || stepChanged) {
+      scheduleTooltipReveal();
+    }
+  }, [isActive, renderRect, scheduleTooltipReveal, step, stepIndex]);
 
-    return () => window.clearTimeout(timer);
-  }, [isActive, isTransitioning, reduced, stepIndex, targetRect]);
+  useEffect(() => {
+    if (tooltipPhase === "hidden" || tooltipPhase === "entering") {
+      setDisplayedStep(step);
+    }
+  }, [step, tooltipPhase]);
 
   useEffect(() => {
     if (!isActive) return;
@@ -329,39 +487,49 @@ export function SpotlightTourOverlay() {
     };
   }, [isActive]);
 
-  if (!mounted || !isActive || !step) {
+  useEffect(() => {
+    return () => clearTooltipTimer();
+  }, [clearTooltipTimer]);
+
+  if (!mounted || !isActive || !step || !renderRect || viewportSize.width === 0) {
     return null;
   }
 
+  const tooltipStep = displayedStep ?? step;
+
   return createPortal(
-    <AnimatePresence mode="wait">
-      {targetRect ? (
-        <motion.div
-          key={stepIndex}
-          className="fixed inset-0 z-[200]"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: reduced ? 0 : MOTION_DURATION.fast }}
-        >
-          <SpotlightPanels rect={targetRect} />
-          <FocusRing rect={targetRect} visible={ringVisible} pulse={tooltipVisible} />
-          <SpotlightTooltip
-            rect={targetRect}
-            visible={tooltipVisible}
-            stepIndex={stepIndex}
-            stepCount={stepCount}
-            title={step.title}
-            body={step.body}
-            cta={step.cta}
-            onAction={handleStepAction}
-            onSkip={() => {
-              void skipTour();
-            }}
-          />
-        </motion.div>
-      ) : null}
-    </AnimatePresence>,
+    <motion.div
+      className="fixed inset-0 z-[200]"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: reduced ? 0 : MOTION_DURATION.fast }}
+    >
+      <AnimatedSpotlightPanels
+        rect={renderRect}
+        viewportWidth={viewportSize.width}
+        viewportHeight={viewportSize.height}
+        transition={springTransition}
+      />
+      <AnimatedFocusRing
+        rect={renderRect}
+        transition={springTransition}
+        pulse={tooltipPhase === "visible"}
+        entrance={showRingEntrance}
+      />
+      <SpotlightTooltip
+        rect={renderRect}
+        phase={tooltipPhase}
+        stepIndex={stepIndex}
+        stepCount={stepCount}
+        title={tooltipStep.title}
+        body={tooltipStep.body}
+        cta={tooltipStep.cta}
+        onAction={handleStepAction}
+        onSkip={() => {
+          void skipTour();
+        }}
+      />
+    </motion.div>,
     document.body
   );
 }
