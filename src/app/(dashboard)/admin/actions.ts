@@ -17,6 +17,16 @@ import type {
   FeedbackStats,
   FeedbackStatus,
 } from "@/lib/feedback/types";
+import type { ChangelogEntry, ChangelogType } from "@/lib/changelog/types";
+import {
+  SECTION_BAR_COLORS,
+  SECTION_LABELS,
+  type AdminUserHealth,
+  type PlatformMetrics,
+  type SectionKey,
+  type UserActivityStatus,
+  type UserHealthSummary,
+} from "@/lib/admin/platform";
 import { getAuthContext } from "@/lib/auth/get-auth-context";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -42,7 +52,82 @@ function revalidateAdminPaths() {
   revalidatePath("/admin/users");
   revalidatePath("/admin/announcements");
   revalidatePath("/admin/feedback");
+  revalidatePath("/admin/changelog");
   revalidatePath("/");
+}
+
+function sortAccessRequests(requests: AccessRequest[]): AccessRequest[] {
+  return [...requests].sort((a, b) => {
+    if (a.status === "pending" && b.status !== "pending") {
+      return -1;
+    }
+    if (b.status === "pending" && a.status !== "pending") {
+      return 1;
+    }
+    if (a.status === "pending" && b.status === "pending") {
+      return (
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+    }
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+}
+
+async function getAuthLastSignInMap(
+  supabase: ReturnType<typeof createAdminClient>
+): Promise<Map<string, string | null>> {
+  const map = new Map<string, string | null>();
+  let page = 1;
+  const perPage = 1000;
+
+  while (true) {
+    const { data, error } = await supabase.auth.admin.listUsers({
+      page,
+      perPage,
+    });
+
+    if (error) {
+      console.error("getAuthLastSignInMap:", error);
+      break;
+    }
+
+    for (const user of data.users) {
+      map.set(user.id, user.last_sign_in_at ?? null);
+    }
+
+    if (data.users.length < perPage) {
+      break;
+    }
+    page += 1;
+  }
+
+  return map;
+}
+
+function countByUserId(
+  rows: { user_id: string }[] | null
+): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const row of rows ?? []) {
+    counts.set(row.user_id, (counts.get(row.user_id) ?? 0) + 1);
+  }
+  return counts;
+}
+
+function getActivityStatus(lastSignIn: string | null): UserActivityStatus {
+  if (!lastSignIn) {
+    return "dormant";
+  }
+  const days = Math.floor(
+    (Date.now() - new Date(lastSignIn).getTime()) / 86_400_000
+  );
+  if (days <= 7) {
+    return "active";
+  }
+  if (days <= 30) {
+    return "inactive";
+  }
+  return "dormant";
 }
 
 export async function getAccessRequests(
@@ -53,7 +138,7 @@ export async function getAccessRequests(
 
   let query = supabase
     .from("access_requests")
-    .select("id, name, email, status, created_at")
+    .select("id, name, email, status, created_at, notes")
     .order("created_at", { ascending: false });
 
   if (filter !== "all") {
@@ -67,13 +152,35 @@ export async function getAccessRequests(
     return [];
   }
 
-  return (data ?? []) as AccessRequest[];
+  return sortAccessRequests((data ?? []) as AccessRequest[]);
+}
+
+export async function updateAccessRequestNotes(
+  id: string,
+  notes: string
+): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  const { error } = await supabase
+    .from("access_requests")
+    .update({ notes: notes.trim() || null })
+    .eq("id", id);
+
+  if (error) {
+    console.error("updateAccessRequestNotes:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidateAdminPaths();
+  return { success: true };
 }
 
 export async function approveRequest(
   id: string,
   email: string,
-  name: string
+  name: string,
+  welcomeMessage?: string
 ): Promise<ActionResult> {
   await requireAdmin();
   const supabase = createAdminClient();
@@ -84,7 +191,10 @@ export async function approveRequest(
   const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
     email.trim().toLowerCase(),
     {
-      data: { name: name.trim() },
+      data: {
+        name: name.trim(),
+        welcome_message: welcomeMessage?.trim() || undefined,
+      },
       redirectTo: `${siteUrl}/auth/callback`,
     }
   );
@@ -470,4 +580,253 @@ export async function getFeedbackStats(): Promise<FeedbackStats> {
   }
 
   return { newCount: count ?? 0 };
+}
+
+export async function getPlatformMetrics(): Promise<PlatformMetrics> {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  const [
+    projectsResult,
+    tasksResult,
+    goalsResult,
+    ideasResult,
+    leadsResult,
+    contentResult,
+  ] = await Promise.all([
+    supabase.from("projects").select("id", { count: "exact", head: true }),
+    supabase.from("tasks").select("id", { count: "exact", head: true }),
+    supabase.from("goals").select("id", { count: "exact", head: true }),
+    supabase.from("ideas").select("id", { count: "exact", head: true }),
+    supabase.from("leads").select("id", { count: "exact", head: true }),
+    supabase.from("content_posts").select("id", { count: "exact", head: true }),
+  ]);
+
+  const counts: Record<SectionKey, number> = {
+    projects: projectsResult.count ?? 0,
+    tasks: tasksResult.count ?? 0,
+    goals: goalsResult.count ?? 0,
+    ideas: ideasResult.count ?? 0,
+    leads: leadsResult.count ?? 0,
+    content: contentResult.count ?? 0,
+  };
+
+  const sectionActivity = (Object.keys(counts) as SectionKey[])
+    .map((key) => ({
+      key,
+      label: SECTION_LABELS[key],
+      count: counts[key],
+      barClass: SECTION_BAR_COLORS[key],
+    }))
+    .sort((a, b) => b.count - a.count);
+
+  return {
+    totalProjects: counts.projects,
+    totalTasks: counts.tasks,
+    totalLeads: counts.leads,
+    totalContentPosts: counts.content,
+    sectionActivity,
+  };
+}
+
+export async function getUsersWithHealth(): Promise<AdminUserHealth[]> {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  const [usersResult, projectsResult, tasksResult, authMap] = await Promise.all([
+    supabase.from("users").select("id, email, name, created_at").order("created_at", { ascending: false }),
+    supabase.from("projects").select("user_id"),
+    supabase.from("tasks").select("user_id"),
+    getAuthLastSignInMap(supabase),
+  ]);
+
+  if (usersResult.error) {
+    console.error("getUsersWithHealth:", usersResult.error);
+    return [];
+  }
+
+  const projectCounts = countByUserId(projectsResult.data);
+  const taskCounts = countByUserId(tasksResult.data);
+  const now = Date.now();
+
+  return (usersResult.data ?? []).map((user) => {
+    const lastSignIn = authMap.get(user.id) ?? null;
+    const daysSinceJoined = Math.floor(
+      (now - new Date(user.created_at).getTime()) / 86_400_000
+    );
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      created_at: user.created_at,
+      last_sign_in_at: lastSignIn,
+      project_count: projectCounts.get(user.id) ?? 0,
+      task_count: taskCounts.get(user.id) ?? 0,
+      days_since_joined: daysSinceJoined,
+      activity_status: getActivityStatus(lastSignIn),
+    };
+  });
+}
+
+export async function getUserHealthSummary(): Promise<UserHealthSummary> {
+  const users = await getUsersWithHealth();
+  return users.reduce(
+    (acc, user) => {
+      acc[user.activity_status] += 1;
+      return acc;
+    },
+    { active: 0, inactive: 0, dormant: 0 }
+  );
+}
+
+export async function createUserManually(
+  name: string,
+  email: string
+): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = createAdminClient();
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
+    "http://localhost:3000";
+
+  const trimmedName = name.trim();
+  const trimmedEmail = email.trim().toLowerCase();
+
+  if (!trimmedName || !trimmedEmail) {
+    return { success: false, error: "Name and email are required." };
+  }
+
+  const { error } = await supabase.auth.admin.inviteUserByEmail(trimmedEmail, {
+    data: { name: trimmedName },
+    redirectTo: `${siteUrl}/auth/callback`,
+  });
+
+  if (error) {
+    console.error("createUserManually:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidateAdminPaths();
+  return { success: true };
+}
+
+export async function resetUserOnboarding(userId: string): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  const { error } = await supabase
+    .from("user_preferences")
+    .update({
+      onboarding_completed: false,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", userId);
+
+  if (error) {
+    console.error("resetUserOnboarding:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidateAdminPaths();
+  return { success: true };
+}
+
+export async function resetUserPersonalisation(
+  userId: string
+): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  const { error } = await supabase
+    .from("user_preferences")
+    .update({
+      personalisation_completed: false,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", userId);
+
+  if (error) {
+    console.error("resetUserPersonalisation:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidateAdminPaths();
+  revalidatePath("/welcome");
+  return { success: true };
+}
+
+export async function getChangelogEntries(): Promise<ChangelogEntry[]> {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("changelog_entries")
+    .select("id, title, description, type, published_at, created_by")
+    .order("published_at", { ascending: false });
+
+  if (error) {
+    console.error("getChangelogEntries:", error);
+    return [];
+  }
+
+  return (data ?? []) as ChangelogEntry[];
+}
+
+export async function createChangelogEntry(input: {
+  title: string;
+  description: string;
+  type: ChangelogType;
+  publishedAt: string;
+}): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  const supabase = createAdminClient();
+
+  const title = input.title.trim();
+  const description = input.description.trim();
+
+  if (!title || !description) {
+    return { success: false, error: "Title and description are required." };
+  }
+
+  const publishedAt = input.publishedAt.trim();
+  const parsedPublishedAt = publishedAt
+    ? new Date(`${publishedAt}T12:00:00.000Z`).toISOString()
+    : new Date().toISOString();
+
+  const { error } = await supabase.from("changelog_entries").insert({
+    title,
+    description,
+    type: input.type,
+    published_at: parsedPublishedAt,
+    created_by: admin.id,
+  });
+
+  if (error) {
+    console.error("createChangelogEntry:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidateAdminPaths();
+  revalidatePath("/");
+  return { success: true };
+}
+
+export async function deleteChangelogEntry(id: string): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  const { error } = await supabase
+    .from("changelog_entries")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    console.error("deleteChangelogEntry:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidateAdminPaths();
+  revalidatePath("/");
+  return { success: true };
 }

@@ -11,6 +11,7 @@ const ADMIN_LINKS = [
   { label: "Users", href: "/admin/users" },
   { label: "Announcements", href: "/admin/announcements" },
   { label: "Feedback", href: "/admin/feedback", showBadge: true },
+  { label: "Changelog", href: "/admin/changelog" },
 ] as const;
 
 type AdminNavProps = {

@@ -6,6 +6,7 @@ import {
   getNotifications,
 } from "@/app/(dashboard)/notifications/actions";
 import { getActiveAnnouncements } from "@/app/(dashboard)/admin/actions";
+import { getPublishedChangelog, getUnreadChangelogCount } from "@/app/(dashboard)/changelog/actions";
 import { AppShell } from "@/components/layout/app-shell";
 import { ThemePreferenceSync } from "@/components/theme/theme-preference-sync";
 import { getAuthContext } from "@/lib/auth/get-auth-context";
@@ -39,13 +40,15 @@ export default async function DashboardLayout({
   }
 
   await generateNotifications();
-  const [profile, preferences, notificationSnapshot, projects, announcements] =
+  const [profile, preferences, notificationSnapshot, projects, announcements, changelogEntries, unreadChangelogCount] =
     await Promise.all([
       getUserProfile(),
       getOrCreateUserPreferences(),
       getNotifications(),
       getProjects(),
       getActiveAnnouncements(user.id),
+      getPublishedChangelog(10),
+      getUnreadChangelogCount(),
     ]);
 
   const displayName = resolveDisplayName({
@@ -73,6 +76,8 @@ export default async function DashboardLayout({
         announcements={announcements}
         displayName={displayName}
         feedbackWelcomeShown={preferences.feedbackWelcomeShown}
+        changelogEntries={changelogEntries}
+        unreadChangelogCount={unreadChangelogCount}
       >
         {children}
       </AppShell>

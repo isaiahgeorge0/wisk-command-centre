@@ -12,6 +12,7 @@ import { QuickAddProvider } from "@/components/quick-add/quick-add-context";
 import { ProjectTourCelebration } from "@/components/spotlight-tour/project-tour-celebration";
 import { SpotlightTourOverlay } from "@/components/spotlight-tour/spotlight-tour-overlay";
 import { SpotlightTourProvider } from "@/components/spotlight-tour/spotlight-tour-context";
+import type { ChangelogEntry } from "@/lib/changelog/types";
 import type { ActiveAnnouncement } from "@/lib/admin/types";
 import type { Notification } from "@/lib/notifications/types";
 import type { FieldVisibility } from "@/lib/preferences/types";
@@ -30,6 +31,8 @@ type AppShellProps = {
   announcements: ActiveAnnouncement[];
   displayName: string;
   feedbackWelcomeShown: boolean;
+  changelogEntries: ChangelogEntry[];
+  unreadChangelogCount: number;
 };
 
 export function AppShell({
@@ -46,6 +49,8 @@ export function AppShell({
   announcements,
   displayName,
   feedbackWelcomeShown,
+  changelogEntries,
+  unreadChangelogCount,
 }: AppShellProps) {
   const showFeedbackWelcome =
     onboardingCompleted &&
@@ -66,6 +71,8 @@ export function AppShell({
                 userName={userName}
                 notifications={notifications}
                 unreadNotificationCount={unreadNotificationCount}
+                changelogEntries={changelogEntries}
+                unreadChangelogCount={unreadChangelogCount}
               />
               <main className="mx-auto max-w-7xl px-4 pt-16 pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:px-6 md:pb-24 lg:px-8">
                 <AnnouncementBanner announcements={announcements} />

@@ -5,11 +5,14 @@ import { useMemo, useState, useTransition } from "react";
 import {
   approveRequest,
   declineRequest,
+  updateAccessRequestNotes,
 } from "@/app/(dashboard)/admin/actions";
+import { ApproveRequestDialog } from "@/components/admin/approve-request-dialog";
 import type { AccessRequest, AccessRequestStatus } from "@/lib/admin/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 type RequestsClientProps = {
@@ -29,6 +32,12 @@ function formatDate(iso: string) {
     month: "short",
     day: "numeric",
   });
+}
+
+function daysWaiting(createdAt: string) {
+  return Math.floor(
+    (Date.now() - new Date(createdAt).getTime()) / 86_400_000
+  );
 }
 
 function StatusBadge({ status }: { status: AccessRequestStatus }) {
@@ -51,8 +60,12 @@ function StatusBadge({ status }: { status: AccessRequestStatus }) {
 export function RequestsClient({ requests }: RequestsClientProps) {
   const [filter, setFilter] = useState<"all" | AccessRequestStatus>("all");
   const [search, setSearch] = useState("");
+  const [notesDraft, setNotesDraft] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [approveTarget, setApproveTarget] = useState<AccessRequest | null>(
+    null
+  );
   const [, startTransition] = useTransition();
 
   const filtered = useMemo(() => {
@@ -71,19 +84,41 @@ export function RequestsClient({ requests }: RequestsClientProps) {
     });
   }, [filter, requests, search]);
 
-  function handleApprove(request: AccessRequest) {
+  function handleSaveNotes(id: string) {
     setError(null);
-    setPendingId(request.id);
+    setPendingId(id);
+    const notes = notesDraft[id] ?? "";
+
     startTransition(async () => {
-      const result = await approveRequest(
-        request.id,
-        request.email,
-        request.name
-      );
+      const result = await updateAccessRequestNotes(id, notes);
       setPendingId(null);
       if (!result.success) {
         setError(result.error);
       }
+    });
+  }
+
+  function handleApproveConfirm(welcomeMessage: string) {
+    if (!approveTarget) {
+      return;
+    }
+
+    setError(null);
+    setPendingId(approveTarget.id);
+
+    startTransition(async () => {
+      const result = await approveRequest(
+        approveTarget.id,
+        approveTarget.email,
+        approveTarget.name,
+        welcomeMessage
+      );
+      setPendingId(null);
+      if (!result.success) {
+        setError(result.error);
+        return;
+      }
+      setApproveTarget(null);
     });
   }
 
@@ -130,13 +165,15 @@ export function RequestsClient({ requests }: RequestsClientProps) {
       ) : null}
 
       <div className="overflow-x-auto rounded-xl ring-1 ring-foreground/10">
-        <table className="w-full min-w-[640px] text-left text-sm">
+        <table className="w-full min-w-[980px] text-left text-sm">
           <thead className="border-b bg-muted/40 text-muted-foreground">
             <tr>
               <th className="px-4 py-3 font-medium">Name</th>
               <th className="px-4 py-3 font-medium">Email</th>
               <th className="px-4 py-3 font-medium">Submitted</th>
+              <th className="px-4 py-3 font-medium">Waiting</th>
               <th className="px-4 py-3 font-medium">Status</th>
+              <th className="px-4 py-3 font-medium">Notes</th>
               <th className="px-4 py-3 font-medium">Actions</th>
             </tr>
           </thead>
@@ -144,7 +181,7 @@ export function RequestsClient({ requests }: RequestsClientProps) {
             {filtered.length === 0 ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={7}
                   className="px-4 py-8 text-center text-muted-foreground"
                 >
                   No access requests found.
@@ -153,8 +190,10 @@ export function RequestsClient({ requests }: RequestsClientProps) {
             ) : (
               filtered.map((request) => {
                 const isRowPending = pendingId === request.id;
+                const waitingDays = daysWaiting(request.created_at);
+
                 return (
-                  <tr key={request.id} className="border-b last:border-b-0">
+                  <tr key={request.id} className="border-b align-top last:border-b-0">
                     <td className="px-4 py-3 font-medium">{request.name}</td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {request.email}
@@ -162,8 +201,42 @@ export function RequestsClient({ requests }: RequestsClientProps) {
                     <td className="px-4 py-3 text-muted-foreground">
                       {formatDate(request.created_at)}
                     </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {request.status === "pending" ? (
+                        <span className="font-medium text-amber-700 dark:text-amber-300">
+                          {waitingDays}d
+                        </span>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <StatusBadge status={request.status} />
+                    </td>
+                    <td className="min-w-[220px] px-4 py-3">
+                      <Textarea
+                        value={notesDraft[request.id] ?? request.notes ?? ""}
+                        onChange={(event) =>
+                          setNotesDraft((prev) => ({
+                            ...prev,
+                            [request.id]: event.target.value,
+                          }))
+                        }
+                        rows={2}
+                        disabled={isRowPending}
+                        placeholder="Context about this person…"
+                        className="min-h-16"
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="mt-1 h-7 px-2"
+                        disabled={isRowPending}
+                        onClick={() => handleSaveNotes(request.id)}
+                      >
+                        Save note
+                      </Button>
                     </td>
                     <td className="px-4 py-3">
                       {request.status === "pending" ? (
@@ -172,7 +245,7 @@ export function RequestsClient({ requests }: RequestsClientProps) {
                             type="button"
                             size="sm"
                             disabled={isRowPending}
-                            onClick={() => handleApprove(request)}
+                            onClick={() => setApproveTarget(request)}
                           >
                             Approve
                           </Button>
@@ -197,6 +270,18 @@ export function RequestsClient({ requests }: RequestsClientProps) {
           </tbody>
         </table>
       </div>
+
+      <ApproveRequestDialog
+        request={approveTarget}
+        open={approveTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setApproveTarget(null);
+          }
+        }}
+        onConfirm={handleApproveConfirm}
+        isPending={pendingId === approveTarget?.id}
+      />
     </div>
   );
 }

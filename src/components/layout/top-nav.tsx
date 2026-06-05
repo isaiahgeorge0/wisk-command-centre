@@ -7,10 +7,12 @@ import { usePathname } from "next/navigation";
 
 import { NavLink } from "@/components/layout/nav-link";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { WhatsNewButton } from "@/components/changelog/whats-new-button";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { UserMenu } from "@/components/layout/user-menu";
 import { cn } from "@/lib/utils";
 import type { Notification } from "@/lib/notifications/types";
+import type { ChangelogEntry } from "@/lib/changelog/types";
 import { isNavActive, NAV_ITEMS } from "@/lib/navigation";
 
 type TopNavProps = {
@@ -18,6 +20,8 @@ type TopNavProps = {
   userName: string | null;
   notifications: Notification[];
   unreadNotificationCount: number;
+  changelogEntries: ChangelogEntry[];
+  unreadChangelogCount: number;
 };
 
 export function TopNav({
@@ -25,6 +29,8 @@ export function TopNav({
   userName,
   notifications,
   unreadNotificationCount,
+  changelogEntries,
+  unreadChangelogCount,
 }: TopNavProps) {
   const pathname = usePathname();
   const reduced = useReducedMotion();
@@ -57,6 +63,10 @@ export function TopNav({
           <NotificationBell
             notifications={notifications}
             unreadCount={unreadNotificationCount}
+          />
+          <WhatsNewButton
+            entries={changelogEntries}
+            unreadCount={unreadChangelogCount}
           />
           <motion.div
             whileHover={reduced ? undefined : { scale: 1.05 }}

@@ -8,6 +8,7 @@ export type AccessRequest = {
   email: string;
   status: AccessRequestStatus;
   created_at: string;
+  notes: string | null;
 };
 
 export type AdminUser = {

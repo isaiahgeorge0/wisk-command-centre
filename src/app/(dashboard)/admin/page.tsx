@@ -1,6 +1,12 @@
 import Link from "next/link";
 
-import { getAdminStats } from "@/app/(dashboard)/admin/actions";
+import {
+  getAdminStats,
+  getPlatformMetrics,
+  getUsers,
+} from "@/app/(dashboard)/admin/actions";
+import { AdminQuickActions } from "@/components/admin/admin-quick-actions";
+import { PlatformMetricsSection } from "@/components/admin/platform-metrics-section";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -19,7 +25,11 @@ function formatDate(iso: string) {
 }
 
 export default async function AdminOverviewPage() {
-  const stats = await getAdminStats();
+  const [stats, platformMetrics, users] = await Promise.all([
+    getAdminStats(),
+    getPlatformMetrics(),
+    getUsers(),
+  ]);
 
   return (
     <div className="space-y-8">
@@ -74,6 +84,10 @@ export default async function AdminOverviewPage() {
           </CardContent>
         </Card>
       </div>
+
+      <PlatformMetricsSection metrics={platformMetrics} />
+
+      <AdminQuickActions users={users} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
