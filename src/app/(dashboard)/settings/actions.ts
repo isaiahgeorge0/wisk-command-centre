@@ -6,6 +6,7 @@ import { getOrCreateUserPreferences } from "@/lib/preferences/get-user-preferenc
 import {
   normalizeServiceTypes,
   type FieldVisibility,
+  type ThemePreference,
 } from "@/lib/preferences/types";
 import { createClient } from "@/lib/supabase/server";
 
@@ -84,6 +85,31 @@ export async function updateDisplayName(
   }
 
   revalidateApp();
+  return { success: true };
+}
+
+export async function updateThemePreference(
+  theme: ThemePreference
+): Promise<SettingsActionResult> {
+  if (theme !== "dark" && theme !== "light") {
+    return { success: false, error: "Invalid theme preference" };
+  }
+
+  await getOrCreateUserPreferences();
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { error } = await supabase
+    .from("user_preferences")
+    .update({
+      theme_preference: theme,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", userId);
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
   return { success: true };
 }
 
