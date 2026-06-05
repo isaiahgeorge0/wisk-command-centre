@@ -18,6 +18,7 @@ export type OnboardingSlideKind = "welcome" | "feature" | "ready";
 export type OnboardingSlide = {
   id: string;
   kind: OnboardingSlideKind;
+  sectionLabel?: string;
   headline: string;
   body?: string;
   subline?: string;
@@ -39,6 +40,7 @@ export const ONBOARDING_SLIDES: OnboardingSlide[] = [
   {
     id: "overview",
     kind: "feature",
+    sectionLabel: "OVERVIEW",
     headline: "Your command centre",
     body: "Every time you open WISK you see what matters most. Overdue tasks, upcoming deadlines, recent activity, and a weekly plan every Monday.",
     icon: LayoutDashboard,
@@ -48,6 +50,7 @@ export const ONBOARDING_SLIDES: OnboardingSlide[] = [
   {
     id: "projects",
     kind: "feature",
+    sectionLabel: "PROJECTS",
     headline: "Track every client project",
     body: "Add your client projects with deadlines, next actions, and values. Link tasks and milestones. See Vercel deployment health and GitHub activity right on the project card.",
     icon: FolderKanban,
@@ -57,6 +60,7 @@ export const ONBOARDING_SLIDES: OnboardingSlide[] = [
   {
     id: "tasks",
     kind: "feature",
+    sectionLabel: "TASKS",
     headline: "Never miss what needs doing",
     body: "Add tasks linked to projects or standalone. Priority badges, due dates, and a clean checklist keep you on top of your work.",
     icon: CheckSquare,
@@ -66,6 +70,7 @@ export const ONBOARDING_SLIDES: OnboardingSlide[] = [
   {
     id: "goals",
     kind: "feature",
+    sectionLabel: "GOALS",
     headline: "Build toward something",
     body: "Set revenue targets, project counts, content output goals and more. Track progress with visual indicators and keep your long-term vision in sight.",
     icon: Target,
@@ -75,6 +80,7 @@ export const ONBOARDING_SLIDES: OnboardingSlide[] = [
   {
     id: "ideas",
     kind: "feature",
+    sectionLabel: "IDEAS",
     headline: "Capture ideas before they disappear",
     body: "Log content ideas, product concepts, and business observations instantly. Categorise and revisit them when the time is right.",
     icon: Lightbulb,
@@ -84,6 +90,7 @@ export const ONBOARDING_SLIDES: OnboardingSlide[] = [
   {
     id: "calendar",
     kind: "feature",
+    sectionLabel: "CALENDAR",
     headline: "See everything in one timeline",
     body: "Project deadlines, task due dates, goal milestones, and planned content all in one calendar. Filter by type and see what's coming in the next 30, 60, or 90 days.",
     icon: CalendarDays,
@@ -93,6 +100,7 @@ export const ONBOARDING_SLIDES: OnboardingSlide[] = [
   {
     id: "leads",
     kind: "feature",
+    sectionLabel: "LEADS",
     headline: "Manage your pipeline",
     body: "Capture inbound enquiries from content and referrals. Move leads through your pipeline from New to Won. Track conversion rate and pipeline value.",
     icon: UserPlus,
@@ -102,6 +110,7 @@ export const ONBOARDING_SLIDES: OnboardingSlide[] = [
   {
     id: "content",
     kind: "feature",
+    sectionLabel: "CONTENT",
     headline: "Plan and track your content",
     body: "Schedule content across TikTok, Instagram, YouTube, LinkedIn and more. Track your publishing streak and link posts to your content goals.",
     icon: Clapperboard,

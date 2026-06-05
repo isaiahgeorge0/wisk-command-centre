@@ -59,7 +59,22 @@ export function OnboardingSlideContent({
           <Icon className="size-8" aria-hidden />
         </div>
       ) : null}
-      <h2 className="mt-6 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+      {slide.sectionLabel ? (
+        <p
+          className={cn(
+            "mt-6 text-[11px] font-medium uppercase tracking-[0.18em] sm:text-xs",
+            slide.accentClass
+          )}
+        >
+          {slide.sectionLabel}
+        </p>
+      ) : null}
+      <h2
+        className={cn(
+          "text-xl font-semibold tracking-tight text-foreground sm:text-2xl",
+          slide.sectionLabel ? "mt-2" : "mt-6"
+        )}
+      >
         {slide.headline}
       </h2>
       {slide.body ? (
