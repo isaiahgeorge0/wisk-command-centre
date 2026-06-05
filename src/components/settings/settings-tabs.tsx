@@ -2,13 +2,19 @@
 
 import { cn } from "@/lib/utils";
 
-export type SettingsTab = "profile" | "preferences" | "service-types" | "integrations";
+export type SettingsTab =
+  | "profile"
+  | "preferences"
+  | "service-types"
+  | "integrations"
+  | "help";
 
 const TABS: { id: SettingsTab; label: string }[] = [
   { id: "profile", label: "Profile" },
   { id: "preferences", label: "Preferences" },
   { id: "service-types", label: "Service types" },
   { id: "integrations", label: "Integrations" },
+  { id: "help", label: "Help" },
 ];
 
 type SettingsTabsProps = {
@@ -42,7 +48,8 @@ export function tabFromSearchParam(value: string | null): SettingsTab {
   if (
     value === "preferences" ||
     value === "service-types" ||
-    value === "integrations"
+    value === "integrations" ||
+    value === "help"
   ) {
     return value;
   }

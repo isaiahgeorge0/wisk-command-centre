@@ -41,6 +41,7 @@ export type UserPreferencesRow = {
   user_id: string;
   field_visibility: unknown;
   service_types: unknown;
+  onboarding_completed: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -50,6 +51,7 @@ export type UserPreferences = {
   userId: string;
   fieldVisibility: FieldVisibility;
   serviceTypes: string[];
+  onboardingCompleted: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -126,6 +128,7 @@ export function rowToUserPreferences(row: UserPreferencesRow): UserPreferences {
     userId: row.user_id,
     fieldVisibility: mergeFieldVisibility(row.field_visibility),
     serviceTypes: mergeServiceTypes(row.service_types),
+    onboardingCompleted: row.onboarding_completed ?? false,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

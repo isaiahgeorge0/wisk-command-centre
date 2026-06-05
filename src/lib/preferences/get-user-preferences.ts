@@ -51,6 +51,7 @@ export function parseStoredPreferences(row: UserPreferencesRow): UserPreferences
     userId: row.user_id,
     fieldVisibility: mergeFieldVisibility(row.field_visibility),
     serviceTypes: mergeServiceTypes(row.service_types),
+    onboardingCompleted: row.onboarding_completed ?? false,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

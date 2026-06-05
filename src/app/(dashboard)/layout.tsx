@@ -31,6 +31,7 @@ export default async function DashboardLayout({
       userName={displayName}
       fieldVisibility={preferences.fieldVisibility}
       serviceTypes={preferences.serviceTypes}
+      onboardingCompleted={preferences.onboardingCompleted}
       notifications={notificationSnapshot.notifications}
       unreadNotificationCount={notificationSnapshot.unreadCount}
     >
