@@ -24,7 +24,7 @@ export async function generateNotifications(): Promise<void> {
       .eq("user_id", userId),
     supabase
       .from("projects")
-      .select("id, client_name, status, deadline, updated_at")
+      .select("id, project_name, status, deadline, updated_at")
       .eq("user_id", userId),
     supabase
       .from("goals")

@@ -19,7 +19,7 @@ export type TaskWithProject = Task & {
 
 export type ProjectOption = {
   id: string;
-  client_name: string;
+  project_name: string;
 };
 
 export type TaskFormInput = {

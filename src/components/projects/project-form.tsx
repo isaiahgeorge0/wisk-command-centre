@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo } from "react";
+
 import { ExpandableSection } from "@/components/motion/expandable-section";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { PROJECT_STATUS_LABELS } from "@/lib/projects/constants";
+import { buildProjectTypeDatalistOptions } from "@/lib/projects/recent-project-types";
 import type { ProjectFormInput, ProjectStatus } from "@/lib/projects/types";
 import { PROJECT_STATUSES } from "@/lib/projects/types";
 
@@ -21,6 +24,7 @@ type ProjectFormProps = {
   values: ProjectFormInput;
   onChange: (values: ProjectFormInput) => void;
   projectTypeOptions: string[];
+  recentProjectTypes: string[];
   disabled?: boolean;
 };
 
@@ -47,6 +51,7 @@ export function ProjectForm({
   values,
   onChange,
   projectTypeOptions,
+  recentProjectTypes,
   disabled,
 }: ProjectFormProps) {
   const setField = <K extends keyof ProjectFormInput>(
@@ -62,17 +67,42 @@ export function ProjectForm({
     values.github_repo
   );
 
+  const datalistOptions = useMemo(
+    () =>
+      buildProjectTypeDatalistOptions(
+        values.service_type,
+        recentProjectTypes,
+        projectTypeOptions
+      ),
+    [values.service_type, recentProjectTypes, projectTypeOptions]
+  );
+
   return (
     <div className="grid gap-4">
-      <div className="grid gap-2" data-tour="client-name">
-        <Label htmlFor={`${formId}-client_name`}>Client name *</Label>
+      <div className="grid gap-2" data-tour="project-name">
+        <Label htmlFor={`${formId}-project_name`}>Project name *</Label>
         <Input
-          id={`${formId}-client_name`}
-          value={values.client_name}
-          onChange={(e) => setField("client_name", e.target.value)}
+          id={`${formId}-project_name`}
+          value={values.project_name}
+          onChange={(e) => setField("project_name", e.target.value)}
+          placeholder="e.g. Restaurant Website Redesign"
           disabled={disabled}
           required
         />
+      </div>
+
+      <div className="grid gap-2" data-tour="client-name">
+        <Label htmlFor={`${formId}-client_name`}>Client name</Label>
+        <Input
+          id={`${formId}-client_name`}
+          value={values.client_name ?? ""}
+          onChange={(e) => setField("client_name", e.target.value)}
+          placeholder="e.g. The Food Plug"
+          disabled={disabled}
+        />
+        <p className="text-xs text-muted-foreground">
+          The person or business this project is for
+        </p>
       </div>
 
       <div className="grid gap-2" data-tour="service-type">
@@ -86,7 +116,7 @@ export function ProjectForm({
           required
         />
         <datalist id={`${formId}-project-types`}>
-          {projectTypeOptions.map((type) => (
+          {datalistOptions.map((type) => (
             <option key={type} value={type} />
           ))}
         </datalist>

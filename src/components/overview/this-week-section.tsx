@@ -11,6 +11,7 @@ import { ProjectStatusBadge } from "@/components/projects/project-status-badge";
 import { TaskPriorityBadge } from "@/components/tasks/task-priority-badge";
 import { TaskProjectTag } from "@/components/tasks/task-project-tag";
 import { formatProjectDeadline } from "@/lib/projects/format";
+import { getProjectDisplayName } from "@/lib/projects/display";
 import { formatShortDueDate } from "@/lib/overview/date";
 import type { OverviewSnapshot } from "@/lib/overview/selectors";
 
@@ -91,7 +92,7 @@ export function ThisWeekSection({ snapshot }: ThisWeekSectionProps) {
                   >
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-foreground">
-                        {project.client_name}
+                        {getProjectDisplayName(project)}
                       </p>
                       {projectsVis.deadline ? (
                         <p className="text-xs text-muted-foreground">

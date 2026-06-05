@@ -30,7 +30,9 @@ export function buildCalendarEvents(
   contentPosts: ContentPost[] = []
 ): CalendarEvent[] {
   const events: CalendarEvent[] = [];
-  const projectNames = new Map(projects.map((project) => [project.id, project.client_name]));
+  const projectNames = new Map(
+    projects.map((project) => [project.id, project.project_name])
+  );
 
   for (const project of projects) {
     const status = project.status ?? "active";
@@ -40,7 +42,7 @@ export function buildCalendarEvents(
       id: project.id,
       type: "project",
       date: project.deadline,
-      title: project.client_name,
+      title: project.project_name,
       href: "/projects",
       meta: "Project deadline",
     });

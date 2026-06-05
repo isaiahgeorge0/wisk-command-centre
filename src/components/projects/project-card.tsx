@@ -25,6 +25,7 @@ import {
   formatProjectValue,
 } from "@/lib/projects/format";
 import { projectToFormInput } from "@/lib/projects/form";
+import { getProjectClientLabel, getProjectDisplayName } from "@/lib/projects/display";
 import { getProjectTaskStats } from "@/lib/projects/progress";
 import type { Project, ProjectFormInput } from "@/lib/projects/types";
 import type { TaskWithProject } from "@/lib/tasks/types";
@@ -33,6 +34,7 @@ import { cn } from "@/lib/utils";
 type ProjectCardProps = {
   project: Project;
   tasks: TaskWithProject[];
+  recentProjectTypes: string[];
   vercelConnected: boolean;
   githubConnected: boolean;
   onDelete: (project: Project) => void;
@@ -45,6 +47,7 @@ type ProjectCardProps = {
 export function ProjectCard({
   project,
   tasks,
+  recentProjectTypes,
   vercelConnected,
   githubConnected,
   onDelete,
@@ -117,6 +120,7 @@ export function ProjectCard({
               values={values}
               onChange={setValues}
               projectTypeOptions={serviceTypes}
+              recentProjectTypes={recentProjectTypes}
               disabled={isPending}
             />
             {error ? (
@@ -154,8 +158,13 @@ export function ProjectCard({
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <h3 className="truncate text-base font-semibold text-foreground">
-              {project.client_name}
+              {getProjectDisplayName(project)}
             </h3>
+            {getProjectClientLabel(project) ? (
+              <p className="truncate text-xs text-muted-foreground">
+                for {getProjectClientLabel(project)}
+              </p>
+            ) : null}
           </div>
           <ProjectStatusBadge status={project.status} />
         </div>

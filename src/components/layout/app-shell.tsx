@@ -1,5 +1,6 @@
 "use client";
 
+import { AnnouncementBanner } from "@/components/announcements/announcement-banner";
 import { OnboardingOverlay } from "@/components/onboarding/onboarding-overlay";
 import { OnboardingProvider } from "@/components/onboarding/onboarding-context";
 import { BottomNav } from "@/components/layout/bottom-nav";
@@ -10,6 +11,7 @@ import { QuickAddProvider } from "@/components/quick-add/quick-add-context";
 import { ProjectTourCelebration } from "@/components/spotlight-tour/project-tour-celebration";
 import { SpotlightTourOverlay } from "@/components/spotlight-tour/spotlight-tour-overlay";
 import { SpotlightTourProvider } from "@/components/spotlight-tour/spotlight-tour-context";
+import type { ActiveAnnouncement } from "@/lib/admin/types";
 import type { Notification } from "@/lib/notifications/types";
 import type { FieldVisibility } from "@/lib/preferences/types";
 
@@ -24,6 +26,7 @@ type AppShellProps = {
   projectTourCompleted: boolean;
   notifications: Notification[];
   unreadNotificationCount: number;
+  announcements: ActiveAnnouncement[];
 };
 
 export function AppShell({
@@ -37,6 +40,7 @@ export function AppShell({
   projectTourCompleted,
   notifications,
   unreadNotificationCount,
+  announcements,
 }: AppShellProps) {
   return (
     <OnboardingProvider initialOpen={!onboardingCompleted}>
@@ -54,6 +58,7 @@ export function AppShell({
                 unreadNotificationCount={unreadNotificationCount}
               />
               <main className="mx-auto max-w-7xl px-4 pt-16 pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:px-6 md:pb-24 lg:px-8">
+                <AnnouncementBanner announcements={announcements} />
                 {children}
               </main>
               <QuickAddFab />

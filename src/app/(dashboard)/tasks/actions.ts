@@ -23,14 +23,14 @@ const taskFormSchema = z.object({
 });
 
 type TaskRow = TaskWithProject & {
-  projects: { client_name: string } | null;
+  projects: { project_name: string } | null;
 };
 
 function mapTaskRow(row: TaskRow): TaskWithProject {
   const { projects, ...task } = row;
   return {
     ...task,
-    project_name: projects?.client_name ?? null,
+    project_name: projects?.project_name ?? null,
   };
 }
 
@@ -48,7 +48,7 @@ export async function getTasks(): Promise<TaskWithProject[]> {
 
   const { data, error } = await supabase
     .from("tasks")
-    .select("*, projects(client_name)")
+    .select("*, projects(project_name)")
     .eq("user_id", userId)
     .order("completed", { ascending: true })
     .order("due_date", { ascending: true, nullsFirst: false })
@@ -66,7 +66,7 @@ export async function getProjectsForSelect(): Promise<ProjectOption[]> {
   const projects = await getProjects();
   return projects.map((p) => ({
     id: p.id,
-    client_name: p.client_name,
+    project_name: p.project_name,
   }));
 }
 
@@ -90,7 +90,7 @@ export async function createTask(
       completed: false,
       ...toDbPayload(parsed.data),
     })
-    .select("*, projects(client_name)")
+    .select("*, projects(project_name)")
     .single();
 
   if (error) {
@@ -123,7 +123,7 @@ export async function updateTask(
     .update(toDbPayload(parsed.data))
     .eq("id", id)
     .eq("user_id", userId)
-    .select("*, projects(client_name)")
+    .select("*, projects(project_name)")
     .single();
 
   if (error) {
@@ -148,7 +148,7 @@ export async function toggleTaskCompleted(
     .update({ completed })
     .eq("id", id)
     .eq("user_id", userId)
-    .select("*, projects(client_name)")
+    .select("*, projects(project_name)")
     .single();
 
   if (error) {

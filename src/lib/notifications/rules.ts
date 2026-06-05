@@ -16,7 +16,7 @@ type TaskRow = {
 
 type ProjectRow = {
   id: string;
-  client_name: string;
+  project_name: string;
   status: string | null;
   deadline: string | null;
   updated_at: string;
@@ -93,7 +93,7 @@ export function buildNotificationCandidates(
         type: "deadline_approaching",
         reference_id: project.id,
         title: "Deadline approaching",
-        message: `${project.client_name} — due in ${days} day${days === 1 ? "" : "s"}`,
+        message: `${project.project_name} — due in ${days} day${days === 1 ? "" : "s"}`,
         link_to: "/projects",
       });
     }
@@ -103,7 +103,7 @@ export function buildNotificationCandidates(
         type: "stalled_project",
         reference_id: project.id,
         title: "Stalled project",
-        message: `${project.client_name} — no updates in 14+ days`,
+        message: `${project.project_name} — no updates in 14+ days`,
         link_to: "/projects",
       });
     }

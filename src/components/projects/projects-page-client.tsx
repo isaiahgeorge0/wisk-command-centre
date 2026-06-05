@@ -2,7 +2,7 @@
 
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { PageTransition } from "@/components/layout/page-transition";
 import { DeleteProjectDialog } from "@/components/projects/delete-project-dialog";
@@ -13,6 +13,8 @@ import { useQuickAdd } from "@/components/quick-add/quick-add-context";
 import { useSpotlightTour } from "@/components/spotlight-tour/spotlight-tour-context";
 import { Button } from "@/components/ui/button";
 import { PAGE_SUBTITLE_CLASS, PAGE_TITLE_CLASS } from "@/lib/navigation";
+import { getProjectDisplayName } from "@/lib/projects/display";
+import { getRecentProjectTypes } from "@/lib/projects/recent-project-types";
 import type { SafeIntegration } from "@/lib/integrations/types";
 import type { Project } from "@/lib/projects/types";
 import type { TaskWithProject } from "@/lib/tasks/types";
@@ -35,8 +37,13 @@ export function ProjectsPageClient({
   const [tasks, setTasks] = useState(initialTasks);
   const [deleteTarget, setDeleteTarget] = useState<{
     id: string;
-    clientName: string;
+    projectName: string;
   } | null>(null);
+
+  const recentProjectTypes = useMemo(
+    () => getRecentProjectTypes(projects),
+    [projects]
+  );
 
   useEffect(() => {
     consumePendingStart();
@@ -60,7 +67,10 @@ export function ProjectsPageClient({
   );
 
   const handleDeleteRequest = useCallback((project: Project) => {
-    setDeleteTarget({ id: project.id, clientName: project.client_name });
+    setDeleteTarget({
+      id: project.id,
+      projectName: getProjectDisplayName(project),
+    });
   }, []);
 
   const handleTaskUpdate = useCallback((updated: TaskWithProject) => {
@@ -117,6 +127,7 @@ export function ProjectsPageClient({
         <ProjectsList
           projects={projects}
           tasks={tasks}
+          recentProjectTypes={recentProjectTypes}
           vercelConnected={vercelConnected}
           githubConnected={githubConnected}
           onDelete={handleDeleteRequest}
@@ -130,11 +141,12 @@ export function ProjectsPageClient({
       <ProjectFormDialog
         open={projectAddOpen}
         onOpenChange={setProjectAddOpen}
+        recentProjectTypes={recentProjectTypes}
       />
 
       <DeleteProjectDialog
         projectId={deleteTarget?.id ?? null}
-        clientName={deleteTarget?.clientName ?? ""}
+        projectName={deleteTarget?.projectName ?? ""}
         open={deleteTarget !== null}
         onOpenChange={(open) => {
           if (!open) setDeleteTarget(null);

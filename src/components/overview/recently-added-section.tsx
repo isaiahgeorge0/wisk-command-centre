@@ -10,6 +10,7 @@ import { useStaggerOnce } from "@/lib/motion/use-stagger-once";
 import { IdeaStatusBadge } from "@/components/ideas/idea-status-badge";
 import { ProjectStatusBadge } from "@/components/projects/project-status-badge";
 import { ProjectTaskProgressBar } from "@/components/projects/project-task-progress-bar";
+import { getProjectDisplayName } from "@/lib/projects/display";
 import type { OverviewSnapshot } from "@/lib/overview/selectors";
 
 type RecentlyAddedSectionProps = {
@@ -76,7 +77,7 @@ export function RecentlyAddedSection({ snapshot }: RecentlyAddedSectionProps) {
                   >
                     <div className="flex items-start justify-between gap-2">
                       <p className="font-medium text-foreground">
-                        {project.client_name}
+                        {getProjectDisplayName(project)}
                       </p>
                       <ProjectStatusBadge status={project.status} />
                     </div>

@@ -11,6 +11,7 @@ import { TaskPriorityBadge } from "@/components/tasks/task-priority-badge";
 import { TaskProjectTag } from "@/components/tasks/task-project-tag";
 import { formatGoalDeadline } from "@/lib/goals/format";
 import { formatShortDueDate } from "@/lib/overview/date";
+import { getProjectDisplayName } from "@/lib/projects/display";
 import { hasNeedsAttention, type OverviewSnapshot } from "@/lib/overview/selectors";
 import { cn } from "@/lib/utils";
 
@@ -113,7 +114,7 @@ export function NeedsAttentionSection({ snapshot }: NeedsAttentionSectionProps) 
                 <StaggerItem key={project.id} stagger={stagger} as="div">
                   <AttentionRow href="/projects">
                     <span className="font-medium text-foreground">
-                      {project.client_name}
+                      {getProjectDisplayName(project)}
                     </span>
                     {projectsVis.serviceType ? (
                       <p className="mt-1 text-sm text-muted-foreground">

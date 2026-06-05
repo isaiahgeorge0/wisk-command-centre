@@ -105,7 +105,7 @@ export function TaskForm({
               { value: NO_PROJECT_VALUE, label: "No project" },
               ...projects.map((project) => ({
                 value: project.id,
-                label: project.client_name,
+                label: project.project_name,
               })),
             ]}
           >
@@ -123,7 +123,7 @@ export function TaskForm({
                       return "No project";
                     }
                     const project = projects.find((p) => p.id === value);
-                    return project?.client_name ?? String(value);
+                    return project?.project_name ?? String(value);
                   }}
                 </SelectValue>
               </SelectTrigger>
@@ -131,7 +131,7 @@ export function TaskForm({
                 <SelectItem value={NO_PROJECT_VALUE}>No project</SelectItem>
                 {projects.map((project) => (
                   <SelectItem key={project.id} value={project.id}>
-                    {project.client_name}
+                    {project.project_name}
                   </SelectItem>
                 ))}
               </SelectContent>

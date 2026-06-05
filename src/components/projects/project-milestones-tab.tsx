@@ -1,6 +1,6 @@
 "use client";
 
-import { Diamond, Plus, Trash2 } from "lucide-react";
+import { Flag, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
@@ -134,13 +134,17 @@ export function ProjectMilestonesTab({
   return (
     <div>
       {milestones.length === 0 ? (
-        <div className="flex flex-col items-center py-8 text-center">
-          <Diamond
+        <div className="flex flex-col items-center px-4 py-8 text-center">
+          <Flag
             className="mb-3 size-8 text-muted-foreground/60"
             aria-hidden
           />
-          <p className="text-sm text-muted-foreground">
-            No milestones yet. Add one below.
+          <h4 className="text-sm font-medium text-foreground">
+            No milestones yet
+          </h4>
+          <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground">
+            Add key dates and checkpoints for this project. Milestones appear
+            on your calendar as diamond markers.
           </p>
         </div>
       ) : (

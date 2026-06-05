@@ -174,7 +174,8 @@ export async function importVercelProjects(
 
   const rows = toImport.map((project) => ({
     user_id: userId,
-    client_name: project.name,
+    project_name: project.name,
+    client_name: null,
     service_type: VERCEL_IMPORT_SERVICE_TYPE,
     status: "active" as const,
     site_url: project.productionUrl,

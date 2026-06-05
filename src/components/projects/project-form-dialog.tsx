@@ -22,9 +22,14 @@ import type { ProjectFormInput } from "@/lib/projects/types";
 type ProjectFormDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  recentProjectTypes: string[];
 };
 
-export function ProjectFormDialog({ open, onOpenChange }: ProjectFormDialogProps) {
+export function ProjectFormDialog({
+  open,
+  onOpenChange,
+  recentProjectTypes,
+}: ProjectFormDialogProps) {
   const { serviceTypes } = usePreferences();
   const { isActive: tourActive, handleProjectCreated } = useSpotlightTour();
   const router = useRouter();
@@ -85,6 +90,7 @@ export function ProjectFormDialog({ open, onOpenChange }: ProjectFormDialogProps
             values={values}
             onChange={setValues}
             projectTypeOptions={serviceTypes}
+            recentProjectTypes={recentProjectTypes}
             disabled={isPending}
           />
           {error ? (

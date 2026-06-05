@@ -162,7 +162,7 @@ export async function updateServiceTypes(
 }
 
 export type ServiceTypeUsage = {
-  clientName: string;
+  projectName: string;
   id: string;
 };
 
@@ -174,10 +174,10 @@ export async function getProjectsUsingServiceType(
 
   const { data, error } = await supabase
     .from("projects")
-    .select("id, client_name")
+    .select("id, project_name")
     .eq("user_id", userId)
     .eq("service_type", trimmed)
-    .order("client_name");
+    .order("project_name");
 
   if (error) {
     throw new Error(error.message);
@@ -185,7 +185,7 @@ export async function getProjectsUsingServiceType(
 
   return (data ?? []).map((row) => ({
     id: row.id,
-    clientName: row.client_name,
+    projectName: row.project_name,
   }));
 }
 
@@ -197,7 +197,7 @@ export async function removeServiceType(
 
   const affected = await getProjectsUsingServiceType(trimmed);
   if (affected.length > 0) {
-    const names = affected.map((p) => p.clientName).join(", ");
+    const names = affected.map((p) => p.projectName).join(", ");
     return {
       success: false,
       error: `Cannot delete "${trimmed}" — used by: ${names}`,

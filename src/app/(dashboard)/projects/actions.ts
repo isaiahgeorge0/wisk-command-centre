@@ -9,7 +9,8 @@ import type { ActionResult, Project, ProjectFormInput } from "@/lib/projects/typ
 import { PROJECT_STATUSES } from "@/lib/projects/types";
 
 const projectFormSchema = z.object({
-  client_name: z.string().trim().min(1, "Client name is required"),
+  project_name: z.string().trim().min(1, "Project name is required"),
+  client_name: z.string().optional(),
   service_type: z.string().trim().min(1, "Project type is required"),
   status: z.enum(PROJECT_STATUSES),
   next_action: z.string().optional(),
@@ -22,7 +23,8 @@ const projectFormSchema = z.object({
 
 function toDbPayload(input: ProjectFormInput) {
   return {
-    client_name: input.client_name.trim(),
+    project_name: input.project_name.trim(),
+    client_name: emptyToNull(input.client_name),
     service_type: input.service_type.trim(),
     status: input.status,
     next_action: emptyToNull(input.next_action),

@@ -2,6 +2,7 @@ import type { Project, ProjectFormInput } from "@/lib/projects/types";
 import { PROJECT_STATUSES, type ProjectStatus } from "@/lib/projects/types";
 
 export const EMPTY_PROJECT_FORM: ProjectFormInput = {
+  project_name: "",
   client_name: "",
   service_type: "",
   status: "active",
@@ -15,7 +16,8 @@ export const EMPTY_PROJECT_FORM: ProjectFormInput = {
 
 export function projectToFormInput(project: Project): ProjectFormInput {
   return {
-    client_name: project.client_name,
+    project_name: project.project_name,
+    client_name: project.client_name ?? "",
     service_type: project.service_type ?? "",
     status: isProjectStatus(project.status) ? project.status : "active",
     next_action: project.next_action ?? "",

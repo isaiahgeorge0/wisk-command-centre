@@ -58,6 +58,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
+    const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+    const userEmail = user?.email?.trim().toLowerCase();
+    if (!adminEmail || userEmail !== adminEmail) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/";
+      return NextResponse.redirect(url);
+    }
+  }
+
   return supabaseResponse;
 }
 

@@ -16,7 +16,7 @@ import {
 
 type DeleteProjectDialogProps = {
   projectId: string | null;
-  clientName: string;
+  projectName: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDeleted: (id: string) => void;
@@ -24,7 +24,7 @@ type DeleteProjectDialogProps = {
 
 export function DeleteProjectDialog({
   projectId,
-  clientName,
+  projectName,
   open,
   onOpenChange,
   onDeleted,
@@ -49,7 +49,7 @@ export function DeleteProjectDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Delete project?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will permanently remove <strong>{clientName}</strong>. This
+            This will permanently remove <strong>{projectName}</strong>. This
             action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>

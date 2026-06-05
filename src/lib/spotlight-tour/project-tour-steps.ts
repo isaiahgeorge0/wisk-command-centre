@@ -13,9 +13,9 @@ export const PROJECT_TOUR_STEPS: ProjectTourStep[] = [
     cta: "Got it",
   },
   {
-    target: "client-name",
-    title: "Who is this for?",
-    body: "Enter your client's name or the name of the project. This is how it will appear across your command centre.",
+    target: "project-name",
+    title: "Name your project",
+    body: "Give this project a clear name that describes the work. Add a client name below if this is for a specific person or business.",
     cta: "Next",
   },
   {

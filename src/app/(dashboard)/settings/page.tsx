@@ -2,6 +2,7 @@ import { Suspense } from "react";
 
 import { SettingsPageShell } from "@/components/settings/settings-page-shell";
 import { getIntegrations } from "@/app/(dashboard)/settings/integrations/actions";
+import { isAdminEmail } from "@/lib/auth/is-admin";
 import { getUserProfile } from "@/lib/auth/get-user-profile";
 import { getOrCreateUserPreferences } from "@/lib/preferences/get-user-preferences";
 
@@ -25,6 +26,7 @@ export default async function SettingsPage() {
         fieldVisibility={preferences.fieldVisibility}
         serviceTypes={preferences.serviceTypes}
         integrations={integrations}
+        showAdminLink={isAdminEmail(profile.email)}
       />
     </Suspense>
   );
