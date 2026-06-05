@@ -12,12 +12,12 @@ export const NAV_ITEMS = [
 
 export type NavItem = (typeof NAV_ITEMS)[number];
 
-/** Bottom nav routes (subset of NAV_ITEMS — no AI Digest). */
+/** Bottom nav routes (subset of NAV_ITEMS — no Overview, Calendar, AI Digest). */
 export const MOBILE_NAV_ITEMS = [
-  { label: "Overview", href: "/" },
   { label: "Projects", href: "/projects" },
   { label: "Tasks", href: "/tasks" },
   { label: "Goals", href: "/goals" },
+  { label: "Ideas", href: "/ideas" },
   { label: "Content", href: "/content" },
   { label: "Leads", href: "/leads" },
 ] as const;

@@ -4,7 +4,7 @@ import {
   CheckSquare,
   Clapperboard,
   FolderKanban,
-  LayoutDashboard,
+  Lightbulb,
   Target,
   UserPlus,
 } from "lucide-react";
@@ -15,10 +15,10 @@ import { isNavActive, MOBILE_NAV_ITEMS } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
 const MOBILE_NAV_ICONS = {
-  "/": LayoutDashboard,
   "/projects": FolderKanban,
   "/tasks": CheckSquare,
   "/goals": Target,
+  "/ideas": Lightbulb,
   "/content": Clapperboard,
   "/leads": UserPlus,
 } as const;
