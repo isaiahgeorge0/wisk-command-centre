@@ -27,6 +27,7 @@ type AppShellProps = {
   notifications: Notification[];
   unreadNotificationCount: number;
   announcements: ActiveAnnouncement[];
+  displayName: string;
 };
 
 export function AppShell({
@@ -41,6 +42,7 @@ export function AppShell({
   notifications,
   unreadNotificationCount,
   announcements,
+  displayName,
 }: AppShellProps) {
   return (
     <OnboardingProvider initialOpen={!onboardingCompleted}>
@@ -64,7 +66,7 @@ export function AppShell({
               <QuickAddFab />
               <BottomNav />
               <SpotlightTourOverlay />
-              <ProjectTourCelebration />
+              <ProjectTourCelebration displayName={displayName} />
               <OnboardingOverlay />
             </div>
           </SpotlightTourProvider>

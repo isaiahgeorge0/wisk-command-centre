@@ -10,6 +10,7 @@ import type { FieldVisibility } from "@/lib/preferences/types";
 type SettingsPageShellProps = {
   email: string;
   displayName: string;
+  accountName: string;
   fieldVisibility: FieldVisibility;
   serviceTypes: string[];
   integrations: SafeIntegration[];

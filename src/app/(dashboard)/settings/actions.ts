@@ -35,7 +35,7 @@ export async function updateProfileName(
 ): Promise<SettingsActionResult> {
   const trimmed = name.trim();
   if (!trimmed) {
-    return { success: false, error: "Display name is required" };
+    return { success: false, error: "Name is required" };
   }
 
   const { supabase, userId } = await getScopedSupabase();
@@ -55,6 +55,32 @@ export async function updateProfileName(
 
   if (authError) {
     return { success: false, error: authError.message };
+  }
+
+  revalidateApp();
+  return { success: true };
+}
+
+export async function updateDisplayName(
+  displayName: string
+): Promise<SettingsActionResult> {
+  const trimmed = displayName.trim();
+  if (!trimmed) {
+    return { success: false, error: "Display name is required" };
+  }
+
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { error } = await supabase
+    .from("user_preferences")
+    .update({
+      display_name: trimmed,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", userId);
+
+  if (error) {
+    return { success: false, error: error.message };
   }
 
   revalidateApp();

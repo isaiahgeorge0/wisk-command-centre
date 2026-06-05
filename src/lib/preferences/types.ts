@@ -36,6 +36,8 @@ export type FieldVisibility = {
   ideas: IdeaFieldVisibility;
 };
 
+export type ThemePreference = "dark" | "light";
+
 export type UserPreferencesRow = {
   id: string;
   user_id: string;
@@ -43,6 +45,9 @@ export type UserPreferencesRow = {
   service_types: unknown;
   onboarding_completed: boolean;
   project_tour_completed: boolean;
+  personalisation_completed: boolean;
+  display_name: string | null;
+  theme_preference: string;
   created_at: string;
   updated_at: string;
 };
@@ -54,6 +59,9 @@ export type UserPreferences = {
   serviceTypes: string[];
   onboardingCompleted: boolean;
   projectTourCompleted: boolean;
+  personalisationCompleted: boolean;
+  displayName: string | null;
+  themePreference: ThemePreference;
   createdAt: string;
   updatedAt: string;
 };
@@ -124,6 +132,10 @@ export function normalizeServiceTypes(types: string[]): string[] {
   return result;
 }
 
+export function normalizeThemePreference(value: unknown): ThemePreference {
+  return value === "light" ? "light" : "dark";
+}
+
 export function rowToUserPreferences(row: UserPreferencesRow): UserPreferences {
   return {
     id: row.id,
@@ -132,6 +144,9 @@ export function rowToUserPreferences(row: UserPreferencesRow): UserPreferences {
     serviceTypes: mergeServiceTypes(row.service_types),
     onboardingCompleted: row.onboarding_completed ?? false,
     projectTourCompleted: row.project_tour_completed ?? false,
+    personalisationCompleted: row.personalisation_completed ?? false,
+    displayName: row.display_name ?? null,
+    themePreference: normalizeThemePreference(row.theme_preference),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

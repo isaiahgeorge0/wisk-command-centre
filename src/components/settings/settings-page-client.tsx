@@ -20,6 +20,7 @@ import type { FieldVisibility } from "@/lib/preferences/types";
 type SettingsPageClientProps = {
   email: string;
   displayName: string;
+  accountName: string;
   fieldVisibility: FieldVisibility;
   serviceTypes: string[];
   integrations: SafeIntegration[];
@@ -28,6 +29,7 @@ type SettingsPageClientProps = {
 export function SettingsPageClient({
   email,
   displayName,
+  accountName,
   fieldVisibility,
   serviceTypes,
   integrations,
@@ -65,7 +67,11 @@ export function SettingsPageClient({
 
       {activeTab === "profile" ? (
         <>
-          <SettingsProfileSection email={email} initialName={displayName} />
+          <SettingsProfileSection
+            email={email}
+            initialDisplayName={displayName}
+            initialName={accountName}
+          />
           <SettingsToolsSection />
         </>
       ) : null}

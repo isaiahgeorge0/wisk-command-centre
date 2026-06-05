@@ -6,6 +6,7 @@ import {
 import {
   mergeFieldVisibility,
   mergeServiceTypes,
+  normalizeThemePreference,
   rowToUserPreferences,
   type UserPreferences,
   type UserPreferencesRow,
@@ -53,6 +54,9 @@ export function parseStoredPreferences(row: UserPreferencesRow): UserPreferences
     serviceTypes: mergeServiceTypes(row.service_types),
     onboardingCompleted: row.onboarding_completed ?? false,
     projectTourCompleted: row.project_tour_completed ?? false,
+    personalisationCompleted: row.personalisation_completed ?? false,
+    displayName: row.display_name ?? null,
+    themePreference: normalizeThemePreference(row.theme_preference),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

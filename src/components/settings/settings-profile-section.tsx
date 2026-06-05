@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 
 import {
   changePassword,
+  updateDisplayName,
   updateProfileName,
 } from "@/app/(dashboard)/settings/actions";
 import { UserAvatar } from "@/components/settings/user-avatar";
@@ -21,14 +22,17 @@ import { Label } from "@/components/ui/label";
 
 type SettingsProfileSectionProps = {
   email: string;
+  initialDisplayName: string;
   initialName: string;
 };
 
 export function SettingsProfileSection({
   email,
+  initialDisplayName,
   initialName,
 }: SettingsProfileSectionProps) {
   const router = useRouter();
+  const [displayName, setDisplayName] = useState(initialDisplayName);
   const [name, setName] = useState(initialName);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -40,18 +44,28 @@ export function SettingsProfileSection({
   const [isProfilePending, startProfileTransition] = useTransition();
   const [isPasswordPending, startPasswordTransition] = useTransition();
 
-  const handleSaveName = (e: React.FormEvent) => {
+  const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
     setProfileMessage(null);
     setProfileError(null);
 
     startProfileTransition(async () => {
-      const result = await updateProfileName(name);
-      if (!result.success) {
-        setProfileError(result.error);
+      const [displayResult, nameResult] = await Promise.all([
+        updateDisplayName(displayName),
+        updateProfileName(name),
+      ]);
+
+      if (!displayResult.success) {
+        setProfileError(displayResult.error);
         return;
       }
-      setProfileMessage("Display name saved.");
+
+      if (!nameResult.success) {
+        setProfileError(nameResult.error);
+        return;
+      }
+
+      setProfileMessage("Profile saved.");
       router.refresh();
     });
   };
@@ -88,23 +102,41 @@ export function SettingsProfileSection({
       </CardHeader>
       <CardContent className="space-y-8">
         <div className="flex items-center gap-4">
-          <UserAvatar name={name} email={email} />
+          <UserAvatar name={displayName} email={email} />
           <div className="min-w-0">
-            <p className="font-medium text-foreground">{name || email}</p>
+            <p className="font-medium text-foreground">
+              {displayName || email}
+            </p>
             <p className="truncate text-sm text-muted-foreground">{email}</p>
           </div>
         </div>
 
-        <form onSubmit={handleSaveName} className="grid max-w-md gap-4">
+        <form onSubmit={handleSaveProfile} className="grid max-w-md gap-4">
           <div className="grid gap-2">
             <Label htmlFor="display-name">Display name</Label>
             <Input
               id="display-name"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              disabled={isProfilePending}
+              required
+            />
+            <p className="text-xs text-muted-foreground">
+              Shown in the nav, greetings, and across the app.
+            </p>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="account-name">Name</Label>
+            <Input
+              id="account-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               disabled={isProfilePending}
               required
             />
+            <p className="text-xs text-muted-foreground">
+              Your account name stored on your profile.
+            </p>
           </div>
           <div className="grid gap-2">
             <Label htmlFor="email">Email</Label>
@@ -120,7 +152,7 @@ export function SettingsProfileSection({
             <p className="text-sm text-wisk-teal">{profileMessage}</p>
           ) : null}
           <Button type="submit" size="sm" disabled={isProfilePending} className="w-fit">
-            {isProfilePending ? "Saving…" : "Save name"}
+            {isProfilePending ? "Saving…" : "Save profile"}
           </Button>
         </form>
 

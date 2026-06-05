@@ -9,6 +9,11 @@ function isPublicPath(pathname: string): boolean {
   );
 }
 
+function withPathnameHeader(response: NextResponse, pathname: string) {
+  response.headers.set("x-pathname", pathname);
+  return response;
+}
+
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -42,11 +47,21 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
+  const isWelcomePath = pathname === "/welcome";
 
   if (user && pathname === "/sign-in") {
     const url = request.nextUrl.clone();
-    url.pathname = "/";
-    return NextResponse.redirect(url);
+    const { data: prefs } = await supabase
+      .from("user_preferences")
+      .select("personalisation_completed")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    const needsPersonalisation =
+      !prefs || prefs.personalisation_completed === false;
+
+    url.pathname = needsPersonalisation ? "/welcome" : "/";
+    return withPathnameHeader(NextResponse.redirect(url), pathname);
   }
 
   if (!user && !isPublicPath(pathname)) {
@@ -55,7 +70,25 @@ export async function middleware(request: NextRequest) {
     if (pathname !== "/") {
       url.searchParams.set("redirectTo", pathname);
     }
-    return NextResponse.redirect(url);
+    return withPathnameHeader(NextResponse.redirect(url), pathname);
+  }
+
+  if (
+    user &&
+    !isWelcomePath &&
+    !isPublicPath(pathname)
+  ) {
+    const { data: prefs } = await supabase
+      .from("user_preferences")
+      .select("personalisation_completed")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (!prefs || prefs.personalisation_completed === false) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/welcome";
+      return withPathnameHeader(NextResponse.redirect(url), pathname);
+    }
   }
 
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {
@@ -64,11 +97,11 @@ export async function middleware(request: NextRequest) {
     if (!adminEmail || userEmail !== adminEmail) {
       const url = request.nextUrl.clone();
       url.pathname = "/";
-      return NextResponse.redirect(url);
+      return withPathnameHeader(NextResponse.redirect(url), pathname);
     }
   }
 
-  return supabaseResponse;
+  return withPathnameHeader(supabaseResponse, pathname);
 }
 
 export const config = {

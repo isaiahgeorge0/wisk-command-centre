@@ -59,7 +59,13 @@ function ProjectTourConfetti() {
   );
 }
 
-export function ProjectTourCelebration() {
+type ProjectTourCelebrationProps = {
+  displayName: string;
+};
+
+export function ProjectTourCelebration({
+  displayName,
+}: ProjectTourCelebrationProps) {
   const reduced = useReducedMotion();
   const { showCelebration, dismissCelebration } = useSpotlightTour();
 
@@ -96,7 +102,9 @@ export function ProjectTourCelebration() {
           </div>
 
           <h2 className="mt-5 text-2xl font-semibold tracking-tight text-foreground">
-            Your first project is live.
+            {displayName.trim()
+              ? `${displayName.trim()}, your first project is live.`
+              : "Your first project is live."}
           </h2>
           <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground sm:text-base">
             Your command centre is ready. Keep adding projects, tasks, and goals

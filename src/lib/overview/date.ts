@@ -88,7 +88,8 @@ export type OverviewHeaderContent = {
 };
 
 export function getOverviewHeader(
-  now: Date = new Date()
+  now: Date = new Date(),
+  displayName?: string | null
 ): OverviewHeaderContent {
   const { dayOfWeek, hour } = getOverviewDateContext(now);
 
@@ -108,8 +109,12 @@ export function getOverviewHeader(
     };
   }
 
+  const greeting = getTimeGreeting(hour);
+  const trimmedName = displayName?.trim();
+  const title = trimmedName ? `${greeting}, ${trimmedName}` : greeting;
+
   return {
-    title: getTimeGreeting(hour),
+    title,
     subtitle: formatOverviewDate(now),
   };
 }

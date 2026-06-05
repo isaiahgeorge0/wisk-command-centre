@@ -62,7 +62,8 @@ export function buildOverviewSnapshot(
   ideas: Idea[],
   leads: Lead[] = [],
   contentPosts: ContentPost[] = [],
-  now: Date = new Date()
+  now: Date = new Date(),
+  displayName?: string | null
 ): OverviewSnapshot {
   const dateContext = getOverviewDateContext(now);
   const { todayISO, weekEndISO } = dateContext;
@@ -126,7 +127,7 @@ export function buildOverviewSnapshot(
   );
 
   return {
-    header: getOverviewHeader(now),
+    header: getOverviewHeader(now, displayName),
     dateContext,
     stats: {
       activeProjects: projects.filter(isActiveProject).length,
