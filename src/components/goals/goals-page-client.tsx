@@ -16,9 +16,13 @@ import type { Goal } from "@/lib/goals/types";
 
 type GoalsPageClientProps = {
   initialGoals: Goal[];
+  publishedPostCounts: Record<string, number>;
 };
 
-export function GoalsPageClient({ initialGoals }: GoalsPageClientProps) {
+export function GoalsPageClient({
+  initialGoals,
+  publishedPostCounts,
+}: GoalsPageClientProps) {
   const router = useRouter();
   const { goalAddOpen, setGoalAddOpen, openGoalAdd } = useQuickAdd();
   const [goals, setGoals] = useState(initialGoals);
@@ -67,6 +71,7 @@ export function GoalsPageClient({ initialGoals }: GoalsPageClientProps) {
       ) : (
         <GoalsList
           goals={goals}
+          publishedPostCounts={publishedPostCounts}
           onGoalUpdate={handleGoalUpdate}
           onGoalDelete={handleDeleteRequest}
         />

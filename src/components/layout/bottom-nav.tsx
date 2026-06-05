@@ -1,12 +1,12 @@
 "use client";
 
 import {
-  CalendarDays,
   CheckSquare,
+  Clapperboard,
   FolderKanban,
   LayoutDashboard,
-  Lightbulb,
   Target,
+  UserPlus,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -19,8 +19,8 @@ const MOBILE_NAV_ICONS = {
   "/projects": FolderKanban,
   "/tasks": CheckSquare,
   "/goals": Target,
-  "/ideas": Lightbulb,
-  "/calendar": CalendarDays,
+  "/content": Clapperboard,
+  "/leads": UserPlus,
 } as const;
 
 export function BottomNav() {

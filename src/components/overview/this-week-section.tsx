@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { ContentPlatformBadge } from "@/components/content/content-platform-badge";
 import { StaggerItem } from "@/components/motion/stagger-item";
 import { StaggerList } from "@/components/motion/stagger-list";
 import { usePreferences } from "@/components/preferences/preferences-context";
@@ -23,8 +24,10 @@ export function ThisWeekSection({ snapshot }: ThisWeekSectionProps) {
   const tasksVis = fieldVisibility.tasks;
   const taskStagger = useStaggerOnce();
   const projectStagger = useStaggerOnce();
+  const contentStagger = useStaggerOnce();
   const hasTasks = snapshot.tasksDueThisWeekGrouped.length > 0;
   const hasProjects = snapshot.projectDeadlinesThisWeek.length > 0;
+  const hasContent = snapshot.contentDueThisWeekGrouped.length > 0;
 
   return (
     <section className="mt-10">
@@ -32,7 +35,7 @@ export function ThisWeekSection({ snapshot }: ThisWeekSectionProps) {
         This week
       </h2>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
         <div className="rounded-xl border border-border/60 bg-card/40 p-4">
           <h3 className="mb-3 text-sm font-medium text-foreground">
             Tasks due
@@ -104,6 +107,46 @@ export function ThisWeekSection({ snapshot }: ThisWeekSectionProps) {
           ) : (
             <p className="text-sm text-muted-foreground">
               No project deadlines in the next 7 days.
+            </p>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-border/60 bg-card/40 p-4">
+          <h3 className="mb-3 text-sm font-medium text-foreground">
+            Content due
+          </h3>
+          {hasContent ? (
+            <div className="space-y-4">
+              {snapshot.contentDueThisWeekGrouped.map((group) => (
+                <div key={group.date}>
+                  <p className="mb-2 text-xs font-medium text-muted-foreground">
+                    {formatShortDueDate(group.date)}
+                  </p>
+                  <StaggerList
+                    stagger={contentStagger}
+                    as="ul"
+                    className="space-y-2"
+                  >
+                    {group.posts.map((post) => (
+                      <StaggerItem key={post.id} stagger={contentStagger} as="li">
+                        <Link
+                          href="/content"
+                          className="flex flex-wrap items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted/50"
+                        >
+                          <span className="text-sm text-foreground">
+                            {post.title}
+                          </span>
+                          <ContentPlatformBadge platform={post.platform} />
+                        </Link>
+                      </StaggerItem>
+                    ))}
+                  </StaggerList>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No content scheduled in the next 7 days.
             </p>
           )}
         </div>

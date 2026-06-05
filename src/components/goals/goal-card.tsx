@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Minus, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -27,6 +28,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { PROGRESS_ACCENT_BORDER_CLASS } from "@/lib/goals/constants";
+import { CONTENT_GOAL_CATEGORY } from "@/lib/content/constants";
 import {
   formatGoalDeadline,
   formatGoalProgressLabel,
@@ -38,6 +40,7 @@ import { cn } from "@/lib/utils";
 type GoalCardProps = {
   goal: Goal;
   showProgressAccent?: boolean;
+  publishedPostCount?: number;
   onUpdate: (goal: Goal) => void;
   onDelete: (goal: Goal) => void;
 };
@@ -45,6 +48,7 @@ type GoalCardProps = {
 export function GoalCard({
   goal,
   showProgressAccent = false,
+  publishedPostCount = 0,
   onUpdate,
   onDelete,
 }: GoalCardProps) {
@@ -176,6 +180,17 @@ export function GoalCard({
                 <GoalCategoryTag category={goal.category} />
               ) : null}
               <GoalStatusBadge status={goal.status} />
+              {goal.category === CONTENT_GOAL_CATEGORY &&
+              publishedPostCount > 0 ? (
+                <Link
+                  href="/content"
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-xs font-medium text-wisk-teal hover:underline"
+                >
+                  {publishedPostCount} post
+                  {publishedPostCount === 1 ? "" : "s"} published
+                </Link>
+              ) : null}
             </div>
           </div>
         </div>

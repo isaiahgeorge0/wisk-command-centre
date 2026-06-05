@@ -13,6 +13,7 @@ import type { GoalStatus } from "@/lib/goals/types";
 
 type GoalsListProps = {
   goals: Goal[];
+  publishedPostCounts: Record<string, number>;
   onGoalUpdate: (goal: Goal) => void;
   onGoalDelete: (goal: Goal) => void;
 };
@@ -26,10 +27,12 @@ function GoalGrid({
   showProgressAccent,
   onGoalUpdate,
   onGoalDelete,
+  publishedPostCounts,
   stagger,
 }: {
   goals: Goal[];
   showProgressAccent?: boolean;
+  publishedPostCounts: Record<string, number>;
   onGoalUpdate: (goal: Goal) => void;
   onGoalDelete: (goal: Goal) => void;
   stagger: boolean;
@@ -48,6 +51,7 @@ function GoalGrid({
           <GoalCard
             goal={goal}
             showProgressAccent={showProgressAccent}
+            publishedPostCount={publishedPostCounts[goal.id] ?? 0}
             onUpdate={onGoalUpdate}
             onDelete={onGoalDelete}
           />
@@ -59,6 +63,7 @@ function GoalGrid({
 
 export function GoalsList({
   goals,
+  publishedPostCounts,
   onGoalUpdate,
   onGoalDelete,
 }: GoalsListProps) {
@@ -104,6 +109,7 @@ export function GoalsList({
           <GoalGrid
             goals={active}
             showProgressAccent
+            publishedPostCounts={publishedPostCounts}
             onGoalUpdate={onGoalUpdate}
             onGoalDelete={onGoalDelete}
             stagger={activeStagger}
@@ -120,6 +126,7 @@ export function GoalsList({
           </h2>
           <GoalGrid
             goals={paused}
+            publishedPostCounts={publishedPostCounts}
             onGoalUpdate={onGoalUpdate}
             onGoalDelete={onGoalDelete}
             stagger={pausedStagger}
@@ -149,6 +156,7 @@ export function GoalsList({
           {archivedExpanded ? (
             <GoalGrid
               goals={completedArchived}
+              publishedPostCounts={publishedPostCounts}
               onGoalUpdate={onGoalUpdate}
               onGoalDelete={onGoalDelete}
               stagger={archivedStagger}

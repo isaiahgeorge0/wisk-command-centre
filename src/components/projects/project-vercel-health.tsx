@@ -53,8 +53,12 @@ export function ProjectVercelHealth({
   }, [enabled, projectId]);
 
   useEffect(() => {
+    if (!enabled) return;
+
     load();
-  }, [load]);
+    const interval = setInterval(load, 60_000);
+    return () => clearInterval(interval);
+  }, [enabled, load]);
 
   if (!enabled) return null;
 
@@ -70,7 +74,8 @@ export function ProjectVercelHealth({
               <span
                 className={cn(
                   "rounded-full px-2 py-0.5 text-[11px] font-medium",
-                  STATE_CLASS[health.state]
+                  STATE_CLASS[health.state],
+                  health.state === "building" && "animate-pulse"
                 )}
               >
                 {STATE_LABELS[health.state]}

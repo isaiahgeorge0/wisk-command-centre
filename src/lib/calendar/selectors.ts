@@ -6,9 +6,11 @@ import type {
   UpcomingWindow,
 } from "@/lib/calendar/types";
 import type { Goal } from "@/lib/goals/types";
+import type { ContentPost } from "@/lib/content/types";
 import type { ProjectMilestone } from "@/lib/projects/milestones/types";
 import type { Project } from "@/lib/projects/types";
 import type { TaskWithProject } from "@/lib/tasks/types";
+import { buildContentCalendarEntries } from "@/lib/content/selectors";
 import {
   addDaysToISO,
   compareDateISO,
@@ -24,7 +26,8 @@ export function buildCalendarEvents(
   projects: Project[],
   tasks: TaskWithProject[],
   goals: Goal[],
-  milestones: ProjectMilestone[] = []
+  milestones: ProjectMilestone[] = [],
+  contentPosts: ContentPost[] = []
 ): CalendarEvent[] {
   const events: CalendarEvent[] = [];
   const projectNames = new Map(projects.map((project) => [project.id, project.client_name]));
@@ -80,6 +83,17 @@ export function buildCalendarEvents(
       title: milestone.title,
       href: "/projects",
       meta: projectNames.get(milestone.project_id) ?? "Project milestone",
+    });
+  }
+
+  for (const entry of buildContentCalendarEntries(contentPosts)) {
+    events.push({
+      id: `${entry.post.id}-${entry.kind}`,
+      type: "content",
+      date: entry.date,
+      title: entry.post.title,
+      href: "/content",
+      meta: entry.post.platform,
     });
   }
 

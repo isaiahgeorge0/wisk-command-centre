@@ -8,7 +8,14 @@ import {
   type OverviewHeaderContent,
 } from "@/lib/overview/date";
 import type { Goal } from "@/lib/goals/types";
+import type { ContentPost } from "@/lib/content/types";
+import {
+  buildContentStats,
+  getPostsDueThisWeek,
+} from "@/lib/content/selectors";
 import type { Idea } from "@/lib/ideas/types";
+import { getRecentLeads } from "@/lib/leads/selectors";
+import type { Lead } from "@/lib/leads/types";
 import { getProjectTaskStatsMap, type ProjectTaskStats } from "@/lib/projects/progress";
 import type { Project } from "@/lib/projects/types";
 import type { TaskWithProject } from "@/lib/tasks/types";
@@ -18,6 +25,10 @@ export type OverviewStats = {
   tasksDueTodayOrOverdue: number;
   activeGoals: number;
   ideasCount: number;
+  contentPublishedThisMonth: number;
+  contentScheduled: number;
+  contentInProgress: number;
+  contentStreak: number;
 };
 
 export type OverviewSnapshot = {
@@ -29,8 +40,10 @@ export type OverviewSnapshot = {
   goalsAtZeroWithDeadline: Goal[];
   tasksDueThisWeekGrouped: { date: string; tasks: TaskWithProject[] }[];
   projectDeadlinesThisWeek: Project[];
+  contentDueThisWeekGrouped: { date: string; posts: ContentPost[] }[];
   recentIdeas: Idea[];
   recentProjects: Project[];
+  recentLeads: Lead[];
   projectTaskStats: Record<string, ProjectTaskStats>;
 };
 
@@ -47,6 +60,8 @@ export function buildOverviewSnapshot(
   tasks: TaskWithProject[],
   goals: Goal[],
   ideas: Idea[],
+  leads: Lead[] = [],
+  contentPosts: ContentPost[] = [],
   now: Date = new Date()
 ): OverviewSnapshot {
   const dateContext = getOverviewDateContext(now);
@@ -103,6 +118,13 @@ export function buildOverviewSnapshot(
     )
     .slice(0, 3);
 
+  const contentStats = buildContentStats(contentPosts, now);
+  const contentDueThisWeekGrouped = getPostsDueThisWeek(
+    contentPosts,
+    todayISO,
+    weekEndISO
+  );
+
   return {
     header: getOverviewHeader(now),
     dateContext,
@@ -111,14 +133,20 @@ export function buildOverviewSnapshot(
       tasksDueTodayOrOverdue,
       activeGoals: goals.filter(isActiveGoal).length,
       ideasCount: ideas.length,
+      contentPublishedThisMonth: contentStats.publishedThisMonth,
+      contentScheduled: contentStats.scheduledUpcoming,
+      contentInProgress: contentStats.inProgress,
+      contentStreak: contentStats.streak,
     },
     overdueTasks,
     projectsMissingNextAction,
     goalsAtZeroWithDeadline,
     tasksDueThisWeekGrouped,
     projectDeadlinesThisWeek,
+    contentDueThisWeekGrouped,
     recentIdeas,
     recentProjects,
+    recentLeads: getRecentLeads(leads),
     projectTaskStats: getProjectTaskStatsMap(tasks),
   };
 }

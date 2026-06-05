@@ -21,6 +21,12 @@ type QuickAddContextValue = {
   ideaAddOpen: boolean;
   setIdeaAddOpen: (open: boolean) => void;
   openIdeaAdd: () => void;
+  leadAddOpen: boolean;
+  setLeadAddOpen: (open: boolean) => void;
+  openLeadAdd: () => void;
+  contentAddOpen: boolean;
+  setContentAddOpen: (open: boolean) => void;
+  openContentAdd: () => void;
 };
 
 const QuickAddContext = createContext<QuickAddContextValue | null>(null);
@@ -30,6 +36,8 @@ export function QuickAddProvider({ children }: { children: React.ReactNode }) {
   const [taskAddOpen, setTaskAddOpen] = useState(false);
   const [goalAddOpen, setGoalAddOpen] = useState(false);
   const [ideaAddOpen, setIdeaAddOpen] = useState(false);
+  const [leadAddOpen, setLeadAddOpen] = useState(false);
+  const [contentAddOpen, setContentAddOpen] = useState(false);
 
   const openProjectAdd = useCallback(() => {
     setProjectAddOpen(true);
@@ -47,6 +55,14 @@ export function QuickAddProvider({ children }: { children: React.ReactNode }) {
     setIdeaAddOpen(true);
   }, []);
 
+  const openLeadAdd = useCallback(() => {
+    setLeadAddOpen(true);
+  }, []);
+
+  const openContentAdd = useCallback(() => {
+    setContentAddOpen(true);
+  }, []);
+
   const value = useMemo(
     () => ({
       projectAddOpen,
@@ -61,16 +77,26 @@ export function QuickAddProvider({ children }: { children: React.ReactNode }) {
       ideaAddOpen,
       setIdeaAddOpen,
       openIdeaAdd,
+      leadAddOpen,
+      setLeadAddOpen,
+      openLeadAdd,
+      contentAddOpen,
+      setContentAddOpen,
+      openContentAdd,
     }),
     [
       projectAddOpen,
       taskAddOpen,
       goalAddOpen,
       ideaAddOpen,
+      leadAddOpen,
+      contentAddOpen,
       openProjectAdd,
       openTaskAdd,
       openGoalAdd,
       openIdeaAdd,
+      openLeadAdd,
+      openContentAdd,
     ]
   );
 

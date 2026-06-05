@@ -16,6 +16,7 @@ import {
   getTodayISO,
 } from "@/lib/calendar/selectors";
 import type { CalendarEventType, CalendarFilterState } from "@/lib/calendar/types";
+import type { ContentPost } from "@/lib/content/types";
 import type { Goal } from "@/lib/goals/types";
 import { PAGE_SUBTITLE_CLASS, PAGE_TITLE_CLASS } from "@/lib/navigation";
 import type { ProjectMilestone } from "@/lib/projects/milestones/types";
@@ -27,6 +28,7 @@ type CalendarPageClientProps = {
   tasks: TaskWithProject[];
   goals: Goal[];
   milestones: ProjectMilestone[];
+  contentPosts: ContentPost[];
 };
 
 export function CalendarPageClient({
@@ -34,6 +36,7 @@ export function CalendarPageClient({
   tasks,
   goals,
   milestones,
+  contentPosts,
 }: CalendarPageClientProps) {
   const todayISO = getTodayISO();
   const today = new Date();
@@ -46,8 +49,8 @@ export function CalendarPageClient({
   );
 
   const allEvents = useMemo(
-    () => buildCalendarEvents(projects, tasks, goals, milestones),
-    [projects, tasks, goals, milestones]
+    () => buildCalendarEvents(projects, tasks, goals, milestones, contentPosts),
+    [projects, tasks, goals, milestones, contentPosts]
   );
 
   const filteredEvents = useMemo(

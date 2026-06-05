@@ -10,7 +10,7 @@ import { MOTION_DURATION, MOTION_EASE } from "@/lib/motion/config";
 export function QuickAddFab() {
   const pathname = usePathname();
   const reduced = useReducedMotion();
-  const { openProjectAdd, openTaskAdd, openGoalAdd, openIdeaAdd } =
+  const { openProjectAdd, openTaskAdd, openGoalAdd, openIdeaAdd, openLeadAdd, openContentAdd } =
     useQuickAdd();
 
   const handleClick = () => {
@@ -22,6 +22,10 @@ export function QuickAddFab() {
       openGoalAdd();
     } else if (pathname === "/ideas") {
       openIdeaAdd();
+    } else if (pathname === "/leads") {
+      openLeadAdd();
+    } else if (pathname === "/content") {
+      openContentAdd();
     }
   };
 
