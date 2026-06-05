@@ -50,7 +50,7 @@ export function ContentCalendarDayCell({
         {visible.map((entry) => (
           <ContentCalendarPill
             key={`${entry.post.id}-${entry.kind}`}
-            platform={entry.post.platform}
+            post={entry.post}
             label={entry.post.title}
           />
         ))}

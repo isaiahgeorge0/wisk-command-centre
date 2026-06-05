@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { ContentPlatformBadge } from "@/components/content/content-platform-badge";
+import { ContentPlatformBadges } from "@/components/content/content-platform-badges";
 import { StaggerItem } from "@/components/motion/stagger-item";
 import { StaggerList } from "@/components/motion/stagger-list";
 import { usePreferences } from "@/components/preferences/preferences-context";
@@ -137,7 +137,7 @@ export function ThisWeekSection({ snapshot }: ThisWeekSectionProps) {
                           <span className="text-sm text-foreground">
                             {post.title}
                           </span>
-                          <ContentPlatformBadge platform={post.platform} />
+                          <ContentPlatformBadges post={post} />
                         </Link>
                       </StaggerItem>
                     ))}

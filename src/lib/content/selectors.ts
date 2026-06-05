@@ -1,7 +1,9 @@
 import { PIPELINE_STATUSES } from "@/lib/content/constants";
 import { todayDateISO } from "@/lib/content/format";
+import { getPostPlatforms } from "@/lib/content/platforms";
 import type {
   ContentCalendarEntry,
+  ContentPlatform,
   ContentPost,
   ContentStatus,
 } from "@/lib/content/types";
@@ -17,6 +19,7 @@ export type ContentStats = {
   scheduledUpcoming: number;
   inProgress: number;
   streak: number;
+  platformBreakdown: { platform: ContentPlatform; count: number }[];
 };
 
 export function groupPostsByStatus(
@@ -67,13 +70,31 @@ export function buildContentStats(
 
   const inProgress = posts.filter((post) => post.status === "in_progress").length;
   const streak = computeContentStreak(posts, now);
+  const platformBreakdown = buildPlatformBreakdown(posts);
 
   return {
     publishedThisMonth,
     scheduledUpcoming,
     inProgress,
     streak,
+    platformBreakdown,
   };
+}
+
+export function buildPlatformBreakdown(
+  posts: ContentPost[]
+): { platform: ContentPlatform; count: number }[] {
+  const counts = new Map<ContentPlatform, number>();
+
+  for (const post of posts) {
+    for (const platform of getPostPlatforms(post)) {
+      counts.set(platform, (counts.get(platform) ?? 0) + 1);
+    }
+  }
+
+  return Array.from(counts.entries())
+    .map(([platform, count]) => ({ platform, count }))
+    .sort((a, b) => b.count - a.count || a.platform.localeCompare(b.platform));
 }
 
 export function computeContentStreak(

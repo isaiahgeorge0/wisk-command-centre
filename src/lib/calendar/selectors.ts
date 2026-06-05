@@ -11,6 +11,7 @@ import type { ProjectMilestone } from "@/lib/projects/milestones/types";
 import type { Project } from "@/lib/projects/types";
 import type { TaskWithProject } from "@/lib/tasks/types";
 import { buildContentCalendarEntries } from "@/lib/content/selectors";
+import { getPostPlatforms } from "@/lib/content/platforms";
 import {
   addDaysToISO,
   compareDateISO,
@@ -95,7 +96,7 @@ export function buildCalendarEvents(
       date: entry.date,
       title: entry.post.title,
       href: "/content",
-      meta: entry.post.platform,
+      meta: getPostPlatforms(entry.post).join(", "),
     });
   }
 

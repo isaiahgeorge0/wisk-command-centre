@@ -6,7 +6,7 @@ import { useState, useTransition } from "react";
 import { updateContentPost } from "@/app/(dashboard)/content/actions";
 import { ExpandableSection } from "@/components/motion/expandable-section";
 import { ContentForm } from "@/components/content/content-form";
-import { ContentPlatformBadge } from "@/components/content/content-platform-badge";
+import { ContentPlatformBadges } from "@/components/content/content-platform-badges";
 import { ContentStatusMenu } from "@/components/content/content-status-menu";
 import { ContentTypeBadge } from "@/components/content/content-type-badge";
 import { Button } from "@/components/ui/button";
@@ -141,7 +141,7 @@ export function ContentPostCard({
           <h3 className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
             {post.title}
           </h3>
-          <ContentPlatformBadge platform={post.platform} />
+          <ContentPlatformBadges post={post} />
         </div>
       </CardHeader>
 

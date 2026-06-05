@@ -38,6 +38,7 @@ export type ContentPost = {
   user_id: string;
   title: string;
   platform: ContentPlatform | string;
+  platforms: ContentPlatform[] | string[] | null;
   content_type: ContentType | string;
   status: ContentStatus | string;
   scheduled_date: string | null;
@@ -52,7 +53,7 @@ export type ContentPost = {
 
 export type ContentFormInput = {
   title: string;
-  platform: ContentPlatform;
+  platforms: ContentPlatform[];
   content_type: ContentType;
   status: ContentStatus;
   scheduled_date?: string;

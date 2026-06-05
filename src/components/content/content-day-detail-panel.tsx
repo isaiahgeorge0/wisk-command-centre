@@ -2,7 +2,7 @@
 
 import { X } from "lucide-react";
 
-import { ContentPlatformBadge } from "@/components/content/content-platform-badge";
+import { ContentPlatformBadges } from "@/components/content/content-platform-badges";
 import { ContentStatusBadge } from "@/components/content/content-status-badge";
 import { ContentTypeBadge } from "@/components/content/content-type-badge";
 import { Button } from "@/components/ui/button";
@@ -66,7 +66,7 @@ export function ContentDayDetailPanel({
                 className="rounded-lg border border-border/50 bg-card/60 p-3"
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  <ContentPlatformBadge platform={entry.post.platform} />
+                  <ContentPlatformBadges post={entry.post} />
                   <ContentTypeBadge contentType={entry.post.content_type} />
                   <ContentStatusBadge status={entry.post.status} />
                 </div>

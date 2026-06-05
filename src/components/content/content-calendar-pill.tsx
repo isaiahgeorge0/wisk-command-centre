@@ -1,29 +1,36 @@
+import { ContentPlatformDots } from "@/components/content/content-platform-dots";
 import { PLATFORM_PILL_CLASS } from "@/lib/content/constants";
-import type { ContentPlatform } from "@/lib/content/types";
+import { getPostPlatforms } from "@/lib/content/platforms";
+import type { ContentPost } from "@/lib/content/types";
 import { cn } from "@/lib/utils";
 
 type ContentCalendarPillProps = {
-  platform: ContentPlatform | string;
+  post: ContentPost;
   label: string;
   className?: string;
 };
 
 export function ContentCalendarPill({
-  platform,
+  post,
   label,
   className,
 }: ContentCalendarPillProps) {
-  const key = platform as ContentPlatform;
+  const platforms = getPostPlatforms(post);
+  const primaryPlatform = platforms[0] ?? "Other";
+
   return (
     <span
       className={cn(
-        "block truncate rounded px-1.5 py-0.5 text-[10px] font-medium leading-tight",
-        PLATFORM_PILL_CLASS[key] ?? PLATFORM_PILL_CLASS.Other,
+        "flex items-center gap-1 truncate rounded px-1.5 py-0.5 text-[10px] font-medium leading-tight",
+        PLATFORM_PILL_CLASS[primaryPlatform] ?? PLATFORM_PILL_CLASS.Other,
         className
       )}
-      title={label}
+      title={`${label} (${platforms.join(", ")})`}
     >
-      {label}
+      {platforms.length > 1 ? (
+        <ContentPlatformDots platforms={platforms} />
+      ) : null}
+      <span className="truncate">{label}</span>
     </span>
   );
 }

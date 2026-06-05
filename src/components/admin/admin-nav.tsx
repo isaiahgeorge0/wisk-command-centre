@@ -10,6 +10,7 @@ const ADMIN_LINKS = [
   { label: "Requests", href: "/admin/requests" },
   { label: "Users", href: "/admin/users" },
   { label: "Announcements", href: "/admin/announcements" },
+  { label: "Blog", href: "/admin/blog" },
   { label: "Feedback", href: "/admin/feedback", showBadge: true },
   { label: "Changelog", href: "/admin/changelog" },
 ] as const;

@@ -15,7 +15,9 @@ import type { ActionResult, ContentFormInput, ContentPost } from "@/lib/content/
 
 const contentFormSchema = z.object({
   title: z.string().trim().min(1, "Title is required"),
-  platform: z.enum(CONTENT_PLATFORMS),
+  platforms: z
+    .array(z.enum(CONTENT_PLATFORMS))
+    .min(1, "Select at least one platform"),
   content_type: z.enum(CONTENT_TYPES),
   status: z.enum(CONTENT_STATUSES),
   scheduled_date: z.string().optional(),
@@ -34,9 +36,12 @@ function revalidateContentPaths() {
 }
 
 function toDbPayload(input: ContentFormInput) {
+  const platforms = input.platforms;
+
   return {
     title: input.title.trim(),
-    platform: input.platform,
+    platforms,
+    platform: platforms[0],
     content_type: input.content_type,
     status: input.status,
     scheduled_date: emptyToNull(input.scheduled_date),
@@ -58,14 +63,21 @@ function publishedDateForStatus(
   return undefined;
 }
 
-export async function getContentPosts(): Promise<ContentPost[]> {
+export async function getContentPosts(
+  platform?: (typeof CONTENT_PLATFORMS)[number]
+): Promise<ContentPost[]> {
   const { supabase, userId } = await getScopedSupabase();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("content_posts")
     .select("*")
     .eq("user_id", userId)
     .order("updated_at", { ascending: false });
+
+  if (platform) {
+    query = query.contains("platforms", [platform]);
+  }
+  const { data, error } = await query;
 
   if (error) {
     console.error("getContentPosts:", error);

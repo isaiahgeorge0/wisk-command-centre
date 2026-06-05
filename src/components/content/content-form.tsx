@@ -1,5 +1,6 @@
 "use client";
 
+import { ContentPlatformPicker } from "@/components/content/content-platform-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ResponsiveSelect } from "@/components/ui/responsive-select";
@@ -16,9 +17,7 @@ import {
   PIPELINE_STATUSES,
 } from "@/lib/content/constants";
 import {
-  CONTENT_PLATFORMS,
   CONTENT_TYPES,
-  type ContentPlatform,
   type ContentStatus,
   type ContentType,
 } from "@/lib/content/types";
@@ -60,44 +59,18 @@ export function ContentForm({
         />
       </div>
 
-      <div className="grid gap-2 md:grid-cols-2 md:gap-4">
-        <div className="grid gap-2">
-          <Label htmlFor={`${formId}-platform`}>Platform *</Label>
-          <ResponsiveSelect
-            id={`${formId}-platform`}
-            value={values.platform}
-            onValueChange={(value) =>
-              value && setField("platform", value as ContentPlatform)
-            }
-            disabled={disabled}
-            options={CONTENT_PLATFORMS.map((platform) => ({
-              value: platform,
-              label: platform,
-            }))}
-          >
-            <Select
-              value={values.platform}
-              onValueChange={(value) =>
-                value && setField("platform", value as ContentPlatform)
-              }
-              disabled={disabled}
-            >
-              <SelectTrigger id={`${formId}-platform`} className="w-full">
-                <SelectValue placeholder="Select platform" />
-              </SelectTrigger>
-              <SelectContent>
-                {CONTENT_PLATFORMS.map((platform) => (
-                  <SelectItem key={platform} value={platform}>
-                    {platform}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </ResponsiveSelect>
-        </div>
+      <div className="grid gap-2">
+        <Label htmlFor={`${formId}-platforms`}>Platforms *</Label>
+        <ContentPlatformPicker
+          id={`${formId}-platforms`}
+          value={values.platforms}
+          onChange={(platforms) => setField("platforms", platforms)}
+          disabled={disabled}
+        />
+      </div>
 
-        <div className="grid gap-2">
-          <Label htmlFor={`${formId}-content_type`}>Content type *</Label>
+      <div className="grid gap-2">
+        <Label htmlFor={`${formId}-content_type`}>Content type *</Label>
           <ResponsiveSelect
             id={`${formId}-content_type`}
             value={values.content_type}
@@ -129,7 +102,6 @@ export function ContentForm({
               </SelectContent>
             </Select>
           </ResponsiveSelect>
-        </div>
       </div>
 
       <div className="grid gap-2">
