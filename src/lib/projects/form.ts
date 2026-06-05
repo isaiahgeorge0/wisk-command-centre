@@ -10,6 +10,7 @@ export const EMPTY_PROJECT_FORM: ProjectFormInput = {
   value: "",
   notes: "",
   site_url: "",
+  github_repo: "",
 };
 
 export function projectToFormInput(project: Project): ProjectFormInput {
@@ -22,6 +23,7 @@ export function projectToFormInput(project: Project): ProjectFormInput {
     value: project.value != null ? String(project.value) : "",
     notes: project.notes ?? "",
     site_url: project.site_url ?? "",
+    github_repo: project.github_repo ?? "",
   };
 }
 

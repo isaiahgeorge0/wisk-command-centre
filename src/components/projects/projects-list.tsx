@@ -10,6 +10,8 @@ import type { TaskWithProject } from "@/lib/tasks/types";
 type ProjectsListProps = {
   projects: Project[];
   tasks: TaskWithProject[];
+  vercelConnected: boolean;
+  githubConnected: boolean;
   onDelete: (project: Project) => void;
   onTaskUpdate: (task: TaskWithProject) => void;
   onTaskCreated: (task: TaskWithProject) => void;
@@ -20,6 +22,8 @@ type ProjectsListProps = {
 export function ProjectsList({
   projects,
   tasks,
+  vercelConnected,
+  githubConnected,
   onDelete,
   onTaskUpdate,
   onTaskCreated,
@@ -38,6 +42,8 @@ export function ProjectsList({
           <ProjectCard
             project={project}
             tasks={tasks}
+            vercelConnected={vercelConnected}
+            githubConnected={githubConnected}
             onDelete={onDelete}
             onTaskUpdate={onTaskUpdate}
             onTaskCreated={onTaskCreated}

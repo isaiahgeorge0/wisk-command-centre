@@ -12,17 +12,20 @@ import { ProjectsList } from "@/components/projects/projects-list";
 import { useQuickAdd } from "@/components/quick-add/quick-add-context";
 import { Button } from "@/components/ui/button";
 import { PAGE_SUBTITLE_CLASS, PAGE_TITLE_CLASS } from "@/lib/navigation";
+import type { SafeIntegration } from "@/lib/integrations/types";
 import type { Project } from "@/lib/projects/types";
 import type { TaskWithProject } from "@/lib/tasks/types";
 
 type ProjectsPageClientProps = {
   initialProjects: Project[];
   initialTasks: TaskWithProject[];
+  integrations: SafeIntegration[];
 };
 
 export function ProjectsPageClient({
   initialProjects,
   initialTasks,
+  integrations,
 }: ProjectsPageClientProps) {
   const router = useRouter();
   const { projectAddOpen, setProjectAddOpen, openProjectAdd } = useQuickAdd();
@@ -84,6 +87,9 @@ export function ProjectsPageClient({
     []
   );
 
+  const vercelConnected = integrations.some((i) => i.provider === "vercel");
+  const githubConnected = integrations.some((i) => i.provider === "github");
+
   return (
     <PageTransition>
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -105,6 +111,8 @@ export function ProjectsPageClient({
         <ProjectsList
           projects={projects}
           tasks={tasks}
+          vercelConnected={vercelConnected}
+          githubConnected={githubConnected}
           onDelete={handleDeleteRequest}
           onTaskUpdate={handleTaskUpdate}
           onTaskCreated={handleTaskCreated}

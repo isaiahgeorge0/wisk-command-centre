@@ -115,6 +115,17 @@ export function ProjectForm({
       </div>
 
       <div className="grid gap-2">
+        <Label htmlFor={`${formId}-github_repo`}>GitHub repo</Label>
+        <Input
+          id={`${formId}-github_repo`}
+          placeholder="owner/repo or https://github.com/owner/repo"
+          value={values.github_repo ?? ""}
+          onChange={(e) => setField("github_repo", e.target.value)}
+          disabled={disabled}
+        />
+      </div>
+
+      <div className="grid gap-2">
         <Label htmlFor={`${formId}-next_action`}>Next action</Label>
         <Input
           id={`${formId}-next_action`}

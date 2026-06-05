@@ -1,5 +1,7 @@
 "use client";
 
+import { ProjectGitHubActivity } from "@/components/projects/project-github-activity";
+import { ProjectVercelHealth } from "@/components/projects/project-vercel-health";
 import { Button } from "@/components/ui/button";
 import type { Project } from "@/lib/projects/types";
 
@@ -7,6 +9,9 @@ type ProjectDetailsTabProps = {
   project: Project;
   showSiteUrl: boolean;
   showNotes: boolean;
+  expanded: boolean;
+  vercelConnected: boolean;
+  githubConnected: boolean;
   onEdit: () => void;
   onDelete: () => void;
 };
@@ -15,9 +20,17 @@ export function ProjectDetailsTab({
   project,
   showSiteUrl,
   showNotes,
+  expanded,
+  vercelConnected,
+  githubConnected,
   onEdit,
   onDelete,
 }: ProjectDetailsTabProps) {
+  const showVercelHealth =
+    vercelConnected &&
+    Boolean(project.site_url?.trim()) &&
+    Boolean(project.vercel_project_id);
+
   return (
     <div className="space-y-3">
       {showSiteUrl && project.site_url?.trim() ? (
@@ -34,11 +47,25 @@ export function ProjectDetailsTab({
             target="_blank"
             rel="noopener noreferrer"
             className="mt-1 block truncate text-sm text-wisk-teal hover:underline"
+            onClick={(e) => e.stopPropagation()}
           >
             {project.site_url}
           </a>
         </div>
       ) : null}
+
+      {showVercelHealth ? (
+        <ProjectVercelHealth projectId={project.id} enabled={showVercelHealth} />
+      ) : null}
+
+      {project.github_repo?.trim() ? (
+        <ProjectGitHubActivity
+          repo={project.github_repo}
+          enabled={githubConnected}
+          expanded={expanded}
+        />
+      ) : null}
+
       {showNotes ? (
         <div>
           <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">

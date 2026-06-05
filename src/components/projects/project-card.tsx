@@ -33,6 +33,8 @@ import { cn } from "@/lib/utils";
 type ProjectCardProps = {
   project: Project;
   tasks: TaskWithProject[];
+  vercelConnected: boolean;
+  githubConnected: boolean;
   onDelete: (project: Project) => void;
   onTaskUpdate: (task: TaskWithProject) => void;
   onTaskCreated: (task: TaskWithProject) => void;
@@ -43,6 +45,8 @@ type ProjectCardProps = {
 export function ProjectCard({
   project,
   tasks,
+  vercelConnected,
+  githubConnected,
   onDelete,
   onTaskUpdate,
   onTaskCreated,
@@ -208,6 +212,9 @@ export function ProjectCard({
                 project={project}
                 showSiteUrl={vis.siteUrl}
                 showNotes={vis.notes}
+                expanded={expanded}
+                vercelConnected={vercelConnected}
+                githubConnected={githubConnected}
                 onEdit={() => setEditing(true)}
                 onDelete={() => onDelete(project)}
               />
