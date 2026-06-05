@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
+import { SettingsFeedbackSection } from "@/components/settings/settings-feedback-section";
 import { SettingsHelpSection } from "@/components/settings/settings-help-section";
 import { SettingsIntegrationsSection } from "@/components/settings/settings-integrations-section";
 import { SettingsPreferencesSection } from "@/components/settings/settings-preferences-section";
@@ -89,6 +90,8 @@ export function SettingsPageClient({
       ) : null}
 
       {activeTab === "help" ? <SettingsHelpSection /> : null}
+
+      <SettingsFeedbackSection />
     </div>
   );
 }

@@ -11,6 +11,12 @@ import type {
   AdminUser,
   Announcement,
 } from "@/lib/admin/types";
+import type {
+  AdminFeedback,
+  FeedbackFilter,
+  FeedbackStats,
+  FeedbackStatus,
+} from "@/lib/feedback/types";
 import { getAuthContext } from "@/lib/auth/get-auth-context";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -35,6 +41,7 @@ function revalidateAdminPaths() {
   revalidatePath("/admin/requests");
   revalidatePath("/admin/users");
   revalidatePath("/admin/announcements");
+  revalidatePath("/admin/feedback");
   revalidatePath("/");
 }
 
@@ -351,4 +358,116 @@ export async function dismissAnnouncement(
 
   revalidatePath("/");
   return { success: true };
+}
+
+export async function getFeedback(
+  filter: FeedbackFilter = "all"
+): Promise<AdminFeedback[]> {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  let query = supabase
+    .from("feedback")
+    .select(
+      `
+      id,
+      user_id,
+      type,
+      message,
+      status,
+      created_at,
+      admin_notes,
+      users ( name, email )
+    `
+    )
+    .order("created_at", { ascending: false });
+
+  if (filter !== "all") {
+    query = query.eq("status", filter);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("getFeedback:", error);
+    return [];
+  }
+
+  return (data ?? []).map((row) => {
+    const userRaw = row.users as
+      | { name: string | null; email: string }
+      | { name: string | null; email: string }[]
+      | null;
+    const user = Array.isArray(userRaw) ? userRaw[0] : userRaw;
+    return {
+      id: row.id,
+      user_id: row.user_id,
+      type: row.type,
+      message: row.message,
+      status: row.status,
+      created_at: row.created_at,
+      admin_notes: row.admin_notes,
+      user_name: user?.name ?? null,
+      user_email: user?.email ?? "",
+    };
+  }) as AdminFeedback[];
+}
+
+export async function updateFeedbackStatus(
+  id: string,
+  status: FeedbackStatus
+): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  const { error } = await supabase
+    .from("feedback")
+    .update({ status })
+    .eq("id", id);
+
+  if (error) {
+    console.error("updateFeedbackStatus:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidateAdminPaths();
+  return { success: true };
+}
+
+export async function updateFeedbackNotes(
+  id: string,
+  notes: string
+): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  const { error } = await supabase
+    .from("feedback")
+    .update({ admin_notes: notes.trim() || null })
+    .eq("id", id);
+
+  if (error) {
+    console.error("updateFeedbackNotes:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidateAdminPaths();
+  return { success: true };
+}
+
+export async function getFeedbackStats(): Promise<FeedbackStats> {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  const { count, error } = await supabase
+    .from("feedback")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "new");
+
+  if (error) {
+    console.error("getFeedbackStats:", error);
+    return { newCount: 0 };
+  }
+
+  return { newCount: count ?? 0 };
 }

@@ -72,6 +72,7 @@ export default async function DashboardLayout({
         unreadNotificationCount={notificationSnapshot.unreadCount}
         announcements={announcements}
         displayName={displayName}
+        feedbackWelcomeShown={preferences.feedbackWelcomeShown}
       >
         {children}
       </AppShell>

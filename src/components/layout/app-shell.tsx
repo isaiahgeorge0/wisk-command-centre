@@ -1,6 +1,7 @@
 "use client";
 
 import { AnnouncementBanner } from "@/components/announcements/announcement-banner";
+import { FeedbackWelcomeModal } from "@/components/feedback/feedback-welcome-modal";
 import { OnboardingOverlay } from "@/components/onboarding/onboarding-overlay";
 import { OnboardingProvider } from "@/components/onboarding/onboarding-context";
 import { BottomNav } from "@/components/layout/bottom-nav";
@@ -28,6 +29,7 @@ type AppShellProps = {
   unreadNotificationCount: number;
   announcements: ActiveAnnouncement[];
   displayName: string;
+  feedbackWelcomeShown: boolean;
 };
 
 export function AppShell({
@@ -43,7 +45,13 @@ export function AppShell({
   unreadNotificationCount,
   announcements,
   displayName,
+  feedbackWelcomeShown,
 }: AppShellProps) {
+  const showFeedbackWelcome =
+    onboardingCompleted &&
+    projectTourCompleted &&
+    !feedbackWelcomeShown;
+
   return (
     <OnboardingProvider initialOpen={!onboardingCompleted}>
       <PreferencesProvider value={{ fieldVisibility, serviceTypes }}>
@@ -67,6 +75,10 @@ export function AppShell({
               <BottomNav />
               <SpotlightTourOverlay />
               <ProjectTourCelebration displayName={displayName} />
+              <FeedbackWelcomeModal
+                displayName={displayName}
+                open={showFeedbackWelcome}
+              />
               <OnboardingOverlay />
             </div>
           </SpotlightTourProvider>
