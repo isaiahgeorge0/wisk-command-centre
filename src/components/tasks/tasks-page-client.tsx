@@ -26,7 +26,7 @@ export function TasksPageClient({
   projects,
 }: TasksPageClientProps) {
   const router = useRouter();
-  const { taskAddOpen, setTaskAddOpen, openTaskAdd } = useQuickAdd();
+  const { openTaskAdd } = useQuickAdd();
   const [tasks, setTasks] = useState(initialTasks);
   const [filters, setFilters] = useState<TaskFilters>(DEFAULT_TASK_FILTERS);
   const [deleteTarget, setDeleteTarget] = useState<{
