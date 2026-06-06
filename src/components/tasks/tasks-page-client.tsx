@@ -2,17 +2,20 @@
 
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { PageTransition } from "@/components/layout/page-transition";
 import { DeleteTaskDialog } from "@/components/tasks/delete-task-dialog";
+import { TaskFiltersBar } from "@/components/tasks/task-filters-bar";
 import { TaskFormDialog } from "@/components/tasks/task-form-dialog";
 import { TasksEmptyState } from "@/components/tasks/tasks-empty-state";
 import { TasksList } from "@/components/tasks/tasks-list";
 import { useQuickAdd } from "@/components/quick-add/quick-add-context";
 import { Button } from "@/components/ui/button";
 import { PAGE_SUBTITLE_CLASS, PAGE_TITLE_CLASS } from "@/lib/navigation";
-import type { ProjectOption, TaskWithProject } from "@/lib/tasks/types";
+import { DEFAULT_TASK_FILTERS } from "@/lib/tasks/constants";
+import { applyTaskFilters } from "@/lib/tasks/selectors";
+import type { ProjectOption, TaskFilters, TaskWithProject } from "@/lib/tasks/types";
 
 type TasksPageClientProps = {
   initialTasks: TaskWithProject[];
@@ -26,6 +29,7 @@ export function TasksPageClient({
   const router = useRouter();
   const { taskAddOpen, setTaskAddOpen, openTaskAdd } = useQuickAdd();
   const [tasks, setTasks] = useState(initialTasks);
+  const [filters, setFilters] = useState<TaskFilters>(DEFAULT_TASK_FILTERS);
   const [deleteTarget, setDeleteTarget] = useState<{
     id: string;
     title: string;
@@ -34,6 +38,23 @@ export function TasksPageClient({
   useEffect(() => {
     setTasks(initialTasks);
   }, [initialTasks]);
+
+  const handleFiltersChange = useCallback((next: TaskFilters) => {
+    setFilters(next);
+  }, []);
+
+  const filteredTasks = useMemo(
+    () => applyTaskFilters(tasks, filters),
+    [tasks, filters]
+  );
+  const incompleteTasks = useMemo(
+    () => filteredTasks.filter((t) => !t.completed),
+    [filteredTasks]
+  );
+  const completedTasks = useMemo(
+    () => filteredTasks.filter((t) => t.completed),
+    [filteredTasks]
+  );
 
   const handleTaskUpdate = useCallback((updated: TaskWithProject) => {
     setTasks((prev) =>
@@ -68,15 +89,39 @@ export function TasksPageClient({
         </Button>
       </div>
 
-      {tasks.length === 0 ? (
+      {initialTasks.length === 0 ? (
         <TasksEmptyState onAdd={openTaskAdd} />
       ) : (
-        <TasksList
-          tasks={tasks}
-          projects={projects}
-          onTaskUpdate={handleTaskUpdate}
-          onTaskDelete={handleDeleteRequest}
-        />
+        <>
+          <TaskFiltersBar
+            filters={filters}
+            projects={projects}
+            onChange={handleFiltersChange}
+          />
+          {filteredTasks.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-xl border border-border/60 bg-card/40 px-6 py-12 text-center">
+              <p className="text-sm text-muted-foreground">
+                No tasks match your filters.
+              </p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="mt-3 text-muted-foreground"
+                onClick={() => handleFiltersChange(DEFAULT_TASK_FILTERS)}
+              >
+                Clear filters
+              </Button>
+            </div>
+          ) : (
+            <TasksList
+              tasks={[...incompleteTasks, ...completedTasks]}
+              projects={projects}
+              onTaskUpdate={handleTaskUpdate}
+              onTaskDelete={handleDeleteRequest}
+            />
+          )}
+        </>
       )}
 
       <TaskFormDialog

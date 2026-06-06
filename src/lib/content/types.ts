@@ -33,6 +33,18 @@ export const CONTENT_STATUSES = [
 
 export type ContentStatus = (typeof CONTENT_STATUSES)[number];
 
+export type RecurrenceRule = "daily" | "weekly" | "monthly";
+
+export type ContentPostOccurrence = {
+  id: string;
+  user_id: string;
+  post_id: string;
+  occurrence_date: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type ContentPost = {
   id: string;
   user_id: string;
@@ -47,6 +59,8 @@ export type ContentPost = {
   description: string | null;
   tags: string[] | null;
   goal_id: string | null;
+  recurrence_rule: RecurrenceRule | string | null;
+  recurrence_end_date: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -62,6 +76,8 @@ export type ContentFormInput = {
   description?: string;
   tags?: string;
   goal_id?: string;
+  recurrence_rule?: RecurrenceRule | "" | null;
+  recurrence_end_date?: string;
 };
 
 export type ActionResult<T = void> =
@@ -72,4 +88,6 @@ export type ContentCalendarEntry = {
   post: ContentPost;
   date: string;
   kind: "scheduled" | "published";
+  isRecurring?: boolean;
+  occurrenceDate?: string;
 };

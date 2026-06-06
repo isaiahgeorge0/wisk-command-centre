@@ -213,3 +213,62 @@ export async function deleteLead(id: string): Promise<ActionResult> {
   revalidateLeadPaths();
   return { success: true };
 }
+
+export async function convertLeadToProject(
+  leadId: string
+): Promise<ActionResult<{ projectId: string }>> {
+  const { supabase, userId } = await getScopedSupabase();
+
+  // Fetch the lead
+  const { data: lead, error: leadError } = await supabase
+    .from("leads")
+    .select("*")
+    .eq("id", leadId)
+    .eq("user_id", userId)
+    .single();
+
+  if (leadError || !lead) {
+    console.error("convertLeadToProject - fetch lead:", leadError);
+    return { success: false, error: "Lead not found." };
+  }
+
+  // Create the project from lead data
+  const { data: project, error: projectError } = await supabase
+    .from("projects")
+    .insert({
+      user_id: userId,
+      project_name: lead.service_interest,
+      client_name: lead.name,
+      service_type: lead.service_interest,
+      status: "active",
+      value: lead.value ?? null,
+      notes: lead.notes ?? null,
+    })
+    .select("id")
+    .single();
+
+  if (projectError || !project) {
+    console.error("convertLeadToProject - create project:", projectError);
+    return { success: false, error: "Could not create project. Please try again." };
+  }
+
+  // Mark lead as won if not already
+  if (lead.status !== "won") {
+    const { error: updateError } = await supabase
+      .from("leads")
+      .update({ status: "won", updated_at: new Date().toISOString() })
+      .eq("id", leadId)
+      .eq("user_id", userId);
+
+    if (updateError) {
+      console.error("convertLeadToProject - update lead status:", updateError);
+      // Non-fatal — project was created successfully, just log it
+    }
+  }
+
+  revalidatePath("/leads");
+  revalidatePath("/projects");
+  revalidatePath("/");
+
+  return { success: true, data: { projectId: project.id } };
+}

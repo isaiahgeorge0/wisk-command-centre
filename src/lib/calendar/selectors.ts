@@ -90,13 +90,21 @@ export function buildCalendarEvents(
   }
 
   for (const entry of buildContentCalendarEntries(contentPosts)) {
+    const platforms = getPostPlatforms(entry.post).join(", ");
     events.push({
-      id: `${entry.post.id}-${entry.kind}`,
+      id: `${entry.post.id}-${entry.kind}-${entry.date}`,
       type: "content",
       date: entry.date,
       title: entry.post.title,
       href: "/content",
-      meta: getPostPlatforms(entry.post).join(", "),
+      meta: entry.isRecurring
+        ? {
+            platforms,
+            isRecurring: true,
+            occurrenceDate: entry.occurrenceDate ?? entry.date,
+            post: entry.post,
+          }
+        : platforms,
     });
   }
 

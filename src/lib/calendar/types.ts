@@ -14,7 +14,7 @@ export type CalendarEvent = {
   date: string;
   title: string;
   href: string;
-  meta?: string;
+  meta?: string | Record<string, unknown>;
 };
 
 export type CalendarDay = {

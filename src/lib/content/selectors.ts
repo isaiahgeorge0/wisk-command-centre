@@ -120,6 +120,41 @@ export function computeContentStreak(
   return streak;
 }
 
+function expandRecurringDates(
+  startDate: string,
+  rule: string,
+  endDate: string | null
+): string[] {
+  const dates: string[] = [];
+  const [sy, sm, sd] = startDate.split("-").map(Number);
+  const start = new Date(sy, sm - 1, sd);
+
+  // Cap at 1 year from today to prevent runaway expansion
+  const cap = new Date();
+  cap.setFullYear(cap.getFullYear() + 1);
+
+  const end = endDate
+    ? (() => { const [y, m, d] = endDate.split("-").map(Number); return new Date(y, m - 1, d); })()
+    : cap;
+
+  const limit = end < cap ? end : cap;
+  const current = new Date(start);
+
+  while (current <= limit) {
+    const y = current.getFullYear();
+    const m = String(current.getMonth() + 1).padStart(2, "0");
+    const d = String(current.getDate()).padStart(2, "0");
+    dates.push(`${y}-${m}-${d}`);
+
+    if (rule === "daily") current.setDate(current.getDate() + 1);
+    else if (rule === "weekly") current.setDate(current.getDate() + 7);
+    else if (rule === "monthly") current.setMonth(current.getMonth() + 1);
+    else break;
+  }
+
+  return dates;
+}
+
 export function buildContentCalendarEntries(
   posts: ContentPost[]
 ): ContentCalendarEntry[] {
@@ -139,11 +174,28 @@ export function buildContentCalendarEntries(
       post.scheduled_date &&
       ["idea", "planned", "in_progress", "scheduled"].includes(post.status)
     ) {
-      entries.push({
-        post,
-        date: post.scheduled_date,
-        kind: "scheduled",
-      });
+      if (post.recurrence_rule) {
+        const dates = expandRecurringDates(
+          post.scheduled_date,
+          post.recurrence_rule,
+          post.recurrence_end_date ?? null
+        );
+        for (const date of dates) {
+          entries.push({
+            post,
+            date,
+            kind: "scheduled",
+            isRecurring: true,
+            occurrenceDate: date,
+          });
+        }
+      } else {
+        entries.push({
+          post,
+          date: post.scheduled_date,
+          kind: "scheduled",
+        });
+      }
     }
   }
 

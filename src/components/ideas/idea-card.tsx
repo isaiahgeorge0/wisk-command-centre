@@ -6,6 +6,7 @@ import { useState, useTransition } from "react";
 import { updateIdea } from "@/app/(dashboard)/ideas/actions";
 import { ExpandableSection } from "@/components/motion/expandable-section";
 import { usePreferences } from "@/components/preferences/preferences-context";
+import { ConvertIdeaDialog } from "@/components/ideas/convert-idea-dialog";
 import { IdeaCategoryTag } from "@/components/ideas/idea-category-tag";
 import { IdeaForm } from "@/components/ideas/idea-form";
 import { IdeaStatusBadge } from "@/components/ideas/idea-status-badge";
@@ -33,6 +34,9 @@ export function IdeaCard({ idea, onDelete }: IdeaCardProps) {
   const [editing, setEditing] = useState(false);
   const [values, setValues] = useState<IdeaFormInput>(ideaToFormInput(idea));
   const [error, setError] = useState<string | null>(null);
+  const [convertMode, setConvertMode] = useState<"project" | "content" | null>(
+    null
+  );
   const [isPending, startTransition] = useTransition();
   const formId = `edit-idea-${idea.id}`;
 
@@ -104,13 +108,14 @@ export function IdeaCard({ idea, onDelete }: IdeaCardProps) {
   }
 
   return (
-    <Card
-      className={cn(
-        "cursor-pointer border-border/60 bg-card/80 transition-colors hover:border-border hover:bg-card",
-        expanded && "border-wisk-purple/20"
-      )}
-      onClick={handleCardClick}
-    >
+    <>
+      <Card
+        className={cn(
+          "cursor-pointer border-border/60 bg-card/80 transition-colors hover:border-border hover:bg-card",
+          expanded && "border-wisk-purple/20"
+        )}
+        onClick={handleCardClick}
+      >
       <CardHeader className="gap-2 pb-2">
         <h3 className="line-clamp-1 text-base font-semibold text-foreground">
           {idea.title}
@@ -158,6 +163,26 @@ export function IdeaCard({ idea, onDelete }: IdeaCardProps) {
                 Edit
               </Button>
               <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setConvertMode("project");
+                }}
+              >
+                To project
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setConvertMode("content");
+                }}
+              >
+                To content
+              </Button>
+              <Button
                 type="button"
                 variant="destructive"
                 size="sm"
@@ -175,6 +200,20 @@ export function IdeaCard({ idea, onDelete }: IdeaCardProps) {
           <p className="text-xs text-muted-foreground">Click to expand</p>
         </CardFooter>
       ) : null}
-    </Card>
+      </Card>
+
+      <ConvertIdeaDialog
+        idea={idea}
+        mode={convertMode ?? "project"}
+        open={convertMode !== null}
+        onOpenChange={(open) => {
+          if (!open) setConvertMode(null);
+        }}
+        onConverted={() => {
+          setConvertMode(null);
+          router.refresh();
+        }}
+      />
+    </>
   );
 }

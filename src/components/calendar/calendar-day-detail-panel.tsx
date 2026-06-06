@@ -12,6 +12,8 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { getOccurrencesForPost } from "@/app/(dashboard)/content/actions";
+import { ContentOccurrencePanel } from "@/components/content/content-occurrence-panel";
 import { Button } from "@/components/ui/button";
 import {
   CALENDAR_TYPE_DOT_CLASS,
@@ -21,6 +23,7 @@ import {
 import { formatSelectedDay } from "@/lib/calendar/grid";
 import { groupEventsByType } from "@/lib/calendar/selectors";
 import type { CalendarEvent, CalendarEventType } from "@/lib/calendar/types";
+import type { ContentPost, ContentPostOccurrence } from "@/lib/content/types";
 import { MOTION_DURATION, MOTION_EASE } from "@/lib/motion/config";
 import { useMotionSafe } from "@/lib/motion/use-motion-safe";
 import { cn } from "@/lib/utils";
@@ -44,7 +47,11 @@ function DayDetailContent({
   events,
   onClose,
   showCloseButton = true,
-}: CalendarDayDetailPanelProps & { showCloseButton?: boolean }) {
+  onOccurrenceClick,
+}: CalendarDayDetailPanelProps & {
+  showCloseButton?: boolean;
+  onOccurrenceClick?: (post: ContentPost, occurrenceDate: string) => void;
+}) {
   const router = useRouter();
   const grouped = groupEventsByType(events);
   const hasEvents = events.length > 0;
@@ -100,6 +107,19 @@ function DayDetailContent({
                         <button
                           type="button"
                           onClick={() => {
+                            const metaObj =
+                              typeof event.meta === "object" ? event.meta : null;
+                            if (
+                              event.type === "content" &&
+                              metaObj?.isRecurring &&
+                              metaObj?.post
+                            ) {
+                              onOccurrenceClick?.(
+                                metaObj.post as ContentPost,
+                                (metaObj.occurrenceDate as string | undefined) ?? event.date
+                              );
+                              return;
+                            }
                             onClose();
                             router.push(event.href);
                           }}
@@ -118,7 +138,9 @@ function DayDetailContent({
                             </span>
                             {event.meta ? (
                               <span className="mt-0.5 block text-xs text-muted-foreground">
-                                {event.meta}
+                                {typeof event.meta === "string"
+                                  ? event.meta
+                                  : (event.meta.platforms as string | undefined) ?? ""}
                               </span>
                             ) : null}
                           </span>
@@ -160,6 +182,22 @@ export function CalendarDayDetailPanel({
   const isMobile = useIsMobilePanel();
   const open = Boolean(selectedDate);
 
+  const [occurrenceTarget, setOccurrenceTarget] = useState<{
+    post: ContentPost;
+    occurrenceDate: string;
+  } | null>(null);
+  const [occurrenceNotes, setOccurrenceNotes] = useState<string | null>(null);
+  const [notesLoading, setNotesLoading] = useState(false);
+
+  const handleOccurrenceClick = async (post: ContentPost, occurrenceDate: string) => {
+    setOccurrenceTarget({ post, occurrenceDate });
+    setNotesLoading(true);
+    const occurrences: ContentPostOccurrence[] = await getOccurrencesForPost(post.id);
+    const match = occurrences.find((o) => o.occurrence_date === occurrenceDate);
+    setOccurrenceNotes(match?.notes ?? null);
+    setNotesLoading(false);
+  };
+
   useEffect(() => {
     if (!open || !isMobile) return;
 
@@ -187,6 +225,7 @@ export function CalendarDayDetailPanel({
             selectedDate={selectedDate}
             events={events}
             onClose={onClose}
+            onOccurrenceClick={handleOccurrenceClick}
           />
         </div>
       </>
@@ -216,6 +255,7 @@ export function CalendarDayDetailPanel({
               selectedDate={selectedDate}
               events={events}
               onClose={onClose}
+              onOccurrenceClick={handleOccurrenceClick}
             />
           </motion.aside>
         ) : (
@@ -233,6 +273,20 @@ export function CalendarDayDetailPanel({
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ContentOccurrencePanel
+        post={occurrenceTarget?.post ?? null}
+        occurrenceDate={occurrenceTarget?.occurrenceDate ?? ""}
+        existingNotes={occurrenceNotes}
+        open={occurrenceTarget !== null}
+        disabled={notesLoading}
+        onOpenChange={(open) => {
+          if (!open) {
+            setOccurrenceTarget(null);
+            setOccurrenceNotes(null);
+          }
+        }}
+      />
     </div>
   );
 }

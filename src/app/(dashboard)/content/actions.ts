@@ -11,7 +11,7 @@ import {
   type ContentStatus,
 } from "@/lib/content/types";
 import { emptyToNull, parseTagsInput, todayDateISO } from "@/lib/content/format";
-import type { ActionResult, ContentFormInput, ContentPost } from "@/lib/content/types";
+import type { ActionResult, ContentFormInput, ContentPost, ContentPostOccurrence } from "@/lib/content/types";
 
 const contentFormSchema = z.object({
   title: z.string().trim().min(1, "Title is required"),
@@ -26,6 +26,11 @@ const contentFormSchema = z.object({
   description: z.string().optional(),
   tags: z.string().optional(),
   goal_id: z.string().optional(),
+  recurrence_rule: z.union([z.enum(["daily", "weekly", "monthly"]), z.literal("")])
+    .nullable()
+    .optional()
+    .transform((v) => (v === "" || v === undefined ? null : v)),
+  recurrence_end_date: z.string().optional(),
 });
 
 function revalidateContentPaths() {
@@ -50,6 +55,8 @@ function toDbPayload(input: ContentFormInput) {
     description: emptyToNull(input.description),
     tags: parseTagsInput(input.tags),
     goal_id: emptyToNull(input.goal_id),
+    recurrence_rule: input.recurrence_rule ?? null,
+    recurrence_end_date: emptyToNull(input.recurrence_end_date),
   };
 }
 
@@ -234,6 +241,56 @@ export async function deleteContentPost(id: string): Promise<ActionResult> {
 
   revalidateContentPaths();
   return { success: true };
+}
+
+export async function upsertOccurrenceNotes(
+  postId: string,
+  occurrenceDate: string,
+  notes: string
+): Promise<ActionResult<ContentPostOccurrence>> {
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { data, error } = await supabase
+    .from("content_post_occurrences")
+    .upsert(
+      {
+        user_id: userId,
+        post_id: postId,
+        occurrence_date: occurrenceDate,
+        notes,
+      },
+      { onConflict: "post_id,occurrence_date" }
+    )
+    .select("*")
+    .single();
+
+  if (error) {
+    console.error("upsertOccurrenceNotes:", error);
+    return { success: false, error: "Could not save notes. Please try again." };
+  }
+
+  revalidatePath("/content");
+  revalidatePath("/calendar");
+  return { success: true, data: data as ContentPostOccurrence };
+}
+
+export async function getOccurrencesForPost(
+  postId: string
+): Promise<ContentPostOccurrence[]> {
+  const { supabase } = await getScopedSupabase();
+
+  const { data, error } = await supabase
+    .from("content_post_occurrences")
+    .select("*")
+    .eq("post_id", postId)
+    .order("occurrence_date", { ascending: true });
+
+  if (error) {
+    console.error("getOccurrencesForPost:", error);
+    return [];
+  }
+
+  return data as ContentPostOccurrence[];
 }
 
 export async function getPublishedPostCountsByGoalIds(

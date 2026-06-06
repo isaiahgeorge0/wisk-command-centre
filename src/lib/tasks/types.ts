@@ -32,3 +32,31 @@ export type TaskFormInput = {
 export type ActionResult<T = void> =
   | { success: true; data?: T }
   | { success: false; error: string };
+
+export type TaskStatusFilter = "all" | "incomplete" | "complete";
+
+export type TaskDueDateFilter =
+  | "all"
+  | "overdue"
+  | "today"
+  | "this_week"
+  | "no_date";
+
+export type TaskSortKey =
+  | "created_at"
+  | "due_date"
+  | "priority"
+  | "project"
+  | "title";
+
+export type TaskSortDirection = "asc" | "desc";
+
+export type TaskFilters = {
+  search: string;
+  priority: TaskPriority | "all";
+  status: TaskStatusFilter;
+  project_id: string | "all";
+  due_date: TaskDueDateFilter;
+  sort_key: TaskSortKey;
+  sort_direction: TaskSortDirection;
+};

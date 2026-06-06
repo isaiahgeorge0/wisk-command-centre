@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 
 import { updateLead } from "@/app/(dashboard)/leads/actions";
+import { ConvertLeadDialog } from "@/components/leads/convert-lead-dialog";
 import { ExpandableSection } from "@/components/motion/expandable-section";
 import { LeadForm } from "@/components/leads/lead-form";
 import { LeadSourceBadge } from "@/components/leads/lead-source-badge";
@@ -46,6 +47,7 @@ export function LeadCard({
   const [error, setError] = useState<string | null>(null);
   const [celebrate, setCelebrate] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [convertOpen, setConvertOpen] = useState(false);
   const formId = `edit-lead-${lead.id}`;
   const status = (lead.status as LeadStatus) ?? "new";
   const prevStatusRef = useRef(status);
@@ -135,6 +137,7 @@ export function LeadCard({
   }
 
   return (
+    <>
     <Card
       className={cn(
         "relative border-border/70 bg-card/80 shadow-sm transition-colors hover:bg-card",
@@ -223,6 +226,17 @@ export function LeadCard({
               </Button>
               <Button
                 type="button"
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setConvertOpen(true);
+                }}
+              >
+                Convert to project
+              </Button>
+              <Button
+                type="button"
                 variant="destructive"
                 size="sm"
                 onClick={() => onDelete(lead)}
@@ -238,5 +252,17 @@ export function LeadCard({
         ) : null}
       </CardContent>
     </Card>
+
+    <ConvertLeadDialog
+      lead={lead}
+      open={convertOpen}
+      onOpenChange={setConvertOpen}
+      onConverted={(leadId) => {
+        setConvertOpen(false);
+        onLeadUpdate({ ...lead, status: "won" });
+        router.refresh();
+      }}
+    />
+    </>
   );
 }

@@ -1,4 +1,4 @@
-import type { ContentPlatform, ContentStatus, ContentType } from "@/lib/content/types";
+import type { ContentPlatform, ContentStatus, ContentType, RecurrenceRule } from "@/lib/content/types";
 
 export const CONTENT_STATUS_LABELS: Record<ContentStatus, string> = {
   idea: "Idea",
@@ -76,3 +76,10 @@ export const CONTENT_STATUS_BADGE_CLASS: Record<ContentStatus, string> = {
 };
 
 export const CONTENT_GOAL_CATEGORY = "Content";
+
+export const RECURRENCE_OPTIONS: { value: RecurrenceRule | ""; label: string }[] = [
+  { value: "", label: "Does not repeat" },
+  { value: "daily", label: "Daily" },
+  { value: "weekly", label: "Weekly" },
+  { value: "monthly", label: "Monthly" },
+];

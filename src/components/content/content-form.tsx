@@ -15,11 +15,13 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   CONTENT_STATUS_LABELS,
   PIPELINE_STATUSES,
+  RECURRENCE_OPTIONS,
 } from "@/lib/content/constants";
 import {
   CONTENT_TYPES,
   type ContentStatus,
   type ContentType,
+  type RecurrenceRule,
 } from "@/lib/content/types";
 import type { ContentFormInput } from "@/lib/content/types";
 import type { Goal } from "@/lib/goals/types";
@@ -161,6 +163,67 @@ export function ContentForm({
           />
         </div>
       </div>
+
+      {/* Recurrence */}
+      <div className="grid gap-2">
+        <Label htmlFor={`${formId}-recurrence_rule`}>Repeats</Label>
+        <ResponsiveSelect
+          id={`${formId}-recurrence_rule`}
+          value={values.recurrence_rule ?? ""}
+          onValueChange={(v) => {
+            if (v === "" || !v) {
+              onChange({ ...values, recurrence_rule: "", recurrence_end_date: "" });
+            } else {
+              setField("recurrence_rule", v as RecurrenceRule);
+            }
+          }}
+          options={RECURRENCE_OPTIONS}
+          disabled={disabled}
+        >
+          <Select
+            value={values.recurrence_rule ? values.recurrence_rule : "none"}
+            onValueChange={(v) => {
+              if (v === "none" || !v) {
+                onChange({ ...values, recurrence_rule: "", recurrence_end_date: "" });
+              } else {
+                setField("recurrence_rule", v as RecurrenceRule);
+              }
+            }}
+            disabled={disabled}
+          >
+            <SelectTrigger id={`${formId}-recurrence_rule`} className="w-full">
+              <SelectValue placeholder="Does not repeat" />
+            </SelectTrigger>
+            <SelectContent>
+              {RECURRENCE_OPTIONS.map((option) => (
+                <SelectItem
+                  key={option.value || "none"}
+                  value={option.value || "none"}
+                >
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </ResponsiveSelect>
+      </div>
+
+      {values.recurrence_rule ? (
+        <div className="grid gap-2">
+          <Label htmlFor={`${formId}-recurrence_end_date`}>Repeat until</Label>
+          <Input
+            id={`${formId}-recurrence_end_date`}
+            type="date"
+            value={values.recurrence_end_date ?? ""}
+            onChange={(e) => setField("recurrence_end_date", e.target.value)}
+            disabled={disabled}
+            min={values.scheduled_date ?? undefined}
+          />
+          <p className="text-xs text-muted-foreground">
+            Leave blank to repeat indefinitely (shows up to 1 year ahead).
+          </p>
+        </div>
+      ) : null}
 
       <div className="grid gap-2">
         <Label htmlFor={`${formId}-hook`}>Hook</Label>

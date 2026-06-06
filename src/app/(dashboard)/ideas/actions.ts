@@ -124,3 +124,87 @@ export async function deleteIdea(id: string): Promise<ActionResult> {
   revalidatePath("/ideas");
   return { success: true };
 }
+
+export async function convertIdeaToProject(
+  ideaId: string
+): Promise<ActionResult<{ projectId: string }>> {
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { data: idea, error: ideaError } = await supabase
+    .from("ideas")
+    .select("*")
+    .eq("id", ideaId)
+    .eq("user_id", userId)
+    .single();
+
+  if (ideaError || !idea) {
+    console.error("convertIdeaToProject - fetch idea:", ideaError);
+    return { success: false, error: "Idea not found." };
+  }
+
+  const { data: project, error: projectError } = await supabase
+    .from("projects")
+    .insert({
+      user_id: userId,
+      project_name: idea.title,
+      service_type: idea.category ?? "",
+      status: "active",
+      notes: idea.description ?? null,
+    })
+    .select("id")
+    .single();
+
+  if (projectError || !project) {
+    console.error("convertIdeaToProject - create project:", projectError);
+    return { success: false, error: "Could not create project. Please try again." };
+  }
+
+  revalidatePath("/ideas");
+  revalidatePath("/projects");
+  revalidatePath("/");
+
+  return { success: true, data: { projectId: project.id } };
+}
+
+export async function convertIdeaToContent(
+  ideaId: string
+): Promise<ActionResult<{ postId: string }>> {
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { data: idea, error: ideaError } = await supabase
+    .from("ideas")
+    .select("*")
+    .eq("id", ideaId)
+    .eq("user_id", userId)
+    .single();
+
+  if (ideaError || !idea) {
+    console.error("convertIdeaToContent - fetch idea:", ideaError);
+    return { success: false, error: "Idea not found." };
+  }
+
+  const { data: post, error: postError } = await supabase
+    .from("content_posts")
+    .insert({
+      user_id: userId,
+      title: idea.title,
+      description: idea.description ?? null,
+      status: "idea",
+      platforms: [],
+      platform: "Other",
+      content_type: "Other",
+    })
+    .select("id")
+    .single();
+
+  if (postError || !post) {
+    console.error("convertIdeaToContent - create post:", postError);
+    return { success: false, error: "Could not create content post. Please try again." };
+  }
+
+  revalidatePath("/ideas");
+  revalidatePath("/content");
+  revalidatePath("/");
+
+  return { success: true, data: { postId: post.id } };
+}
