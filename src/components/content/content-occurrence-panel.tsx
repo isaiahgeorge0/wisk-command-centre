@@ -35,7 +35,6 @@ export function ContentOccurrencePanel({
   onOpenChange,
   disabled: externalDisabled,
 }: ContentOccurrencePanelProps) {
-  if (!post) return null;
   const [notes, setNotes] = useState(existingNotes ?? "");
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,6 +44,8 @@ export function ContentOccurrencePanel({
   useEffect(() => {
     setNotes(existingNotes ?? "");
   }, [existingNotes]);
+
+  if (!post) return null;
 
   const isDisabled = externalDisabled || isPending;
 

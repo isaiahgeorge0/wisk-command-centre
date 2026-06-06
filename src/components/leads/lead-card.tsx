@@ -257,7 +257,7 @@ export function LeadCard({
       lead={lead}
       open={convertOpen}
       onOpenChange={setConvertOpen}
-      onConverted={(leadId) => {
+      onConverted={() => {
         setConvertOpen(false);
         onLeadUpdate({ ...lead, status: "won" });
         router.refresh();
