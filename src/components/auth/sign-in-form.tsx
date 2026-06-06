@@ -33,8 +33,13 @@ export function SignInForm() {
 
   const authError = searchParams.get("error");
 
-  const navigateToWelcome = () => {
-    router.push("/welcome");
+  const navigateAfterSignIn = () => {
+    const redirectTo = searchParams.get("redirectTo");
+    const destination =
+      redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//")
+        ? redirectTo
+        : "/";
+    router.push(destination);
     router.refresh();
   };
 
@@ -58,7 +63,7 @@ export function SignInForm() {
     }
 
     if (reduced) {
-      navigateToWelcome();
+      navigateAfterSignIn();
       return;
     }
 
@@ -70,7 +75,7 @@ export function SignInForm() {
 
   const handleBridgeComplete = () => {
     setShowBridge(false);
-    navigateToWelcome();
+    navigateAfterSignIn();
   };
 
   const handleForgotPassword = async () => {

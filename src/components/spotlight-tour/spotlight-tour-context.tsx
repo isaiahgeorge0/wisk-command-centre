@@ -66,7 +66,9 @@ export function SpotlightTourProvider({
   const canStartTour = !hasProjects && !tourCompletedLocal;
 
   useEffect(() => {
-    setTourCompletedLocal(projectTourCompleted);
+    if (projectTourCompleted) {
+      setTourCompletedLocal(true);
+    }
   }, [projectTourCompleted]);
 
   useEffect(() => {
@@ -120,7 +122,11 @@ export function SpotlightTourProvider({
   }, [canStartTour]);
 
   const consumePendingStart = useCallback(() => {
-    if (!pendingStart || !canStartTour) return;
+    if (!pendingStart) return;
+    if (!canStartTour) {
+      setPendingStart(false);
+      return;
+    }
     startTour();
   }, [canStartTour, pendingStart, startTour]);
 
@@ -152,15 +158,17 @@ export function SpotlightTourProvider({
   }, [endTour, finishTourPermanently, setProjectAddOpen]);
 
   const dismissCelebration = useCallback(async () => {
-    endTour();
     await finishTourPermanently();
-  }, [endTour, finishTourPermanently]);
+    setProjectAddOpen(false);
+    endTour();
+  }, [endTour, finishTourPermanently, setProjectAddOpen]);
 
   const handleProjectCreated = useCallback(() => {
+    setProjectAddOpen(false);
     setIsActive(false);
     setIsTransitioning(false);
     setShowCelebration(true);
-  }, []);
+  }, [setProjectAddOpen]);
 
   const nextStep = useCallback(() => {
     goToNextStepWithPause();

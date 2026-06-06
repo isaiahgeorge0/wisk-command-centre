@@ -1,6 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { getPersonalisationCompleted } from "@/lib/auth/middleware-preferences";
+
 const PUBLIC_PATHS = ["/sign-in", "/auth/callback", "/auth/reset-password"];
 
 function isPublicPath(pathname: string): boolean {
@@ -49,19 +51,30 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isWelcomePath = pathname === "/welcome";
 
-  if (user && pathname === "/sign-in") {
-    const url = request.nextUrl.clone();
-    const { data: prefs } = await supabase
-      .from("user_preferences")
-      .select("personalisation_completed")
-      .eq("user_id", user.id)
-      .maybeSingle();
+  if (user) {
+    const personalisationCompleted = await getPersonalisationCompleted(user.id);
 
-    const needsPersonalisation =
-      !prefs || prefs.personalisation_completed === false;
+    if (pathname === "/sign-in") {
+      const url = request.nextUrl.clone();
+      url.pathname = personalisationCompleted ? "/" : "/welcome";
+      return withPathnameHeader(NextResponse.redirect(url), pathname);
+    }
 
-    url.pathname = needsPersonalisation ? "/welcome" : "/";
-    return withPathnameHeader(NextResponse.redirect(url), pathname);
+    if (isWelcomePath && personalisationCompleted) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/";
+      return withPathnameHeader(NextResponse.redirect(url), pathname);
+    }
+
+    if (
+      !isWelcomePath &&
+      !isPublicPath(pathname) &&
+      !personalisationCompleted
+    ) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/welcome";
+      return withPathnameHeader(NextResponse.redirect(url), pathname);
+    }
   }
 
   if (!user && !isPublicPath(pathname)) {
@@ -71,24 +84,6 @@ export async function middleware(request: NextRequest) {
       url.searchParams.set("redirectTo", pathname);
     }
     return withPathnameHeader(NextResponse.redirect(url), pathname);
-  }
-
-  if (
-    user &&
-    !isWelcomePath &&
-    !isPublicPath(pathname)
-  ) {
-    const { data: prefs } = await supabase
-      .from("user_preferences")
-      .select("personalisation_completed")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (!prefs || prefs.personalisation_completed === false) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/welcome";
-      return withPathnameHeader(NextResponse.redirect(url), pathname);
-    }
   }
 
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {
