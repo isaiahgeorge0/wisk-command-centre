@@ -43,3 +43,20 @@ export type ProjectFormInput = {
 export type ActionResult<T = void> =
   | { success: true; data?: T }
   | { success: false; error: string };
+
+export type ProjectSortKey =
+  | "created_at"
+  | "deadline"
+  | "value"
+  | "project_name"
+  | "updated_at";
+
+export type ProjectSortDirection = "asc" | "desc";
+
+export type ProjectFilters = {
+  search: string;
+  status: ProjectStatus | "all";
+  service_type: string | "all";
+  sort_key: ProjectSortKey;
+  sort_direction: ProjectSortDirection;
+};

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { PageTransition } from "@/components/layout/page-transition";
 import { DeleteProjectDialog } from "@/components/projects/delete-project-dialog";
+import { ProjectFiltersBar } from "@/components/projects/project-filters-bar";
 import { ProjectFormDialog } from "@/components/projects/project-form-dialog";
 import { ProjectsEmptyState } from "@/components/projects/projects-empty-state";
 import { ProjectsList } from "@/components/projects/projects-list";
@@ -13,10 +14,16 @@ import { useQuickAdd } from "@/components/quick-add/quick-add-context";
 import { useSpotlightTour } from "@/components/spotlight-tour/spotlight-tour-context";
 import { Button } from "@/components/ui/button";
 import { PAGE_SUBTITLE_CLASS, PAGE_TITLE_CLASS } from "@/lib/navigation";
+import { DEFAULT_PROJECT_FILTERS } from "@/lib/projects/constants";
 import { getProjectDisplayName } from "@/lib/projects/display";
 import { getRecentProjectTypes } from "@/lib/projects/recent-project-types";
+import {
+  applyProjectFilters,
+  getUniqueServiceTypes,
+  groupProjects,
+} from "@/lib/projects/selectors";
 import type { SafeIntegration } from "@/lib/integrations/types";
-import type { Project } from "@/lib/projects/types";
+import type { Project, ProjectFilters } from "@/lib/projects/types";
 import type { TaskWithProject } from "@/lib/tasks/types";
 
 type ProjectsPageClientProps = {
@@ -39,10 +46,26 @@ export function ProjectsPageClient({
     id: string;
     projectName: string;
   } | null>(null);
+  const [filters, setFilters] = useState<ProjectFilters>(DEFAULT_PROJECT_FILTERS);
 
   const recentProjectTypes = useMemo(
     () => getRecentProjectTypes(projects),
     [projects]
+  );
+
+  const serviceTypes = useMemo(
+    () => getUniqueServiceTypes(projects),
+    [projects]
+  );
+
+  const filteredProjects = useMemo(
+    () => applyProjectFilters(projects, filters),
+    [projects, filters]
+  );
+
+  const grouped = useMemo(
+    () => groupProjects(filteredProjects),
+    [filteredProjects]
   );
 
   useEffect(() => {
@@ -71,6 +94,10 @@ export function ProjectsPageClient({
       id: project.id,
       projectName: getProjectDisplayName(project),
     });
+  }, []);
+
+  const handleFiltersChange = useCallback((next: ProjectFilters) => {
+    setFilters(next);
   }, []);
 
   const handleTaskUpdate = useCallback((updated: TaskWithProject) => {
@@ -106,6 +133,18 @@ export function ProjectsPageClient({
   const vercelConnected = integrations.some((i) => i.provider === "vercel");
   const githubConnected = integrations.some((i) => i.provider === "github");
 
+  const projectsListProps = {
+    tasks,
+    recentProjectTypes,
+    vercelConnected,
+    githubConnected,
+    onDelete: handleDeleteRequest,
+    onTaskUpdate: handleTaskUpdate,
+    onTaskCreated: handleTaskCreated,
+    onTaskCreateFailed: handleTaskCreateFailed,
+    onTaskCreateConfirmed: handleTaskCreateConfirmed,
+  };
+
   return (
     <PageTransition>
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -124,18 +163,67 @@ export function ProjectsPageClient({
       {projects.length === 0 ? (
         <ProjectsEmptyState onAdd={openProjectAdd} />
       ) : (
-        <ProjectsList
-          projects={projects}
-          tasks={tasks}
-          recentProjectTypes={recentProjectTypes}
-          vercelConnected={vercelConnected}
-          githubConnected={githubConnected}
-          onDelete={handleDeleteRequest}
-          onTaskUpdate={handleTaskUpdate}
-          onTaskCreated={handleTaskCreated}
-          onTaskCreateFailed={handleTaskCreateFailed}
-          onTaskCreateConfirmed={handleTaskCreateConfirmed}
-        />
+        <>
+          <ProjectFiltersBar
+            filters={filters}
+            serviceTypes={serviceTypes}
+            onChange={handleFiltersChange}
+          />
+          {filteredProjects.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-xl border border-border/60 bg-card/40 px-6 py-12 text-center">
+              <p className="text-sm text-muted-foreground">
+                No projects match your filters.
+              </p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="mt-3 text-muted-foreground"
+                onClick={() => handleFiltersChange(DEFAULT_PROJECT_FILTERS)}
+              >
+                Clear filters
+              </Button>
+            </div>
+          ) : (
+            <>
+              {grouped.active.length > 0 ? (
+                <>
+                  <h2 className="mt-6 mb-3 text-sm font-medium text-muted-foreground">
+                    Active
+                  </h2>
+                  <ProjectsList
+                    projects={grouped.active}
+                    {...projectsListProps}
+                  />
+                </>
+              ) : null}
+
+              {grouped.paused.length > 0 ? (
+                <>
+                  <h2 className="mt-6 mb-3 text-sm font-medium text-muted-foreground">
+                    Paused
+                  </h2>
+                  <ProjectsList
+                    projects={grouped.paused}
+                    {...projectsListProps}
+                  />
+                </>
+              ) : null}
+
+              {grouped.completedAndArchived.length > 0 ? (
+                <>
+                  <h2 className="mt-6 mb-3 text-sm font-medium text-muted-foreground">
+                    Completed & Archived
+                  </h2>
+                  <ProjectsList
+                    projects={grouped.completedAndArchived}
+                    {...projectsListProps}
+                  />
+                </>
+              ) : null}
+            </>
+          )}
+        </>
       )}
 
       <ProjectFormDialog
