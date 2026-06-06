@@ -7,7 +7,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { PageTransition } from "@/components/layout/page-transition";
 import { DeleteTaskDialog } from "@/components/tasks/delete-task-dialog";
 import { TaskFiltersBar } from "@/components/tasks/task-filters-bar";
-import { TaskFormDialog } from "@/components/tasks/task-form-dialog";
 import { TasksEmptyState } from "@/components/tasks/tasks-empty-state";
 import { TasksList } from "@/components/tasks/tasks-list";
 import { useQuickAdd } from "@/components/quick-add/quick-add-context";
@@ -123,12 +122,6 @@ export function TasksPageClient({
           )}
         </>
       )}
-
-      <TaskFormDialog
-        open={taskAddOpen}
-        onOpenChange={setTaskAddOpen}
-        projects={projects}
-      />
 
       <DeleteTaskDialog
         taskId={deleteTarget?.id ?? null}

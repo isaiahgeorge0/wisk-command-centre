@@ -20,6 +20,7 @@ const taskFormSchema = z.object({
   priority: z.enum(TASK_PRIORITIES),
   project_id: z.string().optional(),
   due_date: z.string().optional(),
+  raw_content: z.string().optional(),
 });
 
 type TaskRow = TaskWithProject & {
@@ -40,6 +41,7 @@ function toDbPayload(input: TaskFormInput) {
     priority: input.priority,
     project_id: projectIdToDb(input.project_id),
     due_date: emptyToNull(input.due_date),
+    raw_content: emptyToNull(input.raw_content),
   };
 }
 

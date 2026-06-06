@@ -8,14 +8,16 @@ import { BottomNav } from "@/components/layout/bottom-nav";
 import { QuickAddFab } from "@/components/layout/quick-add-fab";
 import { TopNav } from "@/components/layout/top-nav";
 import { PreferencesProvider } from "@/components/preferences/preferences-context";
-import { QuickAddProvider } from "@/components/quick-add/quick-add-context";
+import { QuickAddProvider, useQuickAdd } from "@/components/quick-add/quick-add-context";
 import { ProjectTourCelebration } from "@/components/spotlight-tour/project-tour-celebration";
 import { SpotlightTourOverlay } from "@/components/spotlight-tour/spotlight-tour-overlay";
 import { SpotlightTourProvider } from "@/components/spotlight-tour/spotlight-tour-context";
+import { TaskFormDialog } from "@/components/tasks/task-form-dialog";
 import type { ChangelogEntry } from "@/lib/changelog/types";
 import type { ActiveAnnouncement } from "@/lib/admin/types";
 import type { Notification } from "@/lib/notifications/types";
 import type { FieldVisibility } from "@/lib/preferences/types";
+import type { ProjectOption } from "@/lib/tasks/types";
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -33,7 +35,24 @@ type AppShellProps = {
   feedbackWelcomeShown: boolean;
   changelogEntries: ChangelogEntry[];
   unreadChangelogCount: number;
+  projectOptions: ProjectOption[];
 };
+
+function GlobalTaskFormDialog({
+  projects,
+}: {
+  projects: ProjectOption[];
+}) {
+  const { taskAddOpen, setTaskAddOpen } = useQuickAdd();
+
+  return (
+    <TaskFormDialog
+      open={taskAddOpen}
+      onOpenChange={setTaskAddOpen}
+      projects={projects}
+    />
+  );
+}
 
 export function AppShell({
   children,
@@ -51,6 +70,7 @@ export function AppShell({
   feedbackWelcomeShown,
   changelogEntries,
   unreadChangelogCount,
+  projectOptions,
 }: AppShellProps) {
   const showFeedbackWelcome =
     onboardingCompleted &&
@@ -79,6 +99,7 @@ export function AppShell({
                 {children}
               </main>
               <QuickAddFab />
+              <GlobalTaskFormDialog projects={projectOptions} />
               <BottomNav />
               <SpotlightTourOverlay />
               <ProjectTourCelebration displayName={displayName} />

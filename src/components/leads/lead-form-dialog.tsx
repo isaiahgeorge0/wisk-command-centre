@@ -54,7 +54,7 @@ export function LeadFormDialog({ open, onOpenChange }: LeadFormDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Add lead</DialogTitle>
           <DialogDescription>

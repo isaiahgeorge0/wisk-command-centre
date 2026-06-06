@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
 
 const dialogSurfaceClassName =
-  "fixed z-50 grid w-full gap-4 bg-popover p-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-sm text-popover-foreground ring-1 ring-foreground/10 outline-none duration-200 inset-x-0 bottom-0 top-auto max-h-[90dvh] translate-x-0 translate-y-0 overflow-y-auto rounded-t-2xl border-t data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-bottom data-closed:animate-out data-closed:fade-out-0 data-closed:slide-out-to-bottom md:inset-x-auto md:bottom-auto md:top-1/2 md:left-1/2 md:max-h-none md:max-w-[calc(100%-2rem)] md:-translate-x-1/2 md:-translate-y-1/2 md:overflow-visible md:rounded-xl md:border md:pb-4 md:data-open:slide-in-from-bottom-0 md:data-open:zoom-in-95 md:data-closed:slide-out-to-bottom-0 md:data-closed:zoom-out-95 sm:md:max-w-sm"
+  "fixed z-50 grid w-full gap-4 bg-popover p-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-sm text-popover-foreground ring-1 ring-foreground/10 outline-none duration-200 inset-x-0 bottom-0 top-auto max-h-[90dvh] translate-x-0 translate-y-0 overflow-y-auto rounded-t-2xl border-t data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-bottom data-closed:animate-out data-closed:fade-out-0 data-closed:slide-out-to-bottom md:inset-x-auto md:bottom-auto md:top-1/2 md:left-1/2 md:max-h-[90dvh] md:max-w-[calc(100%-2rem)] md:-translate-x-1/2 md:-translate-y-1/2 md:overflow-y-auto md:rounded-xl md:border md:pb-4 md:data-open:slide-in-from-bottom-0 md:data-open:zoom-in-95 md:data-closed:slide-out-to-bottom-0 md:data-closed:zoom-out-95 sm:md:max-w-sm"
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />

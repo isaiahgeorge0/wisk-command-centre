@@ -49,6 +49,7 @@ export function ProjectTaskQuickAdd({
       due_date: dueDate || null,
       priority,
       completed: false,
+      raw_content: null,
       created_at: new Date().toISOString(),
       project_name: null,
     };

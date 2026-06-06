@@ -8,6 +8,7 @@ export const EMPTY_TASK_FORM: TaskFormInput = {
   priority: "medium",
   project_id: NO_PROJECT_VALUE,
   due_date: "",
+  raw_content: "",
 };
 
 export function taskToFormInput(task: TaskWithProject): TaskFormInput {
@@ -16,6 +17,7 @@ export function taskToFormInput(task: TaskWithProject): TaskFormInput {
     priority: isTaskPriority(task.priority) ? task.priority : "medium",
     project_id: task.project_id ?? NO_PROJECT_VALUE,
     due_date: task.due_date ?? "",
+    raw_content: task.raw_content ?? "",
   };
 }
 

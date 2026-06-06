@@ -136,6 +136,11 @@ export function TaskRow({ task, projects, onDelete, onUpdate }: TaskRowProps) {
             <TaskProjectTag projectName={task.project_name} />
           ) : null}
         </div>
+        {task.raw_content ? (
+          <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-2">
+            {task.raw_content}
+          </p>
+        ) : null}
       </div>
 
       {vis.dueDate ? (

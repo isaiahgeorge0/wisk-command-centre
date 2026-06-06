@@ -57,7 +57,7 @@ export function GoalFormDialog({ open, onOpenChange }: GoalFormDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Add goal</DialogTitle>
           <DialogDescription>

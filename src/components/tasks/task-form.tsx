@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { NO_PROJECT_VALUE } from "@/lib/tasks/form";
 import {
   TASK_PRIORITY_LABELS,
@@ -147,6 +148,18 @@ export function TaskForm({
           type="date"
           value={values.due_date ?? ""}
           onChange={(e) => setField("due_date", e.target.value)}
+          disabled={disabled}
+        />
+      </div>
+
+      <div className="grid gap-2">
+        <Label htmlFor={`${formId}-raw_content`}>Notes</Label>
+        <Textarea
+          id={`${formId}-raw_content`}
+          value={values.raw_content ?? ""}
+          onChange={(e) => setField("raw_content", e.target.value)}
+          placeholder="Reference links, brief, context…"
+          rows={3}
           disabled={disabled}
         />
       </div>

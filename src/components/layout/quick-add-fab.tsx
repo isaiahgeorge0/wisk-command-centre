@@ -14,7 +14,11 @@ export function QuickAddFab() {
     useQuickAdd();
 
   const handleClick = () => {
-    if (pathname === "/projects") {
+    if (pathname === "/") {
+      openTaskAdd();
+    } else if (pathname === "/calendar") {
+      openTaskAdd();
+    } else if (pathname === "/projects") {
       openProjectAdd();
     } else if (pathname === "/tasks") {
       openTaskAdd();

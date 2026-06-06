@@ -10,6 +10,7 @@ export type Task = {
   due_date: string | null;
   priority: TaskPriority | string | null;
   completed: boolean;
+  raw_content: string | null;
   created_at: string;
 };
 
@@ -27,6 +28,7 @@ export type TaskFormInput = {
   priority: TaskPriority;
   project_id?: string;
   due_date?: string;
+  raw_content?: string;
 };
 
 export type ActionResult<T = void> =

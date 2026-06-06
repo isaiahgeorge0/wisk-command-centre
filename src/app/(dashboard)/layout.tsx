@@ -78,6 +78,10 @@ export default async function DashboardLayout({
         feedbackWelcomeShown={preferences.feedbackWelcomeShown}
         changelogEntries={changelogEntries}
         unreadChangelogCount={unreadChangelogCount}
+        projectOptions={projects.map((project) => ({
+          id: project.id,
+          project_name: project.project_name,
+        }))}
       >
         {children}
       </AppShell>
