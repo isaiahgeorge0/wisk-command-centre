@@ -435,38 +435,83 @@ Access: Admin email only (ADMIN_EMAIL env var)
 
 ---
 
-## Phase 3 — Planned
+## Phase 3 — Vertical Packages
+
+Phase 3 is when WISK goes vertical. The core platform proven in Phase 2
+and stabilised in Phase 2.5 becomes the foundation for packages that
+serve specific types of ambitious people with specific problems.
+
+Each package shares a common architecture: OAuth-based integrations,
+encrypted token storage, server-side API calls, and connections to the
+core WISK platform (projects, tasks, goals, content, leads). The AI
+layer analyses correlations across all connected data sources.
 
 ### Social Media Package
-- Platform OAuth connections
-  (YouTube, LinkedIn, TikTok, Instagram,
-  Facebook)
-- Analytics dashboard per platform
-- AI performance insights
-- AI competitor tracking from provided link
-- Content creation and scheduling
-  from within WISK
-- Content idea generation based on
-  performance data
 
-### Customisable Dashboard Views
-- Content view, Property view,
-  Business view, General overview
-- Saved layout preferences per user
+Target: content creators, agencies, social-first founders
 
-### AI Layer
-- Full AI digest across all sections
-- Proactive insights and pattern recognition
-- Lead qualification
-- Business performance summaries
-- Content idea engine
+Integrations:
+- YouTube, TikTok, Instagram, LinkedIn, Facebook OAuth
+- Each via the platform's official API
+
+Features:
+- Unified analytics dashboard per platform
+- Audience growth, engagement, reach metrics over time
+- AI performance insights with explanations
+- Competitor tracking from provided links
+- Content scheduling and direct publishing
+- Cross-reference content performance to WISK goals
+- AI content idea generation based on performance data
 
 ### Properties Package
-- Property management for small landlords
-- Tenant management and messaging
-- Maintenance tickets and contractor
-  assignment
-- Rental income tracking
+
+Target: small landlords, property managers, real estate operators
+
+Features:
+- Property management with tenant data and communication
+- Maintenance ticket workflow with contractor assignment
+- Rental income tracking and projections
+- Connected to core tasks/projects for property work
+- Document storage for leases, certificates, inspections
+
+### Commerce Package
+
+Target: ecommerce founders, indie sellers, hybrid creator-merchants
+
+Integrations:
+- Shopify Admin API
+- Stripe (for direct selling)
+- WooCommerce (WordPress shops)
+- Gumroad, Lemonsqueezy (digital products)
+- Square (offline + online retail)
+
+Features:
+- Unified revenue dashboard across all sales channels
+- Product performance and customer analytics
+- Inventory alerts tied to social media trends
+- AI insights correlating content to sales
+  (e.g. "Your Instagram post led to 12 sales")
+- Connected to content calendar
+- Tax/accounting export-ready data
+
+### Integration Architecture (shared across all packages)
+
+1. User connects via OAuth (Shopify, YouTube, etc.)
+2. Token encrypted with AES-256-GCM and stored in user_integrations
+3. Server-side API calls fetch data on demand
+4. Data cached/revalidated on a schedule to prevent API spam
+5. Metrics flow into relevant WISK sections
+6. AI layer analyses correlations across all connected sources
+7. All integrations follow the existing Vercel + GitHub pattern
+
+### Package model
+
+Each package is a paid add-on to the free core WISK platform:
+- Free tier: core WISK (projects, tasks, goals, content, leads, calendar)
+- Growth add-on: Social Media Package
+- Properties add-on: Properties Package
+- Commerce add-on: Commerce Package
+- Pro: all packages bundled
 
 ---
 
