@@ -37,6 +37,12 @@ export function isoToDateInput(iso: string | null | undefined): string {
   return iso.slice(0, 10);
 }
 
+export function isoToDatetimeLocal(iso: string | null | undefined): string {
+  if (!iso) return "";
+  // datetime-local input expects "YYYY-MM-DDTHH:mm"
+  return iso.slice(0, 16);
+}
+
 export function postToFormInput(post: BlogPost): BlogFormInput {
   return {
     title: post.title,
@@ -48,6 +54,7 @@ export function postToFormInput(post: BlogPost): BlogFormInput {
     author_name: post.author_name,
     published: post.published,
     published_at: isoToDateInput(post.published_at) || todayDateISO(),
+    scheduled_for: isoToDatetimeLocal(post.scheduled_for),
   };
 }
 
@@ -62,5 +69,6 @@ export function emptyBlogForm(authorName: string): BlogFormInput {
     author_name: authorName,
     published: false,
     published_at: todayDateISO(),
+    scheduled_for: "",
   };
 }

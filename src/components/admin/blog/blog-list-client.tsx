@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
 import {
+  cancelBlogPostSchedule,
   publishBlogPost,
   unpublishBlogPost,
 } from "@/app/(dashboard)/admin/blog/actions";
@@ -15,6 +16,7 @@ import { formatBlogDate, tagsToString } from "@/lib/blog/format";
 import {
   BLOG_STATUS_BADGE_CLASSES,
   BLOG_STATUS_LABELS,
+  getBlogPostStatus,
   type BlogPost,
 } from "@/lib/blog/types";
 import { cn } from "@/lib/utils";
@@ -23,17 +25,14 @@ type BlogListClientProps = {
   posts: BlogPost[];
 };
 
-function StatusBadge({ published }: { published: boolean }) {
+function StatusBadge({ post }: { post: BlogPost }) {
+  const status = getBlogPostStatus(post);
   return (
     <Badge
       variant="outline"
-      className={cn(
-        published
-          ? BLOG_STATUS_BADGE_CLASSES.published
-          : BLOG_STATUS_BADGE_CLASSES.draft
-      )}
+      className={cn(BLOG_STATUS_BADGE_CLASSES[status])}
     >
-      {published ? BLOG_STATUS_LABELS.published : BLOG_STATUS_LABELS.draft}
+      {BLOG_STATUS_LABELS[status]}
     </Badge>
   );
 }
@@ -76,6 +75,27 @@ export function BlogListClient({ posts: initialPosts }: BlogListClientProps) {
     });
   };
 
+  const handleCancelSchedule = (post: BlogPost) => {
+    setError(null);
+    setPendingId(post.id);
+
+    startTransition(async () => {
+      const result = await cancelBlogPostSchedule(post.id);
+
+      setPendingId(null);
+
+      if (!result.success || !result.data) {
+        setError(result.success ? "Something went wrong." : result.error);
+        return;
+      }
+
+      setPosts((current) =>
+        current.map((item) => (item.id === post.id ? result.data! : item))
+      );
+      router.refresh();
+    });
+  };
+
   const handleDeleted = (id: string) => {
     setPosts((current) => current.filter((post) => post.id !== id));
   };
@@ -96,7 +116,7 @@ export function BlogListClient({ posts: initialPosts }: BlogListClientProps) {
             <tr>
               <th className="px-4 py-3 font-medium">Title</th>
               <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium">Published date</th>
+              <th className="px-4 py-3 font-medium">Published / Scheduled</th>
               <th className="px-4 py-3 font-medium">Tags</th>
               <th className="px-4 py-3 font-medium">Actions</th>
             </tr>
@@ -119,62 +139,88 @@ export function BlogListClient({ posts: initialPosts }: BlogListClientProps) {
                 </td>
               </tr>
             ) : (
-              posts.map((post) => (
-                <tr key={post.id} className="border-b last:border-b-0">
-                  <td className="px-4 py-3">
-                    <Link
-                      href={`/admin/blog/${post.id}/edit`}
-                      className="font-medium text-foreground hover:text-orange-700 dark:hover:text-orange-300"
-                    >
-                      {post.title}
-                    </Link>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      /{post.slug}
-                    </p>
-                  </td>
-                  <td className="px-4 py-3">
-                    <StatusBadge published={post.published} />
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {formatBlogDate(post.published_at)}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {tagsToString(post.tags) || "—"}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-2">
+              posts.map((post) => {
+                const status = getBlogPostStatus(post);
+                const isPending = pendingId === post.id;
+
+                return (
+                  <tr key={post.id} className="border-b last:border-b-0">
+                    <td className="px-4 py-3">
                       <Link
                         href={`/admin/blog/${post.id}/edit`}
-                        className={buttonVariants({ variant: "outline", size: "sm" })}
+                        className="font-medium text-foreground hover:text-orange-700 dark:hover:text-orange-300"
                       >
-                        Edit
+                        {post.title}
                       </Link>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={pendingId === post.id}
-                        onClick={() => handlePublishToggle(post)}
-                      >
-                        {pendingId === post.id
-                          ? "Saving…"
-                          : post.published
-                            ? "Unpublish"
-                            : "Publish"}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() =>
-                          setDeleteTarget({ id: post.id, title: post.title })
-                        }
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        /{post.slug}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <StatusBadge post={post} />
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {status === "published" ? (
+                        formatBlogDate(post.published_at)
+                      ) : status === "scheduled" ? (
+                        <span className="text-wisk-purple">
+                          {formatBlogDate(post.scheduled_for)}
+                        </span>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {tagsToString(post.tags) || "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-2">
+                        <Link
+                          href={`/admin/blog/${post.id}/edit`}
+                          className={buttonVariants({ variant: "outline", size: "sm" })}
+                        >
+                          Edit
+                        </Link>
+
+                        {status === "scheduled" ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={isPending}
+                            onClick={() => handleCancelSchedule(post)}
+                          >
+                            {isPending ? "Saving…" : "Cancel schedule"}
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={isPending}
+                            onClick={() => handlePublishToggle(post)}
+                          >
+                            {isPending
+                              ? "Saving…"
+                              : post.published
+                                ? "Unpublish"
+                                : "Publish"}
+                          </Button>
+                        )}
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() =>
+                            setDeleteTarget({ id: post.id, title: post.title })
+                          }
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

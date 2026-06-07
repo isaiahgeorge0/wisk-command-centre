@@ -1,0 +1,16 @@
+name: Publish scheduled blog posts
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hit publish endpoint
+        run: |
+          curl -X GET "${{ secrets.CRON_ENDPOINT_URL }}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            --fail-with-body

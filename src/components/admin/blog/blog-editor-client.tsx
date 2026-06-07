@@ -14,17 +14,18 @@ import {
 import {
   publishBlogPostFromForm,
   saveBlogPostDraft,
+  scheduleBlogPostFromForm,
 } from "@/app/(dashboard)/admin/blog/actions";
 import { BlogMarkdownPreview } from "@/components/admin/blog/blog-markdown-preview";
 import { BlogMarkdownToolbar } from "@/components/admin/blog/blog-markdown-toolbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { emptyBlogForm, postToFormInput, todayDateISO } from "@/lib/blog/format";
+import { emptyBlogForm, postToFormInput } from "@/lib/blog/format";
 import { slugifyTitle } from "@/lib/blog/slug";
-import type { BlogFormInput, BlogPost } from "@/lib/blog/types";
+import type { BlogFormInput, BlogPost, BlogPostStatus } from "@/lib/blog/types";
+import { getBlogPostStatus } from "@/lib/blog/types";
 import { cn } from "@/lib/utils";
 
 type BlogEditorClientProps = {
@@ -37,6 +38,12 @@ type ContentTab = "write" | "preview";
 function serializeForm(values: BlogFormInput): string {
   return JSON.stringify(values);
 }
+
+const STATUS_OPTIONS: { value: BlogPostStatus; label: string; description: string }[] = [
+  { value: "draft", label: "Draft", description: "Save without publishing" },
+  { value: "scheduled", label: "Schedule for later", description: "Auto-publish at a future time" },
+  { value: "published", label: "Publish now", description: "Make visible immediately" },
+];
 
 export function BlogEditorClient({
   post,
@@ -56,7 +63,11 @@ export function BlogEditorClient({
   const [values, setValues] = useState<BlogFormInput>(initialValues);
   const [slugTouched, setSlugTouched] = useState(Boolean(post?.slug));
   const [contentTab, setContentTab] = useState<ContentTab>("write");
+  const [status, setStatus] = useState<BlogPostStatus>(
+    post ? getBlogPostStatus(post) : "draft"
+  );
   const [error, setError] = useState<string | null>(null);
+  const [successNote, setSuccessNote] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const isDirty = serializeForm(values) !== initialSnapshot;
@@ -83,16 +94,6 @@ export function BlogEditorClient({
     setField("slug", slug);
   };
 
-  const handlePublishedChange = (published: boolean) => {
-    setValues((current) => ({
-      ...current,
-      published,
-      published_at: published
-        ? current.published_at || todayDateISO()
-        : current.published_at,
-    }));
-  };
-
   const confirmLeave = useCallback(() => {
     if (!isDirty) return true;
     return window.confirm(
@@ -116,30 +117,55 @@ export function BlogEditorClient({
     event.preventDefault();
   };
 
-  const saveDraft = () => {
+  const handleSave = () => {
     setError(null);
+    setSuccessNote(null);
+
     startTransition(async () => {
-      const result = await saveBlogPostDraft(post?.id ?? null, values);
+      let result;
+
+      if (status === "draft") {
+        result = await saveBlogPostDraft(post?.id ?? null, values);
+      } else if (status === "scheduled") {
+        if (!values.scheduled_for) {
+          setError("Please set a scheduled date and time.");
+          return;
+        }
+        result = await scheduleBlogPostFromForm(
+          post?.id ?? null,
+          values,
+          values.scheduled_for
+        );
+        if (result.success) {
+          setSuccessNote(
+            "Post scheduled. It will publish automatically within 10 minutes of the scheduled time."
+          );
+          // Brief pause so the note is visible before navigating
+          await new Promise((resolve) => setTimeout(resolve, 1800));
+        }
+      } else {
+        result = await publishBlogPostFromForm(post?.id ?? null, values);
+      }
+
       if (!result.success) {
         setError(result.error);
         return;
       }
+
       router.push("/admin/blog");
       router.refresh();
     });
   };
 
-  const publish = () => {
-    setError(null);
-    startTransition(async () => {
-      const result = await publishBlogPostFromForm(post?.id ?? null, values);
-      if (!result.success) {
-        setError(result.error);
-        return;
-      }
-      router.push("/admin/blog");
-      router.refresh();
-    });
+  const saveButtonLabel = () => {
+    if (isPending) {
+      if (status === "draft") return "Saving…";
+      if (status === "scheduled") return "Scheduling…";
+      return "Publishing…";
+    }
+    if (status === "draft") return "Save draft";
+    if (status === "scheduled") return "Schedule";
+    return "Publish";
   };
 
   return (
@@ -158,21 +184,16 @@ export function BlogEditorClient({
           </h1>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            disabled={isPending}
-            onClick={saveDraft}
-          >
-            {isPending ? "Saving…" : "Save as draft"}
-          </Button>
-          <Button type="button" disabled={isPending} onClick={publish}>
-            {isPending ? "Publishing…" : "Publish"}
+          <Button type="button" disabled={isPending} onClick={handleSave}>
+            {saveButtonLabel()}
           </Button>
         </div>
       </div>
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      {successNote ? (
+        <p className="text-sm text-emerald-600 dark:text-emerald-400">{successNote}</p>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <div className="space-y-5 rounded-xl border border-border/60 bg-card/40 p-5">
@@ -307,33 +328,62 @@ export function BlogEditorClient({
             />
           </div>
 
-          <div className="flex items-center justify-between gap-3 rounded-lg border border-border/60 px-3 py-3">
-            <div>
-              <Label htmlFor="blog-published">Published</Label>
-              <p className="text-xs text-muted-foreground">
-                Off saves as draft
-              </p>
+          {/* Status */}
+          <div className="grid gap-2">
+            <Label>Status</Label>
+            <div className="divide-y divide-border/60 overflow-hidden rounded-lg border border-border/60">
+              {STATUS_OPTIONS.map((option) => (
+                <label
+                  key={option.value}
+                  className={cn(
+                    "flex cursor-pointer items-start gap-3 px-3 py-3 transition-colors",
+                    status === option.value
+                      ? "bg-orange-500/10"
+                      : "hover:bg-muted/40",
+                    isPending && "cursor-not-allowed opacity-60"
+                  )}
+                >
+                  <input
+                    type="radio"
+                    name="blog-status"
+                    value={option.value}
+                    checked={status === option.value}
+                    onChange={() => setStatus(option.value)}
+                    disabled={isPending}
+                    className="mt-0.5 accent-orange-500"
+                  />
+                  <div>
+                    <p className="text-sm font-medium leading-none text-foreground">
+                      {option.label}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {option.description}
+                    </p>
+                  </div>
+                </label>
+              ))}
             </div>
-            <Switch
-              id="blog-published"
-              checked={values.published}
-              onCheckedChange={handlePublishedChange}
-              disabled={isPending}
-            />
           </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="blog-published-at">Published date</Label>
-            <Input
-              id="blog-published-at"
-              type="date"
-              value={values.published_at}
-              onChange={(event) =>
-                setField("published_at", event.target.value)
-              }
-              disabled={isPending || !values.published}
-            />
-          </div>
+          {/* Scheduled datetime — shown only when "scheduled" is selected */}
+          {status === "scheduled" ? (
+            <div className="grid gap-2">
+              <Label htmlFor="blog-scheduled-for">Scheduled date & time</Label>
+              <Input
+                id="blog-scheduled-for"
+                type="datetime-local"
+                value={values.scheduled_for ?? ""}
+                onChange={(event) =>
+                  setField("scheduled_for", event.target.value)
+                }
+                disabled={isPending}
+              />
+              <p className="text-xs text-muted-foreground">
+                Posts publish automatically within 10 minutes of the
+                scheduled time.
+              </p>
+            </div>
+          ) : null}
         </aside>
       </div>
     </div>

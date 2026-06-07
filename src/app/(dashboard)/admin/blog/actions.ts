@@ -27,6 +27,16 @@ const blogFormSchema = z.object({
   author_name: z.string().trim().min(1, "Author name is required"),
   published: z.boolean(),
   published_at: z.string().optional(),
+  scheduled_for: z
+    .string()
+    .optional()
+    .refine(
+      (val) => {
+        if (!val || !val.trim()) return true;
+        return new Date(val) > new Date();
+      },
+      { message: "Scheduled time must be in the future" }
+    ),
 });
 
 function revalidateBlogPaths(id?: string) {
@@ -62,16 +72,28 @@ function normalizeFormInput(
     author_name: data.author_name,
     published: data.published,
     published_at: data.published_at ?? "",
+    scheduled_for: data.scheduled_for ?? "",
   };
 }
 
-function toDbPayload(input: BlogFormInput, publishedAtOverride?: string | null) {
+function toDbPayload(
+  input: BlogFormInput,
+  options?: {
+    publishedAtOverride?: string | null;
+    scheduledForOverride?: string | null;
+  }
+) {
   const publishedAt =
-    publishedAtOverride !== undefined
-      ? publishedAtOverride
+    options?.publishedAtOverride !== undefined
+      ? options.publishedAtOverride
       : input.published && input.published_at
         ? dateInputToISO(input.published_at)
         : null;
+
+  const scheduledFor =
+    options?.scheduledForOverride !== undefined
+      ? options.scheduledForOverride
+      : emptyToNull(input.scheduled_for);
 
   return {
     title: input.title.trim(),
@@ -83,6 +105,7 @@ function toDbPayload(input: BlogFormInput, publishedAtOverride?: string | null) 
     author_name: input.author_name.trim(),
     published: input.published,
     published_at: publishedAt,
+    scheduled_for: scheduledFor,
   };
 }
 
@@ -141,6 +164,10 @@ export async function createBlogPost(
   if (payload.published && !payload.published_at) {
     payload.published_at = new Date().toISOString();
   }
+  // Publishing immediately clears any pending schedule
+  if (payload.published) {
+    payload.scheduled_for = null;
+  }
 
   const { data, error } = await supabase
     .from("blog_posts")
@@ -176,6 +203,10 @@ export async function updateBlogPost(
 
   if (payload.published && !payload.published_at) {
     payload.published_at = new Date().toISOString();
+  }
+  // Publishing immediately clears any pending schedule
+  if (payload.published) {
+    payload.scheduled_for = null;
   }
 
   const { data, error } = await supabase
@@ -218,6 +249,7 @@ export async function publishBlogPost(
     .update({
       published: true,
       published_at: publishedAt,
+      scheduled_for: null,
     })
     .eq("id", id)
     .select("*")
@@ -240,13 +272,35 @@ export async function unpublishBlogPost(
 
   const { data, error } = await supabase
     .from("blog_posts")
-    .update({ published: false })
+    .update({ published: false, scheduled_for: null })
     .eq("id", id)
     .select("*")
     .single();
 
   if (error) {
     console.error("unpublishBlogPost:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidateBlogPaths(id);
+  return { success: true, data: data as BlogPost };
+}
+
+export async function cancelBlogPostSchedule(
+  id: string
+): Promise<BlogActionResult<BlogPost>> {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .update({ scheduled_for: null })
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error) {
+    console.error("cancelBlogPostSchedule:", error);
     return { success: false, error: error.message };
   }
 
@@ -290,6 +344,7 @@ export async function publishBlogPostFromForm(
     ...input,
     published: true,
     published_at: input.published_at || todayDateISO(),
+    scheduled_for: "",
   };
 
   if (id) {
@@ -297,4 +352,27 @@ export async function publishBlogPostFromForm(
   }
 
   return createBlogPost(publishInput);
+}
+
+export async function scheduleBlogPostFromForm(
+  id: string | null,
+  input: BlogFormInput,
+  scheduledFor: string
+): Promise<BlogActionResult<BlogPost>> {
+  if (!scheduledFor || new Date(scheduledFor) <= new Date()) {
+    return { success: false, error: "Scheduled time must be in the future" };
+  }
+
+  const scheduleInput: BlogFormInput = {
+    ...input,
+    published: false,
+    published_at: "",
+    scheduled_for: scheduledFor,
+  };
+
+  if (id) {
+    return updateBlogPost(id, scheduleInput);
+  }
+
+  return createBlogPost(scheduleInput);
 }
