@@ -10,12 +10,12 @@ What is built and working today.
 - Fields: title, platforms, content type, status, dates, hook, description, tags, goal link
 - Stats bar with streak
 - Board drag and drop
+- Recurring content (daily, weekly, monthly, yearly)
+- Per-occurrence notes via occurrence panel
 
 ## Gaps and Missing Features
 
 What is missing or underdeveloped, with a priority rating (High/Medium/Low) per item.
-
-- Recurring content — **High**
 - Content performance manual input — **Medium**
 - Content templates — **Medium**
 - Hook library — **Medium**
@@ -27,7 +27,6 @@ What is missing or underdeveloped, with a priority rating (High/Medium/Low) per 
 
 Features committed to building before Phase 3 begins.
 
-- Recurring content
 - Content performance manual input
 - Content templates
 - Hook library

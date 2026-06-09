@@ -1,6 +1,6 @@
 # WISK — Feature Inventory
 
-Last updated: June 2026 (Phase 2 complete)
+Last updated: June 2026
 
 This document is a complete record of every 
 feature in WISK. It is the source of truth 
@@ -440,6 +440,10 @@ Access: Admin email only (ADMIN_EMAIL env var)
 
 ## Marketing Site (wiskapp.com)
 
+Separate deployment from this repository.
+Posts are authored in the command centre
+admin blog and read by the marketing site.
+
 - Status: Live
 - Hero section with animated background
 - Word-stagger headline animation
@@ -451,36 +455,49 @@ Access: Admin email only (ADMIN_EMAIL env var)
 - Individual post pages with markdown
 - Nav with Blog link
 - Footer: Built by Isaiah George Creative
-- SEO: per-page metadata, Open Graph tags,
-  Twitter card tags
-- Dynamic sitemap.xml and robots.txt
-- OG image for social sharing
-- Vercel Analytics (page views, funnels)
-- Vercel Speed Insights (Core Web Vitals)
+
+## Command Centre Analytics
+
+- Status: Live (this repository)
+- Vercel Analytics in root layout
+- Vercel Speed Insights in root layout
 
 ---
 
-## Phase 2 — Complete
+## Phase 2 — In Progress
 
-All Phase 2 work is shipped and live.
+Core platform polish and connections before
+Phase 3 vertical packages. Several items were
+built in the codebase ahead of formal Phase 2
+kickoff — see Delivered below.
 
-Delivered:
-- Task filtering (priority, status, project),
-  sorting, and task notes field
-- Recurring content posts with per-occurrence
-  notes and status management
+### Delivered (live in this repository)
+
+- Task filtering (priority, status, project,
+  due date), sorting, and search
+- Task notes field (`raw_content` on tasks)
+- Project filtering, sorting, and status
+  grouping
 - Lead → project conversion
 - Idea → project conversion
 - Idea → content post conversion
-- Project filtering, sorting, and status
-  grouping
-- Global task quick-add FAB (overview
-  and calendar routes)
-- All form dialogs scrollable on smaller
-  screens
-- Blog post scheduling with cron job
-- SEO foundation (metadata, OG, sitemap)
-- Vercel Analytics and Speed Insights
+- Recurring content posts with per-occurrence
+  notes (migration `023_recurring_content.sql`)
+- Global task quick-add FAB on overview
+  and calendar routes
+- Form dialog scrollability on all six
+  entity form dialogs
+
+### Remaining
+
+- Strip AI Digest from nav (quick win)
+- Task file attachments (requires
+  Supabase Storage)
+- Calendar recurring events (content
+  recurrence is live; calendar-level
+  recurring events are not)
+- Empty state audit across all sections
+- Mobile QA pass
 
 ---
 
@@ -602,10 +619,12 @@ Each package is a paid add-on to the free core WISK platform:
   (Radix UI compatibility issue)
 - updated_at on projects table added
   but not on all tables
-- Recurring events on calendar not yet
-  built (content recurrence is live;
-  calendar-level recurring events are not)
-- AI Digest page is a placeholder
+- AI Digest still in nav but page is a
+  placeholder (Phase 2 quick win pending)
+- Calendar recurring events not built
+  (content recurrence is live)
+- Task file attachments not built
+  (Phase 2 remaining)
 - Social media API integrations not
   yet implemented (Phase 3)
 

@@ -12,14 +12,14 @@ What is built and working today.
 - Vercel site health
 - GitHub activity
 - Milestones on calendar
+- Filtering by status and service type
+- Sorting by name, deadline, value, and date created
+- Status grouping: Active, Paused, Completed & Archived
+- Search by project name, client name, and service type
 
 ## Gaps and Missing Features
 
 What is missing or underdeveloped, with a priority rating (High/Medium/Low) per item.
-
-- Project filtering by status/type/deadline — **High**
-- Project sorting by deadline/value/updated — **High**
-- Project search — **High**
 - Total pipeline value visible on overview — **Medium**
 - Client as own entity (see all projects per client) — **Medium**
 - Project templates with pre-loaded tasks — **Medium**
@@ -30,8 +30,6 @@ What is missing or underdeveloped, with a priority rating (High/Medium/Low) per 
 
 Features committed to building before Phase 3 begins.
 
-- Filtering and sorting
-- Project search
 - Pipeline value on overview
 
 ## Future Considerations (Phase 3+)

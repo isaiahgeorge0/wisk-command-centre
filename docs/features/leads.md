@@ -14,12 +14,11 @@ What is built and working today.
 - Stats bar
 - Inline edit
 - Quick-add
+- Lead to project conversion (one click)
 
 ## Gaps and Missing Features
 
 What is missing or underdeveloped, with a priority rating (High/Medium/Low) per item.
-
-- Lead to project conversion — **High**
 - Follow-up reminders — **High**
 - Lead activity log — **Medium**
 - Source analytics on overview — **Medium**
@@ -31,7 +30,6 @@ What is missing or underdeveloped, with a priority rating (High/Medium/Low) per 
 
 Features committed to building before Phase 3 begins.
 
-- Lead to project conversion (one click)
 - Follow-up reminders
 - Activity log
 

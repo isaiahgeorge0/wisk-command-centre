@@ -9,13 +9,12 @@ What is built and working today.
 - Click to expand
 - Inline edit
 - Quick-add
+- Convert idea to project (one click)
+- Convert idea to content post (one click)
 
 ## Gaps and Missing Features
 
 What is missing or underdeveloped, with a priority rating (High/Medium/Low) per item.
-
-- Convert idea to project — **High**
-- Convert idea to content post — **High**
 - Ideas search and filtering — **Medium**
 - Rich text description — **Low**
 - Board view alternative — **Low**
@@ -25,8 +24,6 @@ What is missing or underdeveloped, with a priority rating (High/Medium/Low) per 
 
 Features committed to building before Phase 3 begins.
 
-- Convert idea to project (one click)
-- Convert idea to content post (one click)
 - Search and filtering
 
 ## Future Considerations (Phase 3+)

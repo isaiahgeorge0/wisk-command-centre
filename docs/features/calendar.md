@@ -9,6 +9,7 @@ What is built and working today.
 - Filter toggles
 - Day detail panel
 - Upcoming 30/60/90 day panel
+- Global task quick-add FAB
 
 ## Gaps and Missing Features
 
@@ -25,9 +26,8 @@ What is missing or underdeveloped, with a priority rating (High/Medium/Low) per 
 
 Features committed to building before Phase 3 begins.
 
-- Recurring events (content and calendar)
+- Recurring events on calendar (content recurrence is live)
 - Week view
-- Add from calendar
 
 ## Future Considerations (Phase 3+)
 
