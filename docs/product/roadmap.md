@@ -1,6 +1,6 @@
 # WISK — Feature Inventory
 
-Last updated: June 2026
+Last updated: June 2026 (Phase 2 complete)
 
 This document is a complete record of every 
 feature in WISK. It is the source of truth 
@@ -101,6 +101,13 @@ Status definitions:
   (requires GitHub integration)
 - Milestones: add, tick off, delete
   Milestones appear on calendar
+- Filtering: search by name, filter by
+  status and service type
+- Sorting: by name, deadline, value,
+  date created (asc/desc)
+- Status grouping: Active, Paused,
+  Completed & Archived (collapsed)
+- Active filter count badge on filter bar
 
 ### Tasks
 - Status: Live
@@ -108,7 +115,7 @@ Status definitions:
   Incomplete tasks, Completed (collapsed)
 - Fields: title, project link (optional),
   due date, priority (high/medium/low),
-  completed
+  completed, notes (raw_content)
 - Priority badges: High coral, Medium amber,
   Low gray
 - Due date colouring: overdue red,
@@ -119,9 +126,15 @@ Status definitions:
 - Hover edit/delete on desktop
 - Inline edit
 - Quick-add modal via FAB and Add button
+- FAB opens task dialog on overview
+  and calendar pages globally
 - Show completed toggle with count
-- Note: Task filtering not yet built
-  (planned)
+- Notes field: freeform text displayed
+  below task metadata when present
+- Filtering: search by title, filter by
+  priority, status, and project
+- Sorting: by due date, priority, title
+- Active filter count badge on filter bar
 
 ### Goals
 - Status: Live
@@ -154,6 +167,10 @@ Status definitions:
 - Click to expand full description
 - Inline edit
 - Quick-add modal via FAB and Add button
+- Convert idea to project:
+  creates a project pre-filled from idea data
+- Convert idea to content post:
+  creates a content post pre-filled from idea
 
 ### Calendar
 - Status: Live
@@ -197,6 +214,8 @@ Status definitions:
 - Inline edit, delete with confirmation
 - Quick-add modal via FAB and Add button
 - Recent leads on Overview page
+- Convert lead to project:
+  creates a project pre-filled from lead data
 
 ### Content
 - Status: Live
@@ -226,8 +245,11 @@ Status definitions:
 - Goal linking: content goals show
   published post count
 - Content events on main Calendar page
-- Note: Recurring events not yet built
-  (planned)
+- Recurring content: recurrence rule
+  (daily, weekly, monthly, yearly) and
+  optional end date per post
+- Occurrence panel: per-occurrence notes
+  and status management
 - Note: Social media API integration
   not yet built (Phase 3)
 
@@ -389,7 +411,13 @@ Access: Admin email only (ADMIN_EMAIL env var)
 - Auto-generated slug from title
 - Live slug preview: wiskapp.com/blog/{slug}
 - Cover image URL, tags, author name
-- Published toggle and date
+- Three publish states: Draft, Schedule
+  for later, Publish now
+- Scheduled status badge in list view
+- Cancel schedule action on scheduled posts
+- Cron job publishes scheduled posts
+  every 10 minutes (Vercel Cron +
+  GitHub Actions fallback)
 - Unsaved changes warning
 
 ### Feedback (/admin/feedback)
@@ -423,15 +451,36 @@ Access: Admin email only (ADMIN_EMAIL env var)
 - Individual post pages with markdown
 - Nav with Blog link
 - Footer: Built by Isaiah George Creative
+- SEO: per-page metadata, Open Graph tags,
+  Twitter card tags
+- Dynamic sitemap.xml and robots.txt
+- OG image for social sharing
+- Vercel Analytics (page views, funnels)
+- Vercel Speed Insights (Core Web Vitals)
 
 ---
 
-## Planned Features (Phase 2 — in progress)
+## Phase 2 — Complete
 
-- Task filtering and custom columns
-  (priority, status, files, raw content)
-- Recurring events for content and calendar
-- Admin panel: additional enhancements
+All Phase 2 work is shipped and live.
+
+Delivered:
+- Task filtering (priority, status, project),
+  sorting, and task notes field
+- Recurring content posts with per-occurrence
+  notes and status management
+- Lead → project conversion
+- Idea → project conversion
+- Idea → content post conversion
+- Project filtering, sorting, and status
+  grouping
+- Global task quick-add FAB (overview
+  and calendar routes)
+- All form dialogs scrollable on smaller
+  screens
+- Blog post scheduling with cron job
+- SEO foundation (metadata, OG, sitemap)
+- Vercel Analytics and Speed Insights
 
 ---
 
@@ -548,18 +597,17 @@ Each package is a paid add-on to the free core WISK platform:
 
 ## Known Issues / Tech Debt
 
-- TEST_USER_ID pattern fully removed
-  (replaced with real auth)
 - Dialog/alert-dialog Framer Motion
   entrance animation deferred
   (Radix UI compatibility issue)
 - updated_at on projects table added
   but not on all tables
+- Recurring events on calendar not yet
+  built (content recurrence is live;
+  calendar-level recurring events are not)
+- AI Digest page is a placeholder
 - Social media API integrations not
   yet implemented (Phase 3)
-- Recurring events not yet built
-- Task filtering not yet built
-- AI Digest page is a placeholder
 
 ---
 
