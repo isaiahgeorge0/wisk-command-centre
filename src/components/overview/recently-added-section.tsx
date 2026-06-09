@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { Sparkles } from "lucide-react";
 
 import { StaggerItem } from "@/components/motion/stagger-item";
+import { OverviewInlineEmpty } from "@/components/overview/overview-inline-empty";
 import { StaggerList } from "@/components/motion/stagger-list";
 import { IdeaCategoryTag } from "@/components/ideas/idea-category-tag";
 import { usePreferences } from "@/components/preferences/preferences-context";
@@ -25,6 +27,7 @@ export function RecentlyAddedSection({ snapshot }: RecentlyAddedSectionProps) {
   const ideasStagger = useStaggerOnce();
   const projectsStagger = useStaggerOnce();
   const { recentIdeas, recentProjects } = snapshot;
+  const hasRecentlyAdded = recentIdeas.length > 0 || recentProjects.length > 0;
 
   return (
     <section className="mt-10">
@@ -32,6 +35,12 @@ export function RecentlyAddedSection({ snapshot }: RecentlyAddedSectionProps) {
         Recently added
       </h2>
 
+      {!hasRecentlyAdded ? (
+        <OverviewInlineEmpty icon={Sparkles}>
+          Nothing added recently. Start by creating a project or capturing an
+          idea.
+        </OverviewInlineEmpty>
+      ) : (
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-xl border border-border/60 bg-card/40 p-4">
           <h3 className="mb-3 text-sm font-medium text-foreground">Latest ideas</h3>
@@ -108,6 +117,7 @@ export function RecentlyAddedSection({ snapshot }: RecentlyAddedSectionProps) {
           )}
         </div>
       </div>
+      )}
     </section>
   );
 }

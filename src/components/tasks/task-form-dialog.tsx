@@ -1,9 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 import { createTask } from "@/app/(dashboard)/tasks/actions";
+import { useQuickAdd } from "@/components/quick-add/quick-add-context";
 import { TaskForm } from "@/components/tasks/task-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,15 +30,23 @@ export function TaskFormDialog({
   projects,
 }: TaskFormDialogProps) {
   const router = useRouter();
+  const { taskPrefillDueDate, setTaskPrefillDueDate } = useQuickAdd();
   const [values, setValues] = useState<TaskFormInput>(EMPTY_TASK_FORM);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const formId = "add-task-form";
 
+  useEffect(() => {
+    if (open && taskPrefillDueDate) {
+      setValues({ ...EMPTY_TASK_FORM, due_date: taskPrefillDueDate });
+    }
+  }, [open, taskPrefillDueDate]);
+
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
       setValues(EMPTY_TASK_FORM);
       setError(null);
+      setTaskPrefillDueDate(null);
     }
     onOpenChange(nextOpen);
   };

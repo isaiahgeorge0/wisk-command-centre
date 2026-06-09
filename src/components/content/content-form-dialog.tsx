@@ -1,9 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 import { createContentPost } from "@/app/(dashboard)/content/actions";
+import { useQuickAdd } from "@/components/quick-add/quick-add-context";
 import { ContentForm } from "@/components/content/content-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,15 +31,27 @@ export function ContentFormDialog({
   contentGoals,
 }: ContentFormDialogProps) {
   const router = useRouter();
+  const { contentPrefillScheduledDate, setContentPrefillScheduledDate } =
+    useQuickAdd();
   const [values, setValues] = useState<ContentFormInput>(EMPTY_CONTENT_FORM);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const formId = "add-content-form";
 
+  useEffect(() => {
+    if (open && contentPrefillScheduledDate) {
+      setValues({
+        ...EMPTY_CONTENT_FORM,
+        scheduled_date: contentPrefillScheduledDate,
+      });
+    }
+  }, [open, contentPrefillScheduledDate]);
+
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
       setValues(EMPTY_CONTENT_FORM);
       setError(null);
+      setContentPrefillScheduledDate(null);
     }
     onOpenChange(nextOpen);
   };

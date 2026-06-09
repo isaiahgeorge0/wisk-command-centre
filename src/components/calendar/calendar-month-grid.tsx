@@ -15,6 +15,8 @@ type CalendarMonthGridProps = {
   onSelectDate: (dateISO: string) => void;
   onPreviousMonth: () => void;
   onNextMonth: () => void;
+  onAddTask?: (dateISO: string) => void;
+  onAddContent?: (dateISO: string) => void;
 };
 
 export function CalendarMonthGrid({
@@ -25,6 +27,8 @@ export function CalendarMonthGrid({
   onSelectDate,
   onPreviousMonth,
   onNextMonth,
+  onAddTask,
+  onAddContent,
 }: CalendarMonthGridProps) {
   const weeks = getMonthMatrix(year, month);
   const eventsMap = eventsByDate(events);
@@ -61,6 +65,8 @@ export function CalendarMonthGrid({
                 events={eventsMap.get(day.dateISO) ?? []}
                 selected={selectedDate === day.dateISO}
                 onSelect={onSelectDate}
+                onAddTask={onAddTask}
+                onAddContent={onAddContent}
               />
             ))}
           </div>

@@ -4,7 +4,9 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { toggleTaskCompleted, updateTask } from "@/app/(dashboard)/tasks/actions";
+import { ExpandableSection } from "@/components/motion/expandable-section";
 import { usePreferences } from "@/components/preferences/preferences-context";
+import { TaskDetailPanel } from "@/components/tasks/task-detail-panel";
 import { TaskDueDate } from "@/components/tasks/task-due-date";
 import { TaskForm } from "@/components/tasks/task-form";
 import { TaskPriorityBadge } from "@/components/tasks/task-priority-badge";
@@ -18,11 +20,20 @@ import { cn } from "@/lib/utils";
 type TaskRowProps = {
   task: TaskWithProject;
   projects: ProjectOption[];
+  expanded: boolean;
+  onExpandToggle: () => void;
   onDelete: (task: TaskWithProject) => void;
   onUpdate: (task: TaskWithProject) => void;
 };
 
-export function TaskRow({ task, projects, onDelete, onUpdate }: TaskRowProps) {
+export function TaskRow({
+  task,
+  projects,
+  expanded,
+  onExpandToggle,
+  onDelete,
+  onUpdate,
+}: TaskRowProps) {
   const { fieldVisibility } = usePreferences();
   const vis = fieldVisibility.tasks;
   const router = useRouter();
@@ -72,6 +83,16 @@ export function TaskRow({ task, projects, onDelete, onUpdate }: TaskRowProps) {
     });
   };
 
+  const handleRowClick = () => {
+    if (editing) return;
+    onExpandToggle();
+  };
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditing(true);
+  };
+
   if (editing) {
     return (
       <div className="border-b border-border/50 bg-card/50 px-4 py-4">
@@ -107,69 +128,97 @@ export function TaskRow({ task, projects, onDelete, onUpdate }: TaskRowProps) {
   }
 
   return (
-    <div
-      className="group flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-2 border-b border-border/50 px-4 py-3 transition-colors hover:bg-card/50 sm:flex-nowrap"
-      onClick={() => setEditing(true)}
-    >
-      <Checkbox
-        checked={task.completed}
-        onCheckedChange={handleToggle}
-        onClick={(e) => e.stopPropagation()}
-        disabled={isPending}
-        aria-label={task.completed ? "Mark incomplete" : "Mark complete"}
-      />
-
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <span
-            className={cn(
-              "font-medium text-foreground",
-              task.completed && "text-muted-foreground line-through"
-            )}
-          >
-            {task.title}
-          </span>
-          {vis.priorityBadge ? (
-            <TaskPriorityBadge priority={task.priority} />
-          ) : null}
-          {vis.projectTag ? (
-            <TaskProjectTag projectName={task.project_name} />
-          ) : null}
-        </div>
-        {task.raw_content ? (
-          <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-2">
-            {task.raw_content}
-          </p>
-        ) : null}
-      </div>
-
-      {vis.dueDate ? (
-        <TaskDueDate dueDate={task.due_date} completed={task.completed} />
-      ) : null}
-
+    <div className="border-b border-border/50">
       <div
-        className="flex shrink-0 items-center gap-1 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100"
-        onClick={(e) => e.stopPropagation()}
+        role="button"
+        tabIndex={0}
+        className="group flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 transition-colors hover:bg-card/50 sm:flex-nowrap"
+        onClick={handleRowClick}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleRowClick();
+          }
+        }}
       >
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-11 px-2 text-xs md:h-8"
-          onClick={() => setEditing(true)}
+        <Checkbox
+          checked={task.completed}
+          onCheckedChange={handleToggle}
+          onClick={(e) => e.stopPropagation()}
+          disabled={isPending}
+          aria-label={task.completed ? "Mark incomplete" : "Mark complete"}
+        />
+
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={cn(
+                "font-medium text-foreground",
+                task.completed && "text-muted-foreground line-through"
+              )}
+            >
+              {task.title}
+            </span>
+            {vis.priorityBadge ? (
+              <TaskPriorityBadge priority={task.priority} />
+            ) : null}
+            {vis.projectTag ? (
+              <TaskProjectTag projectName={task.project_name} />
+            ) : null}
+          </div>
+        </div>
+
+        {vis.dueDate ? (
+          <TaskDueDate dueDate={task.due_date} completed={task.completed} />
+        ) : null}
+
+        <div
+          className="flex shrink-0 items-center gap-1 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100"
+          onClick={(e) => e.stopPropagation()}
         >
-          Edit
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-11 px-2 text-xs text-destructive hover:text-destructive md:h-8"
-          onClick={() => onDelete(task)}
-        >
-          Delete
-        </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-11 px-2 text-xs md:h-8"
+            onClick={handleEdit}
+          >
+            Edit
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-11 px-2 text-xs text-destructive hover:text-destructive md:h-8"
+            onClick={() => onDelete(task)}
+          >
+            Delete
+          </Button>
+        </div>
       </div>
+
+      <ExpandableSection open={expanded}>
+        <TaskDetailPanel
+          task={task}
+          className="border-t-0"
+          footer={
+            <>
+              <Button type="button" variant="outline" size="sm" onClick={handleEdit}>
+                Edit
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="text-destructive hover:text-destructive"
+                onClick={() => onDelete(task)}
+              >
+                Delete
+              </Button>
+            </>
+          }
+        />
+      </ExpandableSection>
     </div>
   );
 }

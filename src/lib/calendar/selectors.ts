@@ -11,6 +11,7 @@ import type { ProjectMilestone } from "@/lib/projects/milestones/types";
 import type { Project } from "@/lib/projects/types";
 import type { TaskWithProject } from "@/lib/tasks/types";
 import { buildContentCalendarEntries } from "@/lib/content/selectors";
+import type { DateRange } from "@/lib/calendar/grid";
 import { getPostPlatforms } from "@/lib/content/platforms";
 import {
   addDaysToISO,
@@ -28,7 +29,8 @@ export function buildCalendarEvents(
   tasks: TaskWithProject[],
   goals: Goal[],
   milestones: ProjectMilestone[] = [],
-  contentPosts: ContentPost[] = []
+  contentPosts: ContentPost[] = [],
+  options?: { contentWindow?: DateRange }
 ): CalendarEvent[] {
   const events: CalendarEvent[] = [];
   const projectNames = new Map(
@@ -89,7 +91,10 @@ export function buildCalendarEvents(
     });
   }
 
-  for (const entry of buildContentCalendarEntries(contentPosts)) {
+  for (const entry of buildContentCalendarEntries(
+    contentPosts,
+    options?.contentWindow
+  )) {
     const platforms = getPostPlatforms(entry.post).join(", ");
     events.push({
       id: `${entry.post.id}-${entry.kind}-${entry.date}`,

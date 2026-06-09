@@ -25,6 +25,11 @@ export function TasksList({
 }: TasksListProps) {
   const stagger = useStaggerOnce();
   const [completedExpanded, setCompletedExpanded] = useState(false);
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+
+  const handleExpandToggle = (taskId: string) => {
+    setExpandedTaskId((current) => (current === taskId ? null : taskId));
+  };
 
   const { incomplete, completed } = useMemo(() => {
     const incompleteTasks: TaskWithProject[] = [];
@@ -50,6 +55,8 @@ export function TasksList({
               <TaskRow
                 task={task}
                 projects={projects}
+                expanded={expandedTaskId === task.id}
+                onExpandToggle={() => handleExpandToggle(task.id)}
                 onUpdate={onTaskUpdate}
                 onDelete={onTaskDelete}
               />
@@ -90,6 +97,8 @@ export function TasksList({
                   key={task.id}
                   task={task}
                   projects={projects}
+                  expanded={expandedTaskId === task.id}
+                  onExpandToggle={() => handleExpandToggle(task.id)}
                   onUpdate={onTaskUpdate}
                   onDelete={onTaskDelete}
                 />

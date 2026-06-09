@@ -25,6 +25,7 @@ type TaskFormProps = {
   projects: ProjectOption[];
   disabled?: boolean;
   compact?: boolean;
+  hideProject?: boolean;
 };
 
 export function TaskForm({
@@ -34,6 +35,7 @@ export function TaskForm({
   projects,
   disabled,
   compact,
+  hideProject,
 }: TaskFormProps) {
   const setField = <K extends keyof TaskFormInput>(
     key: K,
@@ -93,52 +95,54 @@ export function TaskForm({
           </ResponsiveSelect>
         </div>
 
-        <div className="grid gap-2">
-          <Label htmlFor={`${formId}-project`}>Project</Label>
-          <ResponsiveSelect
-            id={`${formId}-project`}
-            value={projectValue}
-            onValueChange={(value) =>
-              setField("project_id", value ?? NO_PROJECT_VALUE)
-            }
-            disabled={disabled}
-            options={[
-              { value: NO_PROJECT_VALUE, label: "No project" },
-              ...projects.map((project) => ({
-                value: project.id,
-                label: project.project_name,
-              })),
-            ]}
-          >
-            <Select
+        {hideProject ? null : (
+          <div className="grid gap-2">
+            <Label htmlFor={`${formId}-project`}>Project</Label>
+            <ResponsiveSelect
+              id={`${formId}-project`}
               value={projectValue}
               onValueChange={(value) =>
                 setField("project_id", value ?? NO_PROJECT_VALUE)
               }
               disabled={disabled}
+              options={[
+                { value: NO_PROJECT_VALUE, label: "No project" },
+                ...projects.map((project) => ({
+                  value: project.id,
+                  label: project.project_name,
+                })),
+              ]}
             >
-              <SelectTrigger id={`${formId}-project`} className="w-full">
-                <SelectValue placeholder="No project">
-                  {(value) => {
-                    if (value == null || value === NO_PROJECT_VALUE) {
-                      return "No project";
-                    }
-                    const project = projects.find((p) => p.id === value);
-                    return project?.project_name ?? String(value);
-                  }}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NO_PROJECT_VALUE}>No project</SelectItem>
-                {projects.map((project) => (
-                  <SelectItem key={project.id} value={project.id}>
-                    {project.project_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </ResponsiveSelect>
-        </div>
+              <Select
+                value={projectValue}
+                onValueChange={(value) =>
+                  setField("project_id", value ?? NO_PROJECT_VALUE)
+                }
+                disabled={disabled}
+              >
+                <SelectTrigger id={`${formId}-project`} className="w-full">
+                  <SelectValue placeholder="No project">
+                    {(value) => {
+                      if (value == null || value === NO_PROJECT_VALUE) {
+                        return "No project";
+                      }
+                      const project = projects.find((p) => p.id === value);
+                      return project?.project_name ?? String(value);
+                    }}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_PROJECT_VALUE}>No project</SelectItem>
+                  {projects.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.project_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </ResponsiveSelect>
+          </div>
+        )}
       </div>
 
       <div className="grid gap-2">

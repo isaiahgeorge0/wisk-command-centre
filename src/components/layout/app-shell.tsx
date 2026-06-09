@@ -12,7 +12,9 @@ import { QuickAddProvider, useQuickAdd } from "@/components/quick-add/quick-add-
 import { ProjectTourCelebration } from "@/components/spotlight-tour/project-tour-celebration";
 import { SpotlightTourOverlay } from "@/components/spotlight-tour/spotlight-tour-overlay";
 import { SpotlightTourProvider } from "@/components/spotlight-tour/spotlight-tour-context";
+import { ContentFormDialog } from "@/components/content/content-form-dialog";
 import { TaskFormDialog } from "@/components/tasks/task-form-dialog";
+import type { Goal } from "@/lib/goals/types";
 import type { ChangelogEntry } from "@/lib/changelog/types";
 import type { ActiveAnnouncement } from "@/lib/admin/types";
 import type { Notification } from "@/lib/notifications/types";
@@ -36,6 +38,7 @@ type AppShellProps = {
   changelogEntries: ChangelogEntry[];
   unreadChangelogCount: number;
   projectOptions: ProjectOption[];
+  contentGoals: Pick<Goal, "id" | "title">[];
 };
 
 function GlobalTaskFormDialog({
@@ -50,6 +53,22 @@ function GlobalTaskFormDialog({
       open={taskAddOpen}
       onOpenChange={setTaskAddOpen}
       projects={projects}
+    />
+  );
+}
+
+function GlobalContentFormDialog({
+  contentGoals,
+}: {
+  contentGoals: Pick<Goal, "id" | "title">[];
+}) {
+  const { contentAddOpen, setContentAddOpen } = useQuickAdd();
+
+  return (
+    <ContentFormDialog
+      open={contentAddOpen}
+      onOpenChange={setContentAddOpen}
+      contentGoals={contentGoals}
     />
   );
 }
@@ -71,6 +90,7 @@ export function AppShell({
   changelogEntries,
   unreadChangelogCount,
   projectOptions,
+  contentGoals,
 }: AppShellProps) {
   const showFeedbackWelcome =
     onboardingCompleted &&
@@ -100,6 +120,7 @@ export function AppShell({
               </main>
               <QuickAddFab />
               <GlobalTaskFormDialog projects={projectOptions} />
+              <GlobalContentFormDialog contentGoals={contentGoals} />
               <BottomNav />
               <SpotlightTourOverlay />
               <ProjectTourCelebration displayName={displayName} />

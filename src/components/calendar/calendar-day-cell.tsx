@@ -1,6 +1,14 @@
 "use client";
 
+import { Calendar, CheckSquare, Plus } from "lucide-react";
+
 import { CalendarEventPill } from "@/components/calendar/calendar-event-pill";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { CALENDAR_MILESTONE_MARKER_CLASS } from "@/lib/calendar/constants";
 import type { CalendarDay, CalendarEvent } from "@/lib/calendar/types";
 import { cn } from "@/lib/utils";
@@ -10,6 +18,8 @@ type CalendarDayCellProps = {
   events: CalendarEvent[];
   selected: boolean;
   onSelect: (dateISO: string) => void;
+  onAddTask?: (dateISO: string) => void;
+  onAddContent?: (dateISO: string) => void;
 };
 
 const MAX_VISIBLE_ITEMS = 4;
@@ -19,6 +29,8 @@ export function CalendarDayCell({
   events,
   selected,
   onSelect,
+  onAddTask,
+  onAddContent,
 }: CalendarDayCellProps) {
   const pillEvents = events.filter((event) => event.type !== "milestone");
   const milestoneEvents = events.filter((event) => event.type === "milestone");
@@ -28,29 +40,85 @@ export function CalendarDayCell({
   ];
   const visibleItems = combined.slice(0, MAX_VISIBLE_ITEMS);
   const overflowCount = combined.length - visibleItems.length;
+  const showQuickAdd = onAddTask || onAddContent;
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={() => onSelect(day.dateISO)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect(day.dateISO);
+        }
+      }}
       className={cn(
-        "flex min-h-[5.5rem] flex-col gap-1 border-b border-r border-border/50 p-1.5 text-left transition-colors hover:bg-muted/40 md:min-h-[6.5rem] md:p-2",
+        "group relative flex min-h-[5.5rem] cursor-pointer flex-col gap-1 border-b border-r border-border/50 p-1.5 text-left transition-colors hover:bg-muted/40 md:min-h-[6.5rem] md:p-2",
         !day.isCurrentMonth && "bg-muted/20 text-muted-foreground/70",
         day.isToday &&
           "bg-wisk-teal/10 ring-1 ring-inset ring-wisk-teal/30",
         selected && "bg-muted/60 ring-1 ring-inset ring-wisk-purple/40"
       )}
     >
-      <span
-        className={cn(
-          "inline-flex size-6 items-center justify-center rounded-full text-xs font-medium",
-          day.isToday && "bg-wisk-teal text-white",
-          !day.isToday && day.isCurrentMonth && "text-foreground",
-          !day.isCurrentMonth && "text-muted-foreground/60"
-        )}
-      >
-        {day.dayNumber}
-      </span>
+      <div className="flex items-start justify-between gap-0.5">
+        <span
+          className={cn(
+            "inline-flex size-6 items-center justify-center rounded-full text-xs font-medium",
+            day.isToday && "bg-wisk-teal text-white",
+            !day.isToday && day.isCurrentMonth && "text-foreground",
+            !day.isCurrentMonth && "text-muted-foreground/60"
+          )}
+        >
+          {day.dayNumber}
+        </span>
+
+        {showQuickAdd ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              type="button"
+              aria-label={`Add to ${day.dateISO}`}
+              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+              className={cn(
+                "flex size-[18px] shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-wisk-teal/10 hover:text-wisk-teal focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wisk-teal/40",
+                "opacity-100 md:opacity-0 md:group-hover:opacity-100",
+                selected && "md:opacity-100"
+              )}
+            >
+              <Plus className="size-3.5" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              side="bottom"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {onAddTask ? (
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAddTask(day.dateISO);
+                  }}
+                >
+                  <CheckSquare className="size-4" />
+                  Add task
+                </DropdownMenuItem>
+              ) : null}
+              {onAddContent ? (
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAddContent(day.dateISO);
+                  }}
+                >
+                  <Calendar className="size-4" />
+                  Add content
+                </DropdownMenuItem>
+              ) : null}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : null}
+      </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-hidden">
         {visibleItems.map(({ kind, event }) =>
@@ -85,6 +153,6 @@ export function CalendarDayCell({
           </span>
         ) : null}
       </div>
-    </button>
+    </div>
   );
 }

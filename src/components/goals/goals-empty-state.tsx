@@ -14,8 +14,8 @@ export function GoalsEmptyState({ onAdd }: GoalsEmptyStateProps) {
       <Target className="mb-4 size-10 text-muted-foreground" />
       <h2 className="text-lg font-medium text-foreground">No goals yet</h2>
       <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-        Set targets for revenue, projects, content, or personal milestones — and
-        track your progress as you build.
+        Set your first goal to track progress toward what matters most in your
+        business.
       </p>
       <Button className="mt-6 gap-2" onClick={onAdd}>
         <Plus className="size-4" />

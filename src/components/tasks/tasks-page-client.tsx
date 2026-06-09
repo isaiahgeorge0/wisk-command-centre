@@ -82,14 +82,14 @@ export function TasksPageClient({
             What needs doing, by when, and for which client.
           </p>
         </div>
-        <Button className="shrink-0 gap-2" onClick={openTaskAdd}>
+        <Button className="shrink-0 gap-2" onClick={() => openTaskAdd()}>
           <Plus className="size-4" />
           Add task
         </Button>
       </div>
 
       {initialTasks.length === 0 ? (
-        <TasksEmptyState onAdd={openTaskAdd} />
+        <TasksEmptyState onAdd={() => openTaskAdd()} />
       ) : (
         <>
           <TaskFiltersBar

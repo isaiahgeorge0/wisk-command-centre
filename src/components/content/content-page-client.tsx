@@ -8,7 +8,6 @@ import { updateContentPostStatus } from "@/app/(dashboard)/content/actions";
 import { PageTransition } from "@/components/layout/page-transition";
 import { ContentCalendarTab } from "@/components/content/content-calendar-tab";
 import { ContentEmptyState } from "@/components/content/content-empty-state";
-import { ContentFormDialog } from "@/components/content/content-form-dialog";
 import { ContentPipeline } from "@/components/content/content-pipeline";
 import { ContentStatsBar } from "@/components/content/content-stats-bar";
 import {
@@ -37,7 +36,7 @@ export function ContentPageClient({
   contentGoals,
 }: ContentPageClientProps) {
   const router = useRouter();
-  const { contentAddOpen, setContentAddOpen, openContentAdd } = useQuickAdd();
+  const { openContentAdd } = useQuickAdd();
   const [posts, setPosts] = useState(initialPosts);
   const [activeTab, setActiveTab] = useState<ContentViewTab>("calendar");
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -119,14 +118,14 @@ export function ContentPageClient({
             Plan, schedule, and publish content across your platforms.
           </p>
         </div>
-        <Button className="shrink-0 gap-2" onClick={openContentAdd}>
+        <Button className="shrink-0 gap-2" onClick={() => openContentAdd()}>
           <Plus className="size-4" />
           Add content
         </Button>
       </div>
 
       {posts.length === 0 ? (
-        <ContentEmptyState onAdd={openContentAdd} />
+        <ContentEmptyState onAdd={() => openContentAdd()} />
       ) : (
         <>
           <ContentStatsBar stats={stats} />
@@ -144,12 +143,6 @@ export function ContentPageClient({
           )}
         </>
       )}
-
-      <ContentFormDialog
-        open={contentAddOpen}
-        onOpenChange={setContentAddOpen}
-        contentGoals={contentGoals}
-      />
 
       <DeleteContentDialog
         postId={deleteTarget?.id ?? null}

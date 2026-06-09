@@ -14,8 +14,8 @@ export function ProjectsEmptyState({ onAdd }: ProjectsEmptyStateProps) {
       <FolderOpen className="mb-4 size-10 text-muted-foreground" />
       <h2 className="text-lg font-medium text-foreground">No projects yet</h2>
       <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-        Add your first client project to start tracking work, deadlines, and
-        value from your command centre.
+        Create your first project to track client work, deadlines, and progress
+        all in one place.
       </p>
       <Button className="mt-6 gap-2" onClick={onAdd}>
         <Plus className="size-4" />

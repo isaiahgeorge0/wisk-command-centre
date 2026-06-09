@@ -1,5 +1,10 @@
 import type { CalendarDay } from "@/lib/calendar/types";
-import { toDateISO } from "@/lib/overview/date";
+import { addDaysToISO, compareDateISO, toDateISO } from "@/lib/overview/date";
+
+export type DateRange = {
+  start: string;
+  end: string;
+};
 
 function toCalendarDay(
   date: Date,
@@ -66,4 +71,36 @@ export function shiftMonth(
 ): { year: number; month: number } {
   const date = new Date(year, month + delta, 1, 12);
   return { year: date.getFullYear(), month: date.getMonth() };
+}
+
+/** Inclusive ISO date range covering every cell in the month grid. */
+export function getMonthGridDateRange(
+  year: number,
+  month: number,
+  now: Date = new Date()
+): DateRange {
+  const weeks = getMonthMatrix(year, month, now);
+  const dates = weeks.flat().map((day) => day.dateISO);
+  const sorted = [...dates].sort();
+  return { start: sorted[0]!, end: sorted[sorted.length - 1]! };
+}
+
+/**
+ * Union of the visible month grid and the upcoming-events horizon so recurring
+ * content appears in the month view and in the 30/60/90-day upcoming panel.
+ */
+export function getCalendarContentWindow(
+  year: number,
+  month: number,
+  todayISO: string,
+  upcomingHorizonDays = 90
+): DateRange {
+  const grid = getMonthGridDateRange(year, month);
+  const upcomingEnd = addDaysToISO(todayISO, upcomingHorizonDays);
+
+  return {
+    start: grid.start,
+    end:
+      compareDateISO(grid.end, upcomingEnd) > 0 ? grid.end : upcomingEnd,
+  };
 }

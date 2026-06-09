@@ -1,5 +1,6 @@
 "use client";
 
+import { CalendarDays } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { CalendarDayDetailPanel } from "@/components/calendar/calendar-day-detail-panel";
@@ -7,8 +8,10 @@ import { CalendarFilterBar } from "@/components/calendar/calendar-filter-bar";
 import { CalendarMonthGrid } from "@/components/calendar/calendar-month-grid";
 import { CalendarUpcomingPanel } from "@/components/calendar/calendar-upcoming-panel";
 import { PageTransition } from "@/components/layout/page-transition";
+import { useQuickAdd } from "@/components/quick-add/quick-add-context";
 import { DEFAULT_CALENDAR_FILTERS } from "@/lib/calendar/constants";
-import { shiftMonth } from "@/lib/calendar/grid";
+import { getCalendarContentWindow, getMonthGridDateRange, shiftMonth } from "@/lib/calendar/grid";
+import { compareDateISO } from "@/lib/overview/date";
 import {
   buildCalendarEvents,
   filterCalendarEvents,
@@ -47,10 +50,24 @@ export function CalendarPageClient({
   const [filters, setFilters] = useState<CalendarFilterState>(
     DEFAULT_CALENDAR_FILTERS
   );
+  const { openTaskAdd, openContentAdd } = useQuickAdd();
+
+  const contentWindow = useMemo(
+    () => getCalendarContentWindow(viewYear, viewMonth, todayISO),
+    [viewYear, viewMonth, todayISO]
+  );
 
   const allEvents = useMemo(
-    () => buildCalendarEvents(projects, tasks, goals, milestones, contentPosts),
-    [projects, tasks, goals, milestones, contentPosts]
+    () =>
+      buildCalendarEvents(
+        projects,
+        tasks,
+        goals,
+        milestones,
+        contentPosts,
+        { contentWindow }
+      ),
+    [projects, tasks, goals, milestones, contentPosts, contentWindow]
   );
 
   const filteredEvents = useMemo(
@@ -64,6 +81,21 @@ export function CalendarPageClient({
         ? getEventsForDate(filteredEvents, selectedDate)
         : [],
     [filteredEvents, selectedDate]
+  );
+
+  const monthRange = useMemo(
+    () => getMonthGridDateRange(viewYear, viewMonth),
+    [viewYear, viewMonth]
+  );
+
+  const hasEventsThisMonth = useMemo(
+    () =>
+      filteredEvents.some(
+        (event) =>
+          compareDateISO(event.date, monthRange.start) >= 0 &&
+          compareDateISO(event.date, monthRange.end) <= 0
+      ),
+    [filteredEvents, monthRange]
   );
 
   const handleToggleFilter = (type: CalendarEventType) => {
@@ -109,7 +141,21 @@ export function CalendarPageClient({
             onSelectDate={setSelectedDate}
             onPreviousMonth={handlePreviousMonth}
             onNextMonth={handleNextMonth}
+            onAddTask={(dateISO) => openTaskAdd(dateISO)}
+            onAddContent={(dateISO) => openContentAdd(dateISO)}
           />
+          {!hasEventsThisMonth ? (
+            <div className="flex flex-col items-center px-4 py-8 text-center">
+              <CalendarDays
+                className="mb-2 size-8 text-muted-foreground"
+                aria-hidden
+              />
+              <p className="max-w-md text-sm text-muted-foreground">
+                Nothing scheduled this month. Use the + on any day to add a task
+                or content post.
+              </p>
+            </div>
+          ) : null}
         </div>
 
         <CalendarDayDetailPanel

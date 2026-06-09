@@ -1,6 +1,8 @@
 import { headers } from "next/headers";
 
+import { getGoals } from "@/app/(dashboard)/goals/actions";
 import { getProjects } from "@/app/(dashboard)/projects/actions";
+import { filterContentGoals } from "@/lib/content/selectors";
 import {
   generateNotifications,
   getNotifications,
@@ -40,12 +42,13 @@ export default async function DashboardLayout({
   }
 
   await generateNotifications();
-  const [profile, preferences, notificationSnapshot, projects, announcements, changelogEntries, unreadChangelogCount] =
+  const [profile, preferences, notificationSnapshot, projects, goals, announcements, changelogEntries, unreadChangelogCount] =
     await Promise.all([
       getUserProfile(),
       getOrCreateUserPreferences(),
       getNotifications(),
       getProjects(),
+      getGoals(),
       getActiveAnnouncements(user.id),
       getPublishedChangelog(10),
       getUnreadChangelogCount(),
@@ -81,6 +84,10 @@ export default async function DashboardLayout({
         projectOptions={projects.map((project) => ({
           id: project.id,
           project_name: project.project_name,
+        }))}
+        contentGoals={filterContentGoals(goals).map((goal) => ({
+          id: goal.id,
+          title: goal.title,
         }))}
       >
         {children}

@@ -12,6 +12,7 @@ import { ProjectForm } from "@/components/projects/project-form";
 import { ProjectMilestonesTab } from "@/components/projects/project-milestones-tab";
 import { ProjectStatusBadge } from "@/components/projects/project-status-badge";
 import { ProjectTaskProgressBar } from "@/components/projects/project-task-progress-bar";
+import { ProjectTaskDetailOverlay } from "@/components/projects/project-task-detail-overlay";
 import { ProjectTasksTab } from "@/components/projects/project-tasks-tab";
 import { Button } from "@/components/ui/button";
 import {
@@ -61,6 +62,7 @@ export function ProjectCard({
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<ProjectCardTab>("details");
+  const [selectedTask, setSelectedTask] = useState<TaskWithProject | null>(null);
   const [editing, setEditing] = useState(false);
   const [values, setValues] = useState<ProjectFormInput>(
     projectToFormInput(project)
@@ -101,9 +103,32 @@ export function ProjectCard({
   };
 
   const handleCardClick = () => {
-    if (editing) return;
+    if (editing || selectedTask) return;
     setExpanded((prev) => !prev);
   };
+
+  const handleTaskUpdate = (task: TaskWithProject) => {
+    onTaskUpdate(task);
+    setSelectedTask((current) =>
+      current?.id === task.id ? { ...task, project_name: current.project_name } : current
+    );
+  };
+
+  const handleTaskSelect = (task: TaskWithProject) => {
+    setSelectedTask(task);
+    setActiveTab("tasks");
+    setExpanded(true);
+  };
+
+  const handleTaskOverlayClose = () => {
+    setSelectedTask(null);
+    setActiveTab("tasks");
+  };
+
+  const projectOption = useMemo(
+    () => [{ id: project.id, project_name: getProjectDisplayName(project) }],
+    [project]
+  );
 
   if (editing) {
     return (
@@ -149,7 +174,7 @@ export function ProjectCard({
   return (
     <Card
       className={cn(
-        "cursor-pointer border-border/60 bg-card/80 transition-colors hover:border-border hover:bg-card",
+        "relative cursor-pointer border-border/60 bg-card/80 transition-colors hover:border-border hover:bg-card",
         expanded && "border-wisk-purple/20"
       )}
       onClick={handleCardClick}
@@ -216,7 +241,12 @@ export function ProjectCard({
           <div onClick={(e) => e.stopPropagation()}>
             <ProjectCardTabs
               activeTab={activeTab}
-              onChange={setActiveTab}
+              onChange={(tab) => {
+                setActiveTab(tab);
+                if (tab !== "tasks") {
+                  setSelectedTask(null);
+                }
+              }}
             />
 
             {activeTab === "details" ? (
@@ -236,7 +266,8 @@ export function ProjectCard({
               <ProjectTasksTab
                 projectId={project.id}
                 tasks={projectTasks}
-                onTaskUpdate={onTaskUpdate}
+                onTaskUpdate={handleTaskUpdate}
+                onTaskSelect={handleTaskSelect}
                 onTaskCreated={onTaskCreated}
                 onTaskCreateFailed={onTaskCreateFailed}
                 onTaskCreateConfirmed={onTaskCreateConfirmed}
@@ -257,6 +288,14 @@ export function ProjectCard({
           </p>
         ) : null}
       </CardContent>
+
+      <ProjectTaskDetailOverlay
+        task={selectedTask}
+        projectId={project.id}
+        projects={projectOption}
+        onClose={handleTaskOverlayClose}
+        onUpdate={handleTaskUpdate}
+      />
     </Card>
   );
 }

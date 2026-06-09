@@ -14,7 +14,9 @@ type QuickAddContextValue = {
   openProjectAdd: () => void;
   taskAddOpen: boolean;
   setTaskAddOpen: (open: boolean) => void;
-  openTaskAdd: () => void;
+  taskPrefillDueDate: string | null;
+  setTaskPrefillDueDate: (date: string | null) => void;
+  openTaskAdd: (dueDate?: string) => void;
   goalAddOpen: boolean;
   setGoalAddOpen: (open: boolean) => void;
   openGoalAdd: () => void;
@@ -26,7 +28,9 @@ type QuickAddContextValue = {
   openLeadAdd: () => void;
   contentAddOpen: boolean;
   setContentAddOpen: (open: boolean) => void;
-  openContentAdd: () => void;
+  contentPrefillScheduledDate: string | null;
+  setContentPrefillScheduledDate: (date: string | null) => void;
+  openContentAdd: (scheduledDate?: string) => void;
 };
 
 const QuickAddContext = createContext<QuickAddContextValue | null>(null);
@@ -38,12 +42,18 @@ export function QuickAddProvider({ children }: { children: React.ReactNode }) {
   const [ideaAddOpen, setIdeaAddOpen] = useState(false);
   const [leadAddOpen, setLeadAddOpen] = useState(false);
   const [contentAddOpen, setContentAddOpen] = useState(false);
+  const [taskPrefillDueDate, setTaskPrefillDueDate] = useState<string | null>(
+    null
+  );
+  const [contentPrefillScheduledDate, setContentPrefillScheduledDate] =
+    useState<string | null>(null);
 
   const openProjectAdd = useCallback(() => {
     setProjectAddOpen(true);
   }, []);
 
-  const openTaskAdd = useCallback(() => {
+  const openTaskAdd = useCallback((dueDate?: string) => {
+    setTaskPrefillDueDate(dueDate ?? null);
     setTaskAddOpen(true);
   }, []);
 
@@ -59,7 +69,8 @@ export function QuickAddProvider({ children }: { children: React.ReactNode }) {
     setLeadAddOpen(true);
   }, []);
 
-  const openContentAdd = useCallback(() => {
+  const openContentAdd = useCallback((scheduledDate?: string) => {
+    setContentPrefillScheduledDate(scheduledDate ?? null);
     setContentAddOpen(true);
   }, []);
 
@@ -70,6 +81,8 @@ export function QuickAddProvider({ children }: { children: React.ReactNode }) {
       openProjectAdd,
       taskAddOpen,
       setTaskAddOpen,
+      taskPrefillDueDate,
+      setTaskPrefillDueDate,
       openTaskAdd,
       goalAddOpen,
       setGoalAddOpen,
@@ -82,6 +95,8 @@ export function QuickAddProvider({ children }: { children: React.ReactNode }) {
       openLeadAdd,
       contentAddOpen,
       setContentAddOpen,
+      contentPrefillScheduledDate,
+      setContentPrefillScheduledDate,
       openContentAdd,
     }),
     [
@@ -91,6 +106,8 @@ export function QuickAddProvider({ children }: { children: React.ReactNode }) {
       ideaAddOpen,
       leadAddOpen,
       contentAddOpen,
+      taskPrefillDueDate,
+      contentPrefillScheduledDate,
       openProjectAdd,
       openTaskAdd,
       openGoalAdd,

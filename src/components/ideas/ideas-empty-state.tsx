@@ -14,8 +14,8 @@ export function IdeasEmptyState({ onAdd }: IdeasEmptyStateProps) {
       <Lightbulb className="mb-4 size-10 text-muted-foreground" />
       <h2 className="text-lg font-medium text-foreground">No ideas yet</h2>
       <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-        Capture content angles, product thoughts, and business opportunities
-        before they slip away.
+        Capture your first idea before it slips away. Ideas can become projects
+        or content posts in one click.
       </p>
       <Button className="mt-6 gap-2" onClick={onAdd}>
         <Plus className="size-4" />

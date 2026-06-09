@@ -13,9 +13,10 @@ import { cn } from "@/lib/utils";
 type ProjectTaskRowProps = {
   task: TaskWithProject;
   onUpdate: (task: TaskWithProject) => void;
+  onSelect?: (task: TaskWithProject) => void;
 };
 
-export function ProjectTaskRow({ task, onUpdate }: ProjectTaskRowProps) {
+export function ProjectTaskRow({ task, onUpdate, onSelect }: ProjectTaskRowProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -37,10 +38,33 @@ export function ProjectTaskRow({ task, onUpdate }: ProjectTaskRowProps) {
 
   return (
     <div
+      role={onSelect ? "button" : undefined}
+      tabIndex={onSelect ? 0 : undefined}
       className={cn(
         "flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-muted/40",
+        onSelect && "cursor-pointer",
         task.completed && "opacity-70"
       )}
+      onClick={
+        onSelect
+          ? (e) => {
+              if ((e.target as HTMLElement).closest('[data-slot="checkbox"]')) {
+                return;
+              }
+              onSelect(task);
+            }
+          : undefined
+      }
+      onKeyDown={
+        onSelect
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onSelect(task);
+              }
+            }
+          : undefined
+      }
     >
       <Checkbox
         checked={task.completed}

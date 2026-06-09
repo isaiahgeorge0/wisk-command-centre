@@ -7,12 +7,11 @@ export const NAV_ITEMS = [
   { label: "Calendar", href: "/calendar" },
   { label: "Leads", href: "/leads" },
   { label: "Content", href: "/content" },
-  { label: "AI Digest", href: "/ai-digest" },
 ] as const;
 
 export type NavItem = (typeof NAV_ITEMS)[number];
 
-/** Bottom nav routes (subset of NAV_ITEMS — no Overview, Calendar, AI Digest). */
+/** Bottom nav routes (subset of NAV_ITEMS — no Overview or Calendar). */
 export const MOBILE_NAV_ITEMS = [
   { label: "Projects", href: "/projects" },
   { label: "Tasks", href: "/tasks" },

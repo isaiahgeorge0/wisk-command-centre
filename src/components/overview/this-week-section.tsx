@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { Calendar } from "lucide-react";
 
 import { ContentPlatformBadges } from "@/components/content/content-platform-badges";
+import { OverviewInlineEmpty } from "@/components/overview/overview-inline-empty";
 import { StaggerItem } from "@/components/motion/stagger-item";
 import { StaggerList } from "@/components/motion/stagger-list";
 import { usePreferences } from "@/components/preferences/preferences-context";
@@ -29,6 +31,7 @@ export function ThisWeekSection({ snapshot }: ThisWeekSectionProps) {
   const hasTasks = snapshot.tasksDueThisWeekGrouped.length > 0;
   const hasProjects = snapshot.projectDeadlinesThisWeek.length > 0;
   const hasContent = snapshot.contentDueThisWeekGrouped.length > 0;
+  const hasAnythingThisWeek = hasTasks || hasProjects || hasContent;
 
   return (
     <section className="mt-10">
@@ -36,6 +39,11 @@ export function ThisWeekSection({ snapshot }: ThisWeekSectionProps) {
         This week
       </h2>
 
+      {!hasAnythingThisWeek ? (
+        <OverviewInlineEmpty icon={Calendar}>
+          Nothing scheduled for this week.
+        </OverviewInlineEmpty>
+      ) : (
       <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
         <div className="rounded-xl border border-border/60 bg-card/40 p-4">
           <h3 className="mb-3 text-sm font-medium text-foreground">
@@ -152,6 +160,7 @@ export function ThisWeekSection({ snapshot }: ThisWeekSectionProps) {
           )}
         </div>
       </div>
+      )}
     </section>
   );
 }

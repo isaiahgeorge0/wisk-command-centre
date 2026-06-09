@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { CheckCircle } from "lucide-react";
 
 import { StaggerItem } from "@/components/motion/stagger-item";
 import { StaggerList } from "@/components/motion/stagger-list";
-import { OverviewEmptyPositive } from "@/components/overview/overview-empty-positive";
+import { OverviewInlineEmpty } from "@/components/overview/overview-inline-empty";
 import { usePreferences } from "@/components/preferences/preferences-context";
 import { useStaggerOnce } from "@/lib/motion/use-stagger-once";
 import { TaskPriorityBadge } from "@/components/tasks/task-priority-badge";
@@ -54,7 +55,9 @@ export function NeedsAttentionSection({ snapshot }: NeedsAttentionSectionProps) 
         <h2 className="mb-4 text-sm font-medium tracking-wide text-muted-foreground uppercase">
           Needs attention
         </h2>
-        <OverviewEmptyPositive />
+        <OverviewInlineEmpty icon={CheckCircle}>
+          Nothing needs your attention right now.
+        </OverviewInlineEmpty>
       </section>
     );
   }

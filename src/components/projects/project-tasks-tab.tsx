@@ -10,6 +10,7 @@ type ProjectTasksTabProps = {
   projectId: string;
   tasks: TaskWithProject[];
   onTaskUpdate: (task: TaskWithProject) => void;
+  onTaskSelect: (task: TaskWithProject) => void;
   onTaskCreated: (task: TaskWithProject) => void;
   onTaskCreateFailed: (taskId: string) => void;
   onTaskCreateConfirmed: (tempId: string, task: TaskWithProject) => void;
@@ -33,6 +34,7 @@ export function ProjectTasksTab({
   projectId,
   tasks,
   onTaskUpdate,
+  onTaskSelect,
   onTaskCreated,
   onTaskCreateFailed,
   onTaskCreateConfirmed,
@@ -55,7 +57,11 @@ export function ProjectTasksTab({
         <ul className="space-y-0.5">
           {sortedTasks.map((task) => (
             <li key={task.id}>
-              <ProjectTaskRow task={task} onUpdate={onTaskUpdate} />
+              <ProjectTaskRow
+                task={task}
+                onUpdate={onTaskUpdate}
+                onSelect={onTaskSelect}
+              />
             </li>
           ))}
         </ul>

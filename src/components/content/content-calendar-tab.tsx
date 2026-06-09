@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { ContentCalendarGrid } from "@/components/content/content-calendar-grid";
 import { ContentDayDetailPanel } from "@/components/content/content-day-detail-panel";
 import { ContentPlatformFilterBar } from "@/components/content/content-platform-filter-bar";
-import { shiftMonth } from "@/lib/calendar/grid";
+import { getMonthGridDateRange, shiftMonth } from "@/lib/calendar/grid";
 import { postHasPlatform } from "@/lib/content/platforms";
 import {
   buildContentCalendarEntries,
@@ -36,9 +36,14 @@ export function ContentCalendarTab({ posts }: ContentCalendarTabProps) {
     );
   }, [posts, activePlatforms]);
 
+  const contentWindow = useMemo(
+    () => getMonthGridDateRange(viewYear, viewMonth),
+    [viewYear, viewMonth]
+  );
+
   const entries = useMemo(
-    () => buildContentCalendarEntries(filteredPosts),
-    [filteredPosts]
+    () => buildContentCalendarEntries(filteredPosts, contentWindow),
+    [filteredPosts, contentWindow]
   );
 
   const entriesMap = useMemo(() => contentEntriesByDate(entries), [entries]);
