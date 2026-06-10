@@ -1,9 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { getPersonalisationCompleted } from "@/lib/auth/middleware-preferences";
+import { createAdminClient } from "@/lib/supabase/admin";
 
-const PUBLIC_PATHS = ["/sign-in", "/auth/callback", "/auth/reset-password"];
+const PUBLIC_PATHS = [
+  "/sign-in",
+  "/set-password",
+  "/auth/callback",
+  "/auth/reset-password",
+];
 
 // Paths accessible to authenticated users before personalisation is complete.
 const SETUP_PATHS = ["/welcome", "/set-password"];
@@ -21,6 +26,46 @@ function isSetupPath(pathname: string): boolean {
 function withPathnameHeader(response: NextResponse, pathname: string) {
   response.headers.set("x-pathname", pathname);
   return response;
+}
+
+/**
+ * Returns true only when a user_preferences row exists and
+ * personalisation_completed is explicitly true.
+ * Missing row, false flag, query error, or thrown exception → false
+ * (treat as not personalised → redirect to /set-password).
+ */
+async function isPersonalisationCompleted(userId: string): Promise<boolean> {
+  try {
+    const supabase = createAdminClient();
+    const { data, error } = await supabase
+      .from("user_preferences")
+      .select("personalisation_completed")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (error) {
+      console.error(
+        "[middleware] personalisation_completed query failed:",
+        error.message,
+        "userId:",
+        userId
+      );
+      return false;
+    }
+
+    if (data === null) {
+      console.log(
+        "[middleware] no user_preferences row — not personalised, userId:",
+        userId
+      );
+      return false;
+    }
+
+    return data.personalisation_completed === true;
+  } catch (err) {
+    console.error("[middleware] personalisation_completed check error:", err);
+    return false;
+  }
 }
 
 export async function middleware(request: NextRequest) {
@@ -58,7 +103,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (user) {
-    const personalisationCompleted = await getPersonalisationCompleted(user.id);
+    const personalisationCompleted = await isPersonalisationCompleted(user.id);
 
     if (pathname === "/sign-in") {
       const url = request.nextUrl.clone();
