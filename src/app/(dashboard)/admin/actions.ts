@@ -27,6 +27,7 @@ import {
   type UserActivityStatus,
   type UserHealthSummary,
 } from "@/lib/admin/platform";
+import { sendApprovalNotification } from "@/lib/email/resend";
 import { getAuthContext } from "@/lib/auth/get-auth-context";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -188,6 +189,22 @@ export async function approveRequest(
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
     "http://localhost:3000";
 
+  const { error: updateError } = await supabase
+    .from("access_requests")
+    .update({ status: "approved" })
+    .eq("id", id);
+
+  if (updateError) {
+    console.error("approveRequest update:", updateError);
+    return { success: false, error: updateError.message };
+  }
+
+  try {
+    await sendApprovalNotification({ name, email });
+  } catch (error) {
+    console.error("approveRequest approval notification:", error);
+  }
+
   const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
     email.trim().toLowerCase(),
     {
@@ -208,16 +225,6 @@ export async function approveRequest(
       console.error("approveRequest invite:", inviteError);
       return { success: false, error: inviteError.message };
     }
-  }
-
-  const { error: updateError } = await supabase
-    .from("access_requests")
-    .update({ status: "approved" })
-    .eq("id", id);
-
-  if (updateError) {
-    console.error("approveRequest update:", updateError);
-    return { success: false, error: updateError.message };
   }
 
   revalidateAdminPaths();

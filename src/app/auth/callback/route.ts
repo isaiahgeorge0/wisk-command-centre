@@ -10,12 +10,13 @@ export async function GET(request: Request) {
   if (code) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-
     if (!error) {
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? origin;
       const redirectUrl = next.startsWith("/") ? next : "/";
-      return NextResponse.redirect(`${origin}${redirectUrl}`);
+      return NextResponse.redirect(`${baseUrl}${redirectUrl}`);
     }
   }
 
-  return NextResponse.redirect(`${origin}/sign-in?error=auth_callback`);
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? origin;
+  return NextResponse.redirect(`${baseUrl}/sign-in?error=auth_callback`);
 }
