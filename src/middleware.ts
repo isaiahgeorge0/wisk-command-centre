@@ -7,7 +7,9 @@ const PUBLIC_PATHS = [
   "/sign-in",
   "/set-password",
   "/auth/callback",
+  "/auth/callback-client",
   "/auth/reset-password",
+  "/api/auth/personalisation-status",
 ];
 
 // Paths accessible to authenticated users before personalisation is complete.
