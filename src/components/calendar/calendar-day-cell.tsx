@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, CheckSquare, Plus } from "lucide-react";
+import { Calendar, CheckSquare, Circle, Heart, Plus } from "lucide-react";
 
 import { CalendarEventPill } from "@/components/calendar/calendar-event-pill";
 import {
@@ -18,8 +18,11 @@ type CalendarDayCellProps = {
   events: CalendarEvent[];
   selected: boolean;
   onSelect: (dateISO: string) => void;
+  onEventSelect?: (event: CalendarEvent) => void;
   onAddTask?: (dateISO: string) => void;
   onAddContent?: (dateISO: string) => void;
+  onAddLifestyle?: (dateISO: string) => void;
+  onAddOther?: (dateISO: string) => void;
 };
 
 const MAX_VISIBLE_ITEMS = 4;
@@ -29,8 +32,11 @@ export function CalendarDayCell({
   events,
   selected,
   onSelect,
+  onEventSelect,
   onAddTask,
   onAddContent,
+  onAddLifestyle,
+  onAddOther,
 }: CalendarDayCellProps) {
   const pillEvents = events.filter((event) => event.type !== "milestone");
   const milestoneEvents = events.filter((event) => event.type === "milestone");
@@ -40,7 +46,8 @@ export function CalendarDayCell({
   ];
   const visibleItems = combined.slice(0, MAX_VISIBLE_ITEMS);
   const overflowCount = combined.length - visibleItems.length;
-  const showQuickAdd = onAddTask || onAddContent;
+  const showQuickAdd =
+    onAddTask || onAddContent || onAddLifestyle || onAddOther;
 
   return (
     <div
@@ -115,6 +122,28 @@ export function CalendarDayCell({
                   Add content
                 </DropdownMenuItem>
               ) : null}
+              {onAddLifestyle ? (
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAddLifestyle(day.dateISO);
+                  }}
+                >
+                  <Heart className="size-4" />
+                  Add lifestyle/personal
+                </DropdownMenuItem>
+              ) : null}
+              {onAddOther ? (
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAddOther(day.dateISO);
+                  }}
+                >
+                  <Circle className="size-4" />
+                  Add other
+                </DropdownMenuItem>
+              ) : null}
             </DropdownMenuContent>
           </DropdownMenu>
         ) : null}
@@ -123,9 +152,14 @@ export function CalendarDayCell({
       <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-hidden">
         {visibleItems.map(({ kind, event }) =>
           kind === "milestone" ? (
-            <span
+            <button
               key={`${event.type}-${event.id}`}
-              className="flex min-w-0 items-center gap-1 px-0.5"
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEventSelect?.(event);
+              }}
+              className="flex min-w-0 items-center gap-1 px-0.5 text-left hover:opacity-80"
               title={event.title}
             >
               <span
@@ -138,12 +172,13 @@ export function CalendarDayCell({
               <span className="truncate text-[10px] font-medium text-rose-500 dark:text-rose-400">
                 {event.title}
               </span>
-            </span>
+            </button>
           ) : (
             <CalendarEventPill
               key={`${event.type}-${event.id}`}
               type={event.type}
               label={event.title}
+              onClick={() => onEventSelect?.(event)}
             />
           )
         )}

@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { PageTransition } from "@/components/layout/page-transition";
@@ -10,6 +10,7 @@ import { ProjectFiltersBar } from "@/components/projects/project-filters-bar";
 import { ProjectFormDialog } from "@/components/projects/project-form-dialog";
 import { ProjectsEmptyState } from "@/components/projects/projects-empty-state";
 import { ProjectsList } from "@/components/projects/projects-list";
+import type { ProjectCardTab } from "@/components/projects/project-card-tabs";
 import { useQuickAdd } from "@/components/quick-add/quick-add-context";
 import { useSpotlightTour } from "@/components/spotlight-tour/spotlight-tour-context";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,15 @@ export function ProjectsPageClient({
   integrations,
 }: ProjectsPageClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const openProjectId = searchParams.get("project");
+  const openTabParam = searchParams.get("tab");
+  const openTab: ProjectCardTab | null =
+    openTabParam === "details" ||
+    openTabParam === "tasks" ||
+    openTabParam === "milestones"
+      ? openTabParam
+      : null;
   const { projectAddOpen, setProjectAddOpen, openProjectAdd } = useQuickAdd();
   const { consumePendingStart } = useSpotlightTour();
   const [projects, setProjects] = useState(initialProjects);
@@ -143,6 +153,8 @@ export function ProjectsPageClient({
     onTaskCreated: handleTaskCreated,
     onTaskCreateFailed: handleTaskCreateFailed,
     onTaskCreateConfirmed: handleTaskCreateConfirmed,
+    openProjectId,
+    openTab,
   };
 
   return (

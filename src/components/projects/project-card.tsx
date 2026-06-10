@@ -43,6 +43,8 @@ type ProjectCardProps = {
   onTaskCreated: (task: TaskWithProject) => void;
   onTaskCreateFailed: (taskId: string) => void;
   onTaskCreateConfirmed: (tempId: string, task: TaskWithProject) => void;
+  openOnMount?: boolean;
+  initialTab?: ProjectCardTab;
 };
 
 export function ProjectCard({
@@ -56,12 +58,16 @@ export function ProjectCard({
   onTaskCreated,
   onTaskCreateFailed,
   onTaskCreateConfirmed,
+  openOnMount = false,
+  initialTab,
 }: ProjectCardProps) {
   const { fieldVisibility, serviceTypes } = usePreferences();
   const vis = fieldVisibility.projects;
   const router = useRouter();
-  const [expanded, setExpanded] = useState(false);
-  const [activeTab, setActiveTab] = useState<ProjectCardTab>("details");
+  const [expanded, setExpanded] = useState(openOnMount);
+  const [activeTab, setActiveTab] = useState<ProjectCardTab>(
+    initialTab ?? "details"
+  );
   const [selectedTask, setSelectedTask] = useState<TaskWithProject | null>(null);
   const [editing, setEditing] = useState(false);
   const [values, setValues] = useState<ProjectFormInput>(

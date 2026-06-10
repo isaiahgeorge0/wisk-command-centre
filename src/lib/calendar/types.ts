@@ -4,6 +4,8 @@ export const CALENDAR_EVENT_TYPES = [
   "goal",
   "content",
   "milestone",
+  "lifestyle",
+  "other",
 ] as const;
 
 export type CalendarEventType = (typeof CALENDAR_EVENT_TYPES)[number];
@@ -16,6 +18,31 @@ export type CalendarEvent = {
   href: string;
   meta?: string | Record<string, unknown>;
 };
+
+/** Row from the calendar_events table (lifestyle / other). */
+export type StandaloneCalendarEvent = {
+  id: string;
+  user_id: string;
+  title: string;
+  date: string;
+  end_date?: string | null;
+  event_type: "lifestyle" | "other";
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type StandaloneCalendarEventFormInput = {
+  title: string;
+  date: string;
+  end_date?: string;
+  event_type: "lifestyle" | "other";
+  notes?: string;
+};
+
+export type ActionResult<T> =
+  | { success: true; data: T }
+  | { success: false; error: string };
 
 export type CalendarDay = {
   dateISO: string;

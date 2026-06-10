@@ -3,6 +3,7 @@
 import { StaggerItem } from "@/components/motion/stagger-item";
 import { StaggerList } from "@/components/motion/stagger-list";
 import { ProjectCard } from "@/components/projects/project-card";
+import type { ProjectCardTab } from "@/components/projects/project-card-tabs";
 import { useStaggerOnce } from "@/lib/motion/use-stagger-once";
 import type { Project } from "@/lib/projects/types";
 import type { TaskWithProject } from "@/lib/tasks/types";
@@ -18,6 +19,8 @@ type ProjectsListProps = {
   onTaskCreated: (task: TaskWithProject) => void;
   onTaskCreateFailed: (taskId: string) => void;
   onTaskCreateConfirmed: (tempId: string, task: TaskWithProject) => void;
+  openProjectId?: string | null;
+  openTab?: ProjectCardTab | null;
 };
 
 export function ProjectsList({
@@ -31,6 +34,8 @@ export function ProjectsList({
   onTaskCreated,
   onTaskCreateFailed,
   onTaskCreateConfirmed,
+  openProjectId,
+  openTab,
 }: ProjectsListProps) {
   const stagger = useStaggerOnce();
 
@@ -52,6 +57,10 @@ export function ProjectsList({
             onTaskCreated={onTaskCreated}
             onTaskCreateFailed={onTaskCreateFailed}
             onTaskCreateConfirmed={onTaskCreateConfirmed}
+            openOnMount={openProjectId === project.id}
+            initialTab={
+              openProjectId === project.id ? (openTab ?? undefined) : undefined
+            }
           />
         </StaggerItem>
       ))}

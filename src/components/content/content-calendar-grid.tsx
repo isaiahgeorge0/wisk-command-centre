@@ -13,6 +13,8 @@ type ContentCalendarGridProps = {
   entries: ContentCalendarEntry[];
   selectedDate: string | null;
   onSelectDate: (dateISO: string) => void;
+  onEntrySelect?: (entry: ContentCalendarEntry) => void;
+  onAddContent?: (dateISO: string) => void;
   onPreviousMonth: () => void;
   onNextMonth: () => void;
 };
@@ -23,6 +25,8 @@ export function ContentCalendarGrid({
   entries,
   selectedDate,
   onSelectDate,
+  onEntrySelect,
+  onAddContent,
   onPreviousMonth,
   onNextMonth,
 }: ContentCalendarGridProps) {
@@ -61,6 +65,8 @@ export function ContentCalendarGrid({
                 entries={entriesMap.get(day.dateISO) ?? []}
                 selected={selectedDate === day.dateISO}
                 onSelect={onSelectDate}
+                onEntrySelect={onEntrySelect}
+                onAddContent={onAddContent}
               />
             ))}
           </div>

@@ -131,7 +131,7 @@ export function ContentPageClient({
           <ContentStatsBar stats={stats} />
           <ContentViewTabs activeTab={activeTab} onChange={setActiveTab} />
           {activeTab === "calendar" ? (
-            <ContentCalendarTab posts={posts} />
+            <ContentCalendarTab posts={posts} contentGoals={contentGoals} />
           ) : (
             <ContentPipeline
               grouped={grouped}

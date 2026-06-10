@@ -3,8 +3,10 @@
 import {
   Calendar,
   CheckSquare,
+  Circle,
   Diamond,
   FolderKanban,
+  Heart,
   Target,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -38,6 +40,8 @@ const TYPE_ICONS: Record<CalendarEventType, typeof FolderKanban> = {
   goal: Target,
   content: Calendar,
   milestone: Diamond,
+  lifestyle: Heart,
+  other: Circle,
 };
 
 const UPCOMING_WINDOWS: UpcomingWindow[] = [30, 60, 90];

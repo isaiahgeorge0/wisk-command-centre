@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
-import { createContentPost } from "@/app/(dashboard)/content/actions";
+import { createContentPost, updateContentPost } from "@/app/(dashboard)/content/actions";
 import { useQuickAdd } from "@/components/quick-add/quick-add-context";
 import { ContentForm } from "@/components/content/content-form";
 import { Button } from "@/components/ui/button";
@@ -15,43 +15,55 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { EMPTY_CONTENT_FORM } from "@/lib/content/form";
-import type { ContentFormInput } from "@/lib/content/types";
+import { EMPTY_CONTENT_FORM, postToFormInput } from "@/lib/content/form";
+import type { ContentFormInput, ContentPost } from "@/lib/content/types";
 import type { Goal } from "@/lib/goals/types";
 
 type ContentFormDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   contentGoals: Pick<Goal, "id" | "title">[];
+  post?: ContentPost | null;
 };
 
 export function ContentFormDialog({
   open,
   onOpenChange,
   contentGoals,
+  post = null,
 }: ContentFormDialogProps) {
   const router = useRouter();
   const { contentPrefillScheduledDate, setContentPrefillScheduledDate } =
     useQuickAdd();
+  const isEdit = Boolean(post);
   const [values, setValues] = useState<ContentFormInput>(EMPTY_CONTENT_FORM);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const formId = "add-content-form";
+  const formId = isEdit ? `edit-content-${post?.id}` : "add-content-form";
 
   useEffect(() => {
-    if (open && contentPrefillScheduledDate) {
-      setValues({
-        ...EMPTY_CONTENT_FORM,
-        scheduled_date: contentPrefillScheduledDate,
-      });
+    if (!open) return;
+
+    if (post) {
+      setValues(postToFormInput(post));
+      return;
     }
-  }, [open, contentPrefillScheduledDate]);
+
+    setValues({
+      ...EMPTY_CONTENT_FORM,
+      ...(contentPrefillScheduledDate
+        ? { scheduled_date: contentPrefillScheduledDate }
+        : {}),
+    });
+  }, [open, post, contentPrefillScheduledDate]);
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
       setValues(EMPTY_CONTENT_FORM);
       setError(null);
-      setContentPrefillScheduledDate(null);
+      if (!isEdit) {
+        setContentPrefillScheduledDate(null);
+      }
     }
     onOpenChange(nextOpen);
   };
@@ -61,7 +73,9 @@ export function ContentFormDialog({
     setError(null);
 
     startTransition(async () => {
-      const result = await createContentPost(values);
+      const result = isEdit
+        ? await updateContentPost(post!.id, values)
+        : await createContentPost(values);
       if (!result.success) {
         setError(result.error);
         return;
@@ -75,9 +89,11 @@ export function ContentFormDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add content</DialogTitle>
+          <DialogTitle>{isEdit ? "Edit content" : "Add content"}</DialogTitle>
           <DialogDescription>
-            Plan and track content across your platforms.
+            {isEdit
+              ? "Update this content post."
+              : "Plan and track content across your platforms."}
           </DialogDescription>
         </DialogHeader>
 
@@ -104,7 +120,7 @@ export function ContentFormDialog({
             Cancel
           </Button>
           <Button type="submit" form={formId} disabled={isPending}>
-            {isPending ? "Saving…" : "Add content"}
+            {isPending ? "Saving…" : isEdit ? "Save changes" : "Add content"}
           </Button>
         </DialogFooter>
       </DialogContent>

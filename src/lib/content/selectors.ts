@@ -1,6 +1,7 @@
 import { PIPELINE_STATUSES } from "@/lib/content/constants";
 import { todayDateISO } from "@/lib/content/format";
 import { getPostPlatforms } from "@/lib/content/platforms";
+import type { CalendarEvent } from "@/lib/calendar/types";
 import type {
   ContentCalendarEntry,
   ContentPlatform,
@@ -245,4 +246,26 @@ export function filterContentGoals<T extends { id: string; category: string | nu
   goals: T[]
 ): T[] {
   return goals.filter((goal) => goal.category === "Content");
+}
+
+export function contentEntryToCalendarEvent(
+  entry: ContentCalendarEntry
+): CalendarEvent {
+  const platforms = getPostPlatforms(entry.post).join(", ");
+
+  return {
+    id: `${entry.post.id}-${entry.kind}-${entry.date}`,
+    type: "content",
+    date: entry.date,
+    title: entry.post.title,
+    href: "/content",
+    meta: entry.isRecurring
+      ? {
+          platforms,
+          isRecurring: true,
+          occurrenceDate: entry.occurrenceDate ?? entry.date,
+          post: entry.post,
+        }
+      : platforms,
+  };
 }

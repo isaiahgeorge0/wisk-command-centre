@@ -3,9 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
-import { createTask, updateTask } from "@/app/(dashboard)/tasks/actions";
-import { useQuickAdd } from "@/components/quick-add/quick-add-context";
-import { TaskForm } from "@/components/tasks/task-form";
+import { updateProject } from "@/app/(dashboard)/projects/actions";
+import { usePreferences } from "@/components/preferences/preferences-context";
+import { ProjectForm } from "@/components/projects/project-form";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,67 +15,51 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { EMPTY_TASK_FORM, taskToFormInput } from "@/lib/tasks/form";
-import type {
-  ProjectOption,
-  TaskFormInput,
-  TaskWithProject,
-} from "@/lib/tasks/types";
+import { projectToFormInput } from "@/lib/projects/form";
+import { EMPTY_PROJECT_FORM } from "@/lib/projects/form";
+import type { Project, ProjectFormInput } from "@/lib/projects/types";
 
-type TaskFormDialogProps = {
+type ProjectEditFormDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  projects: ProjectOption[];
-  task?: TaskWithProject | null;
+  project: Project | null;
+  recentProjectTypes: string[];
 };
 
-export function TaskFormDialog({
+export function ProjectEditFormDialog({
   open,
   onOpenChange,
-  projects,
-  task = null,
-}: TaskFormDialogProps) {
+  project,
+  recentProjectTypes,
+}: ProjectEditFormDialogProps) {
+  const { serviceTypes } = usePreferences();
   const router = useRouter();
-  const { taskPrefillDueDate, setTaskPrefillDueDate } = useQuickAdd();
-  const isEdit = Boolean(task);
-  const [values, setValues] = useState<TaskFormInput>(EMPTY_TASK_FORM);
+  const [values, setValues] = useState<ProjectFormInput>(EMPTY_PROJECT_FORM);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const formId = isEdit ? `edit-task-${task?.id}` : "add-task-form";
+  const formId = project ? `edit-project-dialog-${project.id}` : "edit-project-dialog";
 
   useEffect(() => {
-    if (!open) return;
-
-    if (task) {
-      setValues(taskToFormInput(task));
-      return;
+    if (open && project) {
+      setValues(projectToFormInput(project));
     }
-
-    setValues({
-      ...EMPTY_TASK_FORM,
-      ...(taskPrefillDueDate ? { due_date: taskPrefillDueDate } : {}),
-    });
-  }, [open, task, taskPrefillDueDate]);
+  }, [open, project]);
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
-      setValues(EMPTY_TASK_FORM);
       setError(null);
-      if (!isEdit) {
-        setTaskPrefillDueDate(null);
-      }
     }
     onOpenChange(nextOpen);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!project) return;
+
     setError(null);
 
     startTransition(async () => {
-      const result = isEdit
-        ? await updateTask(task!.id, values)
-        : await createTask(values);
+      const result = await updateProject(project.id, values);
       if (!result.success) {
         setError(result.error);
         return;
@@ -85,24 +69,25 @@ export function TaskFormDialog({
     });
   };
 
+  if (!project) return null;
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit task" : "Add task"}</DialogTitle>
+          <DialogTitle>Edit project</DialogTitle>
           <DialogDescription>
-            {isEdit
-              ? "Update task details. Required fields are marked with *."
-              : "Capture something to do. Required fields are marked with *."}
+            Update project details. Required fields are marked with *.
           </DialogDescription>
         </DialogHeader>
 
         <form id={formId} onSubmit={handleSubmit}>
-          <TaskForm
+          <ProjectForm
             formId={formId}
             values={values}
             onChange={setValues}
-            projects={projects}
+            projectTypeOptions={serviceTypes}
+            recentProjectTypes={recentProjectTypes}
             disabled={isPending}
           />
           {error ? (
@@ -120,7 +105,7 @@ export function TaskFormDialog({
             Cancel
           </Button>
           <Button type="submit" form={formId} disabled={isPending}>
-            {isPending ? "Saving…" : isEdit ? "Save changes" : "Add task"}
+            {isPending ? "Saving…" : "Save changes"}
           </Button>
         </DialogFooter>
       </DialogContent>

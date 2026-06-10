@@ -3,6 +3,7 @@ import type {
   CalendarEventType,
   CalendarFilterState,
   CalendarUrgency,
+  StandaloneCalendarEvent,
   UpcomingWindow,
 } from "@/lib/calendar/types";
 import type { Goal } from "@/lib/goals/types";
@@ -30,7 +31,10 @@ export function buildCalendarEvents(
   goals: Goal[],
   milestones: ProjectMilestone[] = [],
   contentPosts: ContentPost[] = [],
-  options?: { contentWindow?: DateRange }
+  options?: {
+    contentWindow?: DateRange;
+    standaloneEvents?: StandaloneCalendarEvent[];
+  }
 ): CalendarEvent[] {
   const events: CalendarEvent[] = [];
   const projectNames = new Map(
@@ -87,7 +91,12 @@ export function buildCalendarEvents(
       date: milestone.date,
       title: milestone.title,
       href: "/projects",
-      meta: projectNames.get(milestone.project_id) ?? "Project milestone",
+      meta: {
+        projectId: milestone.project_id,
+        projectName:
+          projectNames.get(milestone.project_id) ?? "Project milestone",
+        completed: milestone.completed,
+      },
     });
   }
 
@@ -110,6 +119,20 @@ export function buildCalendarEvents(
             post: entry.post,
           }
         : platforms,
+    });
+  }
+
+  for (const event of options?.standaloneEvents ?? []) {
+    events.push({
+      id: event.id,
+      type: event.event_type,
+      date: event.date,
+      title: event.title,
+      href: "/calendar",
+      meta: {
+        notes: event.notes ?? undefined,
+        endDate: event.end_date ?? undefined,
+      },
     });
   }
 
@@ -160,6 +183,8 @@ export function groupEventsByType(
     goal: events.filter((e) => e.type === "goal"),
     content: events.filter((e) => e.type === "content"),
     milestone: events.filter((e) => e.type === "milestone"),
+    lifestyle: events.filter((e) => e.type === "lifestyle"),
+    other: events.filter((e) => e.type === "other"),
   };
 }
 

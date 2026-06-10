@@ -4,8 +4,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Calendar,
   CheckSquare,
+  Circle,
   Diamond,
   FolderKanban,
+  Heart,
   Target,
   X,
 } from "lucide-react";
@@ -14,6 +16,7 @@ import { useEffect, useState } from "react";
 
 import { getOccurrencesForPost } from "@/app/(dashboard)/content/actions";
 import { ContentOccurrencePanel } from "@/components/content/content-occurrence-panel";
+import { useIsMobilePanel } from "@/components/calendar/use-is-mobile-panel";
 import { Button } from "@/components/ui/button";
 import {
   CALENDAR_TYPE_DOT_CLASS,
@@ -34,6 +37,8 @@ const TYPE_ICONS: Record<CalendarEventType, typeof FolderKanban> = {
   goal: Target,
   content: Calendar,
   milestone: Diamond,
+  lifestyle: Heart,
+  other: Circle,
 };
 
 type CalendarDayDetailPanelProps = {
@@ -156,21 +161,6 @@ function DayDetailContent({
       </div>
     </>
   );
-}
-
-function useIsMobilePanel() {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 767px)");
-    const update = () => setIsMobile(mediaQuery.matches);
-
-    update();
-    mediaQuery.addEventListener("change", update);
-    return () => mediaQuery.removeEventListener("change", update);
-  }, []);
-
-  return isMobile;
 }
 
 export function CalendarDayDetailPanel({
