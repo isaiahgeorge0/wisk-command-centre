@@ -36,7 +36,7 @@ export function ProjectMilestonesTab({
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
-    if (!active || loaded || loading) return;
+    if (!active || loaded) return;
 
     let cancelled = false;
     setLoading(true);
@@ -47,6 +47,10 @@ export function ProjectMilestonesTab({
         setMilestones(data);
         setLoaded(true);
       })
+      .catch((err) => {
+        console.error("getMilestonesForProject:", err);
+        if (!cancelled) setLoaded(true);
+      })
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
@@ -54,7 +58,7 @@ export function ProjectMilestonesTab({
     return () => {
       cancelled = true;
     };
-  }, [active, loaded, loading, projectId]);
+  }, [active, loaded, projectId]);
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,16 +139,12 @@ export function ProjectMilestonesTab({
     <div>
       {milestones.length === 0 ? (
         <div className="flex flex-col items-center px-4 py-8 text-center">
-          <Flag
-            className="mb-3 size-8 text-muted-foreground/60"
-            aria-hidden
-          />
+          <Flag className="mb-3 size-8 text-muted-foreground" aria-hidden />
           <h4 className="text-sm font-medium text-foreground">
             No milestones yet
           </h4>
           <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground">
-            Add key dates and checkpoints for this project. Milestones appear
-            on your calendar as diamond markers.
+            Add milestones to track key dates and deliverables for this project.
           </p>
         </div>
       ) : (
