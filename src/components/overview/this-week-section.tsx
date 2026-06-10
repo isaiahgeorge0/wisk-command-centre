@@ -35,7 +35,7 @@ export function ThisWeekSection({ snapshot }: ThisWeekSectionProps) {
 
   return (
     <section className="mt-10">
-      <h2 className="mb-4 text-sm font-medium tracking-wide text-muted-foreground uppercase">
+      <h2 className="mb-4 text-base font-semibold text-foreground">
         This week
       </h2>
 

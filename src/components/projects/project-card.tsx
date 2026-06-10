@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { ChevronUp } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 
 import { updateProject } from "@/app/(dashboard)/projects/actions";
@@ -185,6 +186,20 @@ export function ProjectCard({
       )}
       onClick={handleCardClick}
     >
+      {expanded && !selectedTask ? (
+        <button
+          type="button"
+          aria-label="Collapse project"
+          className="absolute top-3 right-3 z-10 text-muted-foreground transition-colors hover:text-foreground"
+          onClick={(e) => {
+            e.stopPropagation();
+            setExpanded(false);
+          }}
+        >
+          <ChevronUp className="size-4" />
+        </button>
+      ) : null}
+
       <CardHeader className="gap-2 pb-2">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">

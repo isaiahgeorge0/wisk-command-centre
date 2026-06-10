@@ -297,7 +297,7 @@ function EventDetailContent({
         </Button>
       </div>
 
-      <div className="max-h-[min(24rem,calc(100dvh-12rem))] overflow-y-auto px-4 py-4 md:max-h-[28rem]">
+      <div className="max-h-none overflow-y-auto px-4 py-4 md:max-h-[28rem]">
         <EventDetailBody
           event={selectedEvent}
           projects={projects}
@@ -478,7 +478,7 @@ export function CalendarEventDetailPanel({
           className="fixed inset-0 z-40 bg-black/10 supports-backdrop-filter:backdrop-blur-xs md:hidden"
           onClick={onClose}
         />
-        <div className="fixed inset-x-0 bottom-0 z-50 max-h-[85dvh] overflow-hidden rounded-t-2xl border-t border-border/60 bg-popover pb-[max(1rem,env(safe-area-inset-bottom))] shadow-lg md:hidden">
+        <div className="fixed inset-x-0 bottom-0 z-50 flex min-h-[60vh] max-h-[85dvh] flex-col overflow-y-auto rounded-t-2xl border-t border-border/60 bg-popover pb-[max(1rem,env(safe-area-inset-bottom))] shadow-lg md:hidden">
           {panelContent}
         </div>
         {editDialogs}

@@ -47,7 +47,7 @@ export function TasksList({
   }, [tasks]);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border/60 bg-card/40">
+    <div>
       {incomplete.length > 0 ? (
         <StaggerList stagger={stagger}>
           {incomplete.map((task) => (
@@ -64,14 +64,14 @@ export function TasksList({
           ))}
         </StaggerList>
       ) : (
-        <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+        <p className="rounded-xl border border-border/60 bg-card px-4 py-6 text-center text-sm text-muted-foreground shadow-sm">
           No open tasks — you&apos;re all caught up.
         </p>
       )}
 
       {completed.length > 0 ? (
-        <div className="border-t border-border/60">
-          <div className="flex items-center justify-between px-4 py-2">
+        <div className="mt-4">
+          <div className="mb-2 flex items-center justify-between">
             <Button
               type="button"
               variant="ghost"

@@ -62,7 +62,7 @@ export function buildOverviewWeekDays(
     return {
       dateISO,
       weekdayLabel: new Intl.DateTimeFormat("en-GB", {
-        weekday: "narrow",
+        weekday: "short",
       }).format(date),
       dayNumber: date.getDate(),
       isToday: dateISO === todayISO,

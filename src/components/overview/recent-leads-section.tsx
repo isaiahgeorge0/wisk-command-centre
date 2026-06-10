@@ -22,7 +22,7 @@ export function RecentLeadsSection({ snapshot }: RecentLeadsSectionProps) {
   return (
     <section className="mt-10">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="text-sm font-medium tracking-wide text-muted-foreground uppercase">
+        <h2 className="text-base font-semibold text-foreground">
           Recent leads
         </h2>
         {recentLeads.length > 0 ? (

@@ -143,6 +143,7 @@ export function LeadCard({
         "relative border-border/70 bg-card/80 shadow-sm transition-colors hover:bg-card",
         isDragOverlay && "shadow-md",
         !isDragOverlay && "cursor-pointer",
+        celebrate && "border-amber-400/70 ring-2 ring-amber-400/50",
         LEAD_CARD_STATUS_CLASS[status] ?? LEAD_CARD_STATUS_CLASS.new,
         className
       )}
@@ -259,6 +260,7 @@ export function LeadCard({
       onOpenChange={setConvertOpen}
       onConverted={() => {
         setConvertOpen(false);
+        setCelebrate(true);
         onLeadUpdate({ ...lead, status: "won" });
         router.refresh();
       }}

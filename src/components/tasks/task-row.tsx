@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { ChevronUp } from "lucide-react";
 import { useState, useTransition } from "react";
 
 import { toggleTaskCompleted, updateTask } from "@/app/(dashboard)/tasks/actions";
@@ -93,9 +94,14 @@ export function TaskRow({
     setEditing(true);
   };
 
+  const handleCollapse = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onExpandToggle();
+  };
+
   if (editing) {
     return (
-      <div className="border-b border-border/50 bg-card/50 px-4 py-4">
+      <div className="mb-2 rounded-xl border border-border/60 bg-card p-4 shadow-sm">
         <form id={formId} onSubmit={handleSave}>
           <TaskForm
             formId={formId}
@@ -128,11 +134,22 @@ export function TaskRow({
   }
 
   return (
-    <div className="border-b border-border/50">
+    <div className="relative mb-2 rounded-xl border border-border/60 bg-card p-4 shadow-sm">
+      {expanded ? (
+        <button
+          type="button"
+          aria-label="Collapse task"
+          className="absolute top-3 right-3 z-10 text-muted-foreground transition-colors hover:text-foreground"
+          onClick={handleCollapse}
+        >
+          <ChevronUp className="size-4" />
+        </button>
+      ) : null}
+
       <div
         role="button"
         tabIndex={0}
-        className="group flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 transition-colors hover:bg-card/50 sm:flex-nowrap"
+        className="group flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-2 pr-6 transition-colors sm:flex-nowrap"
         onClick={handleRowClick}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
@@ -200,7 +217,7 @@ export function TaskRow({
       <ExpandableSection open={expanded}>
         <TaskDetailPanel
           task={task}
-          className="border-t-0"
+          className="mt-3 border-t border-border/50 pt-3"
           footer={
             <>
               <Button type="button" variant="outline" size="sm" onClick={handleEdit}>

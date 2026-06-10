@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect } from "react";
+
 import { PageTransition } from "@/components/layout/page-transition";
 import { NeedsAttentionSection } from "@/components/overview/needs-attention-section";
 import { OverviewHeader } from "@/components/overview/overview-header";
@@ -13,6 +17,10 @@ type OverviewPageClientProps = {
 };
 
 export function OverviewPageClient({ snapshot }: OverviewPageClientProps) {
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, []);
+
   return (
     <PageTransition>
       <OverviewHeader header={snapshot.header} />
