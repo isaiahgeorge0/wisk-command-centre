@@ -124,10 +124,13 @@ Status definitions:
 - Checkbox with optimistic toggle
 - Always-visible edit/delete on mobile
 - Hover edit/delete on desktop
+- Expandable rows with detail panel
+  (one expanded at a time)
 - Inline edit
 - Quick-add modal via FAB and Add button
 - FAB opens task dialog on overview
   and calendar pages globally
+- Calendar day quick-add pre-fills due date
 - Show completed toggle with count
 - Notes field: freeform text displayed
   below task metadata when present
@@ -135,6 +138,10 @@ Status definitions:
   priority, status, and project
 - Sorting: by due date, priority, title
 - Active filter count badge on filter bar
+- Project task detail overlay from project
+  cards (edit in place)
+- Note: File attachments deferred to
+  subscription packages (see Phase 2)
 
 ### Goals
 - Status: Live
@@ -179,18 +186,33 @@ Status definitions:
 - Colour-coded pills per event type:
   Projects purple, Tasks teal,
   Goals amber, Milestones rose,
-  Content coral
+  Content coral, Lifestyle/Personal sky,
+  Other slate
 - Filter toggles per event type
-- Click day to open detail panel
+  (all types on by default)
+- Click day cell to open day detail panel
   (slides in from right on desktop,
   bottom sheet on mobile)
+- Click event pill to open view-only
+  event detail panel with edit action
+  (same panel/sheet pattern as day detail)
+- Day cell + menu: add task, content,
+  lifestyle/personal, or other event
+- Date pre-fill on quick-add from day cells
+- Standalone lifestyle/other events
+  (`calendar_events` table)
+- Recurring content posts shown on main
+  calendar (windowed expansion)
+- Global content quick-add from calendar
+- Content calendar tab: day + button,
+  pill click opens event detail panel
 - Upcoming panel below calendar:
   30, 60, 90 day tabs with counts
 - Items grouped by type in upcoming panel
 - Urgency colouring: overdue red,
   today amber, upcoming muted
-- Note: Recurring events not yet built
-  (planned)
+- Note: Calendar-level recurring events
+  (non-content) not yet built
 
 ### Leads
 - Status: Live
@@ -254,8 +276,9 @@ Status definitions:
   not yet built (Phase 3)
 
 ### AI Digest
-- Status: Placeholder (nav item exists,
-  page is empty)
+- Status: Placeholder (page exists at
+  /ai-digest; removed from main nav)
+- Linked from Settings > Help on mobile
 - Planned for Phase 3 once sufficient
   data exists
 - Will provide weekly AI summary of
@@ -415,9 +438,9 @@ Access: Admin email only (ADMIN_EMAIL env var)
   for later, Publish now
 - Scheduled status badge in list view
 - Cancel schedule action on scheduled posts
-- Cron job publishes scheduled posts
-  every 10 minutes (Vercel Cron +
-  GitHub Actions fallback)
+- GitHub Actions workflow publishes
+  scheduled posts every 10 minutes
+  (Vercel Hobby does not run crons)
 - Unsaved changes warning
 
 ### Feedback (/admin/feedback)
@@ -464,18 +487,19 @@ admin blog and read by the marketing site.
 
 ---
 
-## Phase 2 — In Progress
+## Phase 2 — Complete (June 2026)
 
 Core platform polish and connections before
-Phase 3 vertical packages. Several items were
-built in the codebase ahead of formal Phase 2
-kickoff — see Delivered below.
+Phase 3 vertical packages. Essentially complete —
+one item intentionally deferred (see below).
 
 ### Delivered (live in this repository)
 
 - Task filtering (priority, status, project,
   due date), sorting, and search
 - Task notes field (`raw_content` on tasks)
+- Task expandable rows with detail panel
+- Project task detail overlay
 - Project filtering, sorting, and status
   grouping
 - Lead → project conversion
@@ -483,21 +507,41 @@ kickoff — see Delivered below.
 - Idea → content post conversion
 - Recurring content posts with per-occurrence
   notes (migration `023_recurring_content.sql`)
-- Global task quick-add FAB on overview
-  and calendar routes
-- Form dialog scrollability on all six
-  entity form dialogs
+- Recurring content on main calendar grid
+- Global task and content quick-add FAB
+  on overview and calendar routes
+- Calendar day quick-add with date pre-fill
+- Calendar event detail panels (view + edit)
+- Lifestyle/Personal and Other standalone
+  calendar events (migration
+  `026_calendar_events.sql`)
+- Content calendar tab improvements
+  (+ quick-add, pill detail panel)
+- Form dialog scrollability on all entity
+  form dialogs
+- Empty state standardisation across sections
+- AI Digest removed from main nav
+  (page retained for Phase 3)
+- Branded 404 page (`src/app/not-found.tsx`)
+- Sign-in back link to wiskapp.com
 
-### Remaining
+### Deferred
 
-- Strip AI Digest from nav (quick win)
-- Task file attachments (requires
-  Supabase Storage)
-- Calendar recurring events (content
-  recurrence is live; calendar-level
-  recurring events are not)
-- Empty state audit across all sections
-- Mobile QA pass
+- **Task file attachments** — deferred until
+  subscription packages are implemented.
+  Storage costs will be absorbed by subscription
+  revenue. A UI placeholder exists
+  (`TaskAttachmentsSection`); no Supabase
+  Storage integration yet.
+
+### Carry-forward (not blocking Phase 3)
+
+- Calendar-level recurring events for
+  non-content types (content recurrence
+  is live on the main calendar)
+- Formal mobile QA pass across all sections
+- Approval notification email via Resend
+  (warm heads-up before Supabase invite)
 
 ---
 
@@ -619,14 +663,17 @@ Each package is a paid add-on to the free core WISK platform:
   (Radix UI compatibility issue)
 - updated_at on projects table added
   but not on all tables
-- AI Digest still in nav but page is a
-  placeholder (Phase 2 quick win pending)
-- Calendar recurring events not built
+- AI Digest page is a placeholder
+  (Phase 3)
+- Calendar recurring events for
+  non-content types not built
   (content recurrence is live)
-- Task file attachments not built
-  (Phase 2 remaining)
+- Task file attachments deferred to
+  subscription packages (see Phase 2)
 - Social media API integrations not
   yet implemented (Phase 3)
+- Apply migration `026_calendar_events.sql`
+  on production Supabase if not yet run
 
 ---
 
@@ -650,3 +697,4 @@ Each package is a paid add-on to the free core WISK platform:
 - feedback
 - changelog_entries
 - blog_posts
+- calendar_events
