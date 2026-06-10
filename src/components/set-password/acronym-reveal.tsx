@@ -8,13 +8,13 @@ type AcronymRevealProps = {
 };
 
 const WORDS = [
-  { letter: "W", word: "Wisdom" },
-  { letter: "I", word: "Integrity" },
-  { letter: "S", word: "Strength" },
-  { letter: "K", word: "Knowledge" },
+  { letter: "W", word: "Wisdom", color: "text-[#a855f7]" },
+  { letter: "I", word: "Integrity", color: "text-[#7c9ef0]" },
+  { letter: "S", word: "Strength", color: "text-[#4fb8b0]" },
+  { letter: "K", word: "Knowledge", color: "text-[#14b8a6]" },
 ];
 
-const WORD_DELAY = 0.32;
+const WORD_DELAY = 0.3;
 const WISK_DELAY = WORDS.length * WORD_DELAY + 0.25;
 const COMPLETE_DELAY_MS = (WISK_DELAY + 0.5) * 1000;
 
@@ -44,42 +44,53 @@ export function AcronymReveal({ onComplete }: AcronymRevealProps) {
   if (reduced) return null;
 
   return (
-    <div className="flex flex-col items-center gap-3 pb-2">
-      <div className="flex flex-col items-center gap-1.5">
-        {WORDS.map(({ letter, word }, i) => (
-          <motion.div
-            key={letter}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.28,
-              ease: [0.25, 0.1, 0.25, 1],
-              delay: i * WORD_DELAY,
-            }}
-            className="flex items-baseline gap-2"
-          >
-            <span className="w-4 text-right text-xs font-bold tracking-wider text-wisk-purple/80">
-              {letter}
-            </span>
-            <span className="text-sm font-medium text-muted-foreground">
-              {word}
-            </span>
-          </motion.div>
-        ))}
-      </div>
-
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{
-          duration: 0.35,
-          ease: [0.25, 0.1, 0.25, 1],
-          delay: WISK_DELAY,
+    <div className="relative flex min-h-screen w-full flex-col items-center justify-center bg-background px-6">
+      <div
+        className="pointer-events-none absolute inset-0"
+        aria-hidden
+        style={{
+          background:
+            "radial-gradient(ellipse 60% 50% at 50% 0%, oklch(0.55 0.14 300 / 0.08), transparent 60%), radial-gradient(ellipse 50% 40% at 100% 100%, oklch(0.65 0.1 180 / 0.06), transparent 50%)",
         }}
-        className="mt-2 bg-gradient-to-r from-wisk-purple to-wisk-teal bg-clip-text text-2xl font-bold tracking-[0.28em] text-transparent uppercase sm:text-3xl"
-      >
-        WISK
-      </motion.div>
+      />
+
+      <div className="relative z-10 flex flex-col items-center">
+        <div className="flex flex-col gap-5 sm:gap-6">
+          {WORDS.map(({ letter, word, color }, i) => (
+            <motion.div
+              key={letter}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: 0.35,
+                ease: [0.25, 0.1, 0.25, 1],
+                delay: i * WORD_DELAY,
+              }}
+              className="flex items-center gap-4"
+            >
+              <span
+                className={`w-8 shrink-0 text-center text-3xl font-bold sm:text-4xl ${color}`}
+              >
+                {letter}
+              </span>
+              <span className="text-2xl font-medium text-foreground">{word}</span>
+            </motion.div>
+          ))}
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            duration: 0.4,
+            ease: [0.25, 0.1, 0.25, 1],
+            delay: WISK_DELAY,
+          }}
+          className="mt-8 bg-gradient-to-r from-wisk-purple to-wisk-teal bg-clip-text text-5xl font-bold tracking-widest text-transparent uppercase"
+        >
+          WISK
+        </motion.div>
+      </div>
     </div>
   );
 }
