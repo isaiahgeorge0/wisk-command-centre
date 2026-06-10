@@ -5,10 +5,17 @@ import { getPersonalisationCompleted } from "@/lib/auth/middleware-preferences";
 
 const PUBLIC_PATHS = ["/sign-in", "/auth/callback", "/auth/reset-password"];
 
+// Paths accessible to authenticated users before personalisation is complete.
+const SETUP_PATHS = ["/welcome", "/set-password"];
+
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some(
     (path) => pathname === path || pathname.startsWith(`${path}/`)
   );
+}
+
+function isSetupPath(pathname: string): boolean {
+  return SETUP_PATHS.some((path) => pathname === path);
 }
 
 function withPathnameHeader(response: NextResponse, pathname: string) {
@@ -49,30 +56,32 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const isWelcomePath = pathname === "/welcome";
 
   if (user) {
     const personalisationCompleted = await getPersonalisationCompleted(user.id);
 
     if (pathname === "/sign-in") {
       const url = request.nextUrl.clone();
-      url.pathname = personalisationCompleted ? "/" : "/welcome";
+      url.pathname = personalisationCompleted ? "/" : "/set-password";
       return withPathnameHeader(NextResponse.redirect(url), pathname);
     }
 
-    if (isWelcomePath && personalisationCompleted) {
+    // Setup paths are only accessible pre-personalisation.
+    // Once done, redirect to dashboard.
+    if (isSetupPath(pathname) && personalisationCompleted) {
       const url = request.nextUrl.clone();
       url.pathname = "/";
       return withPathnameHeader(NextResponse.redirect(url), pathname);
     }
 
+    // Gate all other app routes behind personalisation.
     if (
-      !isWelcomePath &&
+      !isSetupPath(pathname) &&
       !isPublicPath(pathname) &&
       !personalisationCompleted
     ) {
       const url = request.nextUrl.clone();
-      url.pathname = "/welcome";
+      url.pathname = "/set-password";
       return withPathnameHeader(NextResponse.redirect(url), pathname);
     }
   }
