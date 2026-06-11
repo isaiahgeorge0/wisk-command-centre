@@ -1,6 +1,9 @@
 "use client";
 
+import { Suspense } from "react";
+
 import { AnnouncementBanner } from "@/components/announcements/announcement-banner";
+import { PasswordUpdatedToastHandler } from "@/components/auth/password-updated-toast-handler";
 import { FeedbackWelcomeModal } from "@/components/feedback/feedback-welcome-modal";
 import { OnboardingOverlay } from "@/components/onboarding/onboarding-overlay";
 import { OnboardingProvider } from "@/components/onboarding/onboarding-context";
@@ -129,6 +132,9 @@ export function AppShell({
                 open={showFeedbackWelcome}
               />
               <OnboardingOverlay />
+              <Suspense fallback={null}>
+                <PasswordUpdatedToastHandler />
+              </Suspense>
             </div>
           </SpotlightTourProvider>
         </QuickAddProvider>

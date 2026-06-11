@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 
+import { sendAccessRequestConfirmation } from "@/lib/email/resend";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const accessRequestSchema = z.object({
@@ -36,6 +37,15 @@ export async function submitAccessRequest(input: {
   if (error) {
     console.error("submitAccessRequest:", error);
     return { success: false, error: error.message };
+  }
+
+  try {
+    await sendAccessRequestConfirmation({
+      name: parsed.data.name,
+      email: parsed.data.email,
+    });
+  } catch (emailError) {
+    console.error("submitAccessRequest confirmation email:", emailError);
   }
 
   return { success: true };
