@@ -14,8 +14,6 @@ import { AccessRequestDialog } from "@/components/auth/access-request-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createBrowserClient } from "@supabase/ssr";
-
 import { MOTION_DURATION } from "@/lib/motion/config";
 import { createClient } from "@/lib/supabase/client";
 
@@ -23,11 +21,9 @@ export function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const reduced = useReducedMotion();
-  const [showForm, setShowForm] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [accessOpen, setAccessOpen] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -48,7 +44,6 @@ export function SignInForm() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setMessage(null);
     setLoading(true);
 
     const supabase = createClient();
@@ -78,45 +73,6 @@ export function SignInForm() {
   const handleBridgeComplete = () => {
     setShowBridge(false);
     navigateAfterSignIn();
-  };
-
-  const handleForgotPassword = async () => {
-    setError(null);
-    setMessage(null);
-
-    if (!email.trim()) {
-      setError("Enter your email above, then click Forgot password.");
-      return;
-    }
-
-    setLoading(true);
-    // Use an implicit-flow client specifically for password reset so the
-    // token arrives in the URL hash — no PKCE verifier cookie needed,
-    // which means cross-device resets work correctly.
-    const resetClient = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      { auth: { flowType: "implicit" } }
-    );
-    const origin =
-      process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
-
-    // Point directly at the client-side callback so the hash fragment
-    // (containing the token) is preserved in the browser — a server-side
-    // redirect would strip the hash before the client ever sees it.
-    const { error: resetError } =
-      await resetClient.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${origin}/auth/callback-client?next=/auth/reset-password`,
-      });
-
-    setLoading(false);
-
-    if (resetError) {
-      setError(resetError.message);
-      return;
-    }
-
-    setMessage("Check your email for a password reset link.");
   };
 
   return (
@@ -154,18 +110,65 @@ export function SignInForm() {
             </p>
           </SignInEntranceItem>
 
-          <SignInEntranceItem className="mt-10 flex w-full flex-col gap-3 sm:flex-row sm:justify-center">
-            <Button
-              type="button"
-              className="w-full sm:w-auto"
-              onClick={() => {
-                setShowForm(true);
-                setError(null);
-              }}
-              disabled={isTransitioning}
+          <SignInEntranceItem className="mt-8 w-full">
+            <form
+              onSubmit={handleSignIn}
+              className="w-full rounded-xl border border-border/60 bg-card/50 p-6 text-left"
             >
-              Sign in
-            </Button>
+              <div className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={loading || isTransitioning}
+                    required
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={loading || isTransitioning}
+                    required
+                  />
+                </div>
+              </div>
+
+              {authError === "auth_callback" ? (
+                <p className="mt-3 text-sm text-destructive">
+                  Sign-in link expired or invalid. Please try again.
+                </p>
+              ) : null}
+              {error ? (
+                <p className="mt-3 text-sm text-destructive">{error}</p>
+              ) : null}
+
+              <Button
+                type="submit"
+                className="mt-6 w-full"
+                disabled={loading || isTransitioning}
+              >
+                {loading ? "Signing in…" : "Sign in"}
+              </Button>
+
+              <Link
+                href="/forgot-password"
+                className="mt-3 block text-center text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Forgot password?
+              </Link>
+            </form>
+          </SignInEntranceItem>
+
+          <SignInEntranceItem className="mt-4">
             <Button
               type="button"
               variant="outline"
@@ -176,71 +179,6 @@ export function SignInForm() {
               Request access
             </Button>
           </SignInEntranceItem>
-
-          {showForm ? (
-            <SignInEntranceItem className="mt-8 w-full">
-              <form
-                onSubmit={handleSignIn}
-                className="w-full rounded-xl border border-border/60 bg-card/50 p-6 text-left"
-              >
-                <div className="grid gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      autoComplete="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      disabled={loading || isTransitioning}
-                      required
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="password">Password</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      autoComplete="current-password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      disabled={loading || isTransitioning}
-                      required
-                    />
-                  </div>
-                </div>
-
-                {authError === "auth_callback" ? (
-                  <p className="mt-3 text-sm text-destructive">
-                    Sign-in link expired or invalid. Please try again.
-                  </p>
-                ) : null}
-                {error ? (
-                  <p className="mt-3 text-sm text-destructive">{error}</p>
-                ) : null}
-                {message ? (
-                  <p className="mt-3 text-sm text-wisk-teal">{message}</p>
-                ) : null}
-
-                <Button
-                  type="submit"
-                  className="mt-6 w-full"
-                  disabled={loading || isTransitioning}
-                >
-                  {loading ? "Signing in…" : "Continue"}
-                </Button>
-
-                <button
-                  type="button"
-                  onClick={handleForgotPassword}
-                  disabled={loading || isTransitioning}
-                  className="mt-3 w-full text-center text-sm text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  Forgot password?
-                </button>
-              </form>
-            </SignInEntranceItem>
-          ) : null}
 
           <AccessRequestDialog open={accessOpen} onOpenChange={setAccessOpen} />
         </SignInEntrance>

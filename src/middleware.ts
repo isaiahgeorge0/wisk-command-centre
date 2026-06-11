@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 const PUBLIC_PATHS = [
   "/sign-in",
+  "/forgot-password",
   "/set-password",
   "/auth/callback",
   "/auth/callback-client",
