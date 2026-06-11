@@ -26,6 +26,7 @@ type LeadsPipelineProps = {
   grouped: Record<LeadStatus, Lead[]>;
   onDelete: (lead: Lead) => void;
   onLeadUpdate: (lead: Lead) => void;
+  onProjectCreated?: (projectId: string) => void;
   onLeadStatusChange: (
     lead: Lead,
     newStatus: LeadStatus,
@@ -54,6 +55,7 @@ export function LeadsPipeline({
   grouped,
   onDelete,
   onLeadUpdate,
+  onProjectCreated,
   onLeadStatusChange,
 }: LeadsPipelineProps) {
   const dndEnabled = usePointerDndEnabled();
@@ -139,6 +141,7 @@ export function LeadsPipeline({
             isDragging={isDragging}
             onDelete={onDelete}
             onLeadUpdate={onLeadUpdate}
+            onProjectCreated={onProjectCreated}
             onStatusChange={handleStatusChange}
             layoutAnimation={layoutAnimation}
           />
@@ -163,6 +166,7 @@ export function LeadsPipeline({
               lead={activeLead}
               onDelete={onDelete}
               onLeadUpdate={onLeadUpdate}
+              onProjectCreated={onProjectCreated}
               onStatusChange={handleStatusChange}
             />
           ) : null}

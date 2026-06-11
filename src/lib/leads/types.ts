@@ -51,3 +51,10 @@ export type LeadFormInput = {
 export type ActionResult<T = void> =
   | { success: true; data?: T }
   | { success: false; error: string };
+
+export type ConvertLeadToProjectInput = {
+  name: string;
+  deadline?: string;
+  value?: string;
+  first_task?: string;
+};

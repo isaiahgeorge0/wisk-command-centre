@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { updateLeadStatus } from "@/app/(dashboard)/leads/actions";
 import { PageTransition } from "@/components/layout/page-transition";
+import { ConvertSuccessToast } from "@/components/leads/convert-success-toast";
 import { DeleteLeadDialog } from "@/components/leads/delete-lead-dialog";
 import { LeadFormDialog } from "@/components/leads/lead-form-dialog";
 import { LeadsEmptyState } from "@/components/leads/leads-empty-state";
@@ -29,6 +30,7 @@ export function LeadsPageClient({ initialLeads }: LeadsPageClientProps) {
     id: string;
     name: string;
   } | null>(null);
+  const [convertSuccessOpen, setConvertSuccessOpen] = useState(false);
 
   useEffect(() => {
     setLeads(initialLeads);
@@ -109,6 +111,7 @@ export function LeadsPageClient({ initialLeads }: LeadsPageClientProps) {
             grouped={grouped}
             onDelete={handleDeleteRequest}
             onLeadUpdate={handleLeadUpdate}
+            onProjectCreated={() => setConvertSuccessOpen(true)}
             onLeadStatusChange={handleLeadStatusChange}
           />
         </>
@@ -124,6 +127,11 @@ export function LeadsPageClient({ initialLeads }: LeadsPageClientProps) {
           if (!open) setDeleteTarget(null);
         }}
         onDeleted={handleDeleted}
+      />
+
+      <ConvertSuccessToast
+        open={convertSuccessOpen}
+        onDismiss={() => setConvertSuccessOpen(false)}
       />
     </PageTransition>
   );

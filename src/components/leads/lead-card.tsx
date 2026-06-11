@@ -27,6 +27,7 @@ type LeadCardProps = {
   lead: Lead;
   onDelete: (lead: Lead) => void;
   onLeadUpdate: (lead: Lead) => void;
+  onProjectCreated?: (projectId: string) => void;
   onStatusChange?: (status: LeadStatus) => void;
   isDragOverlay?: boolean;
   className?: string;
@@ -36,6 +37,7 @@ export function LeadCard({
   lead,
   onDelete,
   onLeadUpdate,
+  onProjectCreated,
   onStatusChange,
   isDragOverlay = false,
   className,
@@ -258,10 +260,11 @@ export function LeadCard({
       lead={lead}
       open={convertOpen}
       onOpenChange={setConvertOpen}
-      onConverted={() => {
+      onConverted={(_leadId, projectId) => {
         setConvertOpen(false);
         setCelebrate(true);
         onLeadUpdate({ ...lead, status: "won" });
+        onProjectCreated?.(projectId);
         router.refresh();
       }}
     />

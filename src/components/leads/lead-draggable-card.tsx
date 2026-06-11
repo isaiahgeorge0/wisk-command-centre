@@ -17,6 +17,7 @@ type LeadDraggableCardProps = {
   dndEnabled: boolean;
   onDelete: (lead: Lead) => void;
   onLeadUpdate: (lead: Lead) => void;
+  onProjectCreated?: (projectId: string) => void;
   onStatusChange: (lead: Lead, status: LeadStatus) => void;
   layoutAnimation: boolean;
 };
@@ -27,6 +28,7 @@ export function LeadDraggableCard({
   dndEnabled,
   onDelete,
   onLeadUpdate,
+  onProjectCreated,
   onStatusChange,
   layoutAnimation,
 }: LeadDraggableCardProps) {
@@ -67,6 +69,7 @@ export function LeadDraggableCard({
         lead={lead}
         onDelete={onDelete}
         onLeadUpdate={onLeadUpdate}
+        onProjectCreated={onProjectCreated}
         onStatusChange={(nextStatus) => onStatusChange(lead, nextStatus)}
         isDragOverlay={false}
         className={dndEnabled ? "cursor-grab active:cursor-grabbing" : undefined}
@@ -79,6 +82,7 @@ type LeadDragOverlayCardProps = {
   lead: Lead;
   onDelete: (lead: Lead) => void;
   onLeadUpdate: (lead: Lead) => void;
+  onProjectCreated?: (projectId: string) => void;
   onStatusChange: (lead: Lead, status: LeadStatus) => void;
 };
 
@@ -86,6 +90,7 @@ export function LeadDragOverlayCard({
   lead,
   onDelete,
   onLeadUpdate,
+  onProjectCreated,
   onStatusChange,
 }: LeadDragOverlayCardProps) {
   return (
@@ -94,6 +99,7 @@ export function LeadDragOverlayCard({
         lead={lead}
         onDelete={onDelete}
         onLeadUpdate={onLeadUpdate}
+        onProjectCreated={onProjectCreated}
         onStatusChange={(status) => onStatusChange(lead, status)}
         isDragOverlay
       />

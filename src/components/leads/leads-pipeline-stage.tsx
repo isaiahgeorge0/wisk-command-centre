@@ -26,6 +26,7 @@ type LeadsPipelineStageProps = {
   isDragging: boolean;
   onDelete: (lead: Lead) => void;
   onLeadUpdate: (lead: Lead) => void;
+  onProjectCreated?: (projectId: string) => void;
   onStatusChange: (lead: Lead, status: LeadStatus) => void;
   layoutAnimation: boolean;
 };
@@ -39,6 +40,7 @@ export function LeadsPipelineStage({
   isDragging,
   onDelete,
   onLeadUpdate,
+  onProjectCreated,
   onStatusChange,
   layoutAnimation,
 }: LeadsPipelineStageProps) {
@@ -146,6 +148,7 @@ export function LeadsPipelineStage({
                         dndEnabled={dndEnabled}
                         onDelete={onDelete}
                         onLeadUpdate={onLeadUpdate}
+                        onProjectCreated={onProjectCreated}
                         onStatusChange={onStatusChange}
                         layoutAnimation={layoutAnimation}
                       />

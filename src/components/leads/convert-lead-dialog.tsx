@@ -1,27 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 import { convertLeadToProject } from "@/app/(dashboard)/leads/actions";
+import { Button } from "@/components/ui/button";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { formatLeadValue } from "@/lib/leads/format";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import type { Lead } from "@/lib/leads/types";
 
 type ConvertLeadDialogProps = {
   lead: Lead | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConverted: (leadId: string) => void;
+  onConverted: (leadId: string, projectId: string) => void;
 };
+
+function leadValueToInput(value: number | null): string {
+  return value != null ? String(value) : "";
+}
 
 export function ConvertLeadDialog({
   lead,
@@ -29,74 +33,137 @@ export function ConvertLeadDialog({
   onOpenChange,
   onConverted,
 }: ConvertLeadDialogProps) {
-  const [isPending, setIsPending] = useState(false);
+  const [name, setName] = useState("");
+  const [deadline, setDeadline] = useState("");
+  const [firstTask, setFirstTask] = useState("");
+  const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (!open || !lead) return;
+    setName(lead.name);
+    setDeadline("");
+    setFirstTask("");
+    setValue(leadValueToInput(lead.value));
+    setError(null);
+  }, [open, lead]);
 
   if (!lead) return null;
 
-  const handleConvert = async () => {
-    setError(null);
-    setIsPending(true);
-
-    const result = await convertLeadToProject(lead.id);
-
-    setIsPending(false);
-
-    if (!result.success) {
-      setError(result.error);
-      return;
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && !isPending) {
+      setError(null);
     }
+    onOpenChange(nextOpen);
+  };
 
-    onConverted(lead.id);
-    onOpenChange(false);
+  const handleConvert = (skipExtras: boolean) => {
+    setError(null);
+
+    startTransition(async () => {
+      const result = await convertLeadToProject(lead.id, {
+        name: name.trim(),
+        ...(skipExtras
+          ? {
+              value: lead.value != null ? String(lead.value) : undefined,
+            }
+          : {
+              deadline: deadline || undefined,
+              value: value || undefined,
+              first_task: firstTask || undefined,
+            }),
+      });
+
+      if (!result.success) {
+        setError(result.error);
+        return;
+      }
+
+      onConverted(lead.id, result.data!.projectId);
+      handleOpenChange(false);
+    });
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Convert to project</AlertDialogTitle>
-          <AlertDialogDescription>
-            This will create a new project and mark this lead as won.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Convert to Project</DialogTitle>
+          <DialogDescription>
+            Add a few details to give this project a strong foundation.
+          </DialogDescription>
+        </DialogHeader>
 
-        <div className="rounded-lg border border-border/60 bg-card/60 p-4">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-baseline justify-between gap-4">
-              <span className="text-xs text-muted-foreground">Project name</span>
-              <span className="text-sm text-foreground">{lead.service_interest}</span>
-            </div>
-            <div className="flex items-baseline justify-between gap-4">
-              <span className="text-xs text-muted-foreground">Client</span>
-              <span className="text-sm text-foreground">{lead.name}</span>
-            </div>
-            {lead.value != null ? (
-              <div className="flex items-baseline justify-between gap-4">
-                <span className="text-xs text-muted-foreground">Value</span>
-                <span className="text-sm text-foreground">
-                  {formatLeadValue(lead.value)}
-                </span>
-              </div>
-            ) : null}
-            <div className="flex items-baseline justify-between gap-4">
-              <span className="text-xs text-muted-foreground">Status</span>
-              <span className="text-sm text-foreground">Active</span>
-            </div>
+        <div className="grid gap-4 py-1">
+          <div className="grid gap-2">
+            <Label htmlFor="convert-project-name">Project name</Label>
+            <Input
+              id="convert-project-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={isPending}
+              required
+            />
           </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="convert-deadline">Deadline</Label>
+            <Input
+              id="convert-deadline"
+              type="date"
+              value={deadline}
+              onChange={(e) => setDeadline(e.target.value)}
+              disabled={isPending}
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="convert-first-task">First task</Label>
+            <Input
+              id="convert-first-task"
+              value={firstTask}
+              onChange={(e) => setFirstTask(e.target.value)}
+              placeholder="What's the first thing to do?"
+              disabled={isPending}
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="convert-value">Project value (£)</Label>
+            <Input
+              id="convert-value"
+              type="number"
+              min={0}
+              step={1}
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              disabled={isPending}
+            />
+          </div>
+
+          {error ? <p className="text-sm text-destructive">{error}</p> : null}
         </div>
 
-        {error ? (
-          <p className="text-sm text-destructive">{error}</p>
-        ) : null}
-
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleConvert} disabled={isPending}>
-            {isPending ? "Converting…" : "Convert to project"}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+        <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-between">
+          <Button
+            type="button"
+            variant="ghost"
+            disabled={isPending || !name.trim()}
+            onClick={() => handleConvert(true)}
+          >
+            Skip &amp; Convert
+          </Button>
+          <Button
+            type="button"
+            disabled={isPending || !name.trim()}
+            onClick={() => handleConvert(false)}
+            className="bg-gradient-to-r from-wisk-purple to-wisk-teal text-white hover:opacity-90"
+          >
+            {isPending ? "Converting…" : "Convert"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

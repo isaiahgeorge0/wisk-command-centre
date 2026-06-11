@@ -5,7 +5,12 @@ import { z } from "zod";
 
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { emptyToNull, parseLeadValue } from "@/lib/leads/format";
-import type { ActionResult, Lead, LeadFormInput } from "@/lib/leads/types";
+import type {
+  ActionResult,
+  ConvertLeadToProjectInput,
+  Lead,
+  LeadFormInput,
+} from "@/lib/leads/types";
 import {
   LEAD_SOURCES,
   LEAD_STATUSES,
@@ -214,12 +219,27 @@ export async function deleteLead(id: string): Promise<ActionResult> {
   return { success: true };
 }
 
+const convertLeadInputSchema = z.object({
+  name: z.string().trim().min(1, "Project name is required"),
+  deadline: z.string().optional(),
+  value: z.string().optional(),
+  first_task: z.string().optional(),
+});
+
 export async function convertLeadToProject(
-  leadId: string
+  leadId: string,
+  input: ConvertLeadToProjectInput
 ): Promise<ActionResult<{ projectId: string }>> {
+  const parsed = convertLeadInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+
   const { supabase, userId } = await getScopedSupabase();
 
-  // Fetch the lead
   const { data: lead, error: leadError } = await supabase
     .from("leads")
     .select("*")
@@ -232,16 +252,21 @@ export async function convertLeadToProject(
     return { success: false, error: "Lead not found." };
   }
 
-  // Create the project from lead data
+  const deadline = emptyToNull(parsed.data.deadline);
+  const value =
+    parseLeadValue(parsed.data.value) ?? lead.value ?? null;
+  const firstTask = emptyToNull(parsed.data.first_task);
+
   const { data: project, error: projectError } = await supabase
     .from("projects")
     .insert({
       user_id: userId,
-      project_name: lead.service_interest,
+      project_name: parsed.data.name,
       client_name: lead.name,
       service_type: lead.service_interest,
       status: "active",
-      value: lead.value ?? null,
+      value,
+      deadline,
       notes: lead.notes ?? null,
     })
     .select("id")
@@ -252,7 +277,21 @@ export async function convertLeadToProject(
     return { success: false, error: "Could not create project. Please try again." };
   }
 
-  // Mark lead as won if not already
+  if (firstTask) {
+    const { error: taskError } = await supabase.from("tasks").insert({
+      user_id: userId,
+      project_id: project.id,
+      title: firstTask,
+      completed: false,
+    });
+
+    if (taskError) {
+      console.error("convertLeadToProject - create task:", taskError);
+    } else {
+      revalidatePath("/tasks");
+    }
+  }
+
   if (lead.status !== "won") {
     const { error: updateError } = await supabase
       .from("leads")
@@ -262,7 +301,6 @@ export async function convertLeadToProject(
 
     if (updateError) {
       console.error("convertLeadToProject - update lead status:", updateError);
-      // Non-fatal — project was created successfully, just log it
     }
   }
 
