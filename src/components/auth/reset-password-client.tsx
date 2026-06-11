@@ -24,13 +24,29 @@ export function ResetPasswordClient() {
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) {
-        router.replace("/sign-in");
+    let attempts = 0;
+    const maxAttempts = 5;
+    const delay = 500; // ms between retries
+
+    async function checkAuth() {
+      attempts++;
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        setCheckingAuth(false);
         return;
       }
-      setCheckingAuth(false);
-    });
+
+      if (attempts < maxAttempts) {
+        setTimeout(checkAuth, delay);
+        return;
+      }
+
+      // All retries exhausted — no session found
+      router.replace("/sign-in");
+    }
+
+    void checkAuth();
   }, [router]);
 
   function handleSubmit(e: React.FormEvent) {
