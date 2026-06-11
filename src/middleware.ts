@@ -11,6 +11,9 @@ const PUBLIC_PATHS = [
   "/auth/callback-client",
   "/auth/reset-password",
   "/api/auth/personalisation-status",
+  "/api/auth/update-password",
+  "/api/ai-digest/generate",
+  "/api/ai-digest/generate-for-user",
 ];
 
 // Paths accessible to authenticated users before personalisation is complete.

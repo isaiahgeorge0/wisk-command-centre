@@ -750,7 +750,12 @@ export async function generateUserDigest(userId: string): Promise<ActionResult> 
       }
     );
 
-    const json = (await res.json()) as { error?: string };
+    let json: { success?: boolean; error?: string };
+    try {
+      json = (await res.json()) as { success?: boolean; error?: string };
+    } catch {
+      return { success: false, error: "Invalid response from digest service" };
+    }
 
     if (!res.ok || json.error) {
       return { success: false, error: json.error ?? `HTTP ${res.status}` };
