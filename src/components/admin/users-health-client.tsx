@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useOptimistic, useState, useTransition } from "react";
-import { Sparkles } from "lucide-react";
+import { Check, Loader2, Sparkles, X, Zap } from "lucide-react";
 
-import { toggleAIAccess } from "@/app/(dashboard)/admin/actions";
+import { generateUserDigest, toggleAIAccess } from "@/app/(dashboard)/admin/actions";
 import type { AdminUserHealth, UserHealthSummary } from "@/lib/admin/platform";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -88,6 +88,66 @@ function WinstonToggle({
   );
 }
 
+// ─── Per-row generate digest button ──────────────────────────────────────────
+
+type DigestState = "idle" | "loading" | "success" | "error";
+
+function GenerateDigestButton({ userId }: { userId: string }) {
+  const [state, setState] = useState<DigestState>("idle");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  function handleClick() {
+    setState("loading");
+    setErrorMsg(null);
+
+    startTransition(async () => {
+      const result = await generateUserDigest(userId);
+
+      if (result.success) {
+        setState("success");
+        setTimeout(() => setState("idle"), 2000);
+      } else {
+        setState("error");
+        setErrorMsg(result.error ?? "Failed to generate digest");
+        setTimeout(() => setState("idle"), 3000);
+      }
+    });
+  }
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <button
+        onClick={handleClick}
+        disabled={pending || state === "loading"}
+        aria-label="Generate Winston digest"
+        title={errorMsg ?? "Generate Winston digest"}
+        className={cn(
+          "inline-flex items-center justify-center rounded-full border p-1.5 transition-colors duration-150",
+          state === "idle" &&
+            "border-border bg-muted text-muted-foreground hover:border-wisk-teal/40 hover:bg-wisk-teal/10 hover:text-wisk-teal",
+          state === "loading" &&
+            "cursor-not-allowed border-border bg-muted text-muted-foreground opacity-60",
+          state === "success" &&
+            "border-emerald-500/40 bg-emerald-500/10 text-emerald-500",
+          state === "error" &&
+            "border-red-500/40 bg-red-500/10 text-red-500"
+        )}
+      >
+        {state === "loading" ? (
+          <Loader2 className="size-4 animate-spin" aria-hidden />
+        ) : state === "success" ? (
+          <Check className="size-4" aria-hidden />
+        ) : state === "error" ? (
+          <X className="size-4" aria-hidden />
+        ) : (
+          <Zap className="size-4" aria-hidden />
+        )}
+      </button>
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function UsersHealthClient({ users, summary }: UsersHealthClientProps) {
@@ -161,13 +221,16 @@ export function UsersHealthClient({ users, summary }: UsersHealthClientProps) {
                   Winston
                 </span>
               </th>
+              <th className="px-4 py-3 font-medium text-muted-foreground">
+                Digest
+              </th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
               <tr>
                 <td
-                  colSpan={8}
+                  colSpan={9}
                   className="px-4 py-8 text-center text-muted-foreground"
                 >
                   No users found.
@@ -202,6 +265,13 @@ export function UsersHealthClient({ users, summary }: UsersHealthClientProps) {
                       userId={user.id}
                       initialValue={user.ai_access}
                     />
+                  </td>
+                  <td className="px-4 py-3">
+                    {user.ai_access ? (
+                      <GenerateDigestButton userId={user.id} />
+                    ) : (
+                      <span className="text-xs text-muted-foreground/40">—</span>
+                    )}
                   </td>
                 </tr>
               ))

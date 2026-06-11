@@ -725,6 +725,45 @@ export async function toggleAIAccess(userId: string): Promise<ActionResult> {
   return { success: true };
 }
 
+export async function generateUserDigest(userId: string): Promise<ActionResult> {
+  await requireAdmin();
+
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
+    "http://localhost:3000";
+  const secret = process.env.AI_DIGEST_SECRET;
+
+  if (!secret) {
+    return { success: false, error: "AI_DIGEST_SECRET is not configured" };
+  }
+
+  try {
+    const res = await fetch(
+      `${siteUrl}/api/ai-digest/generate-for-user`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${secret}`,
+        },
+        body: JSON.stringify({ userId }),
+      }
+    );
+
+    const json = (await res.json()) as { error?: string };
+
+    if (!res.ok || json.error) {
+      return { success: false, error: json.error ?? `HTTP ${res.status}` };
+    }
+
+    return { success: true };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("generateUserDigest:", message);
+    return { success: false, error: message };
+  }
+}
+
 export async function getUserHealthSummary(): Promise<UserHealthSummary> {
   const users = await getUsersWithHealth();
   return users.reduce(

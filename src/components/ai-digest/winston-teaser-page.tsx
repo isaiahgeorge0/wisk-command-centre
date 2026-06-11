@@ -261,17 +261,53 @@ export function WinstonTeaserPage() {
             </div>
 
             <h1 className="text-3xl font-bold tracking-tight text-foreground">
-              Winston
+              Meet Winston.
             </h1>
             <p className="mt-1 text-base text-muted-foreground">
-              Your AI business assistant
+              Your AI business assistant, built into WISK.
             </p>
 
-            <p className="mt-4 max-w-sm text-sm leading-relaxed text-foreground/80">
-              Winston reads your projects, tasks, goals, leads, and content —
-              then delivers a weekly digest every Sunday that feels like a
-              trusted advisor. Wins, risks, insights, and one clear
-              recommendation to start your week.
+            <p className="mt-4 max-w-md text-sm leading-relaxed text-foreground/80">
+              Winston knows your business. Every project, every task, every
+              lead, every goal — Winston reads it all and turns it into
+              something you can actually act on.
+            </p>
+
+            <ul className="mt-5 max-w-md space-y-3 text-left">
+              {[
+                {
+                  name: "Weekly Digest",
+                  desc: "every Sunday morning, a full breakdown of your week. Wins, risks, what's coming, and one clear recommendation to start your week right.",
+                },
+                {
+                  name: "Deep Insights",
+                  desc: "Winston spots patterns you'd miss. Stalled projects, content streaks at risk, leads going cold. Flagged before they become problems.",
+                },
+                {
+                  name: "Ask Winston Anything",
+                  desc: "your entire business, on demand. Ask about your pipeline, your progress, your priorities. Winston answers with your actual data.",
+                },
+                {
+                  name: "Email Intelligence (AI Pro)",
+                  desc: "connect Gmail or Outlook and Winston organises your inbox automatically. Leads, clients, admin — grouped, summarised, and linked to your WISK records.",
+                },
+              ].map(({ name, desc }) => (
+                <li key={name} className="flex items-start gap-2.5 pl-1">
+                  <CheckCircle2
+                    className="mt-0.5 size-4 shrink-0 text-wisk-teal"
+                    aria-hidden
+                  />
+                  <span className="text-sm leading-relaxed">
+                    <span className="font-medium text-foreground">{name}</span>
+                    <span className="text-muted-foreground"> — {desc}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+
+            <p className="mt-5 max-w-md text-base font-medium text-foreground">
+              This is what it looks like when your tools actually understand
+              your business.
             </p>
 
             {/* Coming soon badge */}
