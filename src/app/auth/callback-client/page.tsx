@@ -40,7 +40,24 @@ export default function AuthCallbackClientPage() {
           access_token: accessToken,
           refresh_token: refreshToken,
         });
-        if (error) sessionError = error;
+        if (error) {
+          sessionError = error;
+        } else {
+          // Wait for auth state to confirm session is written
+          // before allowing the redirect logic to proceed.
+          await new Promise<void>((resolve) => {
+            const { data: { subscription } } = supabase.auth.onAuthStateChange(
+              (event, session) => {
+                if (event === "SIGNED_IN" && session) {
+                  subscription.unsubscribe();
+                  resolve();
+                }
+              }
+            );
+            // Fallback timeout — resolve after 2s regardless.
+            setTimeout(resolve, 2000);
+          });
+        }
       } else if (tokenHash && type) {
         // PKCE OTP flow (newer Supabase invite format).
         const { error } = await supabase.auth.verifyOtp({

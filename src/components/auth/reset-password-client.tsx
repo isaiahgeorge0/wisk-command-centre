@@ -3,7 +3,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useReducer, useState, useTransition } from "react";
+import { useReducer, useState, useTransition } from "react";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,47 +14,12 @@ export function ResetPasswordClient() {
   const router = useRouter();
   const reduced = useReducedMotion() ?? false;
 
-  const [checkingAuth, setCheckingAuth] = useState(true);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, toggleShowPassword] = useReducer((s) => !s, false);
   const [showConfirm, toggleShowConfirm] = useReducer((s) => !s, false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-
-  useEffect(() => {
-    console.log("[reset-password] component mounted, starting auth check");
-    const supabase = createClient();
-    let attempts = 0;
-    const maxAttempts = 5;
-    const delay = 500; // ms between retries
-
-    async function checkAuth() {
-      attempts++;
-      console.log(`[reset-password] attempt ${attempts}`);
-      const { data: { user }, error } = await supabase.auth.getUser();
-      console.log(`[reset-password] attempt ${attempts} result:`, {
-        hasUser: !!user,
-        userId: user?.id?.slice(0, 8),
-        error: error?.message,
-      });
-
-      if (user) {
-        setCheckingAuth(false);
-        return;
-      }
-
-      if (attempts < maxAttempts) {
-        setTimeout(checkAuth, delay);
-        return;
-      }
-
-      // All retries exhausted — no session found
-      router.replace("/sign-in");
-    }
-
-    void checkAuth();
-  }, [router]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -98,14 +63,6 @@ export function ResetPasswordClient() {
           ease: MOTION_EASE.smooth,
         },
       };
-
-  if (checkingAuth) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="text-sm text-muted-foreground">Loading…</p>
-      </div>
-    );
-  }
 
   return (
     <div className="relative min-h-screen bg-background">
