@@ -29,6 +29,8 @@ export default function AuthCallbackClientPage() {
       const type = searchParams.get("type") as EmailOtpType | null;
       const accessToken = hashParams.get("access_token");
       const refreshToken = hashParams.get("refresh_token");
+      const nextParam = searchParams.get("next") ?? "";
+      const hashType = hashParams.get("type");
 
       console.log("[callback-client] params:", {
         code: !!code,
@@ -68,6 +70,17 @@ export default function AuthCallbackClientPage() {
         return;
       }
 
+      // Password reset must take priority over personalisation redirects.
+      if (nextParam.startsWith("/auth/reset-password")) {
+        router.push("/auth/reset-password");
+        return;
+      }
+
+      if (hashType === "recovery") {
+        router.push("/auth/reset-password");
+        return;
+      }
+
       // Confirm session was established.
       const {
         data: { user },
@@ -76,19 +89,6 @@ export default function AuthCallbackClientPage() {
       if (!user) {
         console.error("[callback-client] no user after session establishment");
         router.replace("/sign-in?error=auth_callback");
-        return;
-      }
-
-      // If the flow was a password reset, send straight to the reset form.
-      // Check both the next query param and the type in the hash fragment
-      // (implicit flow puts type=recovery in the hash).
-      const nextParam = searchParams.get("next") ?? "";
-      const hashType = hashParams.get("type");
-      if (
-        nextParam.startsWith("/auth/reset-password") ||
-        hashType === "recovery"
-      ) {
-        router.replace("/auth/reset-password");
         return;
       }
 
