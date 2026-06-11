@@ -9,8 +9,8 @@ What is built and working today.
 - Click to expand
 - Inline edit
 - Quick-add
-- Convert idea to project (one click)
-- Convert idea to content post (one click)
+- Convert idea to project (one click) — LIVE
+- Convert idea to content post (one click) — LIVE
 
 ## Gaps and Missing Features
 
@@ -22,9 +22,7 @@ What is missing or underdeveloped, with a priority rating (High/Medium/Low) per 
 
 ## Planned Additions (Phase 2)
 
-Features committed to building before Phase 3 begins.
-
-- Search and filtering
+- Search and filtering — still planned
 
 ## Future Considerations (Phase 3+)
 

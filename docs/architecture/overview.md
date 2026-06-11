@@ -388,4 +388,54 @@ Copy `.env.example` to `.env.local` and fill all required values. Run `npm run d
 
 ---
 
+## 12. Phase 3 Architecture Notes
+
+### AI Package
+
+The AI layer reads from the existing Supabase
+database — no separate AI database is needed.
+User data (projects, tasks, goals, leads, content)
+is the knowledge base.
+
+Each AI request:
+1. Pulls relevant context from Supabase
+   server-side
+2. Constructs a system prompt describing
+   the user's business state
+3. Sends to Claude API (claude-sonnet model)
+4. Returns structured response to the UI
+
+AI Digest runs on a scheduled basis (Sunday).
+WISK Chat is on-demand per user message.
+Smart suggestions are generated on dashboard load
+(replacing or extending generateNotifications()).
+
+### Email Integration (AI Pro)
+
+OAuth tokens for Gmail/Outlook follow the same
+encrypted-at-rest pattern as Vercel/GitHub:
+- AES-256-GCM encryption via lib/integrations/crypto.ts
+- Stored in user_integrations table
+- All API calls server-side only
+- Requires Google/Microsoft app verification
+  before launch (allow several weeks)
+
+### Billing (Stripe)
+
+Stripe goes live before any billable feature ships.
+Package entitlements stored in a new
+user_subscriptions table:
+- user_id
+- package (ai, ai_pro, social, commerce,
+  properties, max)
+- status (active, cancelled, past_due)
+- stripe_subscription_id
+- current_period_end
+
+Feature gating checks user_subscriptions
+server-side — never trust client-side
+entitlement checks.
+
+---
+
 *Last updated to reflect migrations through 022 and current deployment topology.*

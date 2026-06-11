@@ -128,6 +128,23 @@ what you want. Goals with progress tracking.
 Leads that become revenue. Content that builds 
 an audience. Ideas that become products.
 
+## Pricing Model
+
+WISK core is free. Packages are paid add-ons that
+unlock specific high-value capabilities.
+
+| Tier | Price | Description |
+|------|-------|-------------|
+| Core | Free | Projects, tasks, goals, ideas, leads, content, calendar |
+| WISK AI | £9/mo | AI Digest, WISK Chat, smart suggestions |
+| WISK AI Pro | £19/mo | AI + email integration with AI organiser |
+| Verticals | £9-12/mo each | Social, Commerce, Properties |
+| WISK Max | £35-45/mo | Everything bundled |
+
+Packages feel like unlocks, not paywalls. The core
+product is genuinely valuable for free. Packages are
+for users who want to go deeper in a specific area.
+
 ## The long-term vision
 
 In three years WISK is a worldwide productivity 
@@ -150,28 +167,24 @@ tools built for their level of ambition.
 ## What success looks like
 
 **In 6 months:**
-- 500 active users across individual and team 
-  accounts
-- First paid package (Social) live and generating 
-  revenue
-- Net Promoter Score above 50 — users are 
-  actively recommending WISK
+- 500 active users on the core platform
+- WISK AI package live and generating first revenue
+- Stripe billing integrated
+- Net Promoter Score above 50
 
 **In 12 months:**
 - 2,000 active users
-- Three packages live (Social, Property, Agency)
-- Monthly recurring revenue sufficient to fund 
+- WISK AI and AI Pro live
+- First vertical package (Social) in beta
+- Monthly recurring revenue sufficient to fund
   full-time development
-- First team/agency accounts generating 
-  meaningful revenue
 
 **In 3 years:**
 - Worldwide user base across multiple sectors
-- WISK recognised as the go-to command centre 
-  for ambitious individuals and small teams
-- Multiple packages serving distinct verticals
-- AI layer providing genuine business intelligence 
-  not available anywhere else
+- All three vertical packages live
+- WISK Max adopted by small agencies and teams
+- AI layer providing genuine business intelligence
+  not available in any single-purpose tool
 
 ## What WISK is not
 

@@ -2,19 +2,30 @@
 
 ## Current State
 
-What is built and working today.
-
 - Vertical pipeline with horizontal cards
-- Six stages
-- Colour accents per stage
-- Collapse/expand
-- Drag and drop desktop
-- Status menu mobile
-- Won celebration
-- Stats bar
-- Inline edit
-- Quick-add
-- Lead to project conversion (one click)
+- Six stages: New, Contacted, Qualified,
+  Proposal sent, Won, Lost
+- Stage colour accents per stage
+- Collapse/expand per stage
+- Drag and drop between stages (desktop)
+- Status menu for mobile/touch
+- Won celebration: confetti particles,
+  gold trophy overlay, amber border flash
+- Fields: name, email, phone, source,
+  service interest, status, value, notes
+- Source badges
+- Stats bar: Leads this month, Conversion rate,
+  Pipeline value, Average response time
+- Inline edit, delete with confirmation
+- Quick-add modal via FAB and Add button
+- Recent leads on Overview page
+- Convert lead to project with foundation modal:
+  project name (pre-filled), deadline,
+  first task, value collected before creation.
+  First task creates a linked task in the
+  same action.
+- Success toast with link to /projects
+  after conversion
 
 ## Gaps and Missing Features
 
@@ -28,10 +39,9 @@ What is missing or underdeveloped, with a priority rating (High/Medium/Low) per 
 
 ## Planned Additions (Phase 2)
 
-Features committed to building before Phase 3 begins.
-
-- Follow-up reminders
-- Activity log
+- Lead → project conversion — COMPLETE
+- Follow-up reminders — still planned
+- Activity log — still planned
 
 ## Future Considerations (Phase 3+)
 

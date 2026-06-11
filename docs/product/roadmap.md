@@ -237,7 +237,10 @@ Status definitions:
 - Quick-add modal via FAB and Add button
 - Recent leads on Overview page
 - Convert lead to project:
-  creates a project pre-filled from lead data
+  modal collects project name, deadline,
+  first task, and value before creation;
+  skip option for name-only conversion;
+  marks lead as won with celebration
 
 ### Content
 - Status: Live
@@ -273,17 +276,17 @@ Status definitions:
 - Occurrence panel: per-occurrence notes
   and status management
 - Note: Social media API integration
-  not yet built (Phase 3)
+  not yet built (Phase 3.3)
 
 ### AI Digest
 - Status: Placeholder (page exists at
   /ai-digest; removed from main nav)
 - Linked from Settings > Help on mobile
-- Planned for Phase 3 once sufficient
-  data exists
-- Will provide weekly AI summary of
-  business performance, priorities,
-  and recommendations
+- Planned for Phase 3.1 (AI Foundation)
+- Will become the in-app home for the
+  automatic Sunday weekly business summary
+- Superseded long-term by WISK Chat,
+  which can generate summaries on demand
 
 ---
 
@@ -490,7 +493,7 @@ admin blog and read by the marketing site.
 ## Phase 2 — Complete (June 2026)
 
 Core platform polish and connections before
-Phase 3 vertical packages. Essentially complete —
+Phase 3 (AI-first). Essentially complete —
 one item intentionally deferred (see below).
 
 ### Delivered (live in this repository)
@@ -502,7 +505,8 @@ one item intentionally deferred (see below).
 - Project task detail overlay
 - Project filtering, sorting, and status
   grouping
-- Lead → project conversion
+- Lead → project conversion modal
+  (name, deadline, first task, value)
 - Idea → project conversion
 - Idea → content post conversion
 - Recurring content posts with per-occurrence
@@ -521,7 +525,7 @@ one item intentionally deferred (see below).
   form dialogs
 - Empty state standardisation across sections
 - AI Digest removed from main nav
-  (page retained for Phase 3)
+  (page retained for Phase 3.1)
 - Branded 404 page (`src/app/not-found.tsx`)
 - Sign-in back link to wiskapp.com
 
@@ -545,18 +549,88 @@ one item intentionally deferred (see below).
 
 ---
 
-## Phase 3 — Vertical Packages
+## Phase 3 — AI Package (confirmed build order)
 
-Phase 3 is when WISK goes vertical. The core platform proven in Phase 2
-and stabilised in Phase 2.5 becomes the foundation for packages that
-serve specific types of ambitious people with specific problems.
+Phase 3 is AI-first. The vertical packages (Social, Commerce,
+Properties) come after the AI foundation is built.
 
-Each package shares a common architecture: OAuth-based integrations,
-encrypted token storage, server-side API calls, and connections to the
-core WISK platform (projects, tasks, goals, content, leads). The AI
-layer analyses correlations across all connected data sources.
+### Why AI first
 
-### Social Media Package
+The AI layer must be built before vertical packages so that
+when Social, Commerce, and Properties are added, they benefit
+from an already-intelligent foundation. AI that understands
+projects, tasks, goals, leads, and content becomes dramatically
+more powerful when combined with social analytics, revenue data,
+or property metrics.
+
+### Phase 3.1 — AI Foundation
+
+Build order:
+
+1. **AI Digest** — automatic weekly business summary generated
+   every Sunday from the user's Supabase data. Covers:
+   week in review, wins, attention needed, week ahead,
+   one AI insight. Delivered in-app. No external integrations
+   needed. Uses Claude API with user data as context.
+
+2. **WISK Chat** — conversational AI interface. Ask anything
+   about your business. Context-aware responses drawn from
+   live Supabase data. Follow-up questions supported.
+   Replaces the need for a static AI Digest page —
+   the user can ask for a summary anytime plus drill
+   into specifics.
+
+3. **Smart suggestions** — contextual nudges throughout the app.
+   Overdue follow-ups, stalled projects, content streak
+   at risk, goal progress alerts. Generated from data
+   patterns, not just rule-based notifications.
+
+### Phase 3.2 — AI Package (billable)
+
+Stripe billing goes live before this phase.
+
+Pricing:
+- **WISK AI: £9/mo**
+  AI Digest (Sunday auto-summary), WISK Chat,
+  smart suggestions, limited usage
+- **WISK AI Pro: £19/mo**
+  Everything in AI + email integration with
+  AI organiser, higher usage limits
+
+Email integration (AI Pro only):
+- Gmail and Outlook OAuth connection
+- Dedicated Email tab in WISK nav
+- AI automatically groups emails into sections
+  (Leads, Clients, Admin, etc.)
+- Manual sections with assigned addresses
+- Emails from known leads/clients link to
+  their WISK records
+- AI surfaces action items from email threads
+- Requires Google/Microsoft app verification
+  (allow several weeks lead time)
+
+### Phase 3.3 — Vertical Packages
+
+Built on top of the AI foundation. Each package
+connects to the AI layer for intelligent insights.
+
+Pricing:
+- Each vertical: £9–12/mo
+- WISK Max (all verticals + AI Pro): £35–45/mo
+
+Build order:
+1. **Social Media Package** — fits content calendar
+   and creator positioning; OAuth pattern exists
+2. **Commerce Package** — revenue correlation with
+   content is a strong differentiator
+3. **Properties Package** — more domain-specific;
+   larger build
+
+Refer to the vertical package specs below for full
+feature details — these remain unchanged, now sequenced
+after the AI foundation.
+
+#### Social Media Package
 
 Target: content creators, agencies, social-first founders
 
@@ -573,18 +647,7 @@ Features:
 - Cross-reference content performance to WISK goals
 - AI content idea generation based on performance data
 
-### Properties Package
-
-Target: small landlords, property managers, real estate operators
-
-Features:
-- Property management with tenant data and communication
-- Maintenance ticket workflow with contractor assignment
-- Rental income tracking and projections
-- Connected to core tasks/projects for property work
-- Document storage for leases, certificates, inspections
-
-### Commerce Package
+#### Commerce Package
 
 Target: ecommerce founders, indie sellers, hybrid creator-merchants
 
@@ -604,7 +667,18 @@ Features:
 - Connected to content calendar
 - Tax/accounting export-ready data
 
-### Integration Architecture (shared across all packages)
+#### Properties Package
+
+Target: small landlords, property managers, real estate operators
+
+Features:
+- Property management with tenant data and communication
+- Maintenance ticket workflow with contractor assignment
+- Rental income tracking and projections
+- Connected to core tasks/projects for property work
+- Document storage for leases, certificates, inspections
+
+#### Integration Architecture (shared across all packages)
 
 1. User connects via OAuth (Shopify, YouTube, etc.)
 2. Token encrypted with AES-256-GCM and stored in user_integrations
@@ -614,14 +688,12 @@ Features:
 6. AI layer analyses correlations across all connected sources
 7. All integrations follow the existing Vercel + GitHub pattern
 
-### Package model
+#### Package model
 
-Each package is a paid add-on to the free core WISK platform:
 - Free tier: core WISK (projects, tasks, goals, content, leads, calendar)
-- Growth add-on: Social Media Package
-- Properties add-on: Properties Package
-- Commerce add-on: Commerce Package
-- Pro: all packages bundled
+- WISK AI / WISK AI Pro: AI foundation + email (see Phase 3.2)
+- Vertical add-ons: Social, Commerce, Properties (see Phase 3.3)
+- WISK Max: all verticals + AI Pro bundled
 
 ---
 
@@ -648,11 +720,9 @@ Each package is a paid add-on to the free core WISK platform:
 - Estate agency package
 
 ### Monetisation
-- Free tier: core WISK
-- Growth add-on: Social package
-- Properties add-on: Property package
-- Pro: all packages bundled
-- Team/Agency: per-seat pricing
+- See Phase 3.2 and 3.3 for confirmed AI and
+  vertical package pricing
+- Team/Agency: per-seat pricing (speculative)
 
 ---
 
@@ -664,14 +734,18 @@ Each package is a paid add-on to the free core WISK platform:
 - updated_at on projects table added
   but not on all tables
 - AI Digest page is a placeholder
-  (Phase 3)
+  (Phase 3.1)
 - Calendar recurring events for
   non-content types not built
   (content recurrence is live)
 - Task file attachments deferred to
   subscription packages (see Phase 2)
 - Social media API integrations not
-  yet implemented (Phase 3)
+  yet implemented (Phase 3.3)
+- Stripe billing not yet implemented
+  (Phase 3.2)
+- WISK Chat and smart suggestions not
+  yet implemented (Phase 3.1)
 - Apply migration `026_calendar_events.sql`
   on production Supabase if not yet run
 
