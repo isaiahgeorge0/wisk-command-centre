@@ -699,6 +699,45 @@ Features:
 
 ## Phase 4 — Speculative
 
+### Collaboration & Sharing (Phase 4.1)
+
+Build order:
+
+**Phase A — Foundation (lightweight, additive):**
+- Add `username` field to `public.users` (unique, used for discovery)
+- `user_connections` table:
+  `id`, `requester_id`, `recipient_id`, `status` (pending/accepted), `created_at`
+- `item_shares` table:
+  `id`, `owner_id`, `recipient_id`, `item_type` (project/task/goal/idea/lead/content),
+  `item_id`, `permission` (view/edit), `created_at`
+- Username search and add connection UI
+- No sharing UI in Phase A — social graph only
+
+**Phase B — Sharing UI (after Stripe billing is live):**
+- Share button on projects and tasks first
+- Permission picker (view/edit)
+- Shared with me section in the app
+- RLS updates per shareable table
+- In-app notification when someone shares with you
+- Read-only vs edit permission enforcement
+
+**Architecture notes:**
+- Every shareable table needs a second RLS policy:
+  "OR exists in `item_shares` where `recipient_id` = `auth.uid()`"
+- This touches every major table — do after Stripe to avoid multiple simultaneous schema changes
+- Phase A is purely additive — no existing RLS policies touched
+
+### Coming Soon strategy
+
+WISK uses a deliberate "coming soon" approach:
+- Section-level previews only (full page/tab teasers like the Winston teaser page)
+- Never disabled buttons on existing cards or within daily workflows
+- Upcoming features communicated via:
+  - Changelog entries ("coming soon" type)
+  - Settings page "What's coming" section
+  - Social content and build-in-public posts
+- Core product must always feel complete and polished — no building site feeling for daily users
+
 ### Team and Agency Features
 - Multi-user workspaces
 - Role-based permissions

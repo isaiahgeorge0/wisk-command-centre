@@ -23,7 +23,7 @@ export function ContentDayDetailPanel({
 }: ContentDayDetailPanelProps) {
   if (!selectedDate) {
     return (
-      <div className="flex min-h-[20rem] items-center justify-center rounded-xl border border-dashed border-border/60 bg-card/20 px-6 text-center">
+      <div className="flex h-full min-h-[20rem] items-center justify-center rounded-xl border border-dashed border-border/60 bg-card/20 px-6 text-center">
         <p className="text-sm text-muted-foreground">
           Select a day to see scheduled and published content.
         </p>
@@ -32,8 +32,8 @@ export function ContentDayDetailPanel({
   }
 
   return (
-    <aside className="overflow-hidden rounded-xl border border-border/60 bg-card/40">
-      <div className="flex items-start justify-between gap-3 border-b border-border/60 px-4 py-3">
+    <aside className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-card/40">
+      <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border/60 px-4 py-3">
         <div>
           <p className="text-sm font-medium text-foreground">
             {formatSelectedDay(selectedDate)}
@@ -53,7 +53,7 @@ export function ContentDayDetailPanel({
         </Button>
       </div>
 
-      <div className="max-h-[28rem] overflow-y-auto px-4 py-3">
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 max-lg:max-h-[60vh]">
         {entries.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
             No content for this day.

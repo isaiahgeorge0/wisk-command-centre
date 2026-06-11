@@ -436,6 +436,45 @@ Feature gating checks user_subscriptions
 server-side — never trust client-side
 entitlement checks.
 
----
+### Collaboration Architecture (Phase 4)
 
-*Last updated to reflect migrations through 022 and current deployment topology.*
+Two new tables required:
+
+**user_connections:**
+- `id` uuid primary key
+- `requester_id` uuid references `public.users(id)`
+- `recipient_id` uuid references `public.users(id)`
+- `status` text check (pending, accepted, declined)
+- `created_at` timestamptz default now()
+
+**item_shares:**
+- `id` uuid primary key
+- `owner_id` uuid references `public.users(id)`
+- `recipient_id` uuid references `public.users(id)`
+- `item_type` text check (project, task, goal, idea, lead, content, calendar_event)
+- `item_id` uuid not null
+- `permission` text check (view, edit)
+- `created_at` timestamptz default now()
+
+RLS pattern for shared items (example — projects):
+
+```sql
+create policy "Users can view shared projects"
+on public.projects for select
+using (
+  auth.uid() = user_id
+  or exists (
+    select 1 from item_shares
+    where item_shares.item_id = projects.id
+    and item_shares.item_type = 'project'
+    and item_shares.recipient_id = auth.uid()
+    and item_shares.permission in ('view', 'edit')
+  )
+);
+```
+
+This pattern applies to every shareable table.
+Build Phase A (tables only) before Stripe.
+Build Phase B (RLS + UI) after Stripe is live.
+
+---

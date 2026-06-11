@@ -62,8 +62,8 @@ function DayDetailContent({
   const hasEvents = events.length > 0;
 
   return (
-    <>
-      <div className="flex items-start justify-between gap-3 border-b border-border/60 px-4 py-3">
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border/60 px-4 py-3">
         <div>
           <p className="text-sm font-medium text-foreground">
             {formatSelectedDay(selectedDate!)}
@@ -85,7 +85,7 @@ function DayDetailContent({
         ) : null}
       </div>
 
-      <div className="max-h-[min(24rem,calc(100dvh-12rem))] overflow-y-auto px-4 py-3 md:max-h-[28rem]">
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
         {!hasEvents ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
             Nothing scheduled for this day.
@@ -159,7 +159,7 @@ function DayDetailContent({
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 }
 
@@ -210,7 +210,7 @@ export function CalendarDayDetailPanel({
           className="fixed inset-0 z-40 bg-black/10 supports-backdrop-filter:backdrop-blur-xs md:hidden"
           onClick={onClose}
         />
-        <div className="fixed inset-x-0 bottom-0 z-50 max-h-[85dvh] overflow-hidden rounded-t-2xl border-t border-border/60 bg-popover pb-[max(1rem,env(safe-area-inset-bottom))] shadow-lg md:hidden">
+        <div className="fixed inset-x-0 bottom-0 z-50 flex min-h-[60vh] max-h-[85dvh] flex-col overflow-y-auto rounded-t-2xl border-t border-border/60 bg-popover pb-[max(1rem,env(safe-area-inset-bottom))] shadow-lg md:hidden">
           <DayDetailContent
             selectedDate={selectedDate}
             events={events}
@@ -223,7 +223,7 @@ export function CalendarDayDetailPanel({
   }
 
   return (
-    <div className="relative hidden min-h-[24rem] md:block md:min-w-[20rem] md:max-w-[20rem] md:flex-1">
+    <div className="relative hidden h-full min-h-[24rem] md:block md:min-w-[20rem] md:max-w-[20rem] md:flex-1">
       <AnimatePresence mode="wait">
         {open && selectedDate ? (
           <motion.aside
@@ -239,7 +239,7 @@ export function CalendarDayDetailPanel({
                     ease: MOTION_EASE.smooth,
                   }
             }
-            className="h-full overflow-hidden rounded-xl border border-border/60 bg-card/40"
+            className="flex h-full flex-col overflow-hidden rounded-xl border border-border/60 bg-card/40"
           >
             <DayDetailContent
               selectedDate={selectedDate}

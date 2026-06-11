@@ -640,12 +640,17 @@ export async function getUsersWithHealth(): Promise<AdminUserHealth[]> {
   await requireAdmin();
   const supabase = createAdminClient();
 
-  const [usersResult, projectsResult, tasksResult, authMap] = await Promise.all([
-    supabase.from("users").select("id, email, name, created_at").order("created_at", { ascending: false }),
-    supabase.from("projects").select("user_id"),
-    supabase.from("tasks").select("user_id"),
-    getAuthLastSignInMap(supabase),
-  ]);
+  const [usersResult, projectsResult, tasksResult, authMap, prefsResult] =
+    await Promise.all([
+      supabase
+        .from("users")
+        .select("id, email, name, created_at")
+        .order("created_at", { ascending: false }),
+      supabase.from("projects").select("user_id"),
+      supabase.from("tasks").select("user_id"),
+      getAuthLastSignInMap(supabase),
+      supabase.from("user_preferences").select("user_id, ai_access"),
+    ]);
 
   if (usersResult.error) {
     console.error("getUsersWithHealth:", usersResult.error);
@@ -654,6 +659,10 @@ export async function getUsersWithHealth(): Promise<AdminUserHealth[]> {
 
   const projectCounts = countByUserId(projectsResult.data);
   const taskCounts = countByUserId(tasksResult.data);
+  const aiAccessMap = new Map<string, boolean>();
+  for (const row of prefsResult.data ?? []) {
+    aiAccessMap.set(row.user_id, row.ai_access ?? false);
+  }
   const now = Date.now();
 
   return (usersResult.data ?? []).map((user) => {
@@ -672,8 +681,48 @@ export async function getUsersWithHealth(): Promise<AdminUserHealth[]> {
       task_count: taskCounts.get(user.id) ?? 0,
       days_since_joined: daysSinceJoined,
       activity_status: getActivityStatus(lastSignIn),
+      ai_access: aiAccessMap.get(user.id) ?? false,
     };
   });
+}
+
+export async function toggleAIAccess(userId: string): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  // Read current value first
+  const { data: prefs } = await supabase
+    .from("user_preferences")
+    .select("ai_access")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  const current = prefs?.ai_access ?? false;
+
+  if (prefs === null) {
+    // No preferences row yet — insert with the toggled value
+    const { error } = await supabase
+      .from("user_preferences")
+      .insert({ user_id: userId, ai_access: !current });
+
+    if (error) {
+      console.error("toggleAIAccess insert:", error);
+      return { success: false, error: error.message };
+    }
+  } else {
+    const { error } = await supabase
+      .from("user_preferences")
+      .update({ ai_access: !current, updated_at: new Date().toISOString() })
+      .eq("user_id", userId);
+
+    if (error) {
+      console.error("toggleAIAccess update:", error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  revalidatePath("/admin/users");
+  return { success: true };
 }
 
 export async function getUserHealthSummary(): Promise<UserHealthSummary> {

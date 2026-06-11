@@ -1,0 +1,26 @@
+name: Generate Weekly Winston Digest
+
+on:
+  schedule:
+    # 7am every Sunday UTC
+    - cron: '0 7 * * 0'
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Winston digest generation
+        run: |
+          response=$(curl -s -w "\n%{http_code}" -X POST \
+            "https://app.wiskapp.com/api/ai-digest/generate" \
+            -H "Authorization: Bearer ${{ secrets.AI_DIGEST_SECRET }}" \
+            -H "Content-Type: application/json")
+          body=$(echo "$response" | head -n -1)
+          status=$(echo "$response" | tail -n 1)
+          echo "Response: $body"
+          echo "HTTP status: $status"
+          if [ "$status" != "200" ]; then
+            echo "Digest generation failed with status $status"
+            exit 1
+          fi

@@ -51,6 +51,7 @@ export type AdminUserHealth = {
   task_count: number;
   days_since_joined: number;
   activity_status: UserActivityStatus;
+  ai_access: boolean;
 };
 
 export type UserHealthSummary = {

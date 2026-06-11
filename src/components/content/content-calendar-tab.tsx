@@ -102,7 +102,7 @@ export function ContentCalendarTab({
   };
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-stretch">
       <div className="space-y-3">
         <ContentPlatformFilterBar
           activePlatforms={activePlatforms}
@@ -122,27 +122,29 @@ export function ContentCalendarTab({
         />
       </div>
 
-      {selectedEvent ? (
-        <CalendarEventDetailPanel
-          selectedEvent={selectedEvent}
-          onClose={() => setSelectedEvent(null)}
-          projects={[]}
-          tasks={[]}
-          goals={[]}
-          milestones={[]}
-          contentPosts={posts}
-          standaloneEvents={[]}
-          projectOptions={[]}
-          contentGoals={contentGoals}
-          recentProjectTypes={[]}
-        />
-      ) : (
-        <ContentDayDetailPanel
-          selectedDate={selectedDate}
-          entries={selectedEntries}
-          onClose={() => setSelectedDate(null)}
-        />
-      )}
+      <div className="min-h-0 lg:flex lg:flex-col">
+        {selectedEvent ? (
+          <CalendarEventDetailPanel
+            selectedEvent={selectedEvent}
+            onClose={() => setSelectedEvent(null)}
+            projects={[]}
+            tasks={[]}
+            goals={[]}
+            milestones={[]}
+            contentPosts={posts}
+            standaloneEvents={[]}
+            projectOptions={[]}
+            contentGoals={contentGoals}
+            recentProjectTypes={[]}
+          />
+        ) : (
+          <ContentDayDetailPanel
+            selectedDate={selectedDate}
+            entries={selectedEntries}
+            onClose={() => setSelectedDate(null)}
+          />
+        )}
+      </div>
     </div>
   );
 }

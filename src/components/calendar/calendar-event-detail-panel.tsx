@@ -281,8 +281,8 @@ function EventDetailContent({
   if (!selectedEvent) return null;
 
   return (
-    <>
-      <div className="flex items-start justify-between gap-3 border-b border-border/60 px-4 py-3">
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border/60 px-4 py-3">
         <h2 className="min-w-0 pr-2 text-sm font-semibold text-foreground">
           {selectedEvent.title}
         </h2>
@@ -297,7 +297,7 @@ function EventDetailContent({
         </Button>
       </div>
 
-      <div className="max-h-none overflow-y-auto px-4 py-4 md:max-h-[28rem]">
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
         <EventDetailBody
           event={selectedEvent}
           projects={projects}
@@ -309,7 +309,7 @@ function EventDetailContent({
           onEdit={onEdit}
         />
       </div>
-    </>
+    </div>
   );
 }
 
@@ -487,7 +487,7 @@ export function CalendarEventDetailPanel({
   }
 
   return (
-    <div className="relative hidden min-h-[24rem] md:block md:min-w-[20rem] md:max-w-[20rem] md:flex-1">
+    <div className="relative hidden h-full min-h-[24rem] md:block md:min-w-[20rem] md:max-w-[20rem] md:flex-1">
       <AnimatePresence mode="wait">
         {open && selectedEvent ? (
           <motion.aside
@@ -503,7 +503,7 @@ export function CalendarEventDetailPanel({
                     ease: MOTION_EASE.smooth,
                   }
             }
-            className="h-full overflow-hidden rounded-xl border border-border/60 bg-card/40"
+            className="flex h-full flex-col overflow-hidden rounded-xl border border-border/60 bg-card/40"
           >
             {panelContent}
           </motion.aside>

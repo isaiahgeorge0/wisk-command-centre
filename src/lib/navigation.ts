@@ -7,6 +7,7 @@ export const NAV_ITEMS = [
   { label: "Calendar", href: "/calendar" },
   { label: "Leads", href: "/leads" },
   { label: "Content", href: "/content" },
+  { label: "Winston", href: "/ai-digest" },
 ] as const;
 
 export type NavItem = (typeof NAV_ITEMS)[number];
