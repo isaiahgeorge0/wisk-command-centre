@@ -80,8 +80,14 @@ export default function AuthCallbackClientPage() {
       }
 
       // If the flow was a password reset, send straight to the reset form.
+      // Check both the next query param and the type in the hash fragment
+      // (implicit flow puts type=recovery in the hash).
       const nextParam = searchParams.get("next") ?? "";
-      if (nextParam.startsWith("/auth/reset-password")) {
+      const hashType = hashParams.get("type");
+      if (
+        nextParam.startsWith("/auth/reset-password") ||
+        hashType === "recovery"
+      ) {
         router.replace("/auth/reset-password");
         return;
       }

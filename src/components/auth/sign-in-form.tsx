@@ -14,6 +14,8 @@ import { AccessRequestDialog } from "@/components/auth/access-request-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { createBrowserClient } from "@supabase/ssr";
+
 import { MOTION_DURATION } from "@/lib/motion/config";
 import { createClient } from "@/lib/supabase/client";
 
@@ -88,16 +90,24 @@ export function SignInForm() {
     }
 
     setLoading(true);
-    const supabase = createClient();
-    const siteUrl =
+    // Use an implicit-flow client specifically for password reset so the
+    // token arrives in the URL hash — no PKCE verifier cookie needed,
+    // which means cross-device resets work correctly.
+    const resetClient = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { auth: { flowType: "implicit" } }
+    );
+    const origin =
       process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
 
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(
-      email.trim(),
-      {
-        redirectTo: `${siteUrl}/auth/callback?next=/auth/reset-password`,
-      }
-    );
+    // Point directly at the client-side callback so the hash fragment
+    // (containing the token) is preserved in the browser — a server-side
+    // redirect would strip the hash before the client ever sees it.
+    const { error: resetError } =
+      await resetClient.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${origin}/auth/callback-client?next=/auth/reset-password`,
+      });
 
     setLoading(false);
 
