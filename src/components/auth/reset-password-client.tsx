@@ -23,6 +23,7 @@ export function ResetPasswordClient() {
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
+    console.log("[reset-password] component mounted, starting auth check");
     const supabase = createClient();
     let attempts = 0;
     const maxAttempts = 5;
@@ -30,7 +31,13 @@ export function ResetPasswordClient() {
 
     async function checkAuth() {
       attempts++;
-      const { data: { user } } = await supabase.auth.getUser();
+      console.log(`[reset-password] attempt ${attempts}`);
+      const { data: { user }, error } = await supabase.auth.getUser();
+      console.log(`[reset-password] attempt ${attempts} result:`, {
+        hasUser: !!user,
+        userId: user?.id?.slice(0, 8),
+        error: error?.message,
+      });
 
       if (user) {
         setCheckingAuth(false);
