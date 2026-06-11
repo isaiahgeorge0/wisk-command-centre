@@ -122,7 +122,7 @@ export async function updateTask(
 
   const { data, error } = await supabase
     .from("tasks")
-    .update(toDbPayload(parsed.data))
+    .update({ ...toDbPayload(parsed.data), updated_at: new Date().toISOString() })
     .eq("id", id)
     .eq("user_id", userId)
     .select("*, projects(project_name)")
@@ -147,7 +147,7 @@ export async function toggleTaskCompleted(
 
   const { data, error } = await supabase
     .from("tasks")
-    .update({ completed })
+    .update({ completed, updated_at: new Date().toISOString() })
     .eq("id", id)
     .eq("user_id", userId)
     .select("*, projects(project_name)")
