@@ -32,14 +32,6 @@ export default function AuthCallbackClientPage() {
       const nextParam = searchParams.get("next") ?? "";
       const hashType = hashParams.get("type");
 
-      console.log("[callback-client] params:", {
-        code: !!code,
-        tokenHash: !!tokenHash,
-        type,
-        accessToken: !!accessToken,
-        refreshToken: !!refreshToken,
-      });
-
       let sessionError: Error | null = null;
 
       if (accessToken && refreshToken) {
