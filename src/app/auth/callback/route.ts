@@ -54,6 +54,53 @@ export async function GET(request: Request) {
     return response;
   }
 
+  const tokenHash = searchParams.get("token_hash");
+  const type = searchParams.get("type");
+
+  if (tokenHash && type === "recovery") {
+    const cookieStore = await cookies();
+
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          },
+        },
+      }
+    );
+
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: "recovery",
+    });
+
+    if (error) {
+      console.error("[auth/callback] password reset verifyOtp error:", error);
+      return NextResponse.redirect(`${baseUrl}/sign-in?error=auth_callback`);
+    }
+
+    const response = NextResponse.redirect(`${baseUrl}/auth/reset-password`);
+
+    cookieStore.getAll().forEach((cookie) => {
+      response.cookies.set(cookie.name, cookie.value, {
+        path: "/",
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        httpOnly: true,
+      });
+    });
+
+    return response;
+  }
+
   // All other flows (invite, magic link, etc.) — hand off to the
   // client-side handler so the browser manages its own cookies.
   const clientUrl = new URL(`${baseUrl}/auth/callback-client`);
