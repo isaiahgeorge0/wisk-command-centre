@@ -8,7 +8,6 @@ import { useReducer, useState, useTransition } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MOTION_DURATION, MOTION_EASE } from "@/lib/motion/config";
-import { createClient } from "@/lib/supabase/client";
 
 export function ResetPasswordClient() {
   const router = useRouter();
@@ -35,16 +34,16 @@ export function ResetPasswordClient() {
     }
 
     startTransition(async () => {
-      const supabase = createClient();
-      const { error: updateError } = await supabase.auth.updateUser({
-        password,
+      const res = await fetch("/api/auth/update-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
       });
 
-      if (updateError) {
-        setError(
-          updateError.message || "Could not update your password. Please try again."
-        );
-        console.error("reset-password updateUser:", updateError);
+      const json = (await res.json()) as { error?: string };
+
+      if (!res.ok || json.error) {
+        setError(json.error ?? "Could not update your password. Please try again.");
         return;
       }
 
