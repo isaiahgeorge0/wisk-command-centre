@@ -79,6 +79,13 @@ export default function AuthCallbackClientPage() {
         return;
       }
 
+      // If the flow was a password reset, send straight to the reset form.
+      const nextParam = searchParams.get("next") ?? "";
+      if (nextParam.startsWith("/auth/reset-password")) {
+        router.replace("/auth/reset-password");
+        return;
+      }
+
       // Check personalisation status via API route (uses session cookie).
       try {
         const res = await fetch("/api/auth/personalisation-status");

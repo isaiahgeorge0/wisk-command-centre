@@ -101,6 +101,53 @@ export async function GET(request: Request) {
     return response;
   }
 
+  // Recovery flow where Supabase's verify endpoint already exchanged the
+  // token before landing here — the session is established but there's no
+  // code or token_hash in the URL. Check for an active session and, if
+  // present, forward the cookies and land on the reset-password page.
+  if (isPasswordReset) {
+    const cookieStore = await cookies();
+
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          },
+        },
+      }
+    );
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (session) {
+      const response = NextResponse.redirect(`${baseUrl}/auth/reset-password`);
+
+      cookieStore.getAll().forEach((cookie) => {
+        response.cookies.set(cookie.name, cookie.value, {
+          path: "/",
+          sameSite: "lax",
+          secure: process.env.NODE_ENV === "production",
+          httpOnly: true,
+        });
+      });
+
+      return response;
+    }
+
+    // No session established — fall through to client-side handler which
+    // will attempt its own token exchange.
+  }
+
   // All other flows (invite, magic link, etc.) — hand off to the
   // client-side handler so the browser manages its own cookies.
   const clientUrl = new URL(`${baseUrl}/auth/callback-client`);
