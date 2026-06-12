@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { ExternalLink } from "lucide-react";
 
 import { resetOnboarding } from "@/app/(dashboard)/onboarding/actions";
 import { useOnboarding } from "@/components/onboarding/onboarding-context";
@@ -86,6 +87,33 @@ export function SettingsHelpSection() {
             );
           })}
         </div>
+      </section>
+      <section>
+        <h2 className="mb-4 text-sm font-medium tracking-wide text-muted-foreground uppercase">
+          Legal
+        </h2>
+        <Card className="border-border/60 bg-card/80">
+          <CardContent className="divide-y divide-border/60 px-0 py-0">
+            <a
+              href="https://wiskapp.com/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between px-6 py-4 text-sm text-foreground hover:bg-muted/40 transition-colors"
+            >
+              Privacy Policy
+              <ExternalLink className="size-4 text-muted-foreground" aria-hidden />
+            </a>
+            <a
+              href="https://wiskapp.com/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between px-6 py-4 text-sm text-foreground hover:bg-muted/40 transition-colors"
+            >
+              Terms of Service
+              <ExternalLink className="size-4 text-muted-foreground" aria-hidden />
+            </a>
+          </CardContent>
+        </Card>
       </section>
     </div>
   );

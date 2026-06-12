@@ -36,6 +36,7 @@ export function SetPasswordClient({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, toggleShowPassword] = useReducer((s) => !s, false);
   const [showConfirm, toggleShowConfirm] = useReducer((s) => !s, false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -224,6 +225,36 @@ export function SetPasswordClient({
                   </div>
                 </div>
 
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={agreedToTerms}
+                    onChange={(e) => setAgreedToTerms(e.target.checked)}
+                    disabled={isPending}
+                    className="mt-0.5 size-4 shrink-0 accent-wisk-teal cursor-pointer"
+                  />
+                  <span className="text-sm leading-relaxed text-muted-foreground">
+                    I agree to the{" "}
+                    <a
+                      href="https://wiskapp.com/terms"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-foreground underline underline-offset-2 hover:text-wisk-teal transition-colors"
+                    >
+                      Terms of Service
+                    </a>{" "}
+                    and{" "}
+                    <a
+                      href="https://wiskapp.com/privacy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-foreground underline underline-offset-2 hover:text-wisk-teal transition-colors"
+                    >
+                      Privacy Policy
+                    </a>
+                  </span>
+                </label>
+
                 {error ? (
                   <p className="text-sm text-destructive" role="alert">
                     {error}
@@ -232,7 +263,7 @@ export function SetPasswordClient({
 
                 <button
                   type="submit"
-                  disabled={isPending}
+                  disabled={isPending || !agreedToTerms}
                   className="w-full rounded-lg bg-gradient-to-r from-wisk-purple to-wisk-teal px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isPending ? "Setting up…" : "Get started →"}

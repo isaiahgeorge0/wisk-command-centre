@@ -6,20 +6,18 @@ import type { DigestContent } from "@/lib/ai/digest-generator";
 export default async function AiDigestPage() {
   const { supabase, userId } = await getScopedSupabase();
 
-  // ── Access check (server-side, before any digest data is fetched) ──────────
+  // ── Access check ────────────────────────────────────────────────────────────
   const { data: prefs } = await supabase
     .from("user_preferences")
     .select("ai_access")
     .eq("user_id", userId)
     .maybeSingle();
 
-  const hasAccess = prefs?.ai_access === true;
-
-  if (!hasAccess) {
+  if (prefs?.ai_access !== true) {
     return <WinstonTeaserPage />;
   }
 
-  // ── Fetch latest digest only for users with access ─────────────────────────
+  // ── Fetch latest digest ─────────────────────────────────────────────────────
   const { data } = await supabase
     .from("ai_reports")
     .select("content, generated_at")

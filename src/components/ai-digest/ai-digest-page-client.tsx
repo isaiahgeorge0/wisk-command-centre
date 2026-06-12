@@ -152,32 +152,17 @@ export function WinstonDigestPageClient({
 }: WinstonDigestPageClientProps) {
   return (
     <PageTransition>
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-wisk-purple/30 to-wisk-teal/30 shadow-sm">
-            <Sparkles className="size-5 text-wisk-teal" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
-              Winston
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Your weekly business digest
-            </p>
-          </div>
+      {/* Week range */}
+      {digest ? (
+        <div className="mb-6 flex flex-wrap items-center gap-3">
+          <span className="text-sm font-medium text-foreground">
+            {formatWeekRange(digest.generatedAt)}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            · Generated every Sunday
+          </span>
         </div>
-        {digest ? (
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <span className="text-sm font-medium text-foreground">
-              {formatWeekRange(digest.generatedAt)}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              · Generated every Sunday
-            </span>
-          </div>
-        ) : null}
-      </div>
+      ) : null}
 
       {!digest ? (
         <EmptyState />
