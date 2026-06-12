@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { buildUserContext } from "@/lib/ai/context-builder";
 import { generateWeeklyDigest } from "@/lib/ai/digest-generator";
 import { storeDigest } from "@/lib/ai/digest-store";
+import { logUsage } from "@/lib/ai/usage-logger";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
@@ -36,8 +37,9 @@ export async function POST(request: Request) {
   for (const user of users) {
     try {
       const context = await buildUserContext(user.id, supabase);
-      const digest = await generateWeeklyDigest(context);
+      const { digest, inputTokens, outputTokens } = await generateWeeklyDigest(context);
       await storeDigest(user.id, digest);
+      await logUsage(user.id, "digest", inputTokens, outputTokens);
       console.log(`ai-digest/generate: ✓ user ${user.id}`);
       generated++;
     } catch (err) {

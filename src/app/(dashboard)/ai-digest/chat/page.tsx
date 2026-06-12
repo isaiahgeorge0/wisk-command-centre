@@ -1,6 +1,8 @@
+import { getMonthlyUsage } from "@/app/(dashboard)/ai-digest/actions";
 import { WinstonChatClient } from "@/components/ai-digest/winston-chat-client";
 import { WinstonTeaserPage } from "@/components/ai-digest/winston-teaser-page";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
+import { WINSTON_MONTHLY_TOKEN_LIMIT } from "@/lib/ai/constants";
 import type { ConversationMessage } from "@/lib/ai/types";
 
 export default async function WinstonChatPage() {
@@ -16,18 +18,32 @@ export default async function WinstonChatPage() {
     return <WinstonTeaserPage />;
   }
 
-  // Fetch messages server-side so they're available on first render
-  // without a client-side loading state or server action on mount.
-  const { data: messages } = await supabase
-    .from("ai_conversation_messages")
-    .select("id, role, content, created_at")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: true })
-    .limit(50);
+  const [messagesResult, usageResult] = await Promise.all([
+    supabase
+      .from("ai_conversation_messages")
+      .select("id, role, content, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: true })
+      .limit(50),
+    getMonthlyUsage(),
+  ]);
+
+  const usage =
+    usageResult.success && usageResult.data
+      ? usageResult.data
+      : {
+          chatTokens: 0,
+          digestTokens: 0,
+          total: 0,
+          limit: WINSTON_MONTHLY_TOKEN_LIMIT,
+          percentage: 0,
+          resetDate: new Date().toISOString(),
+        };
 
   return (
     <WinstonChatClient
-      initialMessages={(messages ?? []) as ConversationMessage[]}
+      initialMessages={(messagesResult.data ?? []) as ConversationMessage[]}
+      initialUsage={usage}
     />
   );
 }

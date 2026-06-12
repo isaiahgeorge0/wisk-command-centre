@@ -10,11 +10,13 @@ import { SettingsPreferencesSection } from "@/components/settings/settings-prefe
 import { SettingsProfileSection } from "@/components/settings/settings-profile-section";
 import { SettingsServiceTypesSection } from "@/components/settings/settings-service-types-section";
 import { SettingsToolsSection } from "@/components/settings/settings-tools-section";
+import { SettingsWinstonSection } from "@/components/settings/settings-winston-section";
 import {
   SettingsTabs,
   tabFromSearchParam,
   type SettingsTab,
 } from "@/components/settings/settings-tabs";
+import type { MonthlyUsage } from "@/lib/ai/types";
 import type { SafeIntegration } from "@/lib/integrations/types";
 import type { FieldVisibility } from "@/lib/preferences/types";
 
@@ -25,6 +27,8 @@ type SettingsPageClientProps = {
   fieldVisibility: FieldVisibility;
   serviceTypes: string[];
   integrations: SafeIntegration[];
+  aiAccess?: boolean;
+  winstonUsage?: MonthlyUsage | null;
 };
 
 export function SettingsPageClient({
@@ -34,6 +38,8 @@ export function SettingsPageClient({
   fieldVisibility,
   serviceTypes,
   integrations,
+  aiAccess = false,
+  winstonUsage = null,
 }: SettingsPageClientProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -78,7 +84,12 @@ export function SettingsPageClient({
       ) : null}
 
       {activeTab === "preferences" ? (
-        <SettingsPreferencesSection fieldVisibility={fieldVisibility} />
+        <div className="space-y-8">
+          <SettingsPreferencesSection fieldVisibility={fieldVisibility} />
+          {aiAccess && winstonUsage ? (
+            <SettingsWinstonSection usage={winstonUsage} />
+          ) : null}
+        </div>
       ) : null}
 
       {activeTab === "service-types" ? (

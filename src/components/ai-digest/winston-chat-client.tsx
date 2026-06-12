@@ -1,13 +1,64 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Loader2, RotateCcw, Send, Sparkles, X } from "lucide-react";
+import { HelpCircle, Loader2, RotateCcw, Send, Sparkles, X } from "lucide-react";
+import Link from "next/link";
 import { useState, useEffect, useRef, useTransition } from "react";
 
 import { clearConversation } from "@/app/(dashboard)/ai-digest/actions";
-import type { ConversationMessage } from "@/lib/ai/types";
+import type { ConversationMessage, MonthlyUsage } from "@/lib/ai/types";
 import { MOTION_DURATION, MOTION_EASE } from "@/lib/motion/config";
 import { cn } from "@/lib/utils";
+
+// ─── Usage bar ────────────────────────────────────────────────────────────────
+
+const USAGE_TOOLTIP =
+  "Winston usage resets monthly. View full details in Settings.";
+
+function UsageBar({ percentage }: { percentage: number }) {
+  const isAtLimit = percentage >= 100;
+
+  return (
+    <div className="border-b border-border/40 px-4 py-1.5">
+      <div className="flex items-center justify-between gap-2 mb-1">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span
+            className={cn(
+              "text-xs truncate",
+              isAtLimit ? "text-destructive" : "text-muted-foreground"
+            )}
+          >
+            {percentage}% of monthly usage
+          </span>
+          <span
+            title={USAGE_TOOLTIP}
+            aria-label={USAGE_TOOLTIP}
+            className="inline-flex shrink-0 cursor-help text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+          >
+            <HelpCircle className="size-3" aria-hidden />
+          </span>
+        </div>
+        <Link
+          href="/settings?tab=preferences#winston"
+          className="shrink-0 text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline transition-colors"
+        >
+          View details
+        </Link>
+      </div>
+      <div className="h-0.5 w-full overflow-hidden rounded-full bg-border/30">
+        <div
+          className={cn(
+            "h-full rounded-full transition-all duration-500",
+            isAtLimit
+              ? "bg-destructive"
+              : "bg-gradient-to-r from-wisk-purple to-wisk-teal"
+          )}
+          style={{ width: `${Math.min(percentage, 100)}%` }}
+        />
+      </div>
+    </div>
+  );
+}
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -206,9 +257,13 @@ function NewChatConfirmDialog({
 
 type WinstonChatClientProps = {
   initialMessages: ConversationMessage[];
+  initialUsage: MonthlyUsage;
 };
 
-export function WinstonChatClient({ initialMessages }: WinstonChatClientProps) {
+export function WinstonChatClient({
+  initialMessages,
+  initialUsage,
+}: WinstonChatClientProps) {
   const reduced = useReducedMotion() ?? false;
 
   // Split initial messages by 12-hour staleness on first render.
@@ -221,6 +276,11 @@ export function WinstonChatClient({ initialMessages }: WinstonChatClientProps) {
     return archived;
   });
   const [showingArchive, setShowingArchive] = useState(false);
+
+  const [usage, setUsage] = useState(initialUsage);
+  const [monthlyLimitHit, setMonthlyLimitHit] = useState(
+    initialUsage.chatTokens >= initialUsage.limit
+  );
 
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -275,12 +335,23 @@ export function WinstonChatClient({ initialMessages }: WinstonChatClientProps) {
         body: JSON.stringify({ message: text }),
       });
 
-      const json = (await res.json()) as { reply?: string; error?: string };
+      const json = (await res.json()) as {
+        reply?: string;
+        error?: string;
+        limitType?: "monthly" | "short_term";
+        usedTokens?: number;
+      };
 
       if (!res.ok || json.error) {
         setSendError(json.error ?? "Something went wrong. Please try again.");
         setMessages((prev) => prev.filter((m) => m.id !== optimisticMsg.id));
-        setInput(text);
+        if (json.limitType !== "monthly") {
+          // Short-term or generic error — restore input so user can retry.
+          setInput(text);
+        } else {
+          // Monthly limit hit — mark it so the input stays disabled.
+          setMonthlyLimitHit(true);
+        }
         return;
       }
 
@@ -291,6 +362,19 @@ export function WinstonChatClient({ initialMessages }: WinstonChatClientProps) {
         created_at: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, replyMsg]);
+      // Increment usage by the tokens reported by the server.
+      if (json.usedTokens) {
+        setUsage((prev) => {
+          const chatTokens = prev.chatTokens + (json.usedTokens ?? 0);
+          const total = chatTokens + prev.digestTokens;
+          const percentage = Math.min(
+            100,
+            Math.round((total / prev.limit) * 100)
+          );
+          if (chatTokens >= prev.limit) setMonthlyLimitHit(true);
+          return { ...prev, chatTokens, total, percentage };
+        });
+      }
     } catch {
       setSendError("Failed to reach Winston. Please try again.");
       setMessages((prev) => prev.filter((m) => m.id !== optimisticMsg.id));
@@ -329,6 +413,9 @@ export function WinstonChatClient({ initialMessages }: WinstonChatClientProps) {
           onCancel={() => setShowNewChatDialog(false)}
         />
       ) : null}
+
+      {/* Usage bar */}
+      <UsageBar percentage={usage.percentage} />
 
       {/* Toolbar — shown whenever there is any history */}
       {hasAnyHistory ? (
@@ -415,15 +502,15 @@ export function WinstonChatClient({ initialMessages }: WinstonChatClientProps) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask Winston…"
-            disabled={isSending}
+            placeholder={monthlyLimitHit ? "Monthly limit reached" : "Ask Winston…"}
+            disabled={isSending || monthlyLimitHit}
             rows={1}
             className="flex-1 resize-none rounded-xl border border-border/60 bg-background px-4 py-2.5 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-wisk-teal/40 disabled:opacity-50"
             style={{ maxHeight: "96px", overflowY: "auto" }}
           />
           <button
             onClick={() => void handleSend()}
-            disabled={isSending || !input.trim()}
+            disabled={isSending || !input.trim() || monthlyLimitHit}
             aria-label="Send message"
             className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-wisk-purple to-wisk-teal text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
           >

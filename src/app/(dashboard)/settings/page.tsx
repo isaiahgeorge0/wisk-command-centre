@@ -1,18 +1,32 @@
 import { Suspense } from "react";
 
+import { getMonthlyUsage } from "@/app/(dashboard)/ai-digest/actions";
 import { SettingsPageShell } from "@/components/settings/settings-page-shell";
 import { getIntegrations } from "@/app/(dashboard)/settings/integrations/actions";
 import { isAdminEmail } from "@/lib/auth/is-admin";
 import { resolveDisplayName } from "@/lib/auth/resolve-display-name";
 import { getUserProfile } from "@/lib/auth/get-user-profile";
+import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { getOrCreateUserPreferences } from "@/lib/preferences/get-user-preferences";
 
 export default async function SettingsPage() {
-  const [profile, preferences, integrations] = await Promise.all([
-    getUserProfile(),
-    getOrCreateUserPreferences(),
-    getIntegrations(),
-  ]);
+  const { supabase, userId } = await getScopedSupabase();
+
+  const [profile, preferences, integrations, prefsRow, usageResult] =
+    await Promise.all([
+      getUserProfile(),
+      getOrCreateUserPreferences(),
+      getIntegrations(),
+      supabase
+        .from("user_preferences")
+        .select("ai_access")
+        .eq("user_id", userId)
+        .maybeSingle(),
+      getMonthlyUsage(),
+    ]);
+
+  const aiAccess = prefsRow.data?.ai_access === true;
+  const winstonUsage = usageResult.success ? usageResult.data : null;
 
   const displayName = resolveDisplayName({
     displayName: preferences.displayName,
@@ -35,6 +49,8 @@ export default async function SettingsPage() {
         serviceTypes={preferences.serviceTypes}
         integrations={integrations}
         showAdminLink={isAdminEmail(profile.email)}
+        aiAccess={aiAccess}
+        winstonUsage={winstonUsage}
       />
     </Suspense>
   );

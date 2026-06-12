@@ -23,6 +23,13 @@ type AnthropicContentBlock = AnthropicTextBlock | { type: string };
 
 type AnthropicResponse = {
   content: AnthropicContentBlock[];
+  usage?: { input_tokens: number; output_tokens: number };
+};
+
+export type DigestResult = {
+  digest: DigestContent;
+  inputTokens: number;
+  outputTokens: number;
 };
 
 // ─── Prompt builders ──────────────────────────────────────────────────────────
@@ -145,7 +152,7 @@ function buildUserPrompt(ctx: UserContext): string {
 
 export async function generateWeeklyDigest(
   context: UserContext
-): Promise<DigestContent> {
+): Promise<DigestResult> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     throw new Error("ANTHROPIC_API_KEY is not set");
@@ -185,6 +192,9 @@ export async function generateWeeklyDigest(
     throw new Error("Anthropic response did not contain a text block");
   }
 
+  const inputTokens = json.usage?.input_tokens ?? 0;
+  const outputTokens = json.usage?.output_tokens ?? 0;
+
   let raw = (firstBlock as AnthropicTextBlock).text.trim();
 
   // Strip markdown fences if Claude wrapped the JSON
@@ -223,5 +233,5 @@ export async function generateWeeklyDigest(
   // Always stamp with server-side time
   digest.generatedAt = context.generatedAt;
 
-  return digest;
+  return { digest, inputTokens, outputTokens };
 }

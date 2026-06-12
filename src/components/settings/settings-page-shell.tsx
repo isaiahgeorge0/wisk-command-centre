@@ -4,6 +4,7 @@ import { PageTransition } from "@/components/layout/page-transition";
 import { AdminPanelLink } from "@/components/settings/admin-panel-link";
 import { SettingsPageClient } from "@/components/settings/settings-page-client";
 import { PAGE_TITLE_CLASS, PAGE_SUBTITLE_CLASS } from "@/lib/navigation";
+import type { MonthlyUsage } from "@/lib/ai/types";
 import type { SafeIntegration } from "@/lib/integrations/types";
 import type { FieldVisibility } from "@/lib/preferences/types";
 
@@ -15,6 +16,8 @@ type SettingsPageShellProps = {
   serviceTypes: string[];
   integrations: SafeIntegration[];
   showAdminLink?: boolean;
+  aiAccess?: boolean;
+  winstonUsage?: MonthlyUsage | null;
 };
 
 export function SettingsPageShell({
