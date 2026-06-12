@@ -79,11 +79,18 @@ export async function POST(request: Request) {
     // ── Fetch context (cached) ────────────────────────────────────────────────
     const context = await getCachedContext(userId, supabase);
 
-    // ── Fetch last 20 messages ────────────────────────────────────────────────
+    // ── Fetch last 20 messages within the past 12 hours ──────────────────────
+    // Messages older than 12 hours are excluded from Claude context so each
+    // new "session" starts fresh even if old rows exist in the database.
+    const twelveHoursAgo = new Date(
+      Date.now() - 12 * 60 * 60 * 1000
+    ).toISOString();
+
     const { data: history } = await supabase
       .from("ai_conversation_messages")
       .select("role, content")
       .eq("user_id", userId)
+      .gte("created_at", twelveHoursAgo)
       .order("created_at", { ascending: false })
       .limit(20);
 

@@ -1,18 +1,17 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Loader2, Send, Sparkles, Trash2, X } from "lucide-react";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { Loader2, RotateCcw, Send, Sparkles, X } from "lucide-react";
+import { useState, useEffect, useRef, useTransition } from "react";
 
-import {
-  clearConversation,
-  getConversationHistory,
-} from "@/app/(dashboard)/ai-digest/actions";
+import { clearConversation } from "@/app/(dashboard)/ai-digest/actions";
 import type { ConversationMessage } from "@/lib/ai/types";
 import { MOTION_DURATION, MOTION_EASE } from "@/lib/motion/config";
 import { cn } from "@/lib/utils";
 
-// ─── Example prompts ──────────────────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
 
 const EXAMPLE_PROMPTS = [
   "What's my pipeline worth?",
@@ -21,9 +20,32 @@ const EXAMPLE_PROMPTS = [
   "Which projects are stalling?",
 ];
 
+// ─── Staleness helper ─────────────────────────────────────────────────────────
+
+function splitByExpiry(messages: ConversationMessage[]): {
+  active: ConversationMessage[];
+  archived: ConversationMessage[];
+} {
+  if (messages.length === 0) return { active: [], archived: [] };
+  const last = messages[messages.length - 1];
+  const expired =
+    Date.now() - new Date(last.created_at).getTime() > TWELVE_HOURS_MS;
+  return expired
+    ? { active: [], archived: messages }
+    : { active: messages, archived: [] };
+}
+
 // ─── Empty state ──────────────────────────────────────────────────────────────
 
-function EmptyState({ onPrompt }: { onPrompt: (text: string) => void }) {
+function EmptyState({
+  onPrompt,
+  hadOldConversation,
+  onViewPrevious,
+}: {
+  onPrompt: (text: string) => void;
+  hadOldConversation: boolean;
+  onViewPrevious: () => void;
+}) {
   const reduced = useReducedMotion() ?? false;
 
   return (
@@ -34,6 +56,17 @@ function EmptyState({ onPrompt }: { onPrompt: (text: string) => void }) {
         transition={{ duration: MOTION_DURATION.normal, ease: MOTION_EASE.smooth }}
         className="flex flex-col items-center gap-4"
       >
+        {hadOldConversation ? (
+          <p className="text-xs text-muted-foreground">
+            Your last conversation was over 12 hours ago.{" "}
+            <button
+              onClick={onViewPrevious}
+              className="underline underline-offset-2 hover:text-foreground transition-colors"
+            >
+              View previous conversation
+            </button>
+          </p>
+        ) : null}
         <div className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-wisk-purple/20 to-wisk-teal/20">
           <Sparkles className="size-7 text-wisk-teal" aria-hidden />
         </div>
@@ -61,16 +94,18 @@ function EmptyState({ onPrompt }: { onPrompt: (text: string) => void }) {
 function MessageBubble({
   message,
   reduced,
+  dimmed,
 }: {
   message: ConversationMessage;
   reduced: boolean;
+  dimmed?: boolean;
 }) {
   const isUser = message.role === "user";
 
   return (
     <motion.div
       initial={reduced ? false : { opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
+      animate={{ opacity: dimmed ? 0.5 : 1, y: 0 }}
       transition={{ duration: MOTION_DURATION.fast, ease: MOTION_EASE.smooth }}
       className={cn("flex w-full", isUser ? "justify-end" : "justify-start")}
     >
@@ -132,9 +167,9 @@ function TypingIndicator() {
   );
 }
 
-// ─── Clear confirmation dialog ────────────────────────────────────────────────
+// ─── New chat confirm dialog ──────────────────────────────────────────────────
 
-function ClearConfirmDialog({
+function NewChatConfirmDialog({
   onConfirm,
   onCancel,
 }: {
@@ -144,11 +179,11 @@ function ClearConfirmDialog({
   return (
     <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/80 backdrop-blur-sm">
       <div className="mx-6 w-full max-w-sm rounded-xl border border-border/60 bg-card p-5 shadow-lg">
-        <h3 className="font-semibold text-foreground">Clear conversation?</h3>
+        <h3 className="font-semibold text-foreground">Start a new chat?</h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          All messages will be permanently deleted.
+          Your current conversation will be cleared.
         </p>
-        <div className="mt-4 flex gap-2 justify-end">
+        <div className="mt-4 flex justify-end gap-2">
           <button
             onClick={onCancel}
             className="rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -159,7 +194,7 @@ function ClearConfirmDialog({
             onClick={onConfirm}
             className="rounded-lg bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground transition-opacity hover:opacity-90"
           >
-            Clear
+            New chat
           </button>
         </div>
       </div>
@@ -169,30 +204,32 @@ function ClearConfirmDialog({
 
 // ─── Main chat client ─────────────────────────────────────────────────────────
 
-export function WinstonChatClient() {
+type WinstonChatClientProps = {
+  initialMessages: ConversationMessage[];
+};
+
+export function WinstonChatClient({ initialMessages }: WinstonChatClientProps) {
   const reduced = useReducedMotion() ?? false;
 
-  const [messages, setMessages] = useState<ConversationMessage[]>([]);
+  // Split initial messages by 12-hour staleness on first render.
+  const [messages, setMessages] = useState<ConversationMessage[]>(() => {
+    const { active } = splitByExpiry(initialMessages);
+    return active;
+  });
+  const [archived, setArchived] = useState<ConversationMessage[]>(() => {
+    const { archived } = splitByExpiry(initialMessages);
+    return archived;
+  });
+  const [showingArchive, setShowingArchive] = useState(false);
+
   const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
-  const [showClearDialog, setShowClearDialog] = useState(false);
+  const [showNewChatDialog, setShowNewChatDialog] = useState(false);
   const [clearPending, startClearTransition] = useTransition();
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  // ── Load history on mount ───────────────────────────────────────────────────
-  useEffect(() => {
-    void (async () => {
-      const result = await getConversationHistory();
-      if (result.success && result.data) {
-        setMessages(result.data);
-      }
-      setIsLoading(false);
-    })();
-  }, []);
 
   // ── Auto-scroll to bottom ───────────────────────────────────────────────────
   useEffect(() => {
@@ -206,6 +243,13 @@ export function WinstonChatClient() {
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, 96)}px`;
   }, [input]);
+
+  // ── View previous conversation ──────────────────────────────────────────────
+  function handleViewPrevious() {
+    setMessages(archived);
+    setArchived([]);
+    setShowingArchive(true);
+  }
 
   // ── Send message ────────────────────────────────────────────────────────────
   async function handleSend() {
@@ -235,9 +279,7 @@ export function WinstonChatClient() {
 
       if (!res.ok || json.error) {
         setSendError(json.error ?? "Something went wrong. Please try again.");
-        setMessages((prev) =>
-          prev.filter((m) => m.id !== optimisticMsg.id)
-        );
+        setMessages((prev) => prev.filter((m) => m.id !== optimisticMsg.id));
         setInput(text);
         return;
       }
@@ -265,58 +307,85 @@ export function WinstonChatClient() {
     }
   }
 
-  function handleClearConfirm() {
+  function handleNewChatConfirm() {
     startClearTransition(async () => {
       await clearConversation();
       setMessages([]);
-      setShowClearDialog(false);
+      setArchived([]);
+      setShowingArchive(false);
+      setShowNewChatDialog(false);
     });
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex h-[60vh] items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
+  const hasAnyHistory = messages.length > 0 || archived.length > 0;
+  const isEmptyActive = messages.length === 0;
 
   return (
     <div className="relative flex h-[70vh] min-h-[480px] flex-col overflow-hidden rounded-xl border border-border/60 bg-background">
-      {/* Clear confirmation overlay */}
-      {showClearDialog ? (
-        <ClearConfirmDialog
-          onConfirm={handleClearConfirm}
-          onCancel={() => setShowClearDialog(false)}
+      {/* New chat confirm overlay */}
+      {showNewChatDialog ? (
+        <NewChatConfirmDialog
+          onConfirm={handleNewChatConfirm}
+          onCancel={() => setShowNewChatDialog(false)}
         />
       ) : null}
 
-      {/* Toolbar */}
-      {messages.length > 0 ? (
+      {/* Toolbar — shown whenever there is any history */}
+      {hasAnyHistory ? (
         <div className="flex items-center justify-end border-b border-border/60 px-4 py-2">
           <button
-            onClick={() => setShowClearDialog(true)}
+            onClick={() => setShowNewChatDialog(true)}
             disabled={clearPending}
-            aria-label="Clear conversation"
-            title="Clear conversation"
-            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+            aria-label="New chat"
+            title="New chat"
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
           >
-            <Trash2 className="size-3.5" aria-hidden />
-            Clear
+            <RotateCcw className="size-3.5" aria-hidden />
+            New chat
           </button>
         </div>
       ) : null}
 
       {/* Message area */}
       <div className="flex-1 overflow-y-auto px-4 py-4">
-        {messages.length === 0 ? (
-          <EmptyState onPrompt={(text) => setInput(text)} />
+        {isEmptyActive ? (
+          <EmptyState
+            onPrompt={(text) => setInput(text)}
+            hadOldConversation={archived.length > 0}
+            onViewPrevious={handleViewPrevious}
+          />
         ) : (
           <div className="space-y-4">
+            {/* Archive separator when viewing previous */}
+            {showingArchive && archived.length === 0 ? (
+              <div className="flex items-center gap-3 py-2">
+                <div className="flex-1 border-t border-border/40" />
+                <span className="shrink-0 text-xs text-muted-foreground/60">
+                  Previous conversation
+                </span>
+                <div className="flex-1 border-t border-border/40" />
+              </div>
+            ) : null}
             <AnimatePresence initial={false}>
-              {messages.map((msg) => (
-                <MessageBubble key={msg.id} message={msg} reduced={reduced} />
-              ))}
+              {messages.map((msg, idx) => {
+                // If we loaded archived messages, dim the ones before any new
+                // messages were sent (those would have created_at > 12h ago).
+                const isOld =
+                  showingArchive &&
+                  messages.findIndex(
+                    (m) =>
+                      Date.now() - new Date(m.created_at).getTime() <
+                      TWELVE_HOURS_MS
+                  ) > idx;
+                return (
+                  <MessageBubble
+                    key={msg.id}
+                    message={msg}
+                    reduced={reduced}
+                    dimmed={isOld}
+                  />
+                );
+              })}
             </AnimatePresence>
             {isSending ? <TypingIndicator /> : null}
           </div>
