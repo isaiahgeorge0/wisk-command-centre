@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 
 import { buildUserContext } from "@/lib/ai/context-builder";
 import { generateWeeklyDigest } from "@/lib/ai/digest-generator";
@@ -43,6 +44,7 @@ export async function POST(request: Request) {
       console.log(`ai-digest/generate: ✓ user ${user.id}`);
       generated++;
     } catch (err) {
+      Sentry.captureException(err);
       console.error(
         `ai-digest/generate: ✗ user ${user.id}:`,
         err instanceof Error ? err.message : String(err)

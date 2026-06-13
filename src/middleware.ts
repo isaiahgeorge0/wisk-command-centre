@@ -15,6 +15,7 @@ const PUBLIC_PATHS = [
   "/api/ai-digest/generate",
   "/api/ai-digest/generate-for-user",
   "/api/winston/chat",
+  "/monitoring",
 ];
 
 // Paths accessible to authenticated users before personalisation is complete.

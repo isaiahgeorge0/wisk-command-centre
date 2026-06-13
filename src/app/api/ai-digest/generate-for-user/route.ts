@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 
 import { buildUserContext } from "@/lib/ai/context-builder";
 import { generateWeeklyDigest } from "@/lib/ai/digest-generator";
@@ -43,6 +44,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, userId });
   } catch (error) {
     console.error("generate-for-user error:", error);
+    Sentry.captureException(error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }

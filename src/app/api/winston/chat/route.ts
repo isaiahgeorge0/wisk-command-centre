@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { z } from "zod";
 
 import { getCachedContext } from "@/lib/ai/context-cache";
@@ -79,6 +80,8 @@ export async function POST(request: Request) {
     }
 
     const { message } = parsed.data;
+
+    Sentry.setUser({ id: userId });
 
     // ── Rate limiting (admin client for cross-instance reliability) ───────────
     const admin = createAdminClient();
@@ -224,6 +227,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ reply, usedTokens: inputTokens + outputTokens });
   } catch (error) {
     console.error("winston/chat error:", error);
+    Sentry.captureException(error);
     return NextResponse.json(
       {
         error:

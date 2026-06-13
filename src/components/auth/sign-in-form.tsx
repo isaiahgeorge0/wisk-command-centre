@@ -180,7 +180,16 @@ export function SignInForm() {
             </Button>
           </SignInEntranceItem>
 
-          <AccessRequestDialog open={accessOpen} onOpenChange={setAccessOpen} />
+          <AccessRequestDialog
+            open={accessOpen}
+            onOpenChange={setAccessOpen}
+            onGoToSignIn={(submittedEmail) => {
+              setEmail(submittedEmail);
+              requestAnimationFrame(() => {
+                document.getElementById("email")?.focus();
+              });
+            }}
+          />
         </SignInEntrance>
       </motion.div>
     </>

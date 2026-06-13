@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 
 import { submitAccessRequest } from "@/app/sign-in/actions";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -14,19 +14,23 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 type AccessRequestDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onGoToSignIn?: (email: string) => void;
 };
 
 export function AccessRequestDialog({
   open,
   onOpenChange,
+  onGoToSignIn,
 }: AccessRequestDialogProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [alreadyRegistered, setAlreadyRegistered] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -35,19 +39,28 @@ export function AccessRequestDialog({
       setName("");
       setEmail("");
       setError(null);
+      setAlreadyRegistered(false);
       setConfirmed(false);
     }
     onOpenChange(next);
   };
 
+  const handleGoToSignIn = () => {
+    const submittedEmail = email.trim();
+    handleOpenChange(false);
+    onGoToSignIn?.(submittedEmail);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setAlreadyRegistered(false);
 
     startTransition(async () => {
       const result = await submitAccessRequest({ name, email });
       if (!result.success) {
         setError(result.error);
+        setAlreadyRegistered(result.alreadyRegistered === true);
         return;
       }
       setConfirmed(true);
@@ -103,7 +116,21 @@ export function AccessRequestDialog({
                   required
                 />
               </div>
-              {error ? (
+              {error && alreadyRegistered ? (
+                <div className="rounded-lg border border-border/60 bg-muted/40 px-4 py-3 text-left">
+                  <p className="text-sm text-foreground">{error}</p>
+                  <button
+                    type="button"
+                    onClick={handleGoToSignIn}
+                    className={cn(
+                      buttonVariants({ variant: "outline", size: "sm" }),
+                      "mt-3"
+                    )}
+                  >
+                    Go to sign in
+                  </button>
+                </div>
+              ) : error ? (
                 <p className="text-sm text-destructive">{error}</p>
               ) : null}
               <DialogFooter>

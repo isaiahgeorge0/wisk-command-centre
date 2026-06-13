@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import * as Sentry from "@sentry/nextjs";
 
 import { getGoals } from "@/app/(dashboard)/goals/actions";
 import { getProjects } from "@/app/(dashboard)/projects/actions";
@@ -10,6 +11,7 @@ import {
 import { getActiveAnnouncements } from "@/app/(dashboard)/admin/actions";
 import { getPublishedChangelog, getUnreadChangelogCount } from "@/app/(dashboard)/changelog/actions";
 import { AppShell } from "@/components/layout/app-shell";
+import { SentryUser } from "@/components/observability/sentry-user";
 import { ThemePreferenceSync } from "@/components/theme/theme-preference-sync";
 import { getAuthContext } from "@/lib/auth/get-auth-context";
 import { resolveDisplayName } from "@/lib/auth/resolve-display-name";
@@ -26,12 +28,14 @@ export default async function DashboardLayout({
   const isWelcomeRoute = pathname === "/welcome";
 
   const { user } = await getAuthContext();
+  Sentry.setUser({ id: user.id });
 
   if (isWelcomeRoute) {
     const preferences = await getOrCreateUserPreferences();
 
     return (
       <>
+        <SentryUser userId={user.id} />
         <ThemePreferenceSync
           themePreference={preferences.themePreference}
           enabled={!preferences.personalisationCompleted}
@@ -62,6 +66,7 @@ export default async function DashboardLayout({
 
   return (
     <>
+      <SentryUser userId={user.id} />
       <ThemePreferenceSync
         themePreference={preferences.themePreference}
         enabled={preferences.personalisationCompleted}
