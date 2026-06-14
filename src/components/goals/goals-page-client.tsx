@@ -1,9 +1,10 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Plus, Target } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
+import { PageHeader } from "@/components/layout/page-header";
 import { PageTransition } from "@/components/layout/page-transition";
 import { DeleteGoalDialog } from "@/components/goals/delete-goal-dialog";
 import { GoalFormDialog } from "@/components/goals/goal-form-dialog";
@@ -11,7 +12,6 @@ import { GoalsEmptyState } from "@/components/goals/goals-empty-state";
 import { GoalsList } from "@/components/goals/goals-list";
 import { useQuickAdd } from "@/components/quick-add/quick-add-context";
 import { Button } from "@/components/ui/button";
-import { PAGE_SUBTITLE_CLASS, PAGE_TITLE_CLASS } from "@/lib/navigation";
 import type { Goal } from "@/lib/goals/types";
 
 type GoalsPageClientProps = {
@@ -54,12 +54,13 @@ export function GoalsPageClient({
   return (
     <PageTransition>
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className={PAGE_TITLE_CLASS}>Goals</h1>
-          <p className={PAGE_SUBTITLE_CLASS}>
-            Targets you are building toward — revenue, delivery, and growth.
-          </p>
-        </div>
+        <PageHeader
+          className="mb-0"
+          title="Goals"
+          subtitle="Track progress toward what matters most."
+          icon={<Target className="size-6" style={{ color: "#3b82f6" }} />}
+          accentColour="#3b82f6"
+        />
         <Button className="shrink-0 gap-2" onClick={openGoalAdd}>
           <Plus className="size-4" />
           Add goal

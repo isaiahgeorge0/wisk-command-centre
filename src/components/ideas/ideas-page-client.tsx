@@ -1,9 +1,10 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Lightbulb, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
+import { PageHeader } from "@/components/layout/page-header";
 import { PageTransition } from "@/components/layout/page-transition";
 import { DeleteIdeaDialog } from "@/components/ideas/delete-idea-dialog";
 import { IdeaFormDialog } from "@/components/ideas/idea-form-dialog";
@@ -11,7 +12,6 @@ import { IdeasEmptyState } from "@/components/ideas/ideas-empty-state";
 import { IdeasList } from "@/components/ideas/ideas-list";
 import { useQuickAdd } from "@/components/quick-add/quick-add-context";
 import { Button } from "@/components/ui/button";
-import { PAGE_SUBTITLE_CLASS, PAGE_TITLE_CLASS } from "@/lib/navigation";
 import type { Idea } from "@/lib/ideas/types";
 
 type IdeasPageClientProps = {
@@ -46,12 +46,13 @@ export function IdeasPageClient({ initialIdeas }: IdeasPageClientProps) {
   return (
     <PageTransition>
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className={PAGE_TITLE_CLASS}>Ideas</h1>
-          <p className={PAGE_SUBTITLE_CLASS}>
-            A scratchpad for what to build, test, or explore next.
-          </p>
-        </div>
+        <PageHeader
+          className="mb-0"
+          title="Ideas"
+          subtitle="Capture, explore, and convert your best thinking."
+          icon={<Lightbulb className="size-6" style={{ color: "#14b8a6" }} />}
+          accentColour="#14b8a6"
+        />
         <Button className="shrink-0 gap-2" onClick={openIdeaAdd}>
           <Plus className="size-4" />
           Add idea

@@ -1,9 +1,10 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { CheckSquare, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { PageHeader } from "@/components/layout/page-header";
 import { PageTransition } from "@/components/layout/page-transition";
 import { DeleteTaskDialog } from "@/components/tasks/delete-task-dialog";
 import { TaskFiltersBar } from "@/components/tasks/task-filters-bar";
@@ -76,12 +77,15 @@ export function TasksPageClient({
   return (
     <PageTransition>
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className={PAGE_TITLE_CLASS}>Tasks</h1>
-          <p className={PAGE_SUBTITLE_CLASS}>
-            What needs doing, by when, and for which client.
-          </p>
-        </div>
+        <PageHeader
+          className="mb-0"
+          title="Tasks"
+          subtitle="What needs doing, by when, and for which client."
+          icon={
+            <CheckSquare className="size-6" style={{ color: "#6366f1" }} />
+          }
+          accentColour="#6366f1"
+        />
         <Button className="shrink-0 gap-2" onClick={() => openTaskAdd()}>
           <Plus className="size-4" />
           Add task

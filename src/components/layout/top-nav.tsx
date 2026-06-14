@@ -5,6 +5,7 @@ import { Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { NavLink } from "@/components/layout/nav-link";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { WhatsNewButton } from "@/components/changelog/whats-new-button";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
@@ -12,8 +13,7 @@ import { UserMenu } from "@/components/layout/user-menu";
 import { cn } from "@/lib/utils";
 import type { Notification } from "@/lib/notifications/types";
 import type { ChangelogEntry } from "@/lib/changelog/types";
-import { isGroupActive, NAV_GROUPS, type NavGroup } from "@/lib/navigation";
-import { MOTION_DURATION, MOTION_EASE } from "@/lib/motion/config";
+import { isNavActive, NAV_ITEMS } from "@/lib/navigation";
 
 type TopNavProps = {
   userEmail: string;
@@ -23,40 +23,6 @@ type TopNavProps = {
   changelogEntries: ChangelogEntry[];
   unreadChangelogCount: number;
 };
-
-function NavGroupItem({
-  group,
-  pathname,
-  reduced,
-}: {
-  group: NavGroup;
-  pathname: string;
-  reduced: boolean | null;
-}) {
-  const active = isGroupActive(pathname, group);
-
-  const linkClass = cn(
-    "relative shrink-0 px-0.5 py-1 text-sm font-medium transition-colors duration-300",
-    active ? "text-foreground" : "text-muted-foreground hover:text-foreground"
-  );
-
-  return (
-    <Link href={group.href} className={linkClass}>
-      {group.label}
-      {active ? (
-        <motion.span
-          layoutId={reduced ? undefined : "nav-underline"}
-          className="absolute inset-x-0 -bottom-1 h-0.5 rounded-full bg-wisk-teal/80"
-          transition={
-            reduced
-              ? { duration: 0 }
-              : { duration: MOTION_DURATION.normal, ease: MOTION_EASE.smooth }
-          }
-        />
-      ) : null}
-    </Link>
-  );
-}
 
 export function TopNav({
   userEmail,
@@ -82,12 +48,12 @@ export function TopNav({
         </Link>
 
         <nav className="hidden min-w-0 flex-1 items-center gap-4 overflow-x-auto md:flex lg:gap-6">
-          {NAV_GROUPS.map((group) => (
-            <NavGroupItem
-              key={group.label}
-              group={group}
-              pathname={pathname}
-              reduced={reduced}
+          {NAV_ITEMS.map((item) => (
+            <NavLink
+              key={item.href}
+              href={item.href}
+              label={item.label}
+              active={isNavActive(pathname, item.href)}
             />
           ))}
         </nav>

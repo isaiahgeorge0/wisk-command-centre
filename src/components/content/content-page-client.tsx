@@ -1,10 +1,11 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Clapperboard, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { updateContentPostStatus } from "@/app/(dashboard)/content/actions";
+import { PageHeader } from "@/components/layout/page-header";
 import { PageTransition } from "@/components/layout/page-transition";
 import { ContentCalendarTab } from "@/components/content/content-calendar-tab";
 import { ContentEmptyState } from "@/components/content/content-empty-state";
@@ -24,7 +25,6 @@ import {
 } from "@/lib/content/selectors";
 import type { ContentPost, ContentStatus } from "@/lib/content/types";
 import type { Goal } from "@/lib/goals/types";
-import { PAGE_SUBTITLE_CLASS, PAGE_TITLE_CLASS } from "@/lib/navigation";
 
 type ContentPageClientProps = {
   initialPosts: ContentPost[];
@@ -112,12 +112,15 @@ export function ContentPageClient({
   return (
     <PageTransition>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className={PAGE_TITLE_CLASS}>Content</h1>
-          <p className={PAGE_SUBTITLE_CLASS}>
-            Plan, schedule, and publish content across your platforms.
-          </p>
-        </div>
+        <PageHeader
+          className="mb-0"
+          title="Content"
+          subtitle="Plan, schedule, and track your content across platforms."
+          icon={
+            <Clapperboard className="size-6" style={{ color: "#a855f7" }} />
+          }
+          accentColour="#a855f7"
+        />
         <Button className="shrink-0 gap-2" onClick={() => openContentAdd()}>
           <Plus className="size-4" />
           Add content

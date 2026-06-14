@@ -1,9 +1,10 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { FolderKanban, Plus } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { PageHeader } from "@/components/layout/page-header";
 import { PageTransition } from "@/components/layout/page-transition";
 import { DeleteProjectDialog } from "@/components/projects/delete-project-dialog";
 import { ProjectFiltersBar } from "@/components/projects/project-filters-bar";
@@ -14,7 +15,6 @@ import type { ProjectCardTab } from "@/components/projects/project-card-tabs";
 import { useQuickAdd } from "@/components/quick-add/quick-add-context";
 import { useSpotlightTour } from "@/components/spotlight-tour/spotlight-tour-context";
 import { Button } from "@/components/ui/button";
-import { PAGE_SUBTITLE_CLASS, PAGE_TITLE_CLASS } from "@/lib/navigation";
 import { DEFAULT_PROJECT_FILTERS } from "@/lib/projects/constants";
 import { getProjectDisplayName } from "@/lib/projects/display";
 import { getRecentProjectTypes } from "@/lib/projects/recent-project-types";
@@ -160,12 +160,15 @@ export function ProjectsPageClient({
   return (
     <PageTransition>
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className={PAGE_TITLE_CLASS}>Projects</h1>
-          <p className={PAGE_SUBTITLE_CLASS}>
-            Client work, status, and next actions at a glance.
-          </p>
-        </div>
+        <PageHeader
+          className="mb-0"
+          title="Projects"
+          subtitle="Client work, status, and next actions at a glance."
+          icon={
+            <FolderKanban className="size-6" style={{ color: "#a855f7" }} />
+          }
+          accentColour="#a855f7"
+        />
         <Button className="shrink-0 gap-2" onClick={openProjectAdd} data-tour="add-project">
           <Plus className="size-4" />
           Add project

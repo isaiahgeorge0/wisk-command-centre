@@ -52,10 +52,17 @@ export const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
-/** @deprecated Use NAV_GROUPS — flat list of all navigable routes. */
-export const NAV_ITEMS = NAV_GROUPS.flatMap((group) =>
-  group.children ?? [{ label: group.label, href: group.href }]
-);
+export const NAV_ITEMS = [
+  { label: "Overview", href: "/" },
+  { label: "Projects", href: "/projects" },
+  { label: "Tasks", href: "/tasks" },
+  { label: "Goals", href: "/goals" },
+  { label: "Ideas", href: "/ideas" },
+  { label: "Calendar", href: "/calendar" },
+  { label: "Leads", href: "/leads" },
+  { label: "Content", href: "/content" },
+  { label: "Winston", href: "/ai-digest" },
+] as const;
 
 export type NavItem = (typeof NAV_ITEMS)[number];
 

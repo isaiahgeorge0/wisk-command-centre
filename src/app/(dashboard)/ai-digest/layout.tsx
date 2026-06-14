@@ -1,5 +1,6 @@
 import { Sparkles } from "lucide-react";
 
+import { PageHeader } from "@/components/layout/page-header";
 import { SectionSubNav } from "@/components/layout/section-sub-nav";
 
 const SUB_NAV_ITEMS = [
@@ -14,20 +15,14 @@ export default function AiDigestLayout({
 }) {
   return (
     <div>
-      {/* Winston section header */}
-      <div className="mb-6 flex items-center gap-3">
-        <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-wisk-purple/30 to-wisk-teal/30 shadow-sm">
-          <Sparkles className="size-5 text-wisk-teal" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
-            Winston
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Your AI business assistant
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Winston"
+        subtitle="Your AI business assistant."
+        icon={<Sparkles className="size-6 text-white" />}
+        gradient
+        gradientFrom="#14b8a6"
+        gradientTo="#a855f7"
+      />
 
       <SectionSubNav items={SUB_NAV_ITEMS} />
 

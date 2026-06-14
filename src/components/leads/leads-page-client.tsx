@@ -1,10 +1,11 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Plus, TrendingUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { updateLeadStatus } from "@/app/(dashboard)/leads/actions";
+import { PageHeader } from "@/components/layout/page-header";
 import { PageTransition } from "@/components/layout/page-transition";
 import { ConvertSuccessToast } from "@/components/leads/convert-success-toast";
 import { DeleteLeadDialog } from "@/components/leads/delete-lead-dialog";
@@ -14,7 +15,6 @@ import { LeadsPipeline } from "@/components/leads/leads-pipeline";
 import { LeadsStatsBar } from "@/components/leads/leads-stats-bar";
 import { useQuickAdd } from "@/components/quick-add/quick-add-context";
 import { Button } from "@/components/ui/button";
-import { PAGE_SUBTITLE_CLASS, PAGE_TITLE_CLASS } from "@/lib/navigation";
 import { buildLeadStats, groupLeadsByStatus } from "@/lib/leads/selectors";
 import type { Lead, LeadStatus } from "@/lib/leads/types";
 
@@ -90,12 +90,13 @@ export function LeadsPageClient({ initialLeads }: LeadsPageClientProps) {
   return (
     <PageTransition>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className={PAGE_TITLE_CLASS}>Leads</h1>
-          <p className={PAGE_SUBTITLE_CLASS}>
-            Track enquiries and move them through your sales pipeline.
-          </p>
-        </div>
+        <PageHeader
+          className="mb-0"
+          title="Leads"
+          subtitle="Track your pipeline from first contact to won."
+          icon={<TrendingUp className="size-6" style={{ color: "#6366f1" }} />}
+          accentColour="#6366f1"
+        />
         <Button className="shrink-0 gap-2" onClick={openLeadAdd}>
           <Plus className="size-4" />
           Add lead

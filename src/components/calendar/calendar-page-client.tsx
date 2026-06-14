@@ -9,6 +9,7 @@ import { CalendarEventFormDialog } from "@/components/calendar/calendar-event-fo
 import { CalendarFilterBar } from "@/components/calendar/calendar-filter-bar";
 import { CalendarMonthGrid } from "@/components/calendar/calendar-month-grid";
 import { CalendarUpcomingPanel } from "@/components/calendar/calendar-upcoming-panel";
+import { PageHeader } from "@/components/layout/page-header";
 import { PageTransition } from "@/components/layout/page-transition";
 import { useQuickAdd } from "@/components/quick-add/quick-add-context";
 import { DEFAULT_CALENDAR_FILTERS } from "@/lib/calendar/constants";
@@ -28,7 +29,6 @@ import type {
 } from "@/lib/calendar/types";
 import type { ContentPost } from "@/lib/content/types";
 import type { Goal } from "@/lib/goals/types";
-import { PAGE_SUBTITLE_CLASS, PAGE_TITLE_CLASS } from "@/lib/navigation";
 import { getRecentProjectTypes } from "@/lib/projects/recent-project-types";
 import type { ProjectMilestone } from "@/lib/projects/milestones/types";
 import type { Project } from "@/lib/projects/types";
@@ -179,13 +179,12 @@ export function CalendarPageClient({
 
   return (
     <PageTransition>
-      <div className="mb-6">
-        <h1 className={PAGE_TITLE_CLASS}>Calendar</h1>
-        <p className={PAGE_SUBTITLE_CLASS}>
-          Deadlines, due dates, and milestones across projects, tasks, and
-          goals.
-        </p>
-      </div>
+      <PageHeader
+        title="Calendar"
+        subtitle="Deadlines, due dates, and milestones across your business."
+        icon={<CalendarDays className="size-6" style={{ color: "#3b82f6" }} />}
+        accentColour="#3b82f6"
+      />
 
       <div className="mb-4">
         <CalendarFilterBar filters={filters} onToggle={handleToggleFilter} />
