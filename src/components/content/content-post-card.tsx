@@ -136,13 +136,11 @@ export function ContentPostCard({
       )}
       onClick={isDragOverlay ? undefined : handleCardClick}
     >
-      <CardHeader className="gap-2 px-4 pb-2 pt-4">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
-            {post.title}
-          </h3>
-          <ContentPlatformBadges post={post} />
-        </div>
+      <CardHeader className="gap-1.5 px-4 pb-2 pt-4">
+        <h3 className="text-sm font-semibold text-foreground leading-snug">
+          {post.title}
+        </h3>
+        <ContentPlatformBadges post={post} />
       </CardHeader>
 
       <CardContent className="space-y-2 px-4 pb-4 text-sm">

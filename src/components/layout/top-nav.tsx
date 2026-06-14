@@ -1,10 +1,9 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
 
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { WhatsNewButton } from "@/components/changelog/whats-new-button";
@@ -13,12 +12,7 @@ import { UserMenu } from "@/components/layout/user-menu";
 import { cn } from "@/lib/utils";
 import type { Notification } from "@/lib/notifications/types";
 import type { ChangelogEntry } from "@/lib/changelog/types";
-import {
-  isChildNavActive,
-  isGroupActive,
-  NAV_GROUPS,
-  type NavGroup,
-} from "@/lib/navigation";
+import { isGroupActive, NAV_GROUPS, type NavGroup } from "@/lib/navigation";
 import { MOTION_DURATION, MOTION_EASE } from "@/lib/motion/config";
 
 type TopNavProps = {
@@ -39,91 +33,28 @@ function NavGroupItem({
   pathname: string;
   reduced: boolean | null;
 }) {
-  const [hovered, setHovered] = useState(false);
   const active = isGroupActive(pathname, group);
-  const hasChildren = Boolean(group.children?.length);
 
   const linkClass = cn(
     "relative shrink-0 px-0.5 py-1 text-sm font-medium transition-colors duration-300",
     active ? "text-foreground" : "text-muted-foreground hover:text-foreground"
   );
 
-  if (!hasChildren) {
-    return (
-      <Link href={group.href} className={linkClass}>
-        {group.label}
-        {active ? (
-          <motion.span
-            layoutId={reduced ? undefined : "nav-underline"}
-            className="absolute inset-x-0 -bottom-1 h-0.5 rounded-full bg-wisk-teal/80"
-            transition={
-              reduced
-                ? { duration: 0 }
-                : { duration: MOTION_DURATION.normal, ease: MOTION_EASE.smooth }
-            }
-          />
-        ) : null}
-      </Link>
-    );
-  }
-
   return (
-    <div
-      className="relative shrink-0"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      <Link href={group.href} className={linkClass}>
-        {group.label}
-        {active ? (
-          <motion.span
-            layoutId={reduced ? undefined : "nav-underline"}
-            className="absolute inset-x-0 -bottom-1 h-0.5 rounded-full bg-wisk-teal/80"
-            transition={
-              reduced
-                ? { duration: 0 }
-                : { duration: MOTION_DURATION.normal, ease: MOTION_EASE.smooth }
-            }
-          />
-        ) : null}
-      </Link>
-
-      <AnimatePresence>
-        {hovered ? (
-          <motion.div
-            initial={reduced ? false : { opacity: 0, scale: 0.96, y: -4 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={reduced ? undefined : { opacity: 0, scale: 0.96, y: -4 }}
-            transition={{ duration: 0.15, ease: MOTION_EASE.smooth }}
-            className="absolute left-0 top-full z-50 pt-2"
-          >
-            <div className="min-w-[140px] rounded-xl border border-border/60 bg-card p-1.5 shadow-lg">
-              {group.children!.map((child) => {
-                const childActive = isChildNavActive(
-                  pathname,
-                  child,
-                  group.children!
-                );
-                return (
-                  <Link
-                    key={child.href}
-                    href={child.href}
-                    className={cn(
-                      "block rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted/50",
-                      childActive
-                        ? "text-wisk-teal"
-                        : "text-foreground"
-                    )}
-                  >
-                    {child.label}
-                  </Link>
-                );
-              })}
-            </div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-    </div>
+    <Link href={group.href} className={linkClass}>
+      {group.label}
+      {active ? (
+        <motion.span
+          layoutId={reduced ? undefined : "nav-underline"}
+          className="absolute inset-x-0 -bottom-1 h-0.5 rounded-full bg-wisk-teal/80"
+          transition={
+            reduced
+              ? { duration: 0 }
+              : { duration: MOTION_DURATION.normal, ease: MOTION_EASE.smooth }
+          }
+        />
+      ) : null}
+    </Link>
   );
 }
 
