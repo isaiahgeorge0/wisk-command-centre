@@ -309,6 +309,12 @@ Database migrations are applied separately via Supabase CLI against the linked p
 | `NEXT_PUBLIC_SITE_URL` | Yes | Canonical app URL (auth redirects, invite links) |
 | `ADMIN_EMAIL` | Yes | Designated admin account email |
 | `INTEGRATIONS_ENCRYPTION_KEY` | Yes | 32-byte base64 key for token encryption |
+| `ANTHROPIC_API_KEY` | Yes (Winston) | Claude API key for digest and chat |
+| `AI_DIGEST_SECRET` | Yes (Winston) | Bearer token for scheduled digest API routes |
+| `NEXT_PUBLIC_SENTRY_DSN` | Recommended | Sentry DSN for error tracking |
+| `SENTRY_AUTH_TOKEN` | Build only | Source map upload during CI/build |
+| `SENTRY_ORG` | Build only | Sentry organisation slug |
+| `SENTRY_PROJECT` | Build only | Sentry project slug |
 
 ### Environment variables — Marketing (`wiskapp.com`)
 
@@ -399,16 +405,65 @@ is the knowledge base.
 
 Each AI request:
 1. Pulls relevant context from Supabase
-   server-side
+   server-side (with optional 24-hour cache in
+   `ai_context_cache`)
 2. Constructs a system prompt describing
    the user's business state
-3. Sends to Claude API (claude-sonnet model)
+3. Sends to Claude API (`claude-sonnet-4-6`)
 4. Returns structured response to the UI
+5. Logs token usage to `ai_usage_log`
 
-AI Digest runs on a scheduled basis (Sunday).
-WISK Chat is on-demand per user message.
-Smart suggestions are generated on dashboard load
-(replacing or extending generateNotifications()).
+**Delivered (June 2026):**
+- AI Digest — scheduled Sunday generation via
+  GitHub Actions; stored in `ai_reports`
+- WISK Chat v1 — on-demand per user message;
+  conversation history in `ai_conversation_messages`;
+  12-hour session expiry; rate limits enforced
+  server-side
+
+**Planned:**
+- Smart suggestions — generated on dashboard load
+  (replacing or extending `generateNotifications()`)
+- WISK Chat Conversations 2.0 — see Phase 2.5
+  in `docs/product/roadmap.md`
+
+### Observability (Sentry)
+
+WISK uses Sentry (`@sentry/nextjs`) for production
+error tracking:
+
+- DSN configured via `NEXT_PUBLIC_SENTRY_DSN` env var
+- `tracesSampleRate`: 0.1 (10% of transactions)
+- `sendDefaultPii`: false
+- User context: `{ id: userId }` only — no email/name
+- Three error boundaries report to Sentry:
+  `global-error.tsx`, `(dashboard)/error.tsx`,
+  `(dashboard)/ai-digest/error.tsx`
+- API routes capture exceptions in catch blocks
+
+Config files: `sentry.shared.ts`, `sentry.server.config.ts`,
+`sentry.edge.config.ts`, `src/instrumentation.ts`,
+`src/instrumentation-client.ts`.
+
+### AI Usage Tracking
+
+`ai_usage_log` table records every Claude API call:
+
+- `user_id`, `feature` (`'chat'` | `'digest'`)
+- `input_tokens`, `output_tokens`
+- `created_at`
+
+Monthly token limit: 100,000 tokens (chat only)
+Short-term limit: 10 messages per 5 minutes
+Constants in `src/lib/ai/constants.ts`
+
+`ai_context_cache` table caches `buildUserContext()`
+output per user, TTL 24 hours. Reduces DB queries
+on every chat message.
+
+Usage breakdown displayed in Settings (when
+`ai_access` is enabled) and as a lightweight
+percentage bar on the Winston Chat page.
 
 ### Email Integration (AI Pro)
 

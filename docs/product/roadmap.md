@@ -21,9 +21,21 @@ Status definitions:
 - Status: Live
 - Invite-only access control
 - Email and password sign in via Supabase Auth
-- Request access form on marketing site
-- Admin approval workflow
-- Password reset
+- Request access form on marketing site and sign-in page
+- Request access confirmation email from both surfaces
+- "Already registered" detection on both marketing
+  and command centre request access forms
+- Admin approval workflow with Resend approval
+  notification email
+- Branded Supabase email templates (invite, password reset)
+- Full auth flow overhaul:
+  - Invite → `/set-password` (combined account setup:
+    name, theme, password, terms acceptance)
+  - WISK acronym reveal animation on setup page
+  - Forgot password dedicated page (`/forgot-password`)
+  - Password reset flow (cross-device via implicit flow)
+- Privacy Policy and Terms of Service linked from
+  Settings; terms acceptance checkbox on account setup
 - Row Level Security on all tables
 
 ### Personalisation & Onboarding
@@ -278,15 +290,25 @@ Status definitions:
 - Note: Social media API integration
   not yet built (Phase 3.3)
 
-### AI Digest
-- Status: Placeholder (page exists at
-  /ai-digest; removed from main nav)
-- Linked from Settings > Help on mobile
-- Planned for Phase 3.1 (AI Foundation)
-- Will become the in-app home for the
-  automatic Sunday weekly business summary
-- Superseded long-term by WISK Chat,
-  which can generate summaries on demand
+### AI Digest / Winston
+- Status: Live
+- Winston section at `/ai-digest` with Digest and Chat tabs
+  (`SectionSubNav` reusable sub-navigation)
+- **Digest:** Auto-generates every Sunday via GitHub Actions;
+  six sections (week in review, wins, needs attention,
+  week ahead, Winston's insight, Winston's recommendation);
+  stored in `ai_reports`; gated by `ai_access` in
+  `user_preferences`
+- **Chat (WISK Chat v1):** Conversational AI interface;
+  conversation persistence (`ai_conversation_messages`);
+  12-hour conversation expiry with archive view;
+  token-based rate limiting (100,000 tokens/month chat);
+  short-term limit (10 messages/5 minutes);
+  usage tracking (`ai_usage_log`); usage display in
+  chat and Settings
+- Context caching (`ai_context_cache`, 24-hour TTL)
+- Winston teaser page for users without `ai_access`
+- Admin can generate digest per user from admin panel
 
 ---
 
@@ -326,7 +348,13 @@ Status definitions:
 - Status: Live
 - Restart walkthrough button
 - Feature reference cards per section
-- AI Digest link (mobile)
+- Legal links: Privacy Policy, Terms of Service
+
+### Winston Usage
+- Status: Live (visible when `ai_access` is enabled)
+- Monthly token usage breakdown in Settings
+  (chat vs digest, progress bar, reset date)
+- Lightweight usage bar on Winston Chat page
 
 ### Feedback
 - Status: Live
@@ -420,6 +448,9 @@ Access: Admin email only (ADMIN_EMAIL env var)
   Inactive (8-30 days), Dormant (30+ days)
 - Summary cards above table
 - Search by name or email
+- Winston access toggle per user (`ai_access`)
+- Per-user digest generation trigger
+  (when `ai_access` is enabled)
 
 ### Announcements (/admin/announcements)
 - Status: Live
@@ -476,11 +507,14 @@ admin blog and read by the marketing site.
 - Feature cards (6 sections)
 - Testimonials section
 - Request access form
-  (submits to access_requests table)
+  (submits to access_requests table;
+  "already registered" detection for existing accounts)
+- Request access confirmation email
 - Blog at wiskapp.com/blog
 - Individual post pages with markdown
 - Nav with Blog link
-- Footer: Built by Isaiah George Creative
+- Footer: Privacy Policy, Terms of Service,
+  Built by Isaiah George Creative
 
 ## Command Centre Analytics
 
@@ -493,7 +527,7 @@ admin blog and read by the marketing site.
 ## Phase 2 — Complete (June 2026)
 
 Core platform polish and connections before
-Phase 3 (AI-first). Essentially complete —
+Phase 3 (AI-first). Complete as of June 2026 —
 one item intentionally deferred (see below).
 
 ### Delivered (live in this repository)
@@ -521,20 +555,87 @@ one item intentionally deferred (see below).
   `026_calendar_events.sql`)
 - Content calendar tab improvements
   (+ quick-add, pill detail panel)
+- Content calendar panel height fixes
+  (max-h constraint removed across calendar
+  panels; consistent flex/overflow pattern)
 - Form dialog scrollability on all entity
   form dialogs
 - Empty state standardisation across sections
-- AI Digest removed from main nav
-  (page retained for Phase 3.1)
 - Branded 404 page (`src/app/not-found.tsx`)
 - Sign-in back link to wiskapp.com
+- Task `updated_at` field + trigger
+  (migration `028_tasks_updated_at.sql`;
+  Winston context builder correctly detects
+  recently completed tasks)
+
+**Winston AI Digest** (Phase 3.1 foundation —
+built and delivered ahead of schedule):
+- Auto-generates every Sunday via GitHub Actions
+- Six-section digest: week in review, wins,
+  needs attention, week ahead, Winston's insight,
+  Winston's recommendation
+- Stored in `ai_reports` table
+- Gated by `ai_access` flag in `user_preferences`
+- Admin can generate digest per user from
+  admin panel
+- Winston teaser page for non-access users
+
+**WISK Chat v1:**
+- Conversational AI interface under Winston
+- Conversation persistence (`ai_conversation_messages`)
+- 12-hour conversation expiry with archive view
+- Token-based rate limiting (100,000 tokens/month)
+- Short-term rate limit (10 messages/5 minutes)
+- Usage tracking (`ai_usage_log` table)
+- Usage display in chat and Settings
+- `SectionSubNav` component (reusable sub-navigation
+  pattern — Digest/Chat tabs)
+- Context caching (`ai_context_cache`, 24-hour TTL)
+
+**Sentry observability integration:**
+- Error tracking across all dashboard routes
+- Winston-specific error boundary
+- User ID context (no PII)
+- 10% performance sampling
+- API route error capture
+
+**Error boundaries:**
+- `global-error.tsx` (root level)
+- `(dashboard)/error.tsx` (dashboard routes)
+- `(dashboard)/ai-digest/error.tsx` (Winston-specific)
+
+**Privacy Policy and Terms of Service:**
+- Live at wiskapp.com/privacy and wiskapp.com/terms
+- Footer links on marketing site
+- Linked from command centre Settings
+- Terms acceptance checkbox on account setup page
+- "Already registered" detection on both
+  marketing and command centre request access forms
+
+**Full auth flow overhaul:**
+- Invite → `/set-password` page (combined account
+  setup: name, theme, password, terms acceptance)
+- WISK acronym reveal animation on setup page
+- Forgot password dedicated page (`/forgot-password`)
+- Password reset flow (cross-device via implicit flow)
+- Resend approval notification email
+- Branded Supabase email templates
+  (invite, password reset)
+- Request access confirmation email from both
+  marketing and sign-in page
+- "Already registered" detection
+
+**Winston access control:**
+- `ai_access` boolean in `user_preferences`
+- Admin toggle per user in admin panel
+- Admin per-user digest generation trigger
 
 ### Deferred
 
 - **Task file attachments** — deferred until
-  subscription packages are implemented.
-  Storage costs will be absorbed by subscription
-  revenue. A UI placeholder exists
+  Supabase Pro upgrade and subscription packages
+  are implemented. Storage costs will be absorbed
+  by subscription revenue. A UI placeholder exists
   (`TaskAttachmentsSection`); no Supabase
   Storage integration yet.
 
@@ -544,8 +645,59 @@ one item intentionally deferred (see below).
   non-content types (content recurrence
   is live on the main calendar)
 - Formal mobile QA pass across all sections
-- Approval notification email via Resend
-  (warm heads-up before Supabase invite)
+
+---
+
+## Phase 2.5 — Planned (not yet started)
+
+These items are not blocking Phase 3 but are
+committed to building before Phase 3 packages
+are released publicly.
+
+### Navigation restructure
+
+Parent/sub-nav pattern for all major sections.
+Mobile bottom nav currently has 6 items with
+no access to Overview, Calendar, or Winston.
+Proposed grouping:
+
+- **Overview** (standalone)
+- **Work** → Projects, Tasks, Goals
+- **Plan** → Calendar, Content, Ideas
+- **Grow** → Leads
+- **Winston** → Digest, Chat
+
+`SectionSubNav` component already built and
+proven via Winston — ready to extend.
+
+### Winston Conversations 2.0
+
+- Multi-conversation sidebar (new/switch/list)
+- Per-account usage tracking with visible bar
+  (token-based, already partially built)
+- Project-scoped chats (auto-populate context
+  from a specific project)
+- Conversation titles (auto-generated from
+  first message)
+- Usage tied to subscription tier enforcement
+
+### Collaboration Phase A (foundation only)
+
+- Add `username` field to `public.users` (unique)
+- `user_connections` table
+  (`requester_id`, `recipient_id`, `status`)
+- `item_shares` table
+  (`owner_id`, `recipient_id`, `item_type`,
+  `item_id`, `permission`)
+- Username search and add connection UI
+- No sharing UI in Phase A — social graph only
+- RLS not yet updated (purely additive)
+
+### Supabase Pro upgrade planning
+
+- Point-in-time recovery
+- Increased storage for task file attachments
+- Required before task attachments go live
 
 ---
 
@@ -563,27 +715,30 @@ projects, tasks, goals, leads, and content becomes dramatically
 more powerful when combined with social analytics, revenue data,
 or property metrics.
 
-### Phase 3.1 — AI Foundation
+### Phase 3.1 — AI Foundation (in progress)
 
-Build order:
+| Feature | Status |
+|---------|--------|
+| **AI Digest** | Complete (delivered in Phase 2) |
+| **WISK Chat v1** | Complete (delivered in Phase 2) |
+| **Smart suggestions** | Planned (next AI build) |
+| **WISK Chat Conversations 2.0** | Planned (see Phase 2.5) |
 
-1. **AI Digest** — automatic weekly business summary generated
-   every Sunday from the user's Supabase data. Covers:
-   week in review, wins, attention needed, week ahead,
-   one AI insight. Delivered in-app. No external integrations
-   needed. Uses Claude API with user data as context.
+Original build order (for reference):
 
-2. **WISK Chat** — conversational AI interface. Ask anything
-   about your business. Context-aware responses drawn from
-   live Supabase data. Follow-up questions supported.
-   Replaces the need for a static AI Digest page —
-   the user can ask for a summary anytime plus drill
-   into specifics.
+1. **AI Digest** — automatic weekly business summary
+   generated every Sunday from the user's Supabase data.
+   *Delivered ahead of schedule in Phase 2.*
 
-3. **Smart suggestions** — contextual nudges throughout the app.
-   Overdue follow-ups, stalled projects, content streak
-   at risk, goal progress alerts. Generated from data
-   patterns, not just rule-based notifications.
+2. **WISK Chat** — conversational AI interface.
+   *v1 delivered in Phase 2; Conversations 2.0 planned
+   in Phase 2.5.*
+
+3. **Smart suggestions** — contextual nudges throughout
+   the app. Overdue follow-ups, stalled projects, content
+   streak at risk, goal progress alerts. Generated from
+   data patterns, not just rule-based notifications.
+   *Next AI build.*
 
 ### Phase 3.2 — AI Package (billable)
 
@@ -701,6 +856,11 @@ Features:
 
 ### Collaboration & Sharing (Phase 4.1)
 
+Foundation tables and username discovery are also
+listed under **Phase 2.5** (committed before public
+Phase 3 package release). Full sharing UI remains
+Phase 4.
+
 Build order:
 
 **Phase A — Foundation (lightweight, additive):**
@@ -770,21 +930,26 @@ WISK uses a deliberate "coming soon" approach:
 - Dialog/alert-dialog Framer Motion
   entrance animation deferred
   (Radix UI compatibility issue)
-- updated_at on projects table added
+- `updated_at` on projects table added
   but not on all tables
-- AI Digest page is a placeholder
-  (Phase 3.1)
+- Winston usage percentage uses total tokens
+  (chat + digest) but rate limit enforces
+  chat tokens only — minor cosmetic discrepancy,
+  acceptable for v1
+- Task file attachments deferred until Supabase
+  Pro upgrade (see Phase 2.5)
 - Calendar recurring events for
-  non-content types not built
+  non-content types not yet built
   (content recurrence is live)
-- Task file attachments deferred to
-  subscription packages (see Phase 2)
+- Formal mobile QA pass still outstanding
+  (ongoing, not blocking)
+- Navigation restructure planned for Phase 2.5
 - Social media API integrations not
   yet implemented (Phase 3.3)
 - Stripe billing not yet implemented
   (Phase 3.2)
-- WISK Chat and smart suggestions not
-  yet implemented (Phase 3.1)
+- Smart suggestions not yet implemented
+  (Phase 3.1 — next AI build)
 - Apply migration `026_calendar_events.sql`
   on production Supabase if not yet run
 
@@ -794,20 +959,23 @@ WISK uses a deliberate "coming soon" approach:
 
 - users
 - projects
-- tasks
+- tasks (includes `updated_at` — migration 028)
 - goals
 - ideas
 - ai_reports
+- ai_conversation_messages
+- ai_context_cache
+- ai_usage_log
 - notifications
-- user_preferences
+- user_preferences (includes `ai_access`)
 - project_milestones
 - user_integrations
 - leads
 - content_posts
+- calendar_events
 - access_requests
 - announcements
 - announcement_dismissals
 - feedback
 - changelog_entries
 - blog_posts
-- calendar_events
