@@ -174,6 +174,23 @@ export function getEventsForDate(
   return events.filter((event) => event.date === dateISO);
 }
 
+export function eventsInDateRange(
+  events: CalendarEvent[],
+  startISO: string,
+  endISO: string
+): CalendarEvent[] {
+  return events
+    .filter(
+      (event) =>
+        compareDateISO(event.date, startISO) >= 0 &&
+        compareDateISO(event.date, endISO) <= 0
+    )
+    .sort(
+      (a, b) =>
+        compareDateISO(a.date, b.date) || a.title.localeCompare(b.title)
+    );
+}
+
 export function groupEventsByType(
   events: CalendarEvent[]
 ): Record<CalendarEventType, CalendarEvent[]> {

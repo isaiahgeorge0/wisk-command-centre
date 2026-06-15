@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import { CalendarDayCell } from "@/components/calendar/calendar-day-cell";
 import { CalendarMonthHeader } from "@/components/calendar/calendar-month-header";
 import { WEEKDAY_LABELS } from "@/lib/calendar/constants";
@@ -20,6 +22,7 @@ type CalendarMonthGridProps = {
   onAddContent?: (dateISO: string) => void;
   onAddLifestyle?: (dateISO: string) => void;
   onAddOther?: (dateISO: string) => void;
+  headerTrailing?: React.ReactNode;
 };
 
 export function CalendarMonthGrid({
@@ -35,6 +38,7 @@ export function CalendarMonthGrid({
   onAddContent,
   onAddLifestyle,
   onAddOther,
+  headerTrailing,
 }: CalendarMonthGridProps) {
   const weeks = getMonthMatrix(year, month);
   const eventsMap = eventsByDate(events);
@@ -47,6 +51,7 @@ export function CalendarMonthGrid({
           month={month}
           onPrevious={onPreviousMonth}
           onNext={onNextMonth}
+          trailing={headerTrailing}
         />
       </div>
 

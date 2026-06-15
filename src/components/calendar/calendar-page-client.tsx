@@ -1,26 +1,42 @@
 "use client";
 
 import { CalendarDays } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { CalendarDayDetailPanel } from "@/components/calendar/calendar-day-detail-panel";
+import { CalendarDayView } from "@/components/calendar/calendar-day-view";
 import { CalendarEventDetailPanel } from "@/components/calendar/calendar-event-detail-panel";
 import { CalendarEventFormDialog } from "@/components/calendar/calendar-event-form-dialog";
 import { CalendarFilterBar } from "@/components/calendar/calendar-filter-bar";
 import { CalendarMonthGrid } from "@/components/calendar/calendar-month-grid";
 import { CalendarUpcomingPanel } from "@/components/calendar/calendar-upcoming-panel";
+import { CalendarViewSwitcher } from "@/components/calendar/calendar-view-switcher";
+import { CalendarViewToolbar } from "@/components/calendar/calendar-view-toolbar";
+import { CalendarWeekGrid } from "@/components/calendar/calendar-week-grid";
 import { PageHeader } from "@/components/layout/page-header";
 import { PageTransition } from "@/components/layout/page-transition";
 import { useQuickAdd } from "@/components/quick-add/quick-add-context";
 import { DEFAULT_CALENDAR_FILTERS } from "@/lib/calendar/constants";
-import { getCalendarContentWindow, getMonthGridDateRange, shiftMonth } from "@/lib/calendar/grid";
-import { compareDateISO } from "@/lib/overview/date";
+import {
+  dateFromISO,
+  formatWeekRange,
+  getCalendarContentWindow,
+  getMonthGridDateRange,
+  getWeekDateRange,
+  normaliseCalendarDate,
+  shiftDay,
+  shiftMonth,
+  shiftWeek,
+} from "@/lib/calendar/grid";
+import { compareDateISO, addDaysToISO, toDateISO } from "@/lib/overview/date";
 import {
   buildCalendarEvents,
+  eventsInDateRange,
   filterCalendarEvents,
   getEventsForDate,
   getTodayISO,
 } from "@/lib/calendar/selectors";
+import type { CalendarView } from "@/lib/calendar/views";
 import type {
   CalendarEvent,
   CalendarEventType,
@@ -44,6 +60,12 @@ type CalendarPageClientProps = {
   contentGoals: Pick<Goal, "id" | "title">[];
 };
 
+function createTodayDate(): Date {
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+  return today;
+}
+
 export function CalendarPageClient({
   projects,
   tasks,
@@ -54,11 +76,15 @@ export function CalendarPageClient({
   contentGoals,
 }: CalendarPageClientProps) {
   const todayISO = getTodayISO();
-  const today = new Date();
+  const todayDate = useMemo(() => createTodayDate(), []);
 
-  const [viewYear, setViewYear] = useState(today.getFullYear());
-  const [viewMonth, setViewMonth] = useState(today.getMonth());
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [view, setView] = useState<CalendarView>("month");
+  const [selectedDate, setSelectedDate] = useState<Date>(todayDate);
+  const [viewYear, setViewYear] = useState(todayDate.getFullYear());
+  const [viewMonth, setViewMonth] = useState(todayDate.getMonth());
+  const [monthSidePanelDate, setMonthSidePanelDate] = useState<string | null>(
+    null
+  );
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
     null
   );
@@ -72,6 +98,19 @@ export function CalendarPageClient({
   }>({ open: false, date: null, eventType: null });
 
   const { openTaskAdd, openContentAdd } = useQuickAdd();
+
+  useEffect(() => {
+    if (window.innerWidth < 768) {
+      setView("day");
+    }
+  }, []);
+
+  useEffect(() => {
+    setViewYear(selectedDate.getFullYear());
+    setViewMonth(selectedDate.getMonth());
+  }, [selectedDate]);
+
+  const selectedDateISO = toDateISO(selectedDate);
 
   const projectOptions = useMemo(
     () =>
@@ -87,10 +126,29 @@ export function CalendarPageClient({
     [projects]
   );
 
-  const contentWindow = useMemo(
-    () => getCalendarContentWindow(viewYear, viewMonth, todayISO),
-    [viewYear, viewMonth, todayISO]
-  );
+  const contentWindow = useMemo(() => {
+    if (view === "month") {
+      return getCalendarContentWindow(viewYear, viewMonth, todayISO);
+    }
+
+    if (view === "week") {
+      const weekRange = getWeekDateRange(selectedDate);
+      const upcomingEnd = addDaysToISO(todayISO, 90);
+      return {
+        start: weekRange.start,
+        end:
+          compareDateISO(weekRange.end, upcomingEnd) > 0
+            ? weekRange.end
+            : upcomingEnd,
+      };
+    }
+
+    return getCalendarContentWindow(
+      selectedDate.getFullYear(),
+      selectedDate.getMonth(),
+      todayISO
+    );
+  }, [view, viewYear, viewMonth, selectedDate, todayISO]);
 
   const allEvents = useMemo(
     () =>
@@ -118,12 +176,23 @@ export function CalendarPageClient({
     [allEvents, filters]
   );
 
-  const selectedDayEvents = useMemo(
+  const weekRange = useMemo(
+    () => getWeekDateRange(selectedDate),
+    [selectedDate]
+  );
+
+  const weekEvents = useMemo(
     () =>
-      selectedDate
-        ? getEventsForDate(filteredEvents, selectedDate)
+      eventsInDateRange(filteredEvents, weekRange.start, weekRange.end),
+    [filteredEvents, weekRange]
+  );
+
+  const monthSidePanelEvents = useMemo(
+    () =>
+      monthSidePanelDate
+        ? getEventsForDate(filteredEvents, monthSidePanelDate)
         : [],
-    [filteredEvents, selectedDate]
+    [filteredEvents, monthSidePanelDate]
   );
 
   const monthRange = useMemo(
@@ -150,24 +219,54 @@ export function CalendarPageClient({
 
   const handleSelectDate = (dateISO: string) => {
     setSelectedEvent(null);
-    setSelectedDate(dateISO);
+    setSelectedDate(normaliseCalendarDate(dateFromISO(dateISO)));
+    setMonthSidePanelDate(dateISO);
   };
 
   const handleSelectEvent = (event: CalendarEvent) => {
-    setSelectedDate(null);
+    setMonthSidePanelDate(null);
     setSelectedEvent(event);
+  };
+
+  const handleViewChange = (nextView: CalendarView) => {
+    setView(nextView);
+    if (nextView !== "month") {
+      setMonthSidePanelDate(null);
+    }
   };
 
   const handlePreviousMonth = () => {
     const next = shiftMonth(viewYear, viewMonth, -1);
-    setViewYear(next.year);
-    setViewMonth(next.month);
+    setSelectedDate(
+      normaliseCalendarDate(new Date(next.year, next.month, 1, 12))
+    );
   };
 
   const handleNextMonth = () => {
     const next = shiftMonth(viewYear, viewMonth, 1);
-    setViewYear(next.year);
-    setViewMonth(next.month);
+    setSelectedDate(
+      normaliseCalendarDate(new Date(next.year, next.month, 1, 12))
+    );
+  };
+
+  const handlePreviousWeek = () => {
+    setSelectedDate(normaliseCalendarDate(shiftWeek(selectedDate, -1)));
+  };
+
+  const handleNextWeek = () => {
+    setSelectedDate(normaliseCalendarDate(shiftWeek(selectedDate, 1)));
+  };
+
+  const handlePreviousDay = () => {
+    setSelectedDate(normaliseCalendarDate(shiftDay(selectedDate, -1)));
+  };
+
+  const handleNextDay = () => {
+    setSelectedDate(normaliseCalendarDate(shiftDay(selectedDate, 1)));
+  };
+
+  const handleToday = () => {
+    setSelectedDate(todayDate);
   };
 
   const openStandaloneAdd = (
@@ -176,6 +275,10 @@ export function CalendarPageClient({
   ) => {
     setStandaloneDialog({ open: true, date: dateISO, eventType });
   };
+
+  const viewSwitcher = (
+    <CalendarViewSwitcher view={view} onChange={handleViewChange} />
+  );
 
   return (
     <PageTransition>
@@ -192,35 +295,115 @@ export function CalendarPageClient({
 
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
         <div className="min-w-0 flex-1">
-          <CalendarMonthGrid
-            year={viewYear}
-            month={viewMonth}
-            events={filteredEvents}
-            selectedDate={selectedDate}
-            onSelectDate={handleSelectDate}
-            onEventSelect={handleSelectEvent}
-            onPreviousMonth={handlePreviousMonth}
-            onNextMonth={handleNextMonth}
-            onAddTask={(dateISO) => openTaskAdd(dateISO)}
-            onAddContent={(dateISO) => openContentAdd(dateISO)}
-            onAddLifestyle={(dateISO) => openStandaloneAdd(dateISO, "lifestyle")}
-            onAddOther={(dateISO) => openStandaloneAdd(dateISO, "other")}
-          />
-          {!hasEventsThisMonth ? (
-            <div className="flex flex-col items-center px-4 py-8 text-center">
-              <CalendarDays
-                className="mb-2 size-8 text-muted-foreground"
-                aria-hidden
+          {view === "month" ? (
+            <>
+              <CalendarMonthGrid
+                year={viewYear}
+                month={viewMonth}
+                events={filteredEvents}
+                selectedDate={selectedDateISO}
+                onSelectDate={handleSelectDate}
+                onEventSelect={handleSelectEvent}
+                onPreviousMonth={handlePreviousMonth}
+                onNextMonth={handleNextMonth}
+                onAddTask={(dateISO) => openTaskAdd(dateISO)}
+                onAddContent={(dateISO) => openContentAdd(dateISO)}
+                onAddLifestyle={(dateISO) =>
+                  openStandaloneAdd(dateISO, "lifestyle")
+                }
+                onAddOther={(dateISO) => openStandaloneAdd(dateISO, "other")}
+                headerTrailing={viewSwitcher}
               />
-              <p className="max-w-md text-sm text-muted-foreground">
-                Nothing scheduled this month. Use the + on any day to add a task,
-                content post, or personal event.
-              </p>
+              {!hasEventsThisMonth ? (
+                <div className="flex flex-col items-center px-4 py-8 text-center">
+                  <CalendarDays
+                    className="mb-2 size-8 text-muted-foreground"
+                    aria-hidden
+                  />
+                  <p className="max-w-md text-sm text-muted-foreground">
+                    Nothing scheduled this month. Use the + on any day to add a
+                    task, content post, or personal event.
+                  </p>
+                </div>
+              ) : null}
+            </>
+          ) : (
+            <div className="overflow-hidden rounded-xl border border-border/60 bg-card/40">
+              <div className="border-b border-border/60 px-4 py-3">
+                {view === "week" ? (
+                  <CalendarViewToolbar
+                    title={formatWeekRange(selectedDate)}
+                    view={view}
+                    onViewChange={handleViewChange}
+                    onPrevious={handlePreviousWeek}
+                    onNext={handleNextWeek}
+                    previousLabel="Previous week"
+                    nextLabel="Next week"
+                  />
+                ) : (
+                  <CalendarViewToolbar
+                    title=""
+                    view={view}
+                    onViewChange={handleViewChange}
+                    onPrevious={handlePreviousDay}
+                    onNext={handleNextDay}
+                    previousLabel="Previous day"
+                    nextLabel="Next day"
+                    showToday
+                    onToday={handleToday}
+                  />
+                )}
+              </div>
+              <div className="p-4">
+                {view === "week" ? (
+                  <CalendarWeekGrid
+                    selectedDate={selectedDate}
+                    events={weekEvents}
+                    onEventSelect={handleSelectEvent}
+                  />
+                ) : (
+                  <CalendarDayView
+                    selectedDate={selectedDate}
+                    events={filteredEvents}
+                    onEventSelect={handleSelectEvent}
+                    onAddTask={(dateISO) => openTaskAdd(dateISO)}
+                    onAddContent={(dateISO) => openContentAdd(dateISO)}
+                    onAddLifestyle={(dateISO) =>
+                      openStandaloneAdd(dateISO, "lifestyle")
+                    }
+                    onAddOther={(dateISO) =>
+                      openStandaloneAdd(dateISO, "other")
+                    }
+                  />
+                )}
+              </div>
             </div>
-          ) : null}
+          )}
         </div>
 
-        {selectedEvent ? (
+        {view === "month" ? (
+          selectedEvent ? (
+            <CalendarEventDetailPanel
+              selectedEvent={selectedEvent}
+              onClose={() => setSelectedEvent(null)}
+              projects={projects}
+              tasks={tasks}
+              goals={goals}
+              milestones={milestones}
+              contentPosts={contentPosts}
+              standaloneEvents={standaloneEvents}
+              projectOptions={projectOptions}
+              contentGoals={contentGoals}
+              recentProjectTypes={recentProjectTypes}
+            />
+          ) : (
+            <CalendarDayDetailPanel
+              selectedDate={monthSidePanelDate}
+              events={monthSidePanelEvents}
+              onClose={() => setMonthSidePanelDate(null)}
+            />
+          )
+        ) : selectedEvent ? (
           <CalendarEventDetailPanel
             selectedEvent={selectedEvent}
             onClose={() => setSelectedEvent(null)}
@@ -234,13 +417,7 @@ export function CalendarPageClient({
             contentGoals={contentGoals}
             recentProjectTypes={recentProjectTypes}
           />
-        ) : (
-          <CalendarDayDetailPanel
-            selectedDate={selectedDate}
-            events={selectedDayEvents}
-            onClose={() => setSelectedDate(null)}
-          />
-        )}
+        ) : null}
       </div>
 
       <div className="mt-8">
