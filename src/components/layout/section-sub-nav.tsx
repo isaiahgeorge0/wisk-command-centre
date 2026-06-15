@@ -39,7 +39,7 @@ export function SectionSubNav({ items }: SectionSubNavProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                "relative shrink-0 px-4 pb-3 pt-1 text-sm font-medium transition-colors duration-200",
+                "relative flex min-h-11 shrink-0 items-center px-4 text-sm font-medium transition-colors duration-200",
                 isActive
                   ? "text-foreground"
                   : "text-muted-foreground hover:text-foreground"
