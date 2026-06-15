@@ -15,6 +15,7 @@ const PUBLIC_PATHS = [
   "/api/ai-digest/generate",
   "/api/ai-digest/generate-for-user",
   "/api/winston/chat",
+  "/api/stripe/webhook",
   "/monitoring",
 ];
 

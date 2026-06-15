@@ -1,19 +1,26 @@
 import { WinstonDigestPageClient } from "@/components/ai-digest/ai-digest-page-client";
 import { WinstonTeaserPage } from "@/components/ai-digest/winston-teaser-page";
+import { hasAIAccess } from "@/lib/billing/access";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { DigestContent } from "@/lib/ai/digest-generator";
 
 export default async function AiDigestPage() {
   const { supabase, userId } = await getScopedSupabase();
 
-  // ── Access check ────────────────────────────────────────────────────────────
   const { data: prefs } = await supabase
     .from("user_preferences")
     .select("ai_access")
     .eq("user_id", userId)
     .maybeSingle();
 
-  if (prefs?.ai_access !== true) {
+  const canAccessWinston = await hasAIAccess(
+    userId,
+    createAdminClient(),
+    prefs?.ai_access ?? false
+  );
+
+  if (!canAccessWinston) {
     return <WinstonTeaserPage />;
   }
 

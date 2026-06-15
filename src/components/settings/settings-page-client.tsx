@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
+import { SettingsBillingSection } from "@/components/settings/settings-billing-section";
 import { SettingsFeedbackSection } from "@/components/settings/settings-feedback-section";
 import { SettingsHelpSection } from "@/components/settings/settings-help-section";
 import { SettingsIntegrationsSection } from "@/components/settings/settings-integrations-section";
@@ -17,6 +18,7 @@ import {
   type SettingsTab,
 } from "@/components/settings/settings-tabs";
 import type { MonthlyUsage } from "@/lib/ai/types";
+import type { BillingPlan } from "@/lib/billing/types";
 import type { SafeIntegration } from "@/lib/integrations/types";
 import type { FieldVisibility } from "@/lib/preferences/types";
 
@@ -29,6 +31,9 @@ type SettingsPageClientProps = {
   integrations: SafeIntegration[];
   aiAccess?: boolean;
   winstonUsage?: MonthlyUsage | null;
+  billingPlan?: BillingPlan;
+  billingPlanLabel?: string;
+  billingPeriodEnd?: string | null;
 };
 
 export function SettingsPageClient({
@@ -40,6 +45,9 @@ export function SettingsPageClient({
   integrations,
   aiAccess = false,
   winstonUsage = null,
+  billingPlan = "free",
+  billingPlanLabel = "Free",
+  billingPeriodEnd = null,
 }: SettingsPageClientProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -86,6 +94,11 @@ export function SettingsPageClient({
       {activeTab === "preferences" ? (
         <div className="space-y-8">
           <SettingsPreferencesSection fieldVisibility={fieldVisibility} />
+          <SettingsBillingSection
+            plan={billingPlan}
+            planLabel={billingPlanLabel}
+            currentPeriodEnd={billingPeriodEnd}
+          />
           {aiAccess && winstonUsage ? (
             <SettingsWinstonSection usage={winstonUsage} />
           ) : null}

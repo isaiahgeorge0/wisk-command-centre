@@ -1,7 +1,9 @@
 import { getMonthlyUsage } from "@/app/(dashboard)/ai-digest/actions";
 import { WinstonChatClient } from "@/components/ai-digest/winston-chat-client";
 import { WinstonTeaserPage } from "@/components/ai-digest/winston-teaser-page";
+import { hasAIAccess } from "@/lib/billing/access";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { WINSTON_MONTHLY_TOKEN_LIMIT } from "@/lib/ai/constants";
 import type { ConversationMessage } from "@/lib/ai/types";
 
@@ -14,7 +16,13 @@ export default async function WinstonChatPage() {
     .eq("user_id", userId)
     .maybeSingle();
 
-  if (prefs?.ai_access !== true) {
+  const canAccessWinston = await hasAIAccess(
+    userId,
+    createAdminClient(),
+    prefs?.ai_access ?? false
+  );
+
+  if (!canAccessWinston) {
     return <WinstonTeaserPage />;
   }
 

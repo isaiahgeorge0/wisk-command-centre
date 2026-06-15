@@ -9,6 +9,7 @@ import {
   WINSTON_SHORT_TERM_WINDOW_MS,
 } from "@/lib/ai/constants";
 import { logUsage } from "@/lib/ai/usage-logger";
+import { hasAIAccess } from "@/lib/billing/access";
 import { getAuthContext } from "@/lib/auth/get-auth-context";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -56,7 +57,13 @@ export async function POST(request: Request) {
       .eq("user_id", userId)
       .maybeSingle();
 
-    if (prefs?.ai_access !== true) {
+    const canAccessWinston = await hasAIAccess(
+      userId,
+      createAdminClient(),
+      prefs?.ai_access ?? false
+    );
+
+    if (!canAccessWinston) {
       return NextResponse.json(
         { error: "Winston access not enabled" },
         { status: 403 }

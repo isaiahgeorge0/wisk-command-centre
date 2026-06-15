@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { getMonthlyUsage } from "@/app/(dashboard)/ai-digest/actions";
 import { SettingsPageShell } from "@/components/settings/settings-page-shell";
 import { getIntegrations } from "@/app/(dashboard)/settings/integrations/actions";
+import { getUserBillingSummary } from "@/lib/billing/plan";
 import { isAdminEmail } from "@/lib/auth/is-admin";
 import { resolveDisplayName } from "@/lib/auth/resolve-display-name";
 import { getUserProfile } from "@/lib/auth/get-user-profile";
@@ -12,7 +13,7 @@ import { getOrCreateUserPreferences } from "@/lib/preferences/get-user-preferenc
 export default async function SettingsPage() {
   const { supabase, userId } = await getScopedSupabase();
 
-  const [profile, preferences, integrations, prefsRow, usageResult] =
+  const [profile, preferences, integrations, prefsRow, usageResult, billing] =
     await Promise.all([
       getUserProfile(),
       getOrCreateUserPreferences(),
@@ -23,6 +24,7 @@ export default async function SettingsPage() {
         .eq("user_id", userId)
         .maybeSingle(),
       getMonthlyUsage(),
+      getUserBillingSummary(userId),
     ]);
 
   const aiAccess = prefsRow.data?.ai_access === true;
@@ -51,6 +53,9 @@ export default async function SettingsPage() {
         showAdminLink={isAdminEmail(profile.email)}
         aiAccess={aiAccess}
         winstonUsage={winstonUsage}
+        billingPlan={billing.plan}
+        billingPlanLabel={billing.planLabel}
+        billingPeriodEnd={billing.currentPeriodEnd}
       />
     </Suspense>
   );
