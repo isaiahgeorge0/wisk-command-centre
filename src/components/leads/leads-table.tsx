@@ -15,9 +15,12 @@ import {
   sortLeads,
 } from "@/lib/leads/selectors";
 import {
+  daysInStageCellClass,
+  followUpCellClass,
   formatDaysInStage,
   formatFollowUpDate,
   formatLeadValue,
+  lastActivityCellClass,
   relativeTime,
 } from "@/lib/leads/format";
 import type {
@@ -53,18 +56,21 @@ const SORTABLE_COLUMNS: SortableColumn[] = [
   { key: "name", label: "Name", className: "min-w-[180px]" },
   { key: "stage", label: "Stage" },
   { key: "value", label: "Value" },
-  { key: "follow_up_date", label: "Follow-up" },
+  { key: "follow_up_date", label: "Follow Up" },
   {
     key: "last_activity",
-    label: "Last activity",
+    label: "Last Activity",
     className: "hidden xl:table-cell",
   },
   {
     key: "days_in_stage",
-    label: "Days in stage",
+    label: "Days in Stage",
     className: "hidden lg:table-cell",
   },
 ];
+
+const HEADER_CLASS =
+  "px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground";
 
 const COLUMN_COUNT = SORTABLE_COLUMNS.length + 1;
 
@@ -158,15 +164,12 @@ export function LeadsTable({
       <div className="hidden overflow-hidden rounded-xl border border-border/60 md:block">
         <div className="max-h-[70vh] overflow-auto">
           <table className="w-full border-collapse text-sm">
-            <thead className="sticky top-0 z-10 bg-muted/30 backdrop-blur-sm">
-              <tr className="border-b border-border/60">
+            <thead className="sticky top-0 z-10 border-b border-border/60 bg-muted/40 backdrop-blur-sm">
+              <tr>
                 {SORTABLE_COLUMNS.slice(0, 3).map((column) => (
                   <th
                     key={column.key}
-                    className={cn(
-                      "px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground",
-                      column.className
-                    )}
+                    className={cn(HEADER_CLASS, column.className)}
                   >
                     <button
                       type="button"
@@ -181,16 +184,13 @@ export function LeadsTable({
                     </button>
                   </th>
                 ))}
-                <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground lg:table-cell">
+                <th className={cn(HEADER_CLASS, "hidden lg:table-cell")}>
                   Source
                 </th>
                 {SORTABLE_COLUMNS.slice(3).map((column) => (
                   <th
                     key={column.key}
-                    className={cn(
-                      "px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground",
-                      column.className
-                    )}
+                    className={cn(HEADER_CLASS, column.className)}
                   >
                     <button
                       type="button"
@@ -218,8 +218,8 @@ export function LeadsTable({
                     <tr
                       onClick={() => toggleExpanded(lead.id)}
                       className={cn(
-                        "cursor-pointer border-b border-border/40 transition-colors hover:bg-muted/20",
-                        index % 2 === 1 && "bg-muted/[0.03]",
+                        "cursor-pointer border-b border-border/40 transition-colors hover:bg-muted/30",
+                        index % 2 === 0 ? "bg-background" : "bg-muted/10",
                         isExpanded && "bg-muted/20"
                       )}
                     >
@@ -256,10 +256,8 @@ export function LeadsTable({
                         {followUp ? (
                           <span
                             className={cn(
-                              "text-xs font-medium",
-                              followUp.isOverdue
-                                ? "text-orange-500"
-                                : "text-foreground"
+                              "text-xs",
+                              followUpCellClass(followUp.urgency)
                             )}
                           >
                             {followUp.isOverdue
@@ -270,12 +268,22 @@ export function LeadsTable({
                           <span className="text-xs text-muted-foreground">—</span>
                         )}
                       </td>
-                      <td className="hidden px-4 py-3 align-top text-xs text-muted-foreground xl:table-cell">
+                      <td
+                        className={cn(
+                          "hidden px-4 py-3 align-top text-xs xl:table-cell",
+                          lastActivityCellClass(lead.last_activity_at)
+                        )}
+                      >
                         {lead.last_activity_at
                           ? relativeTime(lead.last_activity_at)
                           : "No activity"}
                       </td>
-                      <td className="hidden px-4 py-3 align-top text-xs text-muted-foreground lg:table-cell">
+                      <td
+                        className={cn(
+                          "hidden px-4 py-3 align-top text-xs lg:table-cell",
+                          daysInStageCellClass(lead)
+                        )}
+                      >
                         {formatDaysInStage(lead)}
                       </td>
                     </tr>
@@ -332,9 +340,8 @@ export function LeadsTable({
                   {followUp ? (
                     <span
                       className={cn(
-                        followUp.isOverdue
-                          ? "text-orange-500"
-                          : "text-muted-foreground"
+                        "text-xs",
+                        followUpCellClass(followUp.urgency)
                       )}
                     >
                       {followUp.isOverdue
@@ -346,7 +353,12 @@ export function LeadsTable({
                   )}
                 </div>
                 <div className="mt-1 flex justify-end">
-                  <span className="text-[11px] text-muted-foreground">
+                  <span
+                    className={cn(
+                      "text-[11px]",
+                      lastActivityCellClass(lead.last_activity_at)
+                    )}
+                  >
                     {lead.last_activity_at
                       ? relativeTime(lead.last_activity_at)
                       : "No activity"}

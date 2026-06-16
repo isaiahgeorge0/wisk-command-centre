@@ -40,6 +40,11 @@ export function LeadsFiltersBar({
     filters.search.trim().length > 0 || filters.stage !== "all";
 
   const sortValue = `${sortKey}:${sortDirection}`;
+  const activeSortLabel =
+    LEADS_SORT_OPTIONS.find(
+      (option) =>
+        option.key === sortKey && option.direction === sortDirection
+    )?.label ?? "Sort by";
 
   return (
     <div
@@ -112,7 +117,7 @@ export function LeadsFiltersBar({
           }}
         >
           <SelectTrigger className="h-9 w-full sm:w-52">
-            <SelectValue placeholder="Sort by" />
+            <SelectValue placeholder="Sort by">{activeSortLabel}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {LEADS_SORT_OPTIONS.map((option) => (

@@ -1,5 +1,5 @@
 import type { LeadSource } from "@/lib/leads/types";
-import { toDateISO } from "@/lib/overview/date";
+import { addDaysToISO, toDateISO } from "@/lib/overview/date";
 
 export function emptyToNull(value: string | undefined): string | null {
   const trimmed = value?.trim();
@@ -83,15 +83,72 @@ export function formatDaysInStage(
 export function formatFollowUpDate(
   date: string | null | undefined,
   now: Date = new Date()
-): { label: string; isOverdue: boolean } | null {
+): {
+  label: string;
+  isOverdue: boolean;
+  urgency: "overdue" | "upcoming" | "future";
+} | null {
   if (!date) return null;
   const todayISO = toDateISO(now);
   const isOverdue = date < todayISO;
+  const threeDaysAhead = addDaysToISO(todayISO, 3);
+  const urgency: "overdue" | "upcoming" | "future" = isOverdue
+    ? "overdue"
+    : date <= threeDaysAhead
+      ? "upcoming"
+      : "future";
   const label = new Date(`${date}T12:00:00`).toLocaleDateString("en-GB", {
     day: "numeric",
     month: "short",
   });
-  return { label, isOverdue };
+  return { label, isOverdue, urgency };
+}
+
+export function followUpCellClass(
+  urgency: "overdue" | "upcoming" | "future" | null
+): string {
+  switch (urgency) {
+    case "overdue":
+      return "text-wisk-coral font-medium";
+    case "upcoming":
+      return "text-amber-400 font-medium";
+    case "future":
+      return "text-muted-foreground";
+    default:
+      return "text-muted-foreground";
+  }
+}
+
+export function lastActivityCellClass(
+  lastActivityAt: string | null,
+  now: Date = new Date()
+): string {
+  if (!lastActivityAt) return "text-muted-foreground italic";
+  const days = daysSinceTimestamp(lastActivityAt, now);
+  if (days < 3) return "text-wisk-teal";
+  if (days < 7) return "text-foreground";
+  return "text-wisk-coral";
+}
+
+export function daysInStageCellClass(
+  lead: { status: string; contacted_at: string | null; created_at: string },
+  now: Date = new Date()
+): string {
+  const days = daysInStage(lead, now);
+  if (days < 7) return "text-muted-foreground";
+  if (days < 14) return "text-amber-400";
+  return "text-wisk-coral font-medium";
+}
+
+function daysSinceTimestamp(isoTimestamp: string, now: Date = new Date()): number {
+  const dateISO = toDateISO(new Date(isoTimestamp));
+  const todayISO = toDateISO(now);
+  const then = new Date(`${dateISO}T12:00:00`);
+  const today = new Date(`${todayISO}T12:00:00`);
+  return Math.max(
+    0,
+    Math.round((today.getTime() - then.getTime()) / (1000 * 60 * 60 * 24))
+  );
 }
 
 export function isLeadSource(value: string): value is LeadSource {

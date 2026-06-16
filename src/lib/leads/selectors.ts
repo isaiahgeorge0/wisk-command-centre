@@ -215,10 +215,10 @@ export const LEADS_SORT_OPTIONS: {
   label: string;
   direction: LeadsSortDirection;
 }[] = [
-  { key: "follow_up_date", label: "Follow-up date", direction: "asc" },
+  { key: "follow_up_date", label: "Follow Up Date", direction: "asc" },
   { key: "name", label: "Name (A–Z)", direction: "asc" },
-  { key: "value", label: "Value (high to low)", direction: "desc" },
-  { key: "last_activity", label: "Last activity", direction: "desc" },
-  { key: "days_in_stage", label: "Days in stage", direction: "desc" },
+  { key: "value", label: "Value (High to Low)", direction: "desc" },
+  { key: "last_activity", label: "Last Activity", direction: "desc" },
+  { key: "days_in_stage", label: "Days in Stage", direction: "desc" },
   { key: "stage", label: "Stage", direction: "asc" },
 ];
