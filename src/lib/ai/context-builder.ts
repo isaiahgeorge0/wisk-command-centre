@@ -47,6 +47,12 @@ export type LeadContext = {
   wonThisWeek: Array<{ name: string; value: number | null }>;
   stalled: string[]; // lead names in same stage 14+ days
   totalPipelineValue: number;
+  overdueFollowUps: Array<{ name: string; follow_up_date: string }>;
+  engagementSummary: Array<{
+    name: string;
+    status: string;
+    daysSinceActivity: number | null;
+  }>;
 };
 
 export type ContentContext = {
@@ -227,7 +233,7 @@ export async function buildUserContext(
   // ── Leads ──────────────────────────────────────────────────────────────────
   const { data: leads } = await supabase
     .from("leads")
-    .select("name, status, value, created_at, updated_at")
+    .select("id, name, status, value, created_at, updated_at, follow_up_date")
     .eq("user_id", userId);
 
   const newLeads = (leads ?? [])
@@ -260,6 +266,54 @@ export async function buildUserContext(
   const totalPipelineValue = (leads ?? [])
     .filter((l) => l.status !== "lost")
     .reduce((sum, l) => sum + (l.value ?? 0), 0);
+
+  const overdueFollowUps = (leads ?? [])
+    .filter(
+      (l) =>
+        l.follow_up_date &&
+        l.follow_up_date < todayISO &&
+        l.status !== "won" &&
+        l.status !== "lost"
+    )
+    .map((l) => ({ name: l.name, follow_up_date: l.follow_up_date as string }));
+
+  // Fetch last activity date per active lead
+  const activeLeadIds = (leads ?? [])
+    .filter((l) => l.status !== "won" && l.status !== "lost")
+    .map((l) => l.id);
+
+  const lastActivityMap = new Map<string, string>();
+  if (activeLeadIds.length > 0) {
+    const { data: activityRows } = await supabase
+      .from("lead_activities")
+      .select("lead_id, created_at")
+      .in("lead_id", activeLeadIds)
+      .order("created_at", { ascending: false });
+
+    for (const row of activityRows ?? []) {
+      if (row.lead_id && !lastActivityMap.has(row.lead_id)) {
+        lastActivityMap.set(row.lead_id, row.created_at);
+      }
+    }
+  }
+
+  const engagementSummary = (leads ?? [])
+    .filter((l) => l.status !== "won" && l.status !== "lost")
+    .map((l) => {
+      const lastActivity = lastActivityMap.get(l.id);
+      const daysSinceActivity = lastActivity
+        ? Math.floor(
+            (now.getTime() - new Date(lastActivity).getTime()) /
+              (1000 * 60 * 60 * 24)
+          )
+        : null;
+      return {
+        name: l.name,
+        status: l.status ?? "new",
+        daysSinceActivity,
+      };
+    })
+    .slice(0, 10);
 
   // ── Content ────────────────────────────────────────────────────────────────
   const { data: contentPosts } = await supabase
@@ -326,6 +380,8 @@ export async function buildUserContext(
       wonThisWeek: wonLeads,
       stalled: stalledLeads,
       totalPipelineValue,
+      overdueFollowUps,
+      engagementSummary,
     },
     content: {
       publishedThisWeek,

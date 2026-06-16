@@ -33,6 +33,7 @@ export type Lead = {
   value: number | null;
   notes: string | null;
   contacted_at: string | null;
+  follow_up_date: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -57,4 +58,33 @@ export type ConvertLeadToProjectInput = {
   deadline?: string;
   value?: string;
   first_task?: string;
+};
+
+export const LEAD_ACTIVITY_TYPES = [
+  "note",
+  "call",
+  "email",
+  "meeting",
+  "stage_change",
+  "follow_up_set",
+  "ai_notes",
+] as const;
+
+export type LeadActivityType = (typeof LEAD_ACTIVITY_TYPES)[number];
+
+export type LeadActivity = {
+  id: string;
+  lead_id: string;
+  user_id: string;
+  activity_type: LeadActivityType;
+  title: string;
+  content?: string;
+  metadata?: Record<string, unknown>;
+  created_at: string;
+};
+
+export type LeadActivityFormInput = {
+  activity_type: LeadActivityType;
+  title: string;
+  content?: string;
 };

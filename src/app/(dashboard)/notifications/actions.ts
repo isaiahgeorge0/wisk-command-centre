@@ -17,24 +17,29 @@ export type NotificationsSnapshot = {
 export async function generateNotifications(): Promise<void> {
   const { supabase, userId } = await getScopedSupabase();
 
-  const [tasksRes, projectsRes, goalsRes, existingRes] = await Promise.all([
-    supabase
-      .from("tasks")
-      .select("id, title, due_date, completed")
-      .eq("user_id", userId),
-    supabase
-      .from("projects")
-      .select("id, project_name, status, deadline, updated_at")
-      .eq("user_id", userId),
-    supabase
-      .from("goals")
-      .select("id, title, status, deadline, current")
-      .eq("user_id", userId),
-    supabase
-      .from("notifications")
-      .select("id, type, reference_id")
-      .eq("user_id", userId),
-  ]);
+  const [tasksRes, projectsRes, goalsRes, leadsRes, existingRes] =
+    await Promise.all([
+      supabase
+        .from("tasks")
+        .select("id, title, due_date, completed")
+        .eq("user_id", userId),
+      supabase
+        .from("projects")
+        .select("id, project_name, status, deadline, updated_at")
+        .eq("user_id", userId),
+      supabase
+        .from("goals")
+        .select("id, title, status, deadline, current")
+        .eq("user_id", userId),
+      supabase
+        .from("leads")
+        .select("id, name, status, follow_up_date")
+        .eq("user_id", userId),
+      supabase
+        .from("notifications")
+        .select("id, type, reference_id")
+        .eq("user_id", userId),
+    ]);
 
   if (tasksRes.error) throw new Error(tasksRes.error.message);
   if (projectsRes.error) throw new Error(projectsRes.error.message);
@@ -44,7 +49,8 @@ export async function generateNotifications(): Promise<void> {
   const candidates = buildNotificationCandidates(
     tasksRes.data ?? [],
     projectsRes.data ?? [],
-    goalsRes.data ?? []
+    goalsRes.data ?? [],
+    leadsRes.data ?? []
   );
 
   const validKeys = new Set(candidates.map(candidateKey));

@@ -30,6 +30,13 @@ type GoalRow = {
   current: number;
 };
 
+type LeadRow = {
+  id: string;
+  name: string;
+  status: string | null;
+  follow_up_date: string | null;
+};
+
 const TERMINAL_PROJECT_STATUSES = new Set(["completed", "archived"]);
 const TERMINAL_GOAL_STATUSES = new Set(["completed", "archived"]);
 
@@ -60,6 +67,7 @@ export function buildNotificationCandidates(
   tasks: TaskRow[],
   projects: ProjectRow[],
   goals: GoalRow[],
+  leads: LeadRow[] = [],
   now: Date = new Date()
 ): NotificationCandidate[] {
   const todayISO = toDateISO(now);
@@ -142,6 +150,21 @@ export function buildNotificationCandidates(
         link_to: "/goals",
       });
     }
+  }
+
+  const TERMINAL_LEAD_STATUSES = new Set(["won", "lost"]);
+  for (const lead of leads) {
+    if (!lead.follow_up_date) continue;
+    if (TERMINAL_LEAD_STATUSES.has(lead.status ?? "")) continue;
+    if (!isBeforeToday(lead.follow_up_date, todayISO)) continue;
+
+    candidates.push({
+      type: "follow_up_overdue",
+      reference_id: lead.id,
+      title: "Follow up overdue",
+      message: `${lead.name} — follow up was due ${lead.follow_up_date}`,
+      link_to: "/leads",
+    });
   }
 
   return candidates;

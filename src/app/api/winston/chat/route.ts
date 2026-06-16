@@ -29,6 +29,7 @@ type StoredMessage = { role: "user" | "assistant"; content: string };
 
 const bodySchema = z.object({
   message: z.string().trim().min(1, "Message is required").max(2000),
+  conversationId: z.string().uuid().optional(),
 });
 
 // ─── System prompt ────────────────────────────────────────────────────────────
@@ -86,7 +87,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { message } = parsed.data;
+    const { message, conversationId: incomingConversationId } = parsed.data;
 
     Sentry.setUser({ id: userId });
 
@@ -148,19 +149,43 @@ export async function POST(request: Request) {
       );
     }
 
+    // ── Resolve or create conversation ────────────────────────────────────────
+    let conversationId = incomingConversationId;
+
+    if (!conversationId) {
+      const { data: newConv, error: convError } = await supabase
+        .from("ai_conversations")
+        .insert({ user_id: userId, title: "New conversation" })
+        .select("id")
+        .single();
+
+      if (convError || !newConv) {
+        console.error("winston/chat: failed to create conversation:", convError);
+        return NextResponse.json(
+          { error: "Failed to create conversation" },
+          { status: 500 }
+        );
+      }
+      conversationId = newConv.id;
+    }
+
+    // ── Count existing messages (to detect first message) ────────────────────
+    const { count: existingCount } = await supabase
+      .from("ai_conversation_messages")
+      .select("*", { count: "exact", head: true })
+      .eq("conversation_id", conversationId);
+
+    const isFirstMessage = (existingCount ?? 0) === 0;
+
     // ── Fetch context (cached) ────────────────────────────────────────────────
     const context = await getCachedContext(userId, supabase);
 
-    // ── Fetch last 20 messages within the past 12 hours ──────────────────────
-    const twelveHoursAgo = new Date(
-      Date.now() - 12 * 60 * 60 * 1000
-    ).toISOString();
-
+    // ── Fetch last 20 messages for this conversation ──────────────────────────
     const { data: history } = await supabase
       .from("ai_conversation_messages")
       .select("role, content")
       .eq("user_id", userId)
-      .gte("created_at", twelveHoursAgo)
+      .eq("conversation_id", conversationId)
       .order("created_at", { ascending: false })
       .limit(20);
 
@@ -173,9 +198,10 @@ export async function POST(request: Request) {
       user_id: userId,
       role: "user",
       content: message,
+      conversation_id: conversationId,
     });
 
-    // ── Call Claude ───────────────────────────────────────────────────────────
+    // ── Call Claude (Sonnet for actual response) ──────────────────────────────
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not set");
 
@@ -226,12 +252,64 @@ export async function POST(request: Request) {
       user_id: userId,
       role: "assistant",
       content: reply,
+      conversation_id: conversationId,
     });
 
     // ── Log usage ─────────────────────────────────────────────────────────────
     await logUsage(userId, "chat", inputTokens, outputTokens);
 
-    return NextResponse.json({ reply, usedTokens: inputTokens + outputTokens });
+    // ── Auto-generate title for first message (Haiku, non-blocking) ──────────
+    let generatedTitle: string | undefined;
+    if (isFirstMessage) {
+      try {
+        const titleResponse = await fetch(
+          "https://api.anthropic.com/v1/messages",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-api-key": apiKey,
+              "anthropic-version": "2023-06-01",
+            },
+            body: JSON.stringify({
+              model: "claude-haiku-4-5-20251001",
+              max_tokens: 20,
+              messages: [
+                {
+                  role: "user",
+                  content: `Generate a 3-5 word title for a conversation that starts with this message: "${message.slice(0, 200)}". Return only the title, no punctuation.`,
+                },
+              ],
+            }),
+          }
+        );
+
+        if (titleResponse.ok) {
+          const titleData =
+            (await titleResponse.json()) as AnthropicResponse;
+          const titleBlock = titleData.content.find(
+            (b): b is AnthropicTextBlock => b.type === "text"
+          );
+          if (titleBlock?.text) {
+            generatedTitle = titleBlock.text.trim().replace(/^["']|["']$/g, "");
+            await supabase
+              .from("ai_conversations")
+              .update({ title: generatedTitle })
+              .eq("id", conversationId)
+              .eq("user_id", userId);
+          }
+        }
+      } catch (titleErr) {
+        console.warn("winston/chat: title generation failed (non-fatal):", titleErr);
+      }
+    }
+
+    return NextResponse.json({
+      reply,
+      usedTokens: inputTokens + outputTokens,
+      conversationId,
+      ...(generatedTitle ? { generatedTitle } : {}),
+    });
   } catch (error) {
     console.error("winston/chat error:", error);
     Sentry.captureException(error);

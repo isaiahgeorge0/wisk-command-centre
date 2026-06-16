@@ -1,11 +1,13 @@
 "use client";
 
+import { CalendarDays } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 
 import { updateLead } from "@/app/(dashboard)/leads/actions";
 import { ConvertLeadDialog } from "@/components/leads/convert-lead-dialog";
 import { ExpandableSection } from "@/components/motion/expandable-section";
+import { LeadActivityTab } from "@/components/leads/lead-activity-tab";
 import { LeadForm } from "@/components/leads/lead-form";
 import { LeadSourceBadge } from "@/components/leads/lead-source-badge";
 import { LeadStatusMenu } from "@/components/leads/lead-status-menu";
@@ -22,6 +24,8 @@ import { daysSinceCreated, formatLeadValue } from "@/lib/leads/format";
 import { leadToFormInput } from "@/lib/leads/form";
 import type { Lead, LeadFormInput, LeadStatus } from "@/lib/leads/types";
 import { cn } from "@/lib/utils";
+
+type ExpandedTab = "details" | "activity";
 
 type LeadCardProps = {
   lead: Lead;
@@ -44,12 +48,16 @@ export function LeadCard({
 }: LeadCardProps) {
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
+  const [activeTab, setActiveTab] = useState<ExpandedTab>("details");
   const [editing, setEditing] = useState(false);
   const [values, setValues] = useState<LeadFormInput>(leadToFormInput(lead));
   const [error, setError] = useState<string | null>(null);
   const [celebrate, setCelebrate] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [convertOpen, setConvertOpen] = useState(false);
+  const [localFollowUpDate, setLocalFollowUpDate] = useState<string | null>(
+    lead.follow_up_date ?? null
+  );
   const formId = `edit-lead-${lead.id}`;
   const status = (lead.status as LeadStatus) ?? "new";
   const prevStatusRef = useRef(status);
@@ -190,63 +198,128 @@ export function LeadCard({
 
         <ExpandableSection
           open={expanded}
-          className="space-y-3 border-t border-border/50 pt-3"
+          className="space-y-0 border-t border-border/50 pt-3"
         >
           <div onClick={(e) => e.stopPropagation()} className="space-y-3">
-            {lead.email ? (
-              <p className="text-xs text-muted-foreground">
-                Email:{" "}
-                <span className="text-foreground">{lead.email}</span>
-              </p>
-            ) : null}
-            {lead.phone ? (
-              <p className="text-xs text-muted-foreground">
-                Phone:{" "}
-                <span className="text-foreground">{lead.phone}</span>
-              </p>
-            ) : null}
-            {lead.notes?.trim() ? (
-              <p className="whitespace-pre-wrap text-xs text-foreground">
-                {lead.notes}
-              </p>
-            ) : null}
-            <LeadStatusMenu
-              currentStatus={status}
-              onStatusChange={(nextStatus) => onStatusChange?.(nextStatus)}
-              disabled={isPending}
-            />
-            <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setExpanded(true);
-                  setEditing(true);
-                }}
-              >
-                Edit
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setConvertOpen(true);
-                }}
-              >
-                Convert to project
-              </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                onClick={() => onDelete(lead)}
-              >
-                Delete
-              </Button>
+            {/* Tab bar */}
+            <div className="flex gap-0.5 rounded-lg bg-muted/40 p-0.5">
+              {(["details", "activity"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveTab(tab)}
+                  className={cn(
+                    "flex-1 rounded-md py-1 text-xs font-medium capitalize transition-colors",
+                    activeTab === tab
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {tab === "activity" ? (
+                    <span className="flex items-center justify-center gap-1">
+                      Activity
+                      {localFollowUpDate &&
+                        localFollowUpDate <
+                          new Date().toISOString().slice(0, 10) ? (
+                          <span className="size-1.5 rounded-full bg-orange-500 shrink-0" />
+                        ) : null}
+                    </span>
+                  ) : (
+                    "Details"
+                  )}
+                </button>
+              ))}
             </div>
+
+            {/* Details tab */}
+            {activeTab === "details" ? (
+              <div className="space-y-3">
+                {lead.email ? (
+                  <p className="text-xs text-muted-foreground">
+                    Email:{" "}
+                    <span className="text-foreground">{lead.email}</span>
+                  </p>
+                ) : null}
+                {lead.phone ? (
+                  <p className="text-xs text-muted-foreground">
+                    Phone:{" "}
+                    <span className="text-foreground">{lead.phone}</span>
+                  </p>
+                ) : null}
+                {localFollowUpDate ? (
+                  <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <CalendarDays className="size-3.5 shrink-0" aria-hidden />
+                    Follow up:{" "}
+                    <span
+                      className={cn(
+                        "font-medium",
+                        localFollowUpDate <
+                          new Date().toISOString().slice(0, 10)
+                          ? "text-orange-500"
+                          : "text-foreground"
+                      )}
+                    >
+                      {new Date(
+                        localFollowUpDate + "T12:00:00"
+                      ).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                      })}
+                    </span>
+                  </p>
+                ) : null}
+                {lead.notes?.trim() ? (
+                  <p className="whitespace-pre-wrap text-xs text-foreground">
+                    {lead.notes}
+                  </p>
+                ) : null}
+                <LeadStatusMenu
+                  currentStatus={status}
+                  onStatusChange={(nextStatus) => onStatusChange?.(nextStatus)}
+                  disabled={isPending}
+                />
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setExpanded(true);
+                      setEditing(true);
+                    }}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setConvertOpen(true);
+                    }}
+                  >
+                    Convert to project
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => onDelete(lead)}
+                  >
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+
+            {/* Activity tab */}
+            {activeTab === "activity" ? (
+              <LeadActivityTab
+                lead={lead}
+                onFollowUpChange={(date) => setLocalFollowUpDate(date)}
+              />
+            ) : null}
           </div>
         </ExpandableSection>
 

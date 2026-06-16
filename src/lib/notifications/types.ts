@@ -3,6 +3,7 @@ export const NOTIFICATION_TYPES = [
   "deadline_approaching",
   "stalled_project",
   "goal_no_progress",
+  "follow_up_overdue",
 ] as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];

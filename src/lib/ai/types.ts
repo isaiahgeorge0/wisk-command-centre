@@ -13,3 +13,18 @@ export type MonthlyUsage = {
   percentage: number;
   resetDate: string;
 };
+
+export type AIConversation = {
+  id: string;
+  user_id: string;
+  title: string;
+  project_id: string | null;
+  project_name: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ActiveProject = {
+  id: string;
+  project_name: string;
+};

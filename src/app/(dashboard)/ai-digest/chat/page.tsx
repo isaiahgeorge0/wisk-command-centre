@@ -1,4 +1,8 @@
-import { getMonthlyUsage } from "@/app/(dashboard)/ai-digest/actions";
+import {
+  getActiveProjects,
+  getConversations,
+  getMonthlyUsage,
+} from "@/app/(dashboard)/ai-digest/actions";
 import { WinstonChatClient } from "@/components/ai-digest/winston-chat-client";
 import { WinstonTeaserPage } from "@/components/ai-digest/winston-teaser-page";
 import { hasAIAccess } from "@/lib/billing/access";
@@ -26,15 +30,14 @@ export default async function WinstonChatPage() {
     return <WinstonTeaserPage />;
   }
 
-  const [messagesResult, usageResult] = await Promise.all([
-    supabase
-      .from("ai_conversation_messages")
-      .select("id, role, content, created_at")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: true })
-      .limit(50),
-    getMonthlyUsage(),
-  ]);
+  const [conversationsResult, usageResult, projectsResult] = await Promise.all(
+    [getConversations(), getMonthlyUsage(), getActiveProjects()]
+  );
+
+  const conversations =
+    conversationsResult.success && conversationsResult.data
+      ? conversationsResult.data
+      : [];
 
   const usage =
     usageResult.success && usageResult.data
@@ -48,10 +51,35 @@ export default async function WinstonChatPage() {
           resetDate: new Date().toISOString(),
         };
 
+  const activeProjects =
+    projectsResult.success && projectsResult.data ? projectsResult.data : [];
+
+  // Load messages for the most recent conversation
+  let initialMessages: ConversationMessage[] = [];
+  let initialConversationId: string | null = null;
+
+  if (conversations.length > 0) {
+    const mostRecent = conversations[0];
+    initialConversationId = mostRecent.id;
+
+    const { data: msgs } = await supabase
+      .from("ai_conversation_messages")
+      .select("id, role, content, created_at")
+      .eq("user_id", userId)
+      .eq("conversation_id", mostRecent.id)
+      .order("created_at", { ascending: true })
+      .limit(50);
+
+    initialMessages = (msgs ?? []) as ConversationMessage[];
+  }
+
   return (
     <WinstonChatClient
-      initialMessages={(messagesResult.data ?? []) as ConversationMessage[]}
+      initialMessages={initialMessages}
+      initialConversationId={initialConversationId}
+      initialConversations={conversations}
       initialUsage={usage}
+      activeProjects={activeProjects}
     />
   );
 }

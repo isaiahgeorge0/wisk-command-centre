@@ -5,7 +5,14 @@ import { revalidatePath } from "next/cache";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { WINSTON_MONTHLY_TOKEN_LIMIT } from "@/lib/ai/constants";
 import type { ActionResult } from "@/lib/tasks/types";
-import type { ConversationMessage, MonthlyUsage } from "@/lib/ai/types";
+import type {
+  AIConversation,
+  ActiveProject,
+  ConversationMessage,
+  MonthlyUsage,
+} from "@/lib/ai/types";
+
+// ─── Legacy: single-conversation history ─────────────────────────────────────
 
 export async function getConversationHistory(): Promise<
   ActionResult<ConversationMessage[]>
@@ -26,6 +33,8 @@ export async function getConversationHistory(): Promise<
 
   return { success: true, data: (data ?? []) as ConversationMessage[] };
 }
+
+// ─── Monthly usage ────────────────────────────────────────────────────────────
 
 export async function getMonthlyUsage(): Promise<ActionResult<MonthlyUsage>> {
   const { supabase, userId } = await getScopedSupabase();
@@ -59,10 +68,7 @@ export async function getMonthlyUsage(): Promise<ActionResult<MonthlyUsage>> {
 
   const total = chatTokens + digestTokens;
   const limit = WINSTON_MONTHLY_TOKEN_LIMIT;
-  const percentage = Math.min(
-    100,
-    Math.round((total / limit) * 100)
-  );
+  const percentage = Math.min(100, Math.round((total / limit) * 100));
 
   return {
     success: true,
@@ -77,19 +83,206 @@ export async function getMonthlyUsage(): Promise<ActionResult<MonthlyUsage>> {
   };
 }
 
-export async function clearConversation(): Promise<ActionResult> {
+// ─── Conversations ────────────────────────────────────────────────────────────
+
+export async function getConversations(): Promise<
+  ActionResult<AIConversation[]>
+> {
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { data, error } = await supabase
+    .from("ai_conversations")
+    .select("id, user_id, title, project_id, created_at, updated_at, projects(project_name)")
+    .eq("user_id", userId)
+    .order("updated_at", { ascending: false })
+    .limit(50);
+
+  if (error) {
+    console.error("getConversations:", error);
+    return { success: false, error: error.message };
+  }
+
+  const conversations: AIConversation[] = (data ?? []).map((row) => ({
+    id: row.id,
+    user_id: row.user_id,
+    title: row.title,
+    project_id: row.project_id ?? null,
+    project_name:
+      row.projects && !Array.isArray(row.projects)
+        ? (row.projects as { project_name: string }).project_name
+        : null,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  }));
+
+  return { success: true, data: conversations };
+}
+
+export async function createConversation(
+  projectId?: string
+): Promise<ActionResult<AIConversation>> {
+  const { supabase, userId } = await getScopedSupabase();
+
+  let title = "New conversation";
+
+  if (projectId) {
+    const { data: project } = await supabase
+      .from("projects")
+      .select("project_name")
+      .eq("id", projectId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (project?.project_name) {
+      title = `${project.project_name} chat`;
+    }
+  }
+
+  const { data, error } = await supabase
+    .from("ai_conversations")
+    .insert({
+      user_id: userId,
+      title,
+      project_id: projectId ?? null,
+    })
+    .select("id, user_id, title, project_id, created_at, updated_at")
+    .single();
+
+  if (error) {
+    console.error("createConversation:", error);
+    return { success: false, error: error.message };
+  }
+
+  return {
+    success: true,
+    data: {
+      id: data.id,
+      user_id: data.user_id,
+      title: data.title,
+      project_id: data.project_id ?? null,
+      project_name: null,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+    },
+  };
+}
+
+export async function updateConversationTitle(
+  id: string,
+  title: string
+): Promise<ActionResult> {
   const { supabase, userId } = await getScopedSupabase();
 
   const { error } = await supabase
-    .from("ai_conversation_messages")
-    .delete()
+    .from("ai_conversations")
+    .update({ title })
+    .eq("id", id)
     .eq("user_id", userId);
 
   if (error) {
-    console.error("clearConversation:", error);
+    console.error("updateConversationTitle:", error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true };
+}
+
+export async function deleteConversation(id: string): Promise<ActionResult> {
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { error } = await supabase
+    .from("ai_conversations")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", userId);
+
+  if (error) {
+    console.error("deleteConversation:", error);
     return { success: false, error: error.message };
   }
 
   revalidatePath("/ai-digest/chat");
   return { success: true };
+}
+
+export async function getConversationMessages(
+  conversationId: string
+): Promise<ActionResult<ConversationMessage[]>> {
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { data, error } = await supabase
+    .from("ai_conversation_messages")
+    .select("id, role, content, created_at")
+    .eq("user_id", userId)
+    .eq("conversation_id", conversationId)
+    .order("created_at", { ascending: true })
+    .limit(50);
+
+  if (error) {
+    console.error("getConversationMessages:", error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true, data: (data ?? []) as ConversationMessage[] };
+}
+
+export async function clearConversation(
+  conversationId?: string
+): Promise<ActionResult> {
+  const { supabase, userId } = await getScopedSupabase();
+
+  if (conversationId) {
+    // Delete the conversation itself (messages cascade)
+    const { error } = await supabase
+      .from("ai_conversations")
+      .delete()
+      .eq("id", conversationId)
+      .eq("user_id", userId);
+
+    if (error) {
+      console.error("clearConversation:", error);
+      return { success: false, error: error.message };
+    }
+  } else {
+    // Legacy: delete all messages for the user
+    const { error } = await supabase
+      .from("ai_conversation_messages")
+      .delete()
+      .eq("user_id", userId);
+
+    if (error) {
+      console.error("clearConversation:", error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  revalidatePath("/ai-digest/chat");
+  return { success: true };
+}
+
+// ─── Active projects (for project-scoped chat) ────────────────────────────────
+
+export async function getActiveProjects(): Promise<
+  ActionResult<ActiveProject[]>
+> {
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { data, error } = await supabase
+    .from("projects")
+    .select("id, project_name")
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .order("project_name", { ascending: true });
+
+  if (error) {
+    console.error("getActiveProjects:", error);
+    return { success: false, error: error.message };
+  }
+
+  return {
+    success: true,
+    data: (data ?? []).map((p) => ({
+      id: p.id,
+      project_name: p.project_name ?? "Untitled project",
+    })),
+  };
 }

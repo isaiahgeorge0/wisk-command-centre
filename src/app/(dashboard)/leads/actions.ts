@@ -9,9 +9,12 @@ import type {
   ActionResult,
   ConvertLeadToProjectInput,
   Lead,
+  LeadActivity,
+  LeadActivityFormInput,
   LeadFormInput,
 } from "@/lib/leads/types";
 import {
+  LEAD_ACTIVITY_TYPES,
   LEAD_SOURCES,
   LEAD_STATUSES,
   type LeadStatus,
@@ -309,4 +312,118 @@ export async function convertLeadToProject(
   revalidatePath("/");
 
   return { success: true, data: { projectId: project.id } };
+}
+
+// ─── Lead activities ──────────────────────────────────────────────────────────
+
+export async function getLeadActivities(
+  leadId: string
+): Promise<ActionResult<LeadActivity[]>> {
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { data, error } = await supabase
+    .from("lead_activities")
+    .select("id, lead_id, user_id, activity_type, title, content, metadata, created_at")
+    .eq("lead_id", leadId)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("getLeadActivities:", error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true, data: (data ?? []) as LeadActivity[] };
+}
+
+const activityFormSchema = z.object({
+  activity_type: z.enum(LEAD_ACTIVITY_TYPES),
+  title: z.string().trim().min(1, "Title is required").max(200),
+  content: z.string().optional(),
+});
+
+export async function addLeadActivity(
+  leadId: string,
+  input: LeadActivityFormInput
+): Promise<ActionResult<LeadActivity>> {
+  const parsed = activityFormSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { data, error } = await supabase
+    .from("lead_activities")
+    .insert({
+      lead_id: leadId,
+      user_id: userId,
+      activity_type: parsed.data.activity_type,
+      title: parsed.data.title,
+      content: parsed.data.content?.trim() || null,
+    })
+    .select("id, lead_id, user_id, activity_type, title, content, metadata, created_at")
+    .single();
+
+  if (error) {
+    console.error("addLeadActivity:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/leads");
+  return { success: true, data: data as LeadActivity };
+}
+
+export async function deleteLeadActivity(
+  activityId: string
+): Promise<ActionResult> {
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { error } = await supabase
+    .from("lead_activities")
+    .delete()
+    .eq("id", activityId)
+    .eq("user_id", userId);
+
+  if (error) {
+    console.error("deleteLeadActivity:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/leads");
+  return { success: true };
+}
+
+export async function setLeadFollowUp(
+  leadId: string,
+  date: string | null
+): Promise<ActionResult> {
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { error } = await supabase
+    .from("leads")
+    .update({ follow_up_date: date })
+    .eq("id", leadId)
+    .eq("user_id", userId);
+
+  if (error) {
+    console.error("setLeadFollowUp:", error);
+    return { success: false, error: error.message };
+  }
+
+  if (date) {
+    await supabase.from("lead_activities").insert({
+      lead_id: leadId,
+      user_id: userId,
+      activity_type: "follow_up_set",
+      title: `Follow-up set for ${date}`,
+      metadata: { date },
+    });
+  }
+
+  revalidatePath("/leads");
+  return { success: true };
 }
