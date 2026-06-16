@@ -88,3 +88,22 @@ export type LeadActivityFormInput = {
   title: string;
   content?: string;
 };
+
+export type LeadWithActivity = Lead & {
+  last_activity_at: string | null;
+};
+
+export type LeadsView = "pipeline" | "table";
+
+export type LeadsSortKey =
+  | "follow_up_date"
+  | "name"
+  | "value"
+  | "last_activity"
+  | "days_in_stage"
+  | "stage";
+
+export type LeadsFilterState = {
+  search: string;
+  stage: LeadStatus | "all";
+};

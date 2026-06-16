@@ -12,6 +12,7 @@ import type {
   LeadActivity,
   LeadActivityFormInput,
   LeadFormInput,
+  LeadWithActivity,
 } from "@/lib/leads/types";
 import {
   LEAD_ACTIVITY_TYPES,
@@ -60,20 +61,51 @@ function contactedAtForStatus(
 }
 
 export async function getLeads(): Promise<Lead[]> {
+  const leads = await getLeadsWithActivity();
+  return leads;
+}
+
+export async function getLeadsWithActivity(): Promise<LeadWithActivity[]> {
   const { supabase, userId } = await getScopedSupabase();
 
-  const { data, error } = await supabase
+  const { data: leads, error } = await supabase
     .from("leads")
     .select("*")
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("getLeads:", error);
+    console.error("getLeadsWithActivity:", error);
     return [];
   }
 
-  return (data ?? []) as Lead[];
+  const leadList = (leads ?? []) as Lead[];
+  if (leadList.length === 0) return [];
+
+  const leadIds = leadList.map((lead) => lead.id);
+
+  const { data: activities, error: activityError } = await supabase
+    .from("lead_activities")
+    .select("lead_id, created_at")
+    .eq("user_id", userId)
+    .in("lead_id", leadIds)
+    .order("created_at", { ascending: false });
+
+  if (activityError) {
+    console.error("getLeadsWithActivity activities:", activityError);
+  }
+
+  const lastActivityMap = new Map<string, string>();
+  for (const row of activities ?? []) {
+    if (row.lead_id && !lastActivityMap.has(row.lead_id)) {
+      lastActivityMap.set(row.lead_id, row.created_at);
+    }
+  }
+
+  return leadList.map((lead) => ({
+    ...lead,
+    last_activity_at: lastActivityMap.get(lead.id) ?? null,
+  }));
 }
 
 export async function createLead(

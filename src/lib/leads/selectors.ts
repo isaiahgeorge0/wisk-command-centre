@@ -1,8 +1,16 @@
 import {
   ACTIVE_PIPELINE_STATUSES,
+  LEAD_STATUS_LABELS,
   PIPELINE_STATUSES,
 } from "@/lib/leads/constants";
-import type { Lead, LeadStatus } from "@/lib/leads/types";
+import { daysInStage } from "@/lib/leads/format";
+import type {
+  Lead,
+  LeadStatus,
+  LeadWithActivity,
+  LeadsFilterState,
+  LeadsSortKey,
+} from "@/lib/leads/types";
 
 export type LeadStats = {
   leadsThisMonth: number;
@@ -98,3 +106,119 @@ export function isSameMonth(dateISO: string, now: Date = new Date()): boolean {
 export function monthLabel(now: Date = new Date()): string {
   return new Intl.DateTimeFormat("en-GB", { month: "long" }).format(now);
 }
+
+const STAGE_ORDER: Record<LeadStatus, number> = {
+  new: 0,
+  contacted: 1,
+  qualified: 2,
+  proposal_sent: 3,
+  won: 4,
+  lost: 5,
+};
+
+export function filterLeads<T extends Lead>(
+  leads: T[],
+  filters: LeadsFilterState
+): T[] {
+  const query = filters.search.trim().toLowerCase();
+
+  return leads.filter((lead) => {
+    if (filters.stage !== "all" && lead.status !== filters.stage) {
+      return false;
+    }
+
+    if (!query) return true;
+
+    const haystack = [
+      lead.name,
+      lead.email ?? "",
+      lead.phone ?? "",
+      lead.service_interest,
+      lead.source,
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    return haystack.includes(query);
+  });
+}
+
+export type LeadsSortDirection = "asc" | "desc";
+
+export function sortLeads(
+  leads: LeadWithActivity[],
+  sortKey: LeadsSortKey,
+  direction: LeadsSortDirection
+): LeadWithActivity[] {
+  const sorted = [...leads];
+
+  sorted.sort((a, b) => {
+    let cmp = 0;
+
+    switch (sortKey) {
+      case "follow_up_date": {
+        const aDate = a.follow_up_date;
+        const bDate = b.follow_up_date;
+        if (!aDate && !bDate) cmp = 0;
+        else if (!aDate) cmp = 1;
+        else if (!bDate) cmp = -1;
+        else cmp = aDate.localeCompare(bDate);
+        break;
+      }
+      case "name":
+        cmp = a.name.localeCompare(b.name, "en-GB", { sensitivity: "base" });
+        break;
+      case "value":
+        cmp = (a.value ?? 0) - (b.value ?? 0);
+        break;
+      case "last_activity": {
+        const aDate = a.last_activity_at;
+        const bDate = b.last_activity_at;
+        if (!aDate && !bDate) cmp = 0;
+        else if (!aDate) cmp = 1;
+        else if (!bDate) cmp = -1;
+        else cmp = aDate.localeCompare(bDate);
+        break;
+      }
+      case "days_in_stage":
+        cmp = daysInStage(a) - daysInStage(b);
+        break;
+      case "stage": {
+        const aStage =
+          STAGE_ORDER[
+            PIPELINE_STATUSES.includes(a.status as LeadStatus)
+              ? (a.status as LeadStatus)
+              : "new"
+          ];
+        const bStage =
+          STAGE_ORDER[
+            PIPELINE_STATUSES.includes(b.status as LeadStatus)
+              ? (b.status as LeadStatus)
+              : "new"
+          ];
+        cmp = aStage - bStage;
+        break;
+      }
+    }
+
+    return direction === "asc" ? cmp : -cmp;
+  });
+
+  return sorted;
+}
+
+export const DEFAULT_LEADS_SORT: LeadsSortKey = "follow_up_date";
+export const DEFAULT_LEADS_SORT_DIRECTION: LeadsSortDirection = "asc";
+
+export const LEADS_SORT_OPTIONS: {
+  key: LeadsSortKey;
+  label: string;
+  direction: LeadsSortDirection;
+}[] = [
+  { key: "follow_up_date", label: "Follow-up date", direction: "asc" },
+  { key: "name", label: "Name (A–Z)", direction: "asc" },
+  { key: "value", label: "Value (high to low)", direction: "desc" },
+  { key: "last_activity", label: "Last activity", direction: "desc" },
+  { key: "days_in_stage", label: "Days in stage", direction: "desc" },
+  { key: "stage", label: "Stage", direction: "asc" },
+];
