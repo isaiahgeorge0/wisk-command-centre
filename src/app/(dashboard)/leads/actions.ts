@@ -7,6 +7,8 @@ import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { emptyToNull, parseLeadValue } from "@/lib/leads/format";
 import type {
   ActionResult,
+  CallNotesActions,
+  CallNotesResult,
   ConvertLeadToProjectInput,
   Lead,
   LeadActivity,
@@ -458,4 +460,170 @@ export async function setLeadFollowUp(
 
   revalidatePath("/leads");
   return { success: true };
+}
+
+async function findProjectForLead(
+  supabase: Awaited<ReturnType<typeof getScopedSupabase>>["supabase"],
+  userId: string,
+  leadName: string
+): Promise<string | null> {
+  const { data } = await supabase
+    .from("projects")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("client_name", leadName)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  return data?.id ?? null;
+}
+
+export async function applyCallNotesResult(
+  leadId: string,
+  result: CallNotesResult,
+  selectedActions: CallNotesActions
+): Promise<ActionResult<Lead>> {
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { data: existing, error: existingError } = await supabase
+    .from("leads")
+    .select("*")
+    .eq("id", leadId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (existingError || !existing) {
+    return { success: false, error: "Lead not found" };
+  }
+
+  const updatePayload: Record<string, unknown> = {};
+  let tasksCreated = false;
+
+  if (selectedActions.saveNotes) {
+    const timestamp = new Date().toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+    const entry = `\n\n---\nWinston call notes (${timestamp})\n${result.summary.trim()}`;
+    const currentNotes = existing.notes?.trim() ?? "";
+    updatePayload.notes = currentNotes
+      ? `${currentNotes}${entry}`
+      : result.summary.trim();
+  }
+
+  if (
+    selectedActions.updateStage &&
+    result.suggestedStage &&
+    LEAD_STATUSES.includes(result.suggestedStage as LeadStatus)
+  ) {
+    updatePayload.status = result.suggestedStage;
+    if (result.suggestedStage === "contacted" && !existing.contacted_at) {
+      updatePayload.contacted_at = new Date().toISOString();
+    }
+  }
+
+  if (selectedActions.updateValue && result.suggestedValue != null) {
+    updatePayload.value = result.suggestedValue;
+  }
+
+  if (Object.keys(updatePayload).length > 0) {
+    const { error: updateError } = await supabase
+      .from("leads")
+      .update(updatePayload)
+      .eq("id", leadId)
+      .eq("user_id", userId);
+
+    if (updateError) {
+      console.error("applyCallNotesResult update lead:", updateError);
+      return { success: false, error: updateError.message };
+    }
+  }
+
+  if (selectedActions.setFollowUp && result.followUpDate) {
+    const followUpDate = result.followUpDate.slice(0, 10);
+    const { error: followUpError } = await supabase
+      .from("leads")
+      .update({ follow_up_date: followUpDate })
+      .eq("id", leadId)
+      .eq("user_id", userId);
+
+    if (followUpError) {
+      console.error("applyCallNotesResult follow-up:", followUpError);
+      return { success: false, error: followUpError.message };
+    }
+
+    await supabase.from("lead_activities").insert({
+      lead_id: leadId,
+      user_id: userId,
+      activity_type: "follow_up_set",
+      title: `Follow-up set for ${followUpDate}`,
+      metadata: { date: followUpDate },
+    });
+  }
+
+  if (selectedActions.createTasks.length > 0) {
+    const projectId = await findProjectForLead(
+      supabase,
+      userId,
+      existing.name
+    );
+
+    const { error: taskError } = await supabase.from("tasks").insert(
+      selectedActions.createTasks.map((title) => ({
+        user_id: userId,
+        title: title.trim(),
+        completed: false,
+        project_id: projectId,
+        priority: "medium",
+      }))
+    );
+
+    if (taskError) {
+      console.error("applyCallNotesResult create tasks:", taskError);
+      return { success: false, error: taskError.message };
+    }
+
+    tasksCreated = true;
+  }
+
+  const { error: activityError } = await supabase.from("lead_activities").insert({
+    lead_id: leadId,
+    user_id: userId,
+    activity_type: "ai_notes",
+    title: "Call notes processed by Winston",
+    content: result.summary,
+    metadata: {
+      sentiment: result.sentiment,
+      keyDetails: result.keyDetails,
+      objections: result.objections,
+      nextSteps: result.nextSteps,
+    },
+  });
+
+  if (activityError) {
+    console.error("applyCallNotesResult activity:", activityError);
+    return { success: false, error: activityError.message };
+  }
+
+  const { data: updatedLead, error: fetchError } = await supabase
+    .from("leads")
+    .select("*")
+    .eq("id", leadId)
+    .eq("user_id", userId)
+    .single();
+
+  if (fetchError || !updatedLead) {
+    console.error("applyCallNotesResult fetch updated lead:", fetchError);
+    return { success: false, error: "Could not load updated lead" };
+  }
+
+  revalidatePath("/leads");
+  if (tasksCreated) {
+    revalidatePath("/tasks");
+    revalidatePath("/");
+  }
+
+  return { success: true, data: updatedLead as Lead };
 }

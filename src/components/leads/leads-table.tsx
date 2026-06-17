@@ -34,6 +34,7 @@ import { cn } from "@/lib/utils";
 
 type LeadsTableProps = {
   leads: LeadWithActivity[];
+  canAccessWinston: boolean;
   filters: LeadsFilterState;
   onFiltersChange: (filters: LeadsFilterState) => void;
   onDelete: (lead: Lead) => void;
@@ -93,6 +94,7 @@ function SortIcon({
 
 export function LeadsTable({
   leads,
+  canAccessWinston,
   filters,
   onFiltersChange,
   onDelete,
@@ -292,6 +294,7 @@ export function LeadsTable({
                         <td colSpan={COLUMN_COUNT} className="px-4 py-4">
                           <LeadExpandedDetail
                             lead={lead}
+                            canAccessWinston={canAccessWinston}
                             onDelete={onDelete}
                             onLeadUpdate={onLeadUpdate}
                             onProjectCreated={onProjectCreated}
@@ -370,6 +373,7 @@ export function LeadsTable({
                 <div className="border-t border-border/50 px-4 py-4">
                   <LeadExpandedDetail
                     lead={lead}
+                    canAccessWinston={canAccessWinston}
                     onDelete={onDelete}
                     onLeadUpdate={onLeadUpdate}
                     onProjectCreated={onProjectCreated}

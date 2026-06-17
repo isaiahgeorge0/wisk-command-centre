@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 
 type LeadCardProps = {
   lead: Lead;
+  canAccessWinston: boolean;
   onDelete: (lead: Lead) => void;
   onLeadUpdate: (lead: Lead) => void;
   onProjectCreated?: (projectId: string) => void;
@@ -33,6 +34,7 @@ type LeadCardProps = {
 
 export function LeadCard({
   lead,
+  canAccessWinston,
   onDelete,
   onLeadUpdate,
   onProjectCreated,
@@ -172,6 +174,7 @@ export function LeadCard({
           <div onClick={(e) => e.stopPropagation()}>
             <LeadExpandedDetail
               lead={lead}
+              canAccessWinston={canAccessWinston}
               onDelete={onDelete}
               onLeadUpdate={onLeadUpdate}
               onProjectCreated={onProjectCreated}

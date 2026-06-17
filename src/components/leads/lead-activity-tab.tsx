@@ -21,6 +21,7 @@ import {
   getLeadActivities,
   setLeadFollowUp,
 } from "@/app/(dashboard)/leads/actions";
+import { LeadCallNotes } from "@/components/leads/lead-call-notes";
 import type {
   Lead,
   LeadActivity,
@@ -347,10 +348,17 @@ function ActivityItem({ activity, onDelete }: ActivityItemProps) {
 
 type LeadActivityTabProps = {
   lead: Lead;
+  canAccessWinston: boolean;
   onFollowUpChange: (date: string | null) => void;
+  onLeadUpdate: (lead: Lead) => void;
 };
 
-export function LeadActivityTab({ lead, onFollowUpChange }: LeadActivityTabProps) {
+export function LeadActivityTab({
+  lead,
+  canAccessWinston,
+  onFollowUpChange,
+  onLeadUpdate,
+}: LeadActivityTabProps) {
   const [activities, setActivities] = useState<LeadActivity[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [showLogForm, setShowLogForm] = useState(false);
@@ -388,6 +396,14 @@ export function LeadActivityTab({ lead, onFollowUpChange }: LeadActivityTabProps
     onFollowUpChange(date);
   };
 
+  const refreshActivities = () => {
+    getLeadActivities(lead.id).then((result) => {
+      if (result.success && result.data) {
+        setActivities(result.data);
+      }
+    });
+  };
+
   return (
     <div className="space-y-3 pt-1">
       {/* Follow-up reminder */}
@@ -414,6 +430,19 @@ export function LeadActivityTab({ lead, onFollowUpChange }: LeadActivityTabProps
           Log activity
         </button>
       )}
+
+      <LeadCallNotes
+        lead={lead}
+        canAccessWinston={canAccessWinston}
+        onNotesApplied={(updatedLead) => {
+          onLeadUpdate(updatedLead);
+          if (updatedLead.follow_up_date !== followUpDate) {
+            setFollowUpDate(updatedLead.follow_up_date);
+            onFollowUpChange(updatedLead.follow_up_date);
+          }
+        }}
+        onActivityAdded={refreshActivities}
+      />
 
       {/* Activity timeline */}
       {loading ? (

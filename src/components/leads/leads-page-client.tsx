@@ -40,6 +40,7 @@ const LEADS_VIEW_STORAGE_KEY = "wisk-leads-view";
 
 type LeadsPageClientProps = {
   initialLeads: LeadWithActivity[];
+  canAccessWinston: boolean;
 };
 
 const CELEBRATION_PARTICLES = [
@@ -135,7 +136,10 @@ function WonLeadCelebrationOverlay({
   );
 }
 
-export function LeadsPageClient({ initialLeads }: LeadsPageClientProps) {
+export function LeadsPageClient({
+  initialLeads,
+  canAccessWinston,
+}: LeadsPageClientProps) {
   const router = useRouter();
   const { leadAddOpen, setLeadAddOpen, openLeadAdd } = useQuickAdd();
   const [leads, setLeads] = useState<LeadWithActivity[]>(initialLeads);
@@ -312,6 +316,7 @@ export function LeadsPageClient({ initialLeads }: LeadsPageClientProps) {
               {hasFilteredLeads ? (
                 <LeadsPipeline
                   grouped={grouped}
+                  canAccessWinston={canAccessWinston}
                   onDelete={handleDeleteRequest}
                   onLeadUpdate={handleLeadUpdate}
                   onProjectCreated={() => setConvertSuccessOpen(true)}
@@ -335,6 +340,7 @@ export function LeadsPageClient({ initialLeads }: LeadsPageClientProps) {
           ) : (
             <LeadsTable
               leads={filteredLeads}
+              canAccessWinston={canAccessWinston}
               filters={filters}
               onFiltersChange={setFilters}
               onDelete={handleDeleteRequest}

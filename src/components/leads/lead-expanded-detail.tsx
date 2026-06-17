@@ -18,6 +18,7 @@ type ExpandedTab = "details" | "activity";
 
 type LeadExpandedDetailProps = {
   lead: Lead;
+  canAccessWinston: boolean;
   onDelete: (lead: Lead) => void;
   onLeadUpdate: (lead: Lead) => void;
   onProjectCreated?: (projectId: string) => void;
@@ -27,6 +28,7 @@ type LeadExpandedDetailProps = {
 
 export function LeadExpandedDetail({
   lead,
+  canAccessWinston,
   onDelete,
   onLeadUpdate,
   onProjectCreated,
@@ -207,7 +209,9 @@ export function LeadExpandedDetail({
         {activeTab === "activity" ? (
           <LeadActivityTab
             lead={lead}
+            canAccessWinston={canAccessWinston}
             onFollowUpChange={(date) => setLocalFollowUpDate(date)}
+            onLeadUpdate={onLeadUpdate}
           />
         ) : null}
       </div>

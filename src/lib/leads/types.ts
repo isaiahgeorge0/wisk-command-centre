@@ -107,3 +107,25 @@ export type LeadsFilterState = {
   search: string;
   stage: LeadStatus | "all";
 };
+
+export type CallNotesSentiment = "positive" | "neutral" | "negative";
+
+export type CallNotesResult = {
+  summary: string;
+  keyDetails: string[];
+  objections: string[];
+  nextSteps: string[];
+  suggestedStage: string | null;
+  suggestedValue: number | null;
+  followUpDate: string | null;
+  sentiment: CallNotesSentiment;
+  taskSuggestions: string[];
+};
+
+export type CallNotesActions = {
+  saveNotes: boolean;
+  updateStage: boolean;
+  updateValue: boolean;
+  setFollowUp: boolean;
+  createTasks: string[];
+};
