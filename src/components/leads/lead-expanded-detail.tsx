@@ -22,7 +22,6 @@ type LeadExpandedDetailProps = {
   onLeadUpdate: (lead: Lead) => void;
   onProjectCreated?: (projectId: string) => void;
   onStatusChange?: (status: LeadStatus) => void;
-  onCelebrate?: () => void;
   className?: string;
 };
 
@@ -32,7 +31,6 @@ export function LeadExpandedDetail({
   onLeadUpdate,
   onProjectCreated,
   onStatusChange,
-  onCelebrate,
   className,
 }: LeadExpandedDetailProps) {
   const router = useRouter();
@@ -59,7 +57,6 @@ export function LeadExpandedDetail({
     setError(null);
 
     startTransition(async () => {
-      const previousStatus = lead.status as LeadStatus;
       const result = await updateLead(lead.id, values);
       if (!result.success) {
         setError(result.error);
@@ -67,9 +64,6 @@ export function LeadExpandedDetail({
       }
       if (result.data) {
         onLeadUpdate(result.data);
-        if (result.data.status === "won" && previousStatus !== "won") {
-          onCelebrate?.();
-        }
       }
       setEditing(false);
       router.refresh();
@@ -224,7 +218,6 @@ export function LeadExpandedDetail({
         onOpenChange={setConvertOpen}
         onConverted={(_leadId, projectId) => {
           setConvertOpen(false);
-          onCelebrate?.();
           onLeadUpdate({ ...lead, status: "won" });
           onProjectCreated?.(projectId);
           router.refresh();

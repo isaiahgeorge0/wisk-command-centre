@@ -1,14 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { useCallback, useState, useTransition } from "react";
 
 import { updateLead } from "@/app/(dashboard)/leads/actions";
 import { ExpandableSection } from "@/components/motion/expandable-section";
 import { LeadExpandedDetail } from "@/components/leads/lead-expanded-detail";
 import { LeadForm } from "@/components/leads/lead-form";
 import { LeadSourceBadge } from "@/components/leads/lead-source-badge";
-import { LeadWonCelebrationTrigger } from "@/components/leads/lead-won-celebration";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -46,25 +45,13 @@ export function LeadCard({
   const [editing, setEditing] = useState(false);
   const [values, setValues] = useState<LeadFormInput>(leadToFormInput(lead));
   const [error, setError] = useState<string | null>(null);
-  const [celebrate, setCelebrate] = useState(false);
   const [isPending, startTransition] = useTransition();
   const formId = `edit-lead-${lead.id}`;
   const status = (lead.status as LeadStatus) ?? "new";
-  const prevStatusRef = useRef(status);
-
-  useEffect(() => {
-    if (status === "won" && prevStatusRef.current !== "won") {
-      setCelebrate(true);
-    }
-    prevStatusRef.current = status;
-  }, [status]);
 
   const handleLeadUpdated = useCallback(
-    (updated: Lead, previousStatus: LeadStatus) => {
+    (updated: Lead) => {
       onLeadUpdate(updated);
-      if (updated.status === "won" && previousStatus !== "won") {
-        setCelebrate(true);
-      }
     },
     [onLeadUpdate]
   );
@@ -80,14 +67,13 @@ export function LeadCard({
     setError(null);
 
     startTransition(async () => {
-      const previousStatus = lead.status as LeadStatus;
       const result = await updateLead(lead.id, values);
       if (!result.success) {
         setError(result.error);
         return;
       }
       if (result.data) {
-        handleLeadUpdated(result.data, previousStatus);
+        handleLeadUpdated(result.data);
       }
       setEditing(false);
       router.refresh();
@@ -142,17 +128,11 @@ export function LeadCard({
         "relative border-border/70 bg-card/80 shadow-sm transition-colors hover:bg-card",
         isDragOverlay && "shadow-md",
         !isDragOverlay && "cursor-pointer",
-        celebrate && "border-amber-400/70 ring-2 ring-amber-400/50",
         LEAD_CARD_STATUS_CLASS[status] ?? LEAD_CARD_STATUS_CLASS.new,
         className
       )}
       onClick={isDragOverlay ? undefined : handleCardClick}
     >
-      <LeadWonCelebrationTrigger
-        celebrate={celebrate}
-        onComplete={() => setCelebrate(false)}
-      />
-
       <CardHeader className="gap-2 px-4 pb-2 pt-4">
         <div className="flex items-start justify-between gap-2">
           <h3
@@ -196,7 +176,6 @@ export function LeadCard({
               onLeadUpdate={onLeadUpdate}
               onProjectCreated={onProjectCreated}
               onStatusChange={onStatusChange}
-              onCelebrate={() => setCelebrate(true)}
             />
           </div>
         </ExpandableSection>
