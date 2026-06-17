@@ -10,7 +10,6 @@ import { updateAccountSetup } from "@/app/set-password/actions";
 import { AcronymReveal } from "@/components/set-password/acronym-reveal";
 import { UsernameField } from "@/components/username/username-field";
 import { ThemePreferenceCards } from "@/components/welcome/theme-preference-cards";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MOTION_DURATION, MOTION_EASE } from "@/lib/motion/config";

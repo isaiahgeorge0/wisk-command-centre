@@ -1,6 +1,5 @@
 import {
   ACTIVE_PIPELINE_STATUSES,
-  LEAD_STATUS_LABELS,
   PIPELINE_STATUSES,
 } from "@/lib/leads/constants";
 import { daysInStage } from "@/lib/leads/format";

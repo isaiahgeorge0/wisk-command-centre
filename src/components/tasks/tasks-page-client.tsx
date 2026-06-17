@@ -12,7 +12,6 @@ import { TasksEmptyState } from "@/components/tasks/tasks-empty-state";
 import { TasksList } from "@/components/tasks/tasks-list";
 import { useQuickAdd } from "@/components/quick-add/quick-add-context";
 import { Button } from "@/components/ui/button";
-import { PAGE_SUBTITLE_CLASS, PAGE_TITLE_CLASS } from "@/lib/navigation";
 import { DEFAULT_TASK_FILTERS } from "@/lib/tasks/constants";
 import { applyTaskFilters } from "@/lib/tasks/selectors";
 import type { ProjectOption, TaskFilters, TaskWithProject } from "@/lib/tasks/types";

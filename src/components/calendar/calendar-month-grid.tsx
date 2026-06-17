@@ -1,7 +1,5 @@
 "use client";
 
-import type { ReactNode } from "react";
-
 import { CalendarDayCell } from "@/components/calendar/calendar-day-cell";
 import { CalendarMonthHeader } from "@/components/calendar/calendar-month-header";
 import { WEEKDAY_LABELS } from "@/lib/calendar/constants";
