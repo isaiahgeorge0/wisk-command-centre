@@ -20,7 +20,8 @@ For a full feature inventory, see `docs/product/roadmap.md`.
 | `tasks` | Tasks (optional project link) |
 | `goals` | Business goals with progress tracking |
 | `ideas` | Idea bank |
-| `leads` | Sales pipeline |
+| `leads` | Sales pipeline (includes `follow_up_date` — migration 033) |
+| `lead_activities` | Lead engagement timeline (migration 033) |
 | `content_posts` | Content calendar and board |
 | `project_milestones` | Milestones per project |
 | `notifications` | In-app notifications |
@@ -31,6 +32,41 @@ For a full feature inventory, see `docs/product/roadmap.md`.
 | `changelog_entries` | What's New panel entries |
 | `blog_posts` | Marketing blog (admin-authored) |
 | `ai_reports` | Winston weekly digest content |
+
+---
+
+---
+
+## `leads` (`follow_up_date` — migration 033)
+
+Sales pipeline leads. Migration 033 adds a follow-up reminder date.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `follow_up_date` | date | Nullable; optional follow-up reminder date. Used for overdue detection in table view and notifications. |
+
+All other `leads` columns are unchanged from the original schema.
+
+---
+
+## `lead_activities` (migration 033)
+
+Timeline of interactions and system events per lead.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | uuid | Primary key |
+| `lead_id` | uuid | References `public.leads(id)` |
+| `user_id` | uuid | References `public.users(id)` |
+| `activity_type` | text | `note` \| `call` \| `email` \| `meeting` \| `stage_change` \| `follow_up_set` \| `ai_notes` |
+| `title` | text | Short summary of the activity |
+| `content` | text | Nullable; longer notes or body text |
+| `metadata` | jsonb | Nullable; structured extras (e.g. stage change, sentiment, extracted details) |
+| `created_at` | timestamptz | Default `now()` |
+
+**RLS:** Users can select, insert, and delete their own rows.
+
+**Triggers:** Stage changes on `leads` are auto-logged as `stage_change` activities via database trigger.
 
 ---
 
@@ -183,3 +219,4 @@ public.users
 | `028_tasks_updated_at.sql` | `tasks.updated_at` column + trigger |
 | `029_winston_chat.sql` | `ai_conversation_messages`, `ai_context_cache` |
 | `030_winston_usage.sql` | `ai_usage_log` table |
+| `033_lead_activities.sql` | `lead_activities` table; `follow_up_date` on `leads`; stage-change trigger |

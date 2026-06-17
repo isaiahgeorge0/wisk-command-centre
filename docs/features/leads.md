@@ -9,8 +9,9 @@
 - Collapse/expand per stage
 - Drag and drop between stages (desktop)
 - Status menu for mobile/touch
-- Won celebration: confetti particles,
-  gold trophy overlay, amber border flash
+- Won celebration: full-page overlay with confetti
+  and trophy; fires from confirmed server response;
+  works in pipeline and table views
 - Fields: name, email, phone, source,
   service interest, status, value, notes
 - Source badges
@@ -26,12 +27,20 @@
   same action.
 - Success toast with link to /projects
   after conversion
+- Activity log per lead with timeline view
+- Activity types: Note, Call, Email, Meeting,
+  stage changes (auto-logged), AI notes
+- Follow-up date per lead with overdue detection
+- Follow-up overdue notifications
+- Table/list view with 7 columns
+- Sortable and filterable table
+- Toggle between Pipeline and Table views
+- AI call notes processor (Winston-powered,
+  gated behind WISK AI)
 
 ## Gaps and Missing Features
 
 What is missing or underdeveloped, with a priority rating (High/Medium/Low) per item.
-- Follow-up reminders — **High**
-- Lead activity log — **Medium**
 - Source analytics on overview — **Medium**
 - Email integration — **Low**
 - Lead scoring — **Low**
@@ -40,15 +49,17 @@ What is missing or underdeveloped, with a priority rating (High/Medium/Low) per 
 ## Planned Additions (Phase 2)
 
 - Lead → project conversion — COMPLETE
-- Follow-up reminders — still planned
-- Activity log — still planned
+- Follow-up reminders — COMPLETE
+- Activity log — COMPLETE
 
 ## Future Considerations (Phase 3+)
 
 Features that are on the radar but not yet committed.
 
-- Email integration
-- Lead scoring
+- Email integration for direct sending
+  from lead card (Phase 3.2)
+- Lead scoring (Phase 3.1 smart suggestions)
+- mailto: email button with Winston draft
 - Bulk import
 - AI qualification
 
@@ -59,3 +70,10 @@ Any important technical context, constraints, or decisions relevant to this sect
 - `contacted_at` set automatically on first move to Contacted status
 - Used for average response time stat
 - Pipeline value sums `value` field across active stages
+- `lead_activities` table stores timeline entries;
+  stage changes auto-logged via DB trigger (migration 033)
+- `follow_up_date` on leads drives overdue
+  detection and notifications
+- AI call notes: `/api/winston/process-call-notes`
+  extracts structured data; `applyCallNotesResult`
+  server action applies selected updates

@@ -630,6 +630,37 @@ built and delivered ahead of schedule):
 - Admin toggle per user in admin panel
 - Admin per-user digest generation trigger
 
+**Lead activity log and follow-up reminders:**
+- `lead_activities` table (migration 033)
+- Activity types: note, call, email, meeting,
+  stage_change, follow_up_set, ai_notes
+- Auto-logged stage changes via DB trigger
+- `follow_up_date` added to leads table
+- Follow-up overdue notifications
+- Winston context updated with engagement data
+
+**Leads table/list view:**
+- Toggle between Pipeline and Table views
+- 7 columns with colour coding
+- Sortable, filterable, shared filter state
+- Inline stage changes
+- Mobile simplified list view
+
+**Won celebration overlay:**
+- Full-page celebration on lead won
+- Fires from confirmed server response
+- Works in both pipeline and table views
+
+**AI call notes processor (Winston):**
+- Paste call transcript → Winston extracts
+  structured data
+- Extracts: summary, key details, objections,
+  next steps, suggested stage, value,
+  follow-up date, sentiment, task suggestions
+- User reviews and selects which actions to apply
+- Gated behind `ai_access` / WISK AI subscription
+- Teaser shown to non-access users
+
 ### Deferred
 
 - **Task file attachments** — deferred until
@@ -805,6 +836,23 @@ Features:
 #### Commerce Package
 
 Target: ecommerce founders, indie sellers, hybrid creator-merchants
+
+**Foundation feature: Invoicing**
+
+- Create invoices linked to projects and/or leads
+- Pre-populated from project data (client,
+  value, tasks as line items)
+- Auto-incrementing invoice numbers
+- Line items: description, quantity, rate, amount
+- Status tracking: Draft → Sent → Paid / Overdue
+- PDF generation and download
+- Send via email (requires email OAuth — Phase 3.2)
+- Payment link via Stripe (requires billing — Phase 3.2)
+- Invoice reminders (automated follow-ups)
+- Winston insights: average payment time,
+  overdue invoice alerts, revenue forecasting
+- Revenue dashboard connected to projects and leads
+- Connects to Shopify/Square/Stripe integrations
 
 Integrations:
 - Shopify Admin API
