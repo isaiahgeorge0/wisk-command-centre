@@ -13,7 +13,7 @@ export default function ContentLayout({
 }) {
   return (
     <div>
-      <SectionSubNav items={PLAN_NAV} />
+      <SectionSubNav items={PLAN_NAV} desktopHidden />
       {children}
     </div>
   );

@@ -14,9 +14,10 @@ export type SectionSubNavItem = {
 
 type SectionSubNavProps = {
   items: SectionSubNavItem[];
+  desktopHidden?: boolean;
 };
 
-export function SectionSubNav({ items }: SectionSubNavProps) {
+export function SectionSubNav({ items, desktopHidden = false }: SectionSubNavProps) {
   const pathname = usePathname();
   const reduced = useReducedMotion() ?? false;
 
@@ -29,7 +30,10 @@ export function SectionSubNav({ items }: SectionSubNavProps) {
   return (
     <nav
       aria-label="Section navigation"
-      className="mb-6 overflow-x-auto scrollbar-hide"
+      className={cn(
+        "mb-6 overflow-x-auto scrollbar-hide",
+        desktopHidden && "md:hidden"
+      )}
     >
       <div className="flex min-w-max gap-0 border-b border-border/60">
         {items.map((item) => {

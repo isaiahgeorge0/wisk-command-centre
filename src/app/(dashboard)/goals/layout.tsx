@@ -13,7 +13,7 @@ export default function GoalsLayout({
 }) {
   return (
     <div>
-      <SectionSubNav items={WORK_NAV} />
+      <SectionSubNav items={WORK_NAV} desktopHidden />
       {children}
     </div>
   );

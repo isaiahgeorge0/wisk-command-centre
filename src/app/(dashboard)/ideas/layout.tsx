@@ -13,7 +13,7 @@ export default function IdeasLayout({
 }) {
   return (
     <div>
-      <SectionSubNav items={PLAN_NAV} />
+      <SectionSubNav items={PLAN_NAV} desktopHidden />
       {children}
     </div>
   );
