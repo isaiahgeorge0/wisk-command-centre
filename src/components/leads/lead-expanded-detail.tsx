@@ -7,6 +7,7 @@ import { useState, useTransition } from "react";
 import { updateLead } from "@/app/(dashboard)/leads/actions";
 import { ConvertLeadDialog } from "@/components/leads/convert-lead-dialog";
 import { LeadActivityTab } from "@/components/leads/lead-activity-tab";
+import { LeadEmailActions } from "@/components/leads/lead-email-actions";
 import { LeadForm } from "@/components/leads/lead-form";
 import { LeadStatusMenu } from "@/components/leads/lead-status-menu";
 import { Button } from "@/components/ui/button";
@@ -140,7 +141,14 @@ export function LeadExpandedDetail({
           <div className="space-y-3">
             {lead.email ? (
               <p className="text-xs text-muted-foreground">
-                Email: <span className="text-foreground">{lead.email}</span>
+                Email:{" "}
+                <a
+                  href={`mailto:${lead.email}`}
+                  className="text-sm text-wisk-teal hover:underline"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {lead.email}
+                </a>
               </p>
             ) : null}
             {lead.phone ? (
@@ -176,6 +184,10 @@ export function LeadExpandedDetail({
               currentStatus={status}
               onStatusChange={(nextStatus) => onStatusChange?.(nextStatus)}
               disabled={isPending}
+            />
+            <LeadEmailActions
+              lead={lead}
+              canAccessWinston={canAccessWinston}
             />
             <div className="flex flex-wrap gap-2">
               <Button
