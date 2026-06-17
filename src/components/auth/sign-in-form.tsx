@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MOTION_DURATION } from "@/lib/motion/config";
 import { createClient } from "@/lib/supabase/client";
+import { lookupEmailByUsername } from "@/app/sign-in/actions";
 
 export function SignInForm() {
   const router = useRouter();
@@ -46,9 +47,25 @@ export function SignInForm() {
     setError(null);
     setLoading(true);
 
+    const input = email.trim();
+    // Determine if input is a username: starts with @ or contains no @ at all
+    const isUsername = input.startsWith("@") || !input.includes("@");
+    let resolvedEmail = input;
+
+    if (isUsername) {
+      const usernameRaw = input.startsWith("@") ? input.slice(1) : input;
+      const lookup = await lookupEmailByUsername(usernameRaw);
+      if (!lookup.success) {
+        setError(lookup.error);
+        setLoading(false);
+        return;
+      }
+      resolvedEmail = lookup.email;
+    }
+
     const supabase = createClient();
     const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
+      email: resolvedEmail,
       password,
     });
 
@@ -117,11 +134,11 @@ export function SignInForm() {
             >
               <div className="grid gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">Email or username</Label>
                   <Input
                     id="email"
-                    type="email"
-                    autoComplete="email"
+                    type="text"
+                    autoComplete="username email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     disabled={loading || isTransitioning}

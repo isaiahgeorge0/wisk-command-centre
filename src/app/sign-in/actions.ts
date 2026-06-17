@@ -9,6 +9,33 @@ import { emailIsRegistered } from "@/lib/auth/email-is-registered";
 import { sendAccessRequestConfirmation } from "@/lib/email/resend";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+export type LookupResult =
+  | { success: true; email: string }
+  | { success: false; error: string };
+
+export async function lookupEmailByUsername(
+  username: string
+): Promise<LookupResult> {
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("users")
+    .select("email")
+    .ilike("username", username.trim())
+    .maybeSingle();
+
+  if (error) {
+    console.error("lookupEmailByUsername:", error);
+    return { success: false, error: "Could not look up account" };
+  }
+
+  if (!data) {
+    return { success: false, error: "No account found with that username" };
+  }
+
+  return { success: true, email: data.email };
+}
+
 const accessRequestSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
   email: z.string().trim().email("Enter a valid email address"),

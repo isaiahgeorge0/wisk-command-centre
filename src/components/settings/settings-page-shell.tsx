@@ -13,6 +13,7 @@ type SettingsPageShellProps = {
   email: string;
   displayName: string;
   accountName: string;
+  username?: string | null;
   fieldVisibility: FieldVisibility;
   serviceTypes: string[];
   integrations: SafeIntegration[];

@@ -26,6 +26,7 @@ type SettingsPageClientProps = {
   email: string;
   displayName: string;
   accountName: string;
+  username?: string | null;
   fieldVisibility: FieldVisibility;
   serviceTypes: string[];
   integrations: SafeIntegration[];
@@ -40,6 +41,7 @@ export function SettingsPageClient({
   email,
   displayName,
   accountName,
+  username = null,
   fieldVisibility,
   serviceTypes,
   integrations,
@@ -86,6 +88,7 @@ export function SettingsPageClient({
             email={email}
             initialDisplayName={displayName}
             initialName={accountName}
+            initialUsername={username ?? null}
           />
           <SettingsToolsSection />
         </>

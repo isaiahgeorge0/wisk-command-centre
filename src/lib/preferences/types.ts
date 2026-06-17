@@ -50,6 +50,7 @@ export type UserPreferencesRow = {
   theme_preference: string;
   feedback_welcome_shown: boolean;
   last_seen_changelog: string | null;
+  username_set: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -66,6 +67,7 @@ export type UserPreferences = {
   themePreference: ThemePreference;
   feedbackWelcomeShown: boolean;
   lastSeenChangelog: string | null;
+  usernameSet: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -153,6 +155,7 @@ export function rowToUserPreferences(row: UserPreferencesRow): UserPreferences {
     themePreference: normalizeThemePreference(row.theme_preference),
     feedbackWelcomeShown: row.feedback_welcome_shown ?? false,
     lastSeenChangelog: row.last_seen_changelog ?? null,
+    usernameSet: row.username_set ?? false,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

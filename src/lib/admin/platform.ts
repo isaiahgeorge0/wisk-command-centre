@@ -45,6 +45,7 @@ export type AdminUserHealth = {
   id: string;
   email: string;
   name: string | null;
+  username: string | null;
   created_at: string;
   last_sign_in_at: string | null;
   project_count: number;

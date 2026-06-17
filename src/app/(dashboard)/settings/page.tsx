@@ -13,7 +13,7 @@ import { getOrCreateUserPreferences } from "@/lib/preferences/get-user-preferenc
 export default async function SettingsPage() {
   const { supabase, userId } = await getScopedSupabase();
 
-  const [profile, preferences, integrations, prefsRow, usageResult, billing] =
+  const [profile, preferences, integrations, prefsRow, usageResult, billing, userRow] =
     await Promise.all([
       getUserProfile(),
       getOrCreateUserPreferences(),
@@ -25,6 +25,11 @@ export default async function SettingsPage() {
         .maybeSingle(),
       getMonthlyUsage(),
       getUserBillingSummary(userId),
+      supabase
+        .from("users")
+        .select("username")
+        .eq("id", userId)
+        .maybeSingle(),
     ]);
 
   const aiAccess = prefsRow.data?.ai_access === true;
@@ -47,6 +52,7 @@ export default async function SettingsPage() {
         email={profile.email}
         displayName={displayName}
         accountName={accountName}
+        username={userRow.data?.username ?? null}
         fieldVisibility={preferences.fieldVisibility}
         serviceTypes={preferences.serviceTypes}
         integrations={integrations}

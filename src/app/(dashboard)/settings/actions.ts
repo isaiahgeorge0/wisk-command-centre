@@ -9,6 +9,7 @@ import {
   type ThemePreference,
 } from "@/lib/preferences/types";
 import { createClient } from "@/lib/supabase/server";
+import { formatUsername, validateUsername } from "@/lib/users/username";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -309,4 +310,74 @@ export async function reorderServiceType(
   next.splice(nextIndex, 0, item!);
 
   return updateServiceTypes(next);
+}
+
+export async function checkUsernameAvailable(
+  username: string
+): Promise<SettingsActionResult<{ available: boolean }>> {
+  const validation = validateUsername(username);
+  if (!validation.valid) {
+    return { success: false, error: validation.error ?? "Invalid username" };
+  }
+
+  const { supabase } = await getScopedSupabase();
+  const lower = formatUsername(username);
+
+  const { data, error } = await supabase
+    .from("users")
+    .select("id")
+    .ilike("username", lower)
+    .maybeSingle();
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  return { success: true, data: { available: data === null } };
+}
+
+export async function setUsername(
+  username: string
+): Promise<SettingsActionResult> {
+  const validation = validateUsername(username);
+  if (!validation.valid) {
+    return { success: false, error: validation.error ?? "Invalid username" };
+  }
+
+  const lower = formatUsername(username);
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { data: existing } = await supabase
+    .from("users")
+    .select("id")
+    .ilike("username", lower)
+    .maybeSingle();
+
+  if (existing) {
+    return { success: false, error: "This username is already taken" };
+  }
+
+  const { error: usersError } = await supabase
+    .from("users")
+    .update({ username: lower })
+    .eq("id", userId);
+
+  if (usersError) {
+    if (usersError.code === "23505") {
+      return { success: false, error: "This username is already taken" };
+    }
+    return { success: false, error: usersError.message };
+  }
+
+  const { error: prefsError } = await supabase
+    .from("user_preferences")
+    .update({ username_set: true })
+    .eq("user_id", userId);
+
+  if (prefsError) {
+    console.error("setUsername prefs:", prefsError);
+  }
+
+  revalidatePath("/settings");
+  return { success: true };
 }

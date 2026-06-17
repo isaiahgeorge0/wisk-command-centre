@@ -59,6 +59,7 @@ export function parseStoredPreferences(row: UserPreferencesRow): UserPreferences
     themePreference: normalizeThemePreference(row.theme_preference),
     feedbackWelcomeShown: row.feedback_welcome_shown ?? false,
     lastSeenChangelog: row.last_seen_changelog ?? null,
+    usernameSet: row.username_set ?? false,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

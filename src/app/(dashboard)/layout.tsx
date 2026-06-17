@@ -86,6 +86,7 @@ export default async function DashboardLayout({
         feedbackWelcomeShown={preferences.feedbackWelcomeShown}
         changelogEntries={changelogEntries}
         unreadChangelogCount={unreadChangelogCount}
+        usernameSet={preferences.usernameSet}
         projectOptions={projects.map((project) => ({
           id: project.id,
           project_name: project.project_name,

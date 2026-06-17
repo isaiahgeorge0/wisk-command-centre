@@ -205,10 +205,11 @@ export function UsersHealthClient({ users, summary }: UsersHealthClientProps) {
       </div>
 
       <div className="overflow-x-auto rounded-xl ring-1 ring-foreground/10">
-        <table className="w-full min-w-[1040px] text-left text-sm">
+        <table className="w-full min-w-[1100px] text-left text-sm">
           <thead className="border-b bg-muted/40 text-muted-foreground">
             <tr>
               <th className="px-4 py-3 font-medium">Name</th>
+              <th className="px-4 py-3 font-medium">Username</th>
               <th className="px-4 py-3 font-medium">Email</th>
               <th className="px-4 py-3 font-medium">Joined</th>
               <th className="px-4 py-3 font-medium">Last login</th>
@@ -230,7 +231,7 @@ export function UsersHealthClient({ users, summary }: UsersHealthClientProps) {
             {filtered.length === 0 ? (
               <tr>
                 <td
-                  colSpan={9}
+                  colSpan={10}
                   className="px-4 py-8 text-center text-muted-foreground"
                 >
                   No users found.
@@ -241,6 +242,15 @@ export function UsersHealthClient({ users, summary }: UsersHealthClientProps) {
                 <tr key={user.id} className="border-b last:border-b-0">
                   <td className="px-4 py-3 font-medium">
                     {user.name?.trim() || "—"}
+                  </td>
+                  <td className="px-4 py-3">
+                    {user.username ? (
+                      <span className="font-mono text-xs text-foreground">
+                        @{user.username}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground/40">—</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {user.email}

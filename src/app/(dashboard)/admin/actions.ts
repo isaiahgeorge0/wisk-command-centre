@@ -644,7 +644,7 @@ export async function getUsersWithHealth(): Promise<AdminUserHealth[]> {
     await Promise.all([
       supabase
         .from("users")
-        .select("id, email, name, created_at")
+        .select("id, email, name, username, created_at")
         .order("created_at", { ascending: false }),
       supabase.from("projects").select("user_id"),
       supabase.from("tasks").select("user_id"),
@@ -675,6 +675,7 @@ export async function getUsersWithHealth(): Promise<AdminUserHealth[]> {
       id: user.id,
       email: user.email,
       name: user.name,
+      username: user.username ?? null,
       created_at: user.created_at,
       last_sign_in_at: lastSignIn,
       project_count: projectCounts.get(user.id) ?? 0,

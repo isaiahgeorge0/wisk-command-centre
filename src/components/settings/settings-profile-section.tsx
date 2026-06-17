@@ -1,14 +1,17 @@
 "use client";
 
+import { Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import {
   changePassword,
+  setUsername,
   updateDisplayName,
   updateProfileName,
 } from "@/app/(dashboard)/settings/actions";
 import { UserAvatar } from "@/components/settings/user-avatar";
+import { UsernameField } from "@/components/username/username-field";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,17 +22,20 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { displayUsername } from "@/lib/users/username";
 
 type SettingsProfileSectionProps = {
   email: string;
   initialDisplayName: string;
   initialName: string;
+  initialUsername: string | null;
 };
 
 export function SettingsProfileSection({
   email,
   initialDisplayName,
   initialName,
+  initialUsername,
 }: SettingsProfileSectionProps) {
   const router = useRouter();
   const [displayName, setDisplayName] = useState(initialDisplayName);
@@ -43,6 +49,33 @@ export function SettingsProfileSection({
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [isProfilePending, startProfileTransition] = useTransition();
   const [isPasswordPending, startPasswordTransition] = useTransition();
+
+  // Username state
+  const [savedUsername, setSavedUsername] = useState(initialUsername);
+  const [usernameEditMode, setUsernameEditMode] = useState(!initialUsername);
+  const [usernameInput, setUsernameInput] = useState(initialUsername ?? "");
+  const [usernameAvailable, setUsernameAvailable] = useState(false);
+  const [usernameMessage, setUsernameMessage] = useState<string | null>(null);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [isUsernamePending, startUsernameTransition] = useTransition();
+
+  const handleSaveUsername = (e: React.FormEvent) => {
+    e.preventDefault();
+    setUsernameMessage(null);
+    setUsernameError(null);
+
+    startUsernameTransition(async () => {
+      const result = await setUsername(usernameInput);
+      if (!result.success) {
+        setUsernameError(result.error);
+        return;
+      }
+      setSavedUsername(usernameInput.toLowerCase().trim());
+      setUsernameEditMode(false);
+      setUsernameMessage("Username saved.");
+      router.refresh();
+    });
+  };
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,6 +142,73 @@ export function SettingsProfileSection({
             </p>
             <p className="truncate text-sm text-muted-foreground">{email}</p>
           </div>
+        </div>
+
+        {/* Username section */}
+        <div className="max-w-md border-b border-border/50 pb-8">
+          <h3 className="mb-4 text-sm font-medium text-foreground">Username</h3>
+          {!usernameEditMode && savedUsername ? (
+            <div className="flex items-center gap-3">
+              <span className="rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-sm font-medium text-foreground">
+                {displayUsername(savedUsername)}
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setUsernameInput(savedUsername);
+                  setUsernameEditMode(true);
+                  setUsernameMessage(null);
+                  setUsernameError(null);
+                }}
+              >
+                <Pencil className="mr-1.5 size-3.5" aria-hidden />
+                Change
+              </Button>
+              {usernameMessage ? (
+                <p className="text-xs text-wisk-teal">{usernameMessage}</p>
+              ) : null}
+            </div>
+          ) : (
+            <form onSubmit={handleSaveUsername} className="grid gap-4">
+              <UsernameField
+                id="settings-username"
+                value={usernameInput}
+                onChange={setUsernameInput}
+                onAvailabilityChange={setUsernameAvailable}
+                disabled={isUsernamePending}
+                currentUsername={savedUsername}
+              />
+              {usernameError ? (
+                <p className="text-sm text-destructive">{usernameError}</p>
+              ) : null}
+              <div className="flex gap-2">
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={isUsernamePending || !usernameAvailable || !usernameInput.trim()}
+                  className="w-fit"
+                >
+                  {isUsernamePending ? "Saving…" : "Save username"}
+                </Button>
+                {savedUsername ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setUsernameInput(savedUsername);
+                      setUsernameEditMode(false);
+                      setUsernameError(null);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                ) : null}
+              </div>
+            </form>
+          )}
         </div>
 
         <form onSubmit={handleSaveProfile} className="grid max-w-md gap-4">

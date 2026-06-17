@@ -8,6 +8,7 @@ import { useTheme } from "next-themes";
 
 import { updateAccountSetup } from "@/app/set-password/actions";
 import { AcronymReveal } from "@/components/set-password/acronym-reveal";
+import { UsernameField } from "@/components/username/username-field";
 import { ThemePreferenceCards } from "@/components/welcome/theme-preference-cards";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +32,8 @@ export function SetPasswordClient({
 
   const [animationDone, setAnimationDone] = useState(reduced);
   const [displayName, setDisplayName] = useState(defaultName);
+  const [username, setUsername] = useState("");
+  const [usernameAvailable, setUsernameAvailable] = useState(false);
   const [themePreference, setThemePreference] = useState<ThemePreference>("dark");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -53,6 +56,14 @@ export function SetPasswordClient({
       setError("Please enter your name.");
       return;
     }
+    if (!username.trim()) {
+      setError("Please choose a username.");
+      return;
+    }
+    if (!usernameAvailable) {
+      setError("Please choose an available username.");
+      return;
+    }
     if (password.length < 8) {
       setError("Password must be at least 8 characters.");
       return;
@@ -72,7 +83,7 @@ export function SetPasswordClient({
         return;
       }
 
-      const result = await updateAccountSetup({ displayName, themePreference });
+      const result = await updateAccountSetup({ displayName, username, themePreference });
 
       if (!result.success) {
         setError(result.error);
@@ -152,6 +163,14 @@ export function SetPasswordClient({
                     required
                   />
                 </div>
+
+                <UsernameField
+                  id="sp-username"
+                  value={username}
+                  onChange={setUsername}
+                  onAvailabilityChange={setUsernameAvailable}
+                  disabled={isPending}
+                />
 
                 <div className="space-y-2">
                   <Label>Theme preference</Label>
@@ -263,7 +282,7 @@ export function SetPasswordClient({
 
                 <button
                   type="submit"
-                  disabled={isPending || !agreedToTerms}
+                  disabled={isPending || !agreedToTerms || !usernameAvailable}
                   className="w-full rounded-lg bg-gradient-to-r from-wisk-purple to-wisk-teal px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isPending ? "Setting up…" : "Get started →"}

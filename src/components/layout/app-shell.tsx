@@ -1,11 +1,12 @@
 "use client";
 
-import { Suspense } from "react";
+import React, { Suspense } from "react";
 
 import { AnnouncementBanner } from "@/components/announcements/announcement-banner";
 import { PasswordUpdatedToastHandler } from "@/components/auth/password-updated-toast-handler";
 import { FeedbackWelcomeModal } from "@/components/feedback/feedback-welcome-modal";
 import { OnboardingOverlay } from "@/components/onboarding/onboarding-overlay";
+import { UsernamePromptModal } from "@/components/username/username-prompt-modal";
 import { OnboardingProvider } from "@/components/onboarding/onboarding-context";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { QuickAddFab } from "@/components/layout/quick-add-fab";
@@ -42,6 +43,7 @@ type AppShellProps = {
   unreadChangelogCount: number;
   projectOptions: ProjectOption[];
   contentGoals: Pick<Goal, "id" | "title">[];
+  usernameSet: boolean;
 };
 
 function GlobalTaskFormDialog({
@@ -94,7 +96,12 @@ export function AppShell({
   unreadChangelogCount,
   projectOptions,
   contentGoals,
+  usernameSet,
 }: AppShellProps) {
+  const [showUsernamePrompt, setShowUsernamePrompt] = React.useState(
+    !usernameSet
+  );
+
   const showFeedbackWelcome =
     onboardingCompleted &&
     projectTourCompleted &&
@@ -135,6 +142,11 @@ export function AppShell({
               <Suspense fallback={null}>
                 <PasswordUpdatedToastHandler />
               </Suspense>
+              {showUsernamePrompt ? (
+                <UsernamePromptModal
+                  onComplete={() => setShowUsernamePrompt(false)}
+                />
+              ) : null}
             </div>
           </SpotlightTourProvider>
         </QuickAddProvider>
