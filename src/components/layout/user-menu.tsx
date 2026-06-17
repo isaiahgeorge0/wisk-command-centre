@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Settings, Users } from "lucide-react";
+import Link from "next/link";
 
 import { signOut } from "@/app/(dashboard)/actions/auth";
 import { Button } from "@/components/ui/button";
@@ -8,8 +9,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
 
 type UserMenuProps = {
   userEmail: string;
@@ -40,6 +43,22 @@ export function UserMenu({ userEmail, userName }: UserMenuProps) {
             <p className="truncate text-xs text-muted-foreground">{userEmail}</p>
           ) : null}
         </div>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          render={<Link href="/connections" />}
+          className="flex items-center gap-2"
+        >
+          <Users className="size-4 text-muted-foreground" />
+          Connections
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          render={<Link href="/settings" />}
+          className="flex items-center gap-2"
+        >
+          <Settings className="size-4 text-muted-foreground" />
+          Settings
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem
           className="text-destructive focus:text-destructive"
           onClick={() => {

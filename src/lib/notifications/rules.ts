@@ -37,6 +37,11 @@ type LeadRow = {
   follow_up_date: string | null;
 };
 
+type PendingConnectionRow = {
+  id: string;
+  requester_username: string;
+};
+
 const TERMINAL_PROJECT_STATUSES = new Set(["completed", "archived"]);
 const TERMINAL_GOAL_STATUSES = new Set(["completed", "archived"]);
 
@@ -68,6 +73,7 @@ export function buildNotificationCandidates(
   projects: ProjectRow[],
   goals: GoalRow[],
   leads: LeadRow[] = [],
+  pendingConnections: PendingConnectionRow[] = [],
   now: Date = new Date()
 ): NotificationCandidate[] {
   const todayISO = toDateISO(now);
@@ -164,6 +170,16 @@ export function buildNotificationCandidates(
       title: "Follow up overdue",
       message: `${lead.name} — follow up was due ${lead.follow_up_date}`,
       link_to: "/leads",
+    });
+  }
+
+  for (const conn of pendingConnections) {
+    candidates.push({
+      type: "connection_request",
+      reference_id: conn.id,
+      title: "New connection request",
+      message: `@${conn.requester_username} wants to connect with you`,
+      link_to: "/connections",
     });
   }
 

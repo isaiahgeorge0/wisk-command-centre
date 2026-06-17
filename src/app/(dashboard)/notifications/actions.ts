@@ -17,7 +17,7 @@ export type NotificationsSnapshot = {
 export async function generateNotifications(): Promise<void> {
   const { supabase, userId } = await getScopedSupabase();
 
-  const [tasksRes, projectsRes, goalsRes, leadsRes, existingRes] =
+  const [tasksRes, projectsRes, goalsRes, leadsRes, existingRes, pendingConnectionsRes] =
     await Promise.all([
       supabase
         .from("tasks")
@@ -39,6 +39,11 @@ export async function generateNotifications(): Promise<void> {
         .from("notifications")
         .select("id, type, reference_id")
         .eq("user_id", userId),
+      supabase
+        .from("user_connections")
+        .select("id, requester_id")
+        .eq("recipient_id", userId)
+        .eq("status", "pending"),
     ]);
 
   if (tasksRes.error) throw new Error(tasksRes.error.message);
@@ -46,11 +51,29 @@ export async function generateNotifications(): Promise<void> {
   if (goalsRes.error) throw new Error(goalsRes.error.message);
   if (existingRes.error) throw new Error(existingRes.error.message);
 
+  // Fetch requester usernames for connection request notifications
+  const pendingConnections = pendingConnectionsRes.data ?? [];
+  const requesterIds = pendingConnections.map((c) => c.requester_id);
+  let usernameMap = new Map<string, string>();
+  if (requesterIds.length > 0) {
+    const { data: requesters } = await supabase
+      .from("users")
+      .select("id, username")
+      .in("id", requesterIds);
+    for (const r of requesters ?? []) {
+      if (r.username) usernameMap.set(r.id, r.username);
+    }
+  }
+
   const candidates = buildNotificationCandidates(
     tasksRes.data ?? [],
     projectsRes.data ?? [],
     goalsRes.data ?? [],
-    leadsRes.data ?? []
+    leadsRes.data ?? [],
+    pendingConnections.map((c) => ({
+      id: c.id,
+      requester_username: usernameMap.get(c.requester_id) ?? "someone",
+    }))
   );
 
   const validKeys = new Set(candidates.map(candidateKey));

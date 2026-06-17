@@ -4,6 +4,7 @@ export const NOTIFICATION_TYPES = [
   "stalled_project",
   "goal_no_progress",
   "follow_up_overdue",
+  "connection_request",
 ] as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
