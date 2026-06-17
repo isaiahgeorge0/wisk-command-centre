@@ -7,7 +7,6 @@ import { useState, useTransition } from "react";
 import { updateLead } from "@/app/(dashboard)/leads/actions";
 import { ConvertLeadDialog } from "@/components/leads/convert-lead-dialog";
 import { LeadActivityTab } from "@/components/leads/lead-activity-tab";
-import { LeadEmailActions } from "@/components/leads/lead-email-actions";
 import { LeadForm } from "@/components/leads/lead-form";
 import { LeadStatusMenu } from "@/components/leads/lead-status-menu";
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,6 @@ type ExpandedTab = "details" | "activity";
 
 type LeadExpandedDetailProps = {
   lead: Lead;
-  canAccessWinston: boolean;
   onDelete: (lead: Lead) => void;
   onLeadUpdate: (lead: Lead) => void;
   onProjectCreated?: (projectId: string) => void;
@@ -29,7 +27,6 @@ type LeadExpandedDetailProps = {
 
 export function LeadExpandedDetail({
   lead,
-  canAccessWinston,
   onDelete,
   onLeadUpdate,
   onProjectCreated,
@@ -185,10 +182,6 @@ export function LeadExpandedDetail({
               onStatusChange={(nextStatus) => onStatusChange?.(nextStatus)}
               disabled={isPending}
             />
-            <LeadEmailActions
-              lead={lead}
-              canAccessWinston={canAccessWinston}
-            />
             <div className="flex flex-wrap gap-2">
               <Button
                 type="button"
@@ -221,9 +214,7 @@ export function LeadExpandedDetail({
         {activeTab === "activity" ? (
           <LeadActivityTab
             lead={lead}
-            canAccessWinston={canAccessWinston}
             onFollowUpChange={(date) => setLocalFollowUpDate(date)}
-            onLeadUpdate={onLeadUpdate}
           />
         ) : null}
       </div>

@@ -24,7 +24,6 @@ type LeadsPipelineStageProps = {
   onToggle: () => void;
   dndEnabled: boolean;
   isDragging: boolean;
-  canAccessWinston: boolean;
   onDelete: (lead: Lead) => void;
   onLeadUpdate: (lead: Lead) => void;
   onProjectCreated?: (projectId: string) => void;
@@ -39,7 +38,6 @@ export function LeadsPipelineStage({
   onToggle,
   dndEnabled,
   isDragging,
-  canAccessWinston,
   onDelete,
   onLeadUpdate,
   onProjectCreated,
@@ -148,7 +146,6 @@ export function LeadsPipelineStage({
                         lead={lead}
                         status={status}
                         dndEnabled={dndEnabled}
-                        canAccessWinston={canAccessWinston}
                         onDelete={onDelete}
                         onLeadUpdate={onLeadUpdate}
                         onProjectCreated={onProjectCreated}

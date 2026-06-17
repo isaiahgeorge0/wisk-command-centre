@@ -24,7 +24,6 @@ import type { Lead, LeadStatus } from "@/lib/leads/types";
 
 type LeadsPipelineProps = {
   grouped: Record<LeadStatus, Lead[]>;
-  canAccessWinston: boolean;
   onDelete: (lead: Lead) => void;
   onLeadUpdate: (lead: Lead) => void;
   onProjectCreated?: (projectId: string) => void;
@@ -54,7 +53,6 @@ function resolveTargetStatus(
 
 export function LeadsPipeline({
   grouped,
-  canAccessWinston,
   onDelete,
   onLeadUpdate,
   onProjectCreated,
@@ -141,7 +139,6 @@ export function LeadsPipeline({
             onToggle={() => toggle(status)}
             dndEnabled={dndEnabled}
             isDragging={isDragging}
-            canAccessWinston={canAccessWinston}
             onDelete={onDelete}
             onLeadUpdate={onLeadUpdate}
             onProjectCreated={onProjectCreated}
@@ -167,7 +164,6 @@ export function LeadsPipeline({
           {activeLead ? (
             <LeadDragOverlayCard
               lead={activeLead}
-              canAccessWinston={canAccessWinston}
               onDelete={onDelete}
               onLeadUpdate={onLeadUpdate}
               onProjectCreated={onProjectCreated}

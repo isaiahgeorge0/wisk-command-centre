@@ -15,7 +15,6 @@ type LeadDraggableCardProps = {
   lead: Lead;
   status: LeadStatus;
   dndEnabled: boolean;
-  canAccessWinston: boolean;
   onDelete: (lead: Lead) => void;
   onLeadUpdate: (lead: Lead) => void;
   onProjectCreated?: (projectId: string) => void;
@@ -27,7 +26,6 @@ export function LeadDraggableCard({
   lead,
   status,
   dndEnabled,
-  canAccessWinston,
   onDelete,
   onLeadUpdate,
   onProjectCreated,
@@ -69,7 +67,6 @@ export function LeadDraggableCard({
     >
       <LeadCard
         lead={lead}
-        canAccessWinston={canAccessWinston}
         onDelete={onDelete}
         onLeadUpdate={onLeadUpdate}
         onProjectCreated={onProjectCreated}
@@ -83,7 +80,6 @@ export function LeadDraggableCard({
 
 type LeadDragOverlayCardProps = {
   lead: Lead;
-  canAccessWinston: boolean;
   onDelete: (lead: Lead) => void;
   onLeadUpdate: (lead: Lead) => void;
   onProjectCreated?: (projectId: string) => void;
@@ -92,7 +88,6 @@ type LeadDragOverlayCardProps = {
 
 export function LeadDragOverlayCard({
   lead,
-  canAccessWinston,
   onDelete,
   onLeadUpdate,
   onProjectCreated,
@@ -102,7 +97,6 @@ export function LeadDragOverlayCard({
     <div className={cn(LEAD_CARD_WIDTH_CLASS, "rotate-1 shadow-lg")}>
       <LeadCard
         lead={lead}
-        canAccessWinston={canAccessWinston}
         onDelete={onDelete}
         onLeadUpdate={onLeadUpdate}
         onProjectCreated={onProjectCreated}

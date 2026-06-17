@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { KanbanSquare, LayoutList, Plus, TrendingUp, Trophy } from "lucide-react";
+import { KanbanSquare, LayoutList, Plus, Sparkles, TrendingUp, Trophy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -16,6 +16,7 @@ import { LeadsFiltersBar } from "@/components/leads/leads-filters-bar";
 import { LeadsPipeline } from "@/components/leads/leads-pipeline";
 import { LeadsStatsBar } from "@/components/leads/leads-stats-bar";
 import { LeadsTable } from "@/components/leads/leads-table";
+import { WinstonLeadsPanel } from "@/components/leads/winston-leads-panel";
 import { useQuickAdd } from "@/components/quick-add/quick-add-context";
 import { Button } from "@/components/ui/button";
 import {
@@ -158,6 +159,7 @@ export function LeadsPageClient({
   } | null>(null);
   const [convertSuccessOpen, setConvertSuccessOpen] = useState(false);
   const [wonLeadName, setWonLeadName] = useState<string | null>(null);
+  const [winstonOpen, setWinstonOpen] = useState(false);
 
   useEffect(() => {
     setLeads(initialLeads);
@@ -256,6 +258,14 @@ export function LeadsPageClient({
           accentColour="#6366f1"
         />
         <div className="flex items-center gap-2 self-end sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setWinstonOpen(true)}
+            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-wisk-purple/30 bg-gradient-to-r from-wisk-purple/10 to-wisk-teal/10 px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-wisk-purple/50 hover:from-wisk-purple/15 hover:to-wisk-teal/15"
+          >
+            <Sparkles className="size-4 text-wisk-purple" aria-hidden />
+            <span className="hidden sm:inline">Winston</span>
+          </button>
           <div className="flex items-center rounded-lg border border-border/60 p-0.5">
             <button
               type="button"
@@ -298,58 +308,68 @@ export function LeadsPageClient({
       {!hasAnyLeads ? (
         <LeadsEmptyState onAdd={openLeadAdd} />
       ) : (
-        <>
-          <LeadsStatsBar stats={stats} />
+        <div className="flex min-h-0 items-start gap-4">
+          <div className="min-w-0 flex-1">
+            <LeadsStatsBar stats={stats} />
 
-          {view === "pipeline" ? (
-            <div className="space-y-4">
-              <LeadsFiltersBar
-                filters={filters}
-                onFiltersChange={setFilters}
-                sortKey={sortKey}
-                sortDirection={sortDirection}
-                onSortChange={(key, direction) => {
-                  setSortKey(key);
-                  setSortDirection(direction);
-                }}
-              />
-              {hasFilteredLeads ? (
-                <LeadsPipeline
-                  grouped={grouped}
-                  canAccessWinston={canAccessWinston}
+            {view === "pipeline" ? (
+              <div className="mt-4 space-y-4">
+                <LeadsFiltersBar
+                  filters={filters}
+                  onFiltersChange={setFilters}
+                  sortKey={sortKey}
+                  sortDirection={sortDirection}
+                  onSortChange={(key, direction) => {
+                    setSortKey(key);
+                    setSortDirection(direction);
+                  }}
+                />
+                {hasFilteredLeads ? (
+                  <LeadsPipeline
+                    grouped={grouped}
+                    onDelete={handleDeleteRequest}
+                    onLeadUpdate={handleLeadUpdate}
+                    onProjectCreated={() => setConvertSuccessOpen(true)}
+                    onLeadStatusChange={handleLeadStatusChange}
+                  />
+                ) : (
+                  <div className="rounded-xl border border-dashed border-border/80 bg-card/40 px-6 py-12 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      No leads match your filters.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setFilters({ search: "", stage: "all" })}
+                      className="mt-3 text-sm text-wisk-teal underline-offset-2 hover:underline"
+                    >
+                      Clear filters
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="mt-4">
+                <LeadsTable
+                  leads={filteredLeads}
+                  filters={filters}
+                  onFiltersChange={setFilters}
                   onDelete={handleDeleteRequest}
                   onLeadUpdate={handleLeadUpdate}
                   onProjectCreated={() => setConvertSuccessOpen(true)}
                   onLeadStatusChange={handleLeadStatusChange}
                 />
-              ) : (
-                <div className="rounded-xl border border-dashed border-border/80 bg-card/40 px-6 py-12 text-center">
-                  <p className="text-sm text-muted-foreground">
-                    No leads match your filters.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setFilters({ search: "", stage: "all" })}
-                    className="mt-3 text-sm text-wisk-teal underline-offset-2 hover:underline"
-                  >
-                    Clear filters
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <LeadsTable
-              leads={filteredLeads}
-              canAccessWinston={canAccessWinston}
-              filters={filters}
-              onFiltersChange={setFilters}
-              onDelete={handleDeleteRequest}
-              onLeadUpdate={handleLeadUpdate}
-              onProjectCreated={() => setConvertSuccessOpen(true)}
-              onLeadStatusChange={handleLeadStatusChange}
-            />
-          )}
-        </>
+              </div>
+            )}
+          </div>
+
+          <WinstonLeadsPanel
+            open={winstonOpen}
+            onClose={() => setWinstonOpen(false)}
+            canAccessWinston={canAccessWinston}
+            leads={leads}
+            onLeadUpdate={handleLeadUpdate}
+          />
+        </div>
       )}
 
       <LeadFormDialog open={leadAddOpen} onOpenChange={setLeadAddOpen} />

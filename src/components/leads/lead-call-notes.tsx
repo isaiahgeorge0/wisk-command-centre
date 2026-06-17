@@ -30,9 +30,10 @@ const MIN_NOTES_LENGTH = 20;
 
 type LeadCallNotesProps = {
   lead: Lead;
-  canAccessWinston: boolean;
+  canAccessWinston?: boolean;
   onNotesApplied: (updatedLead: Lead) => void;
   onActivityAdded?: () => void;
+  variant?: "card" | "panel";
 };
 
 function SentimentBadge({ sentiment }: { sentiment: CallNotesSentiment }) {
@@ -113,11 +114,13 @@ function stageLabel(stage: string): string {
 
 export function LeadCallNotes({
   lead,
-  canAccessWinston,
+  canAccessWinston = true,
   onNotesApplied,
   onActivityAdded,
+  variant = "card",
 }: LeadCallNotesProps) {
-  const [state, setState] = useState<CallNotesState>("idle");
+  const isPanel = variant === "panel";
+  const [state, setState] = useState<CallNotesState>(isPanel ? "input" : "idle");
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<CallNotesResult | null>(null);
@@ -129,17 +132,32 @@ export function LeadCallNotes({
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
+    if (!isPanel) return;
+    setState("input");
+    setNotes("");
+    setResult(null);
+    setError(null);
+  }, [lead.id, isPanel]);
+
+  useEffect(() => {
     if (state !== "applied") return;
     const timeout = window.setTimeout(() => {
-      setState("idle");
+      setState(isPanel ? "input" : "idle");
       setNotes("");
       setResult(null);
       setError(null);
     }, 2000);
     return () => window.clearTimeout(timeout);
-  }, [state]);
+  }, [state, isPanel]);
 
   const resetToIdle = () => {
+    if (isPanel) {
+      setState("input");
+      setNotes("");
+      setResult(null);
+      setError(null);
+      return;
+    }
     setState("idle");
     setNotes("");
     setResult(null);
@@ -221,7 +239,7 @@ export function LeadCallNotes({
     );
   };
 
-  if (!canAccessWinston) {
+  if (!canAccessWinston && !isPanel) {
     return (
       <div className="rounded-xl border border-dashed border-border/50 bg-muted/10 px-3 py-2.5 text-center">
         <p className="text-xs text-muted-foreground">
@@ -237,7 +255,7 @@ export function LeadCallNotes({
     );
   }
 
-  if (state === "idle") {
+  if (state === "idle" && !isPanel) {
     return (
       <button
         type="button"
