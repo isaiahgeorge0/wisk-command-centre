@@ -14,8 +14,11 @@ For a full feature inventory, see `docs/product/roadmap.md`.
 
 | Table | Purpose |
 |-------|---------|
-| `users` | User profile (synced from `auth.users`) |
-| `user_preferences` | Display name, theme, field visibility, onboarding flags, `ai_access` |
+| `users` | User profile (synced from `auth.users`); includes `username` (migration 034) |
+| `user_preferences` | Display name, theme, field visibility, onboarding flags, `ai_access`, `username_set` |
+| `user_subscriptions` | Stripe package entitlements (migration 031) |
+| `user_connections` | User-to-user connection requests (migration 035) |
+| `item_shares` | Shared item permissions (migration 035) |
 | `projects` | Client projects |
 | `tasks` | Tasks (optional project link) |
 | `goals` | Business goals with progress tracking |
@@ -32,6 +35,10 @@ For a full feature inventory, see `docs/product/roadmap.md`.
 | `changelog_entries` | What's New panel entries |
 | `blog_posts` | Marketing blog (admin-authored) |
 | `ai_reports` | Winston weekly digest content |
+| `ai_conversations` | Winston Chat conversation threads (migration 032) |
+| `ai_conversation_messages` | Winston Chat messages (migration 029) |
+| `ai_context_cache` | Cached user context for chat (migration 029) |
+| `ai_usage_log` | Claude API token usage (migration 030) |
 
 ---
 
@@ -184,12 +191,23 @@ Stores generated Winston weekly digest content (pre-existing table; used by AI D
 
 ---
 
+## `public.users` (updated migration 034)
+
+User profile synced from `auth.users`.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `username` | text | Unique, case-insensitive index; nullable until set |
+
+---
+
 ## `user_preferences` (relevant fields)
 
 | Column | Type | Notes |
 |--------|------|-------|
 | `user_id` | uuid | Primary key |
-| `ai_access` | boolean | Gates Winston Digest and Chat |
+| `ai_access` | boolean | Default `false` (migration 027); gates Winston Digest and Chat |
+| `username_set` | boolean | Default `false` (migration 034); tracks whether user has chosen a username |
 | `personalisation_completed` | boolean | Auth/onboarding gate |
 | `onboarding_completed` | boolean | Product tour completion |
 | `field_visibility` | jsonb | Per-section field toggles |
@@ -198,15 +216,103 @@ Stores generated Winston weekly digest content (pre-existing table; used by AI D
 
 ---
 
+## `user_subscriptions` (migration 031)
+
+Stripe package entitlements per user.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | uuid | Primary key |
+| `user_id` | uuid | References `public.users(id)` |
+| `package` | text | `ai` \| `ai_pro` \| `social` \| `commerce` \| `properties` \| `max` |
+| `status` | text | `active` \| `trialing` \| `cancelled` \| `past_due` |
+| `stripe_customer_id` | text | Nullable |
+| `stripe_subscription_id` | text | Nullable |
+| `current_period_end` | timestamptz | Nullable |
+| `created_at` | timestamptz | |
+| `updated_at` | timestamptz | |
+
+**RLS:** Users can view their own rows. Inserts/updates via admin client only (webhook handler).
+
+---
+
+## `ai_conversations` (migration 032)
+
+Winston Chat conversation threads. Messages link via `conversation_id` on `ai_conversation_messages`.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | uuid | Primary key |
+| `user_id` | uuid | References `public.users(id)` |
+| `title` | text | Default `'New conversation'` |
+| `project_id` | uuid | References `projects(id)`; nullable |
+| `created_at` | timestamptz | |
+| `updated_at` | timestamptz | Auto-updated via trigger on new messages |
+
+**RLS:** Users can select, insert, update, and delete their own rows.
+
+---
+
+## `user_connections` (migration 035)
+
+User-to-user connection requests (collaboration social graph).
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | uuid | Primary key |
+| `requester_id` | uuid | References `public.users(id)` |
+| `recipient_id` | uuid | References `public.users(id)` |
+| `status` | text | `pending` \| `accepted` \| `declined` |
+| `created_at` | timestamptz | |
+| `updated_at` | timestamptz | |
+
+**Constraints:** `unique(requester_id, recipient_id)`; `check(requester_id != recipient_id)`.
+
+**RLS:** Requester and recipient can view; requester inserts; recipient updates; either party can delete.
+
+---
+
+## `item_shares` (migration 035)
+
+Shared item permissions between connected users. RLS on item tables not yet updated (Phase B).
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | uuid | Primary key |
+| `owner_id` | uuid | References `public.users(id)` |
+| `recipient_id` | uuid | References `public.users(id)` |
+| `item_type` | text | `project` \| `task` \| `goal` \| `idea` \| `lead` \| `content` \| `calendar_event` |
+| `item_id` | uuid | ID of the shared item |
+| `permission` | text | `view` \| `edit` |
+| `created_at` | timestamptz | |
+
+**RLS:** Owner and recipient can view; owner inserts and deletes.
+
+---
+
 ## Relationships (AI / Winston)
 
 ```
 public.users
+    ├── ai_conversations (1:many)
     ├── ai_conversation_messages (1:many)
     ├── ai_context_cache (1:1)
     ├── ai_usage_log (1:many)
     ├── ai_reports (1:many)
+    ├── user_subscriptions (1:many)
+    ├── user_connections (1:many as requester or recipient)
+    ├── item_shares (1:many as owner or recipient)
     └── user_preferences.ai_access (boolean gate)
+```
+
+---
+
+## Relationships (Collaboration)
+
+```
+public.users
+    ├── user_connections (requester_id / recipient_id)
+    └── item_shares (owner_id / recipient_id)
 ```
 
 ---
@@ -219,4 +325,9 @@ public.users
 | `028_tasks_updated_at.sql` | `tasks.updated_at` column + trigger |
 | `029_winston_chat.sql` | `ai_conversation_messages`, `ai_context_cache` |
 | `030_winston_usage.sql` | `ai_usage_log` table |
+| `031_user_subscriptions.sql` | `user_subscriptions` table |
+| `032_ai_conversations.sql` | `ai_conversations` table; `conversation_id` on messages |
 | `033_lead_activities.sql` | `lead_activities` table; `follow_up_date` on `leads`; stage-change trigger |
+| `034_usernames.sql` | `username` on `users`; `username_set` on `user_preferences` |
+| `035_collaboration_foundation.sql` | `user_connections`, `item_shares` tables |
+| `036_notification_suggestion_types.sql` | `suggestion_*` notification types |

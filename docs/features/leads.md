@@ -37,6 +37,9 @@
 - Toggle between Pipeline and Table views
 - AI call notes processor (Winston-powered,
   gated behind WISK AI)
+- Winston for Leads panel (Sparkles button
+  on leads page)
+- mailto email button with Winston draft
 
 ## Gaps and Missing Features
 
@@ -59,7 +62,6 @@ Features that are on the radar but not yet committed.
 - Email integration for direct sending
   from lead card (Phase 3.2)
 - Lead scoring (Phase 3.1 smart suggestions)
-- mailto: email button with Winston draft
 - Bulk import
 - AI qualification
 
@@ -77,3 +79,8 @@ Any important technical context, constraints, or decisions relevant to this sect
 - AI call notes: `/api/winston/process-call-notes`
   extracts structured data; `applyCallNotesResult`
   server action applies selected updates
+- Email draft: `/api/winston/draft-email`
+  generates mailto body via Winston
+- Winston panel: call notes processor and email
+  drafting; both gated behind `ai_access`
+- Teaser shown to non-access users

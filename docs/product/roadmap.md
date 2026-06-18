@@ -681,65 +681,96 @@ built and delivered ahead of schedule):
 
 ## Phase 2.5 — Delivered
 
-All Phase 2.5 items are complete:
-
-| Item | Status |
-|------|--------|
-| Navigation restructure | ✅ Complete |
-| Winston Conversations 2.0 | ✅ Complete |
-| Collaboration Phase A | ✅ Complete |
-| Username system | ✅ Complete |
-| Supabase Pro upgrade | Planning noted — not yet actioned |
+All Phase 2.5 items are complete.
 
 ### Navigation restructure
 
-Parent/sub-nav pattern for all major sections.
-Mobile bottom nav grouped into Work, Plan, Grow,
-and Winston sections with `SectionSubNav` on mobile.
+- **Desktop:** flat top nav (9 items)
+- **Mobile:** grouped bottom nav (5 groups)
+  — Overview, Work, Plan, Grow, Winston
+- `SectionSubNav` hidden on desktop via
+  `desktopHidden` prop, visible on mobile
 
-- **Overview** (standalone)
-- **Work** → Projects, Tasks, Goals
-- **Plan** → Calendar, Content, Ideas
-- **Grow** → Leads
-- **Winston** → Digest, Chat
+### Section header icons and accent colours
 
-`SectionSubNav` component with `desktopHidden` prop
-for Work/Plan layouts — Winston sub-nav remains
-visible on desktop.
+- `PageHeader` component (reusable)
+- Each section has icon + accent colour
+- Overview and Winston: gradient treatment
+- Middle sections: symmetrical colour flow
+  purple → indigo → blue → teal →
+  blue → indigo → purple
 
 ### Winston Conversations 2.0
 
-- Multi-conversation sidebar (new/switch/list)
-- Per-account usage tracking with visible bar
-- Project-scoped chats (auto-populate context
-  from a specific project)
-- Conversation titles (auto-generated from
-  first message)
-- Usage tied to subscription tier enforcement
+- `ai_conversations` table (migration 032)
+- Multi-conversation sidebar
+- Auto-generated titles via Haiku model
+- Project-scoped chats
+- Desktop: pushes content; Mobile: overlay
 
-### Collaboration Phase A (foundation only)
+### Leads improvements (all complete)
 
-- `username` field on `public.users` (unique,
-  case-insensitive index) — migration 034
+- Activity log with timeline view
+- Follow-up reminders with overdue detection
+- Table/list view with 7 columns + colour coding
+- Won celebration full-page overlay
+- AI call notes processor (Winston-powered)
+- Winston for Leads panel (gated behind AI access)
+- mailto email button with Winston draft
+- Lead table view toggle (Pipeline/Table)
+
+### Username system
+
+- `username` field on `public.users`
 - `username_set` flag on `user_preferences`
-- `user_connections` table — migration 035
-- `item_shares` table — migration 035
-- `/connections` page with username search,
-  pending requests, and connection management
+- Real-time availability check
+- Set on account setup page
+- Prompt modal for existing users
+- Sign in with email OR @username
+- `displayUsername()` helper (@prefix in
+  collaborative contexts only)
+
+### Collaboration Phase A
+
+- `user_connections` table (migration 035)
+- `item_shares` table (migration 035)
+- `/connections` page with search, pending,
+  accepted connections
 - Connection request notifications
-- Username prompt modal for existing users
-- Sign-in with email or @username
+- Accessible via user menu
 - No sharing UI in Phase A — social graph only
 - RLS not yet updated on existing tables
   (purely additive)
 
-### Username system
+### Stripe billing foundation
 
-- Validation (format, reserved words, profanity)
-- Real-time availability check on set-password
-  and settings
-- `@username` display in collaboration contexts
-  only (settings, connections, admin)
+- `user_subscriptions` table (migration 031)
+- `hasPackageAccess()` and `hasAIAccess()` helpers
+- Stripe webhook handler stub
+- `/upgrade` page with pricing cards
+- Settings billing section
+- Infrastructure ready, keys pending
+
+### Sentry observability
+
+- Error tracking live in production
+- User ID context (no PII)
+- Three error boundaries
+- 10% performance sampling
+
+### Privacy Policy and Terms of Service
+
+- Live at wiskapp.com/privacy and wiskapp.com/terms
+- Placeholders replaced (Isaiah George Creative,
+  18 June 2026)
+- Linked from settings and account setup
+
+### Smart suggestions (Phase 3.1)
+
+- 13 rule-based suggestion types
+- Gated behind `ai_access`
+- Winston suggests section on Overview
+- High-priority suggestions → notifications
 
 ### Supabase Pro upgrade planning
 
@@ -769,10 +800,10 @@ or property metrics.
 
 | Feature | Status |
 |---------|--------|
-| **AI Digest** | Complete (delivered in Phase 2) |
-| **WISK Chat v1** | Complete (delivered in Phase 2) |
-| **Winston Conversations 2.0** | Complete |
-| **Smart Suggestions** | Complete |
+| AI Digest | Complete |
+| WISK Chat v1 | Complete |
+| Winston Conversations 2.0 | Complete |
+| Smart Suggestions | Complete |
 
 **Smart Suggestions — delivered:**
 
@@ -808,18 +839,20 @@ Original build order (for reference):
 
 **Phase 3.2 is the next active phase.**
 
-Prerequisites before building:
+Prerequisites status:
 
-1. Business structure decision
-   (sole trader vs limited company)
-2. Stripe account setup
-3. Google Cloud project created
-   (Gmail API enabled)
-4. Azure app registration (Outlook OAuth)
+1. **Business structure** — Sole trader (decided)
+2. **Stripe account** — Created, sandbox active,
+   products and webhook configured
+3. **Google Cloud** — Created, Gmail API enabled,
+   OAuth credentials created, consent screen
+   configured, test mode
+4. **Azure** — In progress
+5. **Stripe env vars** — Added to Vercel
 
-Items 3 and 4 can be started immediately at no
-cost — verification takes weeks so the clock
-should start now.
+**Next build:** Stripe checkout flow
+(create-checkout API route, customer portal,
+upgrade page with real checkout buttons)
 
 Stripe billing goes live as part of this phase.
 
@@ -1128,21 +1161,22 @@ WISK uses a deliberate "coming soon" approach:
   (chat + digest) but rate limit enforces
   chat tokens only — minor cosmetic discrepancy,
   acceptable for v1
-- Stripe billing not yet implemented
-  (Phase 3.2) — waiting on business
-  structure decision
+- Stripe checkout flow not yet built
+  (next prompt)
+- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` needs
+  adding to Vercel
+- Google OAuth not yet built into app
+  (credentials ready, build pending)
+- Azure registration pending completion
 - Smart suggestions are rule-based only —
   AI-generated deeper insights planned for
   Phase 3.2 alongside billing
-- Google Cloud / Azure app registration
-  pending (required for email integration)
 - Task file attachments deferred until
   Supabase Pro upgrade
 - Calendar recurring events for
   non-content types not yet built
   (content recurrence is live)
 - Formal mobile QA pass still outstanding
-  (ongoing, not blocking)
 - Social media API integrations not
   yet implemented (Phase 3.3)
 - Apply migration `026_calendar_events.sql`
@@ -1152,22 +1186,27 @@ WISK uses a deliberate "coming soon" approach:
 
 ## Database Tables (current)
 
-- users
+- users (includes `username` — migration 034)
+- user_preferences (includes `ai_access`, `username_set`)
+- user_subscriptions (migration 031)
+- user_connections (migration 035)
+- item_shares (migration 035)
 - projects
 - tasks (includes `updated_at` — migration 028)
 - goals
 - ideas
+- leads (includes `follow_up_date` — migration 033)
+- lead_activities (migration 033)
+- content_posts
+- calendar_events
+- project_milestones
+- notifications
+- user_integrations
 - ai_reports
+- ai_conversations (migration 032)
 - ai_conversation_messages
 - ai_context_cache
 - ai_usage_log
-- notifications
-- user_preferences (includes `ai_access`)
-- project_milestones
-- user_integrations
-- leads
-- content_posts
-- calendar_events
 - access_requests
 - announcements
 - announcement_dismissals

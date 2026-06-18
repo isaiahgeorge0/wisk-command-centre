@@ -420,12 +420,58 @@ Each AI request:
   conversation history in `ai_conversation_messages`;
   12-hour session expiry; rate limits enforced
   server-side
+- Winston Conversations 2.0 — multi-conversation
+  sidebar; `ai_conversations` table; project-scoped
+  chats; auto-generated titles via Haiku model
+- Smart suggestions — 13 rule-based suggestion types
+  on Overview; gated behind `ai_access`
 
-**Planned:**
-- Smart suggestions — generated on dashboard load
-  (replacing or extending `generateNotifications()`)
-- WISK Chat Conversations 2.0 — see Phase 2.5
-  in `docs/product/roadmap.md`
+### Stripe Billing
+
+Stripe goes live before any billable feature
+ships. Package entitlements stored in
+`user_subscriptions` table. Feature gating
+checks `user_subscriptions` server-side —
+never trust client-side entitlement checks.
+
+Stripe account: sandbox active, products
+created (WISK AI £9/mo, WISK AI Pro £19/mo),
+webhook configured at
+`/api/stripe/webhook`.
+
+Infrastructure delivered: `hasPackageAccess()`
+and `hasAIAccess()` helpers, webhook handler
+stub, `/upgrade` page with pricing cards,
+Settings billing section. Checkout flow and
+customer portal are next (Phase 3.2).
+
+### Google OAuth (pending)
+
+Google Cloud project: WISK (wisk-499812)
+Gmail API: enabled
+OAuth credentials: created
+Consent screen: configured, testing mode
+Redirect URI: `app.wiskapp.com/auth/google/callback`
+Status: credentials ready, OAuth flow
+not yet built into app
+
+### Winston for Leads
+
+Dedicated AI panel in the leads section.
+Accessible via "Winston" button on leads page.
+Features: call notes processor, email
+drafting, pipeline health (coming soon).
+Gated behind `ai_access` / WISK AI subscription.
+Non-access users see upgrade teaser.
+
+### Username System
+
+`username` field on `public.users` (unique,
+case-insensitive index).
+Display rules:
+- Personal contexts: display name only
+- Collaborative contexts: @username prefix
+- Sign in accepts email OR @username
 
 ### Observability (Sentry)
 
@@ -475,43 +521,17 @@ encrypted-at-rest pattern as Vercel/GitHub:
 - Requires Google/Microsoft app verification
   before launch (allow several weeks)
 
-### Billing (Stripe)
+### Collaboration Architecture
 
-Stripe goes live before any billable feature ships.
-Package entitlements stored in a new
-user_subscriptions table:
-- user_id
-- package (ai, ai_pro, social, commerce,
-  properties, max)
-- status (active, cancelled, past_due)
-- stripe_subscription_id
-- current_period_end
+**Phase A (delivered):** `user_connections` and
+`item_shares` tables (migration 035); `/connections`
+page; connection request notifications. No sharing
+UI yet — social graph only. RLS on existing item
+tables not yet updated.
 
-Feature gating checks user_subscriptions
-server-side — never trust client-side
-entitlement checks.
-
-### Collaboration Architecture (Phase 4)
-
-Two new tables required:
-
-**user_connections:**
-- `id` uuid primary key
-- `requester_id` uuid references `public.users(id)`
-- `recipient_id` uuid references `public.users(id)`
-- `status` text check (pending, accepted, declined)
-- `created_at` timestamptz default now()
-
-**item_shares:**
-- `id` uuid primary key
-- `owner_id` uuid references `public.users(id)`
-- `recipient_id` uuid references `public.users(id)`
-- `item_type` text check (project, task, goal, idea, lead, content, calendar_event)
-- `item_id` uuid not null
-- `permission` text check (view, edit)
-- `created_at` timestamptz default now()
-
-RLS pattern for shared items (example — projects):
+**Phase B (planned):** RLS updates on shareable
+tables and sharing UI. Example RLS pattern for
+shared projects:
 
 ```sql
 create policy "Users can view shared projects"
@@ -529,7 +549,7 @@ using (
 ```
 
 This pattern applies to every shareable table.
-Build Phase A (tables only) before Stripe.
-Build Phase B (RLS + UI) after Stripe is live.
+Build Phase B (RLS + UI) after Stripe checkout
+is live.
 
 ---
