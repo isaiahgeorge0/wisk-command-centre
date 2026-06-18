@@ -1,6 +1,6 @@
 "use client";
 
-import { BellOff } from "lucide-react";
+import { BellOff, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
@@ -14,6 +14,7 @@ import { formatNotificationTime } from "@/lib/notifications/format";
 import {
   NOTIFICATION_ACCENT_CLASS,
   NOTIFICATION_DOT_CLASS,
+  isSuggestionNotificationType,
 } from "@/lib/notifications/styles";
 import type { Notification } from "@/lib/notifications/types";
 import { cn } from "@/lib/utils";
@@ -121,15 +122,27 @@ export function NotificationPanel({
                 )}
               >
                 <div className="flex items-start gap-2">
-                  <span
-                    className={cn(
-                      "mt-1.5 size-2 shrink-0 rounded-full",
-                      notification.read
-                        ? "bg-transparent"
-                        : NOTIFICATION_DOT_CLASS[notification.type]
-                    )}
-                    aria-hidden
-                  />
+                  {isSuggestionNotificationType(notification.type) ? (
+                    <Sparkles
+                      className={cn(
+                        "mt-0.5 size-3.5 shrink-0",
+                        notification.read
+                          ? "text-muted-foreground/50"
+                          : "text-wisk-teal"
+                      )}
+                      aria-hidden
+                    />
+                  ) : (
+                    <span
+                      className={cn(
+                        "mt-1.5 size-2 shrink-0 rounded-full",
+                        notification.read
+                          ? "bg-transparent"
+                          : NOTIFICATION_DOT_CLASS[notification.type]
+                      )}
+                      aria-hidden
+                    />
+                  )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-3">
                       <p className="text-sm font-medium text-foreground">

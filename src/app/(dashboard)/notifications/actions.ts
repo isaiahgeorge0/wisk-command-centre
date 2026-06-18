@@ -8,6 +8,11 @@ import {
   candidateKey,
 } from "@/lib/notifications/rules";
 import type { Notification } from "@/lib/notifications/types";
+import {
+  buildSuggestions,
+  mergeNotificationCandidates,
+  suggestionsToNotificationCandidates,
+} from "@/lib/suggestions";
 
 export type NotificationsSnapshot = {
   notifications: Notification[];
@@ -65,15 +70,21 @@ export async function generateNotifications(): Promise<void> {
     }
   }
 
-  const candidates = buildNotificationCandidates(
-    tasksRes.data ?? [],
-    projectsRes.data ?? [],
-    goalsRes.data ?? [],
-    leadsRes.data ?? [],
-    pendingConnections.map((c) => ({
-      id: c.id,
-      requester_username: usernameMap.get(c.requester_id) ?? "someone",
-    }))
+  const candidates = mergeNotificationCandidates(
+    buildNotificationCandidates(
+      tasksRes.data ?? [],
+      projectsRes.data ?? [],
+      goalsRes.data ?? [],
+      leadsRes.data ?? [],
+      pendingConnections.map((c) => ({
+        id: c.id,
+        requester_username: usernameMap.get(c.requester_id) ?? "someone",
+      }))
+    ),
+    suggestionsToNotificationCandidates(
+      await buildSuggestions(userId, supabase),
+      userId
+    )
   );
 
   const validKeys = new Set(candidates.map(candidateKey));
