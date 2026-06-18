@@ -679,18 +679,23 @@ built and delivered ahead of schedule):
 
 ---
 
-## Phase 2.5 — Planned (not yet started)
+## Phase 2.5 — Delivered
 
-These items are not blocking Phase 3 but are
-committed to building before Phase 3 packages
-are released publicly.
+All Phase 2.5 items are complete:
+
+| Item | Status |
+|------|--------|
+| Navigation restructure | ✅ Complete |
+| Winston Conversations 2.0 | ✅ Complete |
+| Collaboration Phase A | ✅ Complete |
+| Username system | ✅ Complete |
+| Supabase Pro upgrade | Planning noted — not yet actioned |
 
 ### Navigation restructure
 
 Parent/sub-nav pattern for all major sections.
-Mobile bottom nav currently has 6 items with
-no access to Overview, Calendar, or Winston.
-Proposed grouping:
+Mobile bottom nav grouped into Work, Plan, Grow,
+and Winston sections with `SectionSubNav` on mobile.
 
 - **Overview** (standalone)
 - **Work** → Projects, Tasks, Goals
@@ -698,14 +703,14 @@ Proposed grouping:
 - **Grow** → Leads
 - **Winston** → Digest, Chat
 
-`SectionSubNav` component already built and
-proven via Winston — ready to extend.
+`SectionSubNav` component with `desktopHidden` prop
+for Work/Plan layouts — Winston sub-nav remains
+visible on desktop.
 
 ### Winston Conversations 2.0
 
 - Multi-conversation sidebar (new/switch/list)
 - Per-account usage tracking with visible bar
-  (token-based, already partially built)
 - Project-scoped chats (auto-populate context
   from a specific project)
 - Conversation titles (auto-generated from
@@ -714,21 +719,35 @@ proven via Winston — ready to extend.
 
 ### Collaboration Phase A (foundation only)
 
-- Add `username` field to `public.users` (unique)
-- `user_connections` table
-  (`requester_id`, `recipient_id`, `status`)
-- `item_shares` table
-  (`owner_id`, `recipient_id`, `item_type`,
-  `item_id`, `permission`)
-- Username search and add connection UI
+- `username` field on `public.users` (unique,
+  case-insensitive index) — migration 034
+- `username_set` flag on `user_preferences`
+- `user_connections` table — migration 035
+- `item_shares` table — migration 035
+- `/connections` page with username search,
+  pending requests, and connection management
+- Connection request notifications
+- Username prompt modal for existing users
+- Sign-in with email or @username
 - No sharing UI in Phase A — social graph only
-- RLS not yet updated (purely additive)
+- RLS not yet updated on existing tables
+  (purely additive)
+
+### Username system
+
+- Validation (format, reserved words, profanity)
+- Real-time availability check on set-password
+  and settings
+- `@username` display in collaboration contexts
+  only (settings, connections, admin)
 
 ### Supabase Pro upgrade planning
 
 - Point-in-time recovery
 - Increased storage for task file attachments
 - Required before task attachments go live
+- **Not yet actioned** — planning complete,
+  upgrade pending business decision
 
 ---
 
@@ -746,14 +765,28 @@ projects, tasks, goals, leads, and content becomes dramatically
 more powerful when combined with social analytics, revenue data,
 or property metrics.
 
-### Phase 3.1 — AI Foundation (in progress)
+### Phase 3.1 — AI Foundation (complete)
 
 | Feature | Status |
 |---------|--------|
 | **AI Digest** | Complete (delivered in Phase 2) |
 | **WISK Chat v1** | Complete (delivered in Phase 2) |
-| **Smart suggestions** | Planned (next AI build) |
-| **WISK Chat Conversations 2.0** | Planned (see Phase 2.5) |
+| **Winston Conversations 2.0** | Complete |
+| **Smart Suggestions** | Complete |
+
+**Smart Suggestions — delivered:**
+
+- 13 rule-based suggestion types across leads,
+  projects, tasks, goals, content, and ideas
+- Sorted by priority (high/medium/low),
+  capped at 6 per dashboard load
+- "Winston suggests" section on Overview page
+  (hidden when empty, hidden for non-AI users)
+- High-priority suggestions also appear as
+  bell notifications (`suggestion_*` types)
+- Gated behind `ai_access` / WISK AI subscription
+- No Claude API calls — rule-based, runs on
+  every dashboard load
 
 Original build order (for reference):
 
@@ -762,18 +795,33 @@ Original build order (for reference):
    *Delivered ahead of schedule in Phase 2.*
 
 2. **WISK Chat** — conversational AI interface.
-   *v1 delivered in Phase 2; Conversations 2.0 planned
-   in Phase 2.5.*
+   *v1 delivered in Phase 2; Conversations 2.0
+   delivered in Phase 2.5.*
 
 3. **Smart suggestions** — contextual nudges throughout
    the app. Overdue follow-ups, stalled projects, content
-   streak at risk, goal progress alerts. Generated from
-   data patterns, not just rule-based notifications.
-   *Next AI build.*
+   streak at risk, goal progress alerts.
+   *Delivered — rule-based in Phase 3.1; AI-generated
+   deeper insights planned for Phase 3.2.*
 
 ### Phase 3.2 — AI Package (billable)
 
-Stripe billing goes live before this phase.
+**Phase 3.2 is the next active phase.**
+
+Prerequisites before building:
+
+1. Business structure decision
+   (sole trader vs limited company)
+2. Stripe account setup
+3. Google Cloud project created
+   (Gmail API enabled)
+4. Azure app registration (Outlook OAuth)
+
+Items 3 and 4 can be started immediately at no
+cost — verification takes weeks so the clock
+should start now.
+
+Stripe billing goes live as part of this phase.
 
 Pricing:
 - **WISK AI: £9/mo**
@@ -1080,20 +1128,23 @@ WISK uses a deliberate "coming soon" approach:
   (chat + digest) but rate limit enforces
   chat tokens only — minor cosmetic discrepancy,
   acceptable for v1
-- Task file attachments deferred until Supabase
-  Pro upgrade (see Phase 2.5)
+- Stripe billing not yet implemented
+  (Phase 3.2) — waiting on business
+  structure decision
+- Smart suggestions are rule-based only —
+  AI-generated deeper insights planned for
+  Phase 3.2 alongside billing
+- Google Cloud / Azure app registration
+  pending (required for email integration)
+- Task file attachments deferred until
+  Supabase Pro upgrade
 - Calendar recurring events for
   non-content types not yet built
   (content recurrence is live)
 - Formal mobile QA pass still outstanding
   (ongoing, not blocking)
-- Navigation restructure planned for Phase 2.5
 - Social media API integrations not
   yet implemented (Phase 3.3)
-- Stripe billing not yet implemented
-  (Phase 3.2)
-- Smart suggestions not yet implemented
-  (Phase 3.1 — next AI build)
 - Apply migration `026_calendar_events.sql`
   on production Supabase if not yet run
 
