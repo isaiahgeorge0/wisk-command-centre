@@ -41,6 +41,11 @@ export type PlatformMetrics = {
 
 export type UserActivityStatus = "active" | "inactive" | "dormant";
 
+export type ActiveSubscriptionSummary = {
+  package: string;
+  status: string;
+};
+
 export type AdminUserHealth = {
   id: string;
   email: string;
@@ -53,6 +58,7 @@ export type AdminUserHealth = {
   days_since_joined: number;
   activity_status: UserActivityStatus;
   ai_access: boolean;
+  subscriptions: ActiveSubscriptionSummary[];
 };
 
 export type UserHealthSummary = {

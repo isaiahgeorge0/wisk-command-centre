@@ -640,17 +640,27 @@ export async function getUsersWithHealth(): Promise<AdminUserHealth[]> {
   await requireAdmin();
   const supabase = createAdminClient();
 
-  const [usersResult, projectsResult, tasksResult, authMap, prefsResult] =
-    await Promise.all([
-      supabase
-        .from("users")
-        .select("id, email, name, username, created_at")
-        .order("created_at", { ascending: false }),
-      supabase.from("projects").select("user_id"),
-      supabase.from("tasks").select("user_id"),
-      getAuthLastSignInMap(supabase),
-      supabase.from("user_preferences").select("user_id, ai_access"),
-    ]);
+  const [
+    usersResult,
+    projectsResult,
+    tasksResult,
+    authMap,
+    prefsResult,
+    subscriptionsResult,
+  ] = await Promise.all([
+    supabase
+      .from("users")
+      .select("id, email, name, username, created_at")
+      .order("created_at", { ascending: false }),
+    supabase.from("projects").select("user_id"),
+    supabase.from("tasks").select("user_id"),
+    getAuthLastSignInMap(supabase),
+    supabase.from("user_preferences").select("user_id, ai_access"),
+    supabase
+      .from("user_subscriptions")
+      .select("user_id, package, status")
+      .in("status", ["active", "trialing"]),
+  ]);
 
   if (usersResult.error) {
     console.error("getUsersWithHealth:", usersResult.error);
@@ -659,10 +669,22 @@ export async function getUsersWithHealth(): Promise<AdminUserHealth[]> {
 
   const projectCounts = countByUserId(projectsResult.data);
   const taskCounts = countByUserId(tasksResult.data);
+
   const aiAccessMap = new Map<string, boolean>();
   for (const row of prefsResult.data ?? []) {
     aiAccessMap.set(row.user_id, row.ai_access ?? false);
   }
+
+  const subscriptionsMap = new Map<
+    string,
+    { package: string; status: string }[]
+  >();
+  for (const row of subscriptionsResult.data ?? []) {
+    const existing = subscriptionsMap.get(row.user_id) ?? [];
+    existing.push({ package: row.package, status: row.status });
+    subscriptionsMap.set(row.user_id, existing);
+  }
+
   const now = Date.now();
 
   return (usersResult.data ?? []).map((user) => {
@@ -683,6 +705,7 @@ export async function getUsersWithHealth(): Promise<AdminUserHealth[]> {
       days_since_joined: daysSinceJoined,
       activity_status: getActivityStatus(lastSignIn),
       ai_access: aiAccessMap.get(user.id) ?? false,
+      subscriptions: subscriptionsMap.get(user.id) ?? [],
     };
   });
 }

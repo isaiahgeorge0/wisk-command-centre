@@ -14,8 +14,6 @@ export default async function UpgradePage() {
         plan={billing.plan}
         planLabel={billing.planLabel}
         currentPeriodEnd={billing.currentPeriodEnd}
-        priceAi={process.env.STRIPE_PRICE_AI_MONTHLY ?? ""}
-        priceAiPro={process.env.STRIPE_PRICE_AI_PRO_MONTHLY ?? ""}
       />
     </Suspense>
   );

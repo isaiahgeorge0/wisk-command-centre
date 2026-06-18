@@ -83,7 +83,7 @@ export async function POST(request: Request) {
       payment_method_types: ["card"],
       ...(email ? { customer_email: email } : {}),
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${siteUrl}/upgrade?success=true`,
+      success_url: `${siteUrl}/upgrade/success`,
       cancel_url: `${siteUrl}/upgrade?cancelled=true`,
       metadata: { userId },
       subscription_data: { metadata: { userId } },

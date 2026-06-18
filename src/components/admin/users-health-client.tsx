@@ -4,7 +4,11 @@ import { useMemo, useOptimistic, useState, useTransition } from "react";
 import { Check, Loader2, Sparkles, X, Zap } from "lucide-react";
 
 import { generateUserDigest, toggleAIAccess } from "@/app/(dashboard)/admin/actions";
-import type { AdminUserHealth, UserHealthSummary } from "@/lib/admin/platform";
+import type {
+  ActiveSubscriptionSummary,
+  AdminUserHealth,
+  UserHealthSummary,
+} from "@/lib/admin/platform";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -148,6 +152,56 @@ function GenerateDigestButton({ userId }: { userId: string }) {
   );
 }
 
+// ─── Subscription badges ──────────────────────────────────────────────────────
+
+const PACKAGE_LABEL: Record<string, string> = {
+  ai: "WISK AI",
+  ai_pro: "WISK AI Pro",
+  social: "Social",
+  commerce: "Commerce",
+  properties: "Properties",
+  max: "WISK Max",
+};
+
+const PACKAGE_CLASS: Record<string, string> = {
+  ai: "border-wisk-teal/30 bg-wisk-teal/10 text-wisk-teal",
+  ai_pro: "border-wisk-purple/30 bg-wisk-purple/10 text-wisk-purple",
+  social: "border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400",
+  commerce:
+    "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400",
+  properties:
+    "border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400",
+  max: "border-wisk-teal/30 bg-wisk-teal/10 text-foreground",
+};
+
+function SubscriptionBadges({
+  subscriptions,
+}: {
+  subscriptions: ActiveSubscriptionSummary[];
+}) {
+  if (subscriptions.length === 0) {
+    return <span className="text-muted-foreground/40">—</span>;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {subscriptions.map((sub) => (
+        <Badge
+          key={sub.package}
+          variant="outline"
+          className={cn(
+            "text-xs",
+            PACKAGE_CLASS[sub.package] ??
+              "border-border bg-muted text-muted-foreground"
+          )}
+        >
+          {PACKAGE_LABEL[sub.package] ?? sub.package}
+        </Badge>
+      ))}
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function UsersHealthClient({ users, summary }: UsersHealthClientProps) {
@@ -205,7 +259,7 @@ export function UsersHealthClient({ users, summary }: UsersHealthClientProps) {
       </div>
 
       <div className="overflow-x-auto rounded-xl ring-1 ring-foreground/10">
-        <table className="w-full min-w-[1100px] text-left text-sm">
+        <table className="w-full min-w-[1200px] text-left text-sm">
           <thead className="border-b bg-muted/40 text-muted-foreground">
             <tr>
               <th className="px-4 py-3 font-medium">Name</th>
@@ -222,6 +276,7 @@ export function UsersHealthClient({ users, summary }: UsersHealthClientProps) {
                   Winston
                 </span>
               </th>
+              <th className="px-4 py-3 font-medium">Subscriptions</th>
               <th className="px-4 py-3 font-medium text-muted-foreground">
                 Digest
               </th>
@@ -231,7 +286,7 @@ export function UsersHealthClient({ users, summary }: UsersHealthClientProps) {
             {filtered.length === 0 ? (
               <tr>
                 <td
-                  colSpan={10}
+                  colSpan={11}
                   className="px-4 py-8 text-center text-muted-foreground"
                 >
                   No users found.
@@ -275,6 +330,9 @@ export function UsersHealthClient({ users, summary }: UsersHealthClientProps) {
                       userId={user.id}
                       initialValue={user.ai_access}
                     />
+                  </td>
+                  <td className="px-4 py-3">
+                    <SubscriptionBadges subscriptions={user.subscriptions} />
                   </td>
                   <td className="px-4 py-3">
                     {user.ai_access ? (

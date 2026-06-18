@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { CheckCircle2, Loader2, Sparkles, X } from "lucide-react";
+import { Loader2, Sparkles, X } from "lucide-react";
 import Link from "next/link";
 
 import { PageTransition } from "@/components/layout/page-transition";
@@ -23,8 +23,6 @@ type UpgradePageClientProps = {
   plan: BillingPlan;
   planLabel: string;
   currentPeriodEnd: string | null;
-  priceAi: string;
-  priceAiPro: string;
 };
 
 function formatPeriodEnd(iso: string | null): string | null {
@@ -36,93 +34,52 @@ function formatPeriodEnd(iso: string | null): string | null {
   });
 }
 
-type LoadingKey = "ai" | "ai_pro" | "portal" | null;
-
 export function UpgradePageClient({
   plan,
   planLabel,
   currentPeriodEnd,
-  priceAi,
-  priceAiPro,
 }: UpgradePageClientProps) {
   const searchParams = useSearchParams();
-  const [loading, setLoading] = useState<LoadingKey>(null);
-  const [banner, setBanner] = useState<"success" | "cancelled" | null>(null);
+  const [portalLoading, setPortalLoading] = useState(false);
+  const [showCancelled, setShowCancelled] = useState(false);
   const bannerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (searchParams.get("success") === "true") setBanner("success");
-    else if (searchParams.get("cancelled") === "true") setBanner("cancelled");
+    if (searchParams.get("cancelled") === "true") setShowCancelled(true);
   }, [searchParams]);
 
   const periodEndLabel = formatPeriodEnd(currentPeriodEnd);
   const hasActivePlan = plan !== "free";
 
-  async function startCheckout(priceId: string, key: "ai" | "ai_pro") {
-    if (loading || !priceId) return;
-    setLoading(key);
-    try {
-      const res = await fetch("/api/stripe/create-checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ priceId }),
-      });
-      const data = (await res.json()) as { url?: string; error?: string };
-      if (!res.ok || !data.url) {
-        console.error("create-checkout failed:", data.error);
-        setLoading(null);
-        return;
-      }
-      window.location.href = data.url;
-    } catch (err) {
-      console.error("create-checkout error:", err);
-      setLoading(null);
-    }
-  }
-
   async function openPortal() {
-    if (loading) return;
-    setLoading("portal");
+    if (portalLoading) return;
+    setPortalLoading(true);
     try {
-      const res = await fetch("/api/stripe/customer-portal", {
-        method: "POST",
-      });
+      const res = await fetch("/api/stripe/customer-portal", { method: "POST" });
       const data = (await res.json()) as { url?: string; error?: string };
       if (!res.ok || !data.url) {
         console.error("customer-portal failed:", data.error);
-        setLoading(null);
+        setPortalLoading(false);
         return;
       }
       window.location.href = data.url;
     } catch (err) {
       console.error("customer-portal error:", err);
-      setLoading(null);
+      setPortalLoading(false);
     }
   }
 
   return (
     <PageTransition>
-      {/* ── Status banner ─────────────────────────────────────────────────────── */}
-      {banner && (
+      {/* ── Cancelled banner ──────────────────────────────────────────────────── */}
+      {showCancelled && (
         <div
           ref={bannerRef}
-          className={cn(
-            "mb-6 flex items-start gap-3 rounded-xl border px-4 py-3 text-sm",
-            banner === "success"
-              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-              : "border-border bg-muted/60 text-muted-foreground"
-          )}
+          className="mb-6 flex items-start gap-3 rounded-xl border border-border bg-muted/60 px-4 py-3 text-sm text-muted-foreground"
         >
-          {banner === "success" && (
-            <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-500" />
-          )}
-          <p className="flex-1">
-            {banner === "success"
-              ? "You're all set. Welcome to WISK AI."
-              : "No worries — you can upgrade any time."}
-          </p>
+          <p className="flex-1">No worries — you can upgrade any time.</p>
           <button
-            onClick={() => setBanner(null)}
+            onClick={() => setShowCancelled(false)}
             className="shrink-0 opacity-60 hover:opacity-100"
             aria-label="Dismiss"
           >
@@ -186,24 +143,23 @@ export function UpgradePageClient({
               <Button
                 className="w-full bg-wisk-teal text-white hover:bg-wisk-teal/90"
                 onClick={openPortal}
-                disabled={loading !== null}
+                disabled={portalLoading}
               >
-                {loading === "portal" ? (
+                {portalLoading ? (
                   <Loader2 className="mr-2 size-4 animate-spin" />
                 ) : null}
                 Manage subscription
               </Button>
             ) : (
-              <Button
-                className="w-full bg-wisk-teal text-white hover:bg-wisk-teal/90"
-                onClick={() => startCheckout(priceAi, "ai")}
-                disabled={loading !== null || !priceAi}
+              <Link
+                href="/upgrade/ai"
+                className={cn(
+                  buttonVariants(),
+                  "w-full bg-wisk-teal text-white hover:bg-wisk-teal/90"
+                )}
               >
-                {loading === "ai" ? (
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                ) : null}
                 Get started
-              </Button>
+              </Link>
             )}
           </CardFooter>
         </Card>
@@ -241,25 +197,20 @@ export function UpgradePageClient({
                 variant="outline"
                 className="w-full"
                 onClick={openPortal}
-                disabled={loading !== null}
+                disabled={portalLoading}
               >
-                {loading === "portal" ? (
+                {portalLoading ? (
                   <Loader2 className="mr-2 size-4 animate-spin" />
                 ) : null}
                 Manage subscription
               </Button>
             ) : (
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => startCheckout(priceAiPro, "ai_pro")}
-                disabled={loading !== null || !priceAiPro}
+              <Link
+                href="/upgrade/ai-pro"
+                className={cn(buttonVariants({ variant: "outline" }), "w-full")}
               >
-                {loading === "ai_pro" ? (
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                ) : null}
                 Get started
-              </Button>
+              </Link>
             )}
           </CardFooter>
         </Card>
@@ -274,9 +225,7 @@ export function UpgradePageClient({
               You&apos;re on the free Core plan.
             </p>
           ) : (
-            <p className="text-muted-foreground">
-              You&apos;re on {planLabel}.
-            </p>
+            <p className="text-muted-foreground">You&apos;re on {planLabel}.</p>
           )}
           {periodEndLabel ? (
             <p className="text-muted-foreground">
@@ -287,13 +236,13 @@ export function UpgradePageClient({
             <p className="pt-1">
               <button
                 onClick={openPortal}
-                disabled={loading !== null}
+                disabled={portalLoading}
                 className={cn(
                   buttonVariants({ variant: "link" }),
                   "h-auto p-0 text-wisk-teal"
                 )}
               >
-                {loading === "portal" && (
+                {portalLoading && (
                   <Loader2 className="mr-1 size-3 animate-spin" />
                 )}
                 Manage billing
