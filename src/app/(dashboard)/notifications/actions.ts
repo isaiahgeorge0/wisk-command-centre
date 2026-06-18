@@ -54,7 +54,7 @@ export async function generateNotifications(): Promise<void> {
   // Fetch requester usernames for connection request notifications
   const pendingConnections = pendingConnectionsRes.data ?? [];
   const requesterIds = pendingConnections.map((c) => c.requester_id);
-  let usernameMap = new Map<string, string>();
+  const usernameMap = new Map<string, string>();
   if (requesterIds.length > 0) {
     const { data: requesters } = await supabase
       .from("users")

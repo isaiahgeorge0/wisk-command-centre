@@ -168,7 +168,7 @@ export async function getConnections(): Promise<
     r.requester_id === userId ? r.recipient_id : r.requester_id
   );
 
-  let profileMap = new Map<string, PublicUserProfile>();
+  const profileMap = new Map<string, PublicUserProfile>();
   if (otherIds.length > 0) {
     const { data: profiles } = await supabase
       .from("users")
@@ -212,7 +212,7 @@ export async function getPendingRequests(): Promise<
   const rows = data ?? [];
   const requesterIds = rows.map((r) => r.requester_id);
 
-  let profileMap = new Map<string, PublicUserProfile>();
+  const profileMap = new Map<string, PublicUserProfile>();
   if (requesterIds.length > 0) {
     const { data: profiles } = await supabase
       .from("users")
