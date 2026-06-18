@@ -1,29 +1,26 @@
 "use client";
 
+import { motion, useReducedMotion } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Sparkles, X } from "lucide-react";
+import { Loader2, Mail, Sparkles, X } from "lucide-react";
 import Link from "next/link";
 
 import { PageTransition } from "@/components/layout/page-transition";
-import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { buttonVariants } from "@/components/ui/button";
 import type { BillingPlan } from "@/lib/billing/types";
+import { MOTION_EASE } from "@/lib/motion/config";
 import { cn } from "@/lib/utils";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type UpgradePageClientProps = {
   plan: BillingPlan;
   planLabel: string;
   currentPeriodEnd: string | null;
 };
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatPeriodEnd(iso: string | null): string | null {
   if (!iso) return null;
@@ -34,6 +31,80 @@ function formatPeriodEnd(iso: string | null): string | null {
   });
 }
 
+// ─── Plan card data ───────────────────────────────────────────────────────────
+
+const AI_FEATURES = [
+  "AI Digest — weekly business summary",
+  "WISK Chat — ask Winston anything",
+  "Smart suggestions across your workspace",
+  "100,000 tokens per month",
+];
+
+const AI_PRO_FEATURES = [
+  "Everything in WISK AI",
+  "Email integration (Gmail + Outlook)",
+  "Higher usage limits",
+  "Priority support",
+];
+
+// ─── Shared CTA link (for unsubscribed state) ─────────────────────────────────
+
+function GetStartedLink({
+  href,
+  gradient,
+}: {
+  href: string;
+  gradient: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group relative block w-full overflow-hidden rounded-xl py-3.5 text-center text-sm font-semibold text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 min-h-[48px]"
+      style={{ background: gradient }}
+    >
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -translate-x-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)] transition-transform duration-700 ease-in-out group-hover:translate-x-full"
+      />
+      <span className="relative flex items-center justify-center">Get started</span>
+    </Link>
+  );
+}
+
+// ─── Manage subscription button (for subscribed state) ────────────────────────
+
+function ManageButton({
+  onClick,
+  loading,
+  accentColor,
+}: {
+  onClick: () => void;
+  loading: boolean;
+  accentColor: "purple" | "teal";
+}) {
+  const styles =
+    accentColor === "purple"
+      ? "border-purple-500/30 bg-purple-500/8 text-purple-400 hover:bg-purple-500/15"
+      : "border-teal-500/30 bg-teal-500/8 text-teal-400 hover:bg-teal-500/15";
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={loading}
+      className={cn(
+        "flex w-full items-center justify-center gap-2 rounded-xl border py-3.5 text-sm font-medium transition-colors disabled:opacity-50 min-h-[48px]",
+        styles
+      )}
+    >
+      {loading && <Loader2 className="size-4 animate-spin" aria-hidden />}
+      Manage subscription
+    </button>
+  );
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
+
 export function UpgradePageClient({
   plan,
   planLabel,
@@ -43,6 +114,8 @@ export function UpgradePageClient({
   const [portalLoading, setPortalLoading] = useState(false);
   const [showCancelled, setShowCancelled] = useState(false);
   const bannerRef = useRef<HTMLDivElement>(null);
+  const reduced = useReducedMotion();
+  const noMotion = reduced === true;
 
   useEffect(() => {
     if (searchParams.get("cancelled") === "true") setShowCancelled(true);
@@ -75,193 +148,350 @@ export function UpgradePageClient({
       {showCancelled && (
         <div
           ref={bannerRef}
-          className="mb-6 flex items-start gap-3 rounded-xl border border-border bg-muted/60 px-4 py-3 text-sm text-muted-foreground"
+          className="mb-6 flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm"
         >
-          <p className="flex-1">No worries — you can upgrade any time.</p>
+          <p className="flex-1 text-muted-foreground">
+            No worries — you can upgrade any time.
+          </p>
           <button
             onClick={() => setShowCancelled(false)}
-            className="shrink-0 opacity-60 hover:opacity-100"
+            className="shrink-0 text-muted-foreground/60 transition-opacity hover:text-muted-foreground"
             aria-label="Dismiss"
           >
-            <X className="size-4" />
+            <X className="size-4" aria-hidden />
           </button>
         </div>
       )}
 
-      {/* ── Page header ───────────────────────────────────────────────────────── */}
-      <div className="mb-10 max-w-2xl">
-        <div className="mb-6 flex items-center gap-4">
-          <div
-            className="flex size-10 items-center justify-center rounded-2xl shadow-sm md:size-12"
-            style={{
-              backgroundImage:
-                "linear-gradient(to bottom right, color-mix(in srgb, #14b8a6 30%, transparent), color-mix(in srgb, #a855f7 30%, transparent))",
-            }}
+      {/* ── Section 1: Hero ───────────────────────────────────────────────────── */}
+      <section
+        className="-mx-4 mb-12 overflow-hidden md:-mx-6 lg:-mx-8"
+        aria-label="Plan selection hero"
+        style={{
+          background:
+            "linear-gradient(145deg, #07040f 0%, #080c16 50%, #040d0d 100%)",
+        }}
+      >
+        {/* Dot-grid overlay */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px)",
+            backgroundSize: "28px 28px",
+          }}
+        />
+
+        {/* Ambient orbs — purple left, teal right */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-32 -left-32 size-80 rounded-full blur-3xl"
+          style={{ background: "rgba(109, 40, 217, 0.28)" }}
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-20 -right-20 size-72 rounded-full blur-3xl"
+          style={{ background: "rgba(20, 184, 166, 0.2)" }}
+        />
+
+        {/* Hero content */}
+        <div className="relative z-10 mx-auto max-w-2xl px-4 py-16 text-center md:px-6 md:py-20 lg:px-8">
+          {/* Eyebrow */}
+          <motion.p
+            initial={noMotion ? false : { opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.05, ease: MOTION_EASE.easeOut }}
+            className="mb-5 text-xs font-semibold uppercase tracking-[0.2em] text-white/40"
           >
-            <Sparkles className="size-6 text-white" />
-          </div>
-          <div>
-            <h1
-              className="text-xl font-semibold tracking-tight md:text-3xl"
+            Choose your plan
+          </motion.p>
+
+          {/* Headline */}
+          <h1 className="mb-5 text-4xl font-bold tracking-tight md:text-5xl lg:text-[3.25rem] lg:leading-[1.1]">
+            <motion.span
+              className="block"
               style={{
-                backgroundImage: "linear-gradient(to right, #14b8a6, #a855f7)",
+                backgroundImage:
+                  "linear-gradient(to right, #c084fc, #a855f7 40%, #14b8a6)",
                 WebkitBackgroundClip: "text",
                 backgroundClip: "text",
                 color: "transparent",
               }}
+              initial={noMotion ? false : { opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: 0.4,
+                delay: noMotion ? 0 : 0.15,
+                ease: MOTION_EASE.easeOut,
+              }}
             >
-              Upgrade to WISK AI
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Unlock Winston and AI-powered insights for your business.
-            </p>
-          </div>
+              Invest in
+            </motion.span>
+
+            <span className="block text-white">
+              {["your", "business."].map((word, i) => (
+                <motion.span
+                  key={word}
+                  className="inline-block"
+                  initial={noMotion ? false : { opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.35,
+                    delay: noMotion ? 0 : 0.35 + i * 0.08,
+                    ease: MOTION_EASE.easeOut,
+                  }}
+                >
+                  {word}
+                  {i === 0 ? "\u00a0" : ""}
+                </motion.span>
+              ))}
+            </span>
+          </h1>
+
+          {/* Subheading */}
+          <motion.p
+            initial={noMotion ? false : { opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: noMotion ? 0 : 0.55, ease: MOTION_EASE.easeOut }}
+            className="text-base leading-relaxed text-white/60 md:text-lg"
+          >
+            WISK core is free. Add Winston and AI-powered insights when you&apos;re ready to go deeper.
+          </motion.p>
         </div>
-      </div>
+      </section>
 
-      {/* ── Pricing cards ─────────────────────────────────────────────────────── */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* WISK AI */}
-        <Card className="border-wisk-teal/30 bg-card/80 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-wisk-teal">WISK AI</CardTitle>
-            <CardDescription>
-              <span className="text-2xl font-semibold text-foreground">£9</span>
-              <span className="text-muted-foreground">/month</span>
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>AI Digest — weekly business summary</li>
-              <li>WISK Chat — ask Winston anything</li>
-              <li>Smart suggestions across your workspace</li>
-              <li>100,000 tokens per month</li>
-            </ul>
-          </CardContent>
-          <CardFooter>
-            {hasActivePlan ? (
-              <Button
-                className="w-full bg-wisk-teal text-white hover:bg-wisk-teal/90"
-                onClick={openPortal}
-                disabled={portalLoading}
-              >
-                {portalLoading ? (
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                ) : null}
-                Manage subscription
-              </Button>
-            ) : (
-              <Link
-                href="/upgrade/ai"
-                className={cn(
-                  buttonVariants(),
-                  "w-full bg-wisk-teal text-white hover:bg-wisk-teal/90"
-                )}
-              >
-                Get started
-              </Link>
-            )}
-          </CardFooter>
-        </Card>
+      {/* ── Section 2: Pricing cards ──────────────────────────────────────────── */}
+      <section className="mb-8" aria-label="Pricing plans">
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* ── WISK AI ─────────────────────────────────────────────────────── */}
+          <motion.div
+            initial={noMotion ? false : { opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4, ease: MOTION_EASE.easeOut }}
+            whileHover={{ scale: 1.01 }}
+            className="group flex flex-col overflow-hidden rounded-2xl border border-purple-500/20 bg-card/90 shadow-[0_4px_24px_-4px_rgba(168,85,247,0.12)] transition-shadow hover:border-purple-500/40 hover:shadow-[0_8px_40px_-8px_rgba(168,85,247,0.3)]"
+          >
+            {/* Accent bar */}
+            <div
+              aria-hidden
+              className="h-1 w-full shrink-0"
+              style={{
+                background:
+                  "linear-gradient(to right, #5b21b6, #a855f7, #7c3aed)",
+              }}
+            />
 
-        {/* WISK AI Pro */}
-        <Card className="relative border-wisk-purple/30 bg-card/80 shadow-sm">
-          {!hasActivePlan && (
-            <Badge
-              variant="secondary"
-              className="absolute top-4 right-4 border-wisk-purple/30 bg-wisk-purple/10 text-wisk-purple"
-            >
-              Most powerful
-            </Badge>
-          )}
-          <CardHeader>
-            <CardTitle className="text-wisk-purple">WISK AI Pro</CardTitle>
-            <CardDescription>
-              <span className="text-2xl font-semibold text-foreground">
-                £19
+            {/* Header */}
+            <div className="px-6 pt-6 pb-4">
+              <div className="mb-1 flex items-center gap-2">
+                <div
+                  className="flex size-8 items-center justify-center rounded-lg"
+                  style={{
+                    background: "rgba(168,85,247,0.15)",
+                    border: "1px solid rgba(168,85,247,0.25)",
+                  }}
+                >
+                  <Sparkles className="size-4 text-purple-400" aria-hidden />
+                </div>
+                <p className="text-sm font-semibold text-purple-400">WISK AI</p>
+              </div>
+              <div className="mt-3 flex items-baseline gap-1">
+                <span className="text-4xl font-bold tracking-tight text-foreground">
+                  £9
+                </span>
+                <span className="text-sm text-muted-foreground">/month</span>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Billed monthly. Cancel any time.
+              </p>
+            </div>
+
+            {/* Features */}
+            <div className="flex-1 px-6 pb-5">
+              <ul className="space-y-2.5">
+                {AI_FEATURES.map((f) => (
+                  <li key={f} className="flex items-center gap-2.5 text-sm text-muted-foreground">
+                    <span
+                      className="size-1.5 shrink-0 rounded-full"
+                      style={{ background: "#a855f7" }}
+                      aria-hidden
+                    />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* CTA */}
+            <div className="px-6 pb-6">
+              {hasActivePlan ? (
+                <ManageButton
+                  onClick={openPortal}
+                  loading={portalLoading}
+                  accentColor="purple"
+                />
+              ) : (
+                <GetStartedLink
+                  href="/upgrade/ai"
+                  gradient="linear-gradient(135deg, #6d28d9 0%, #a855f7 50%, #14b8a6 100%)"
+                />
+              )}
+            </div>
+          </motion.div>
+
+          {/* ── WISK AI Pro ─────────────────────────────────────────────────── */}
+          <motion.div
+            initial={noMotion ? false : { opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{
+              duration: 0.4,
+              delay: noMotion ? 0 : 0.1,
+              ease: MOTION_EASE.easeOut,
+            }}
+            whileHover={{ scale: 1.01 }}
+            className="group relative flex flex-col overflow-hidden rounded-2xl border border-teal-500/20 bg-card/90 shadow-[0_4px_24px_-4px_rgba(20,184,166,0.1)] transition-shadow hover:border-teal-500/40 hover:shadow-[0_8px_40px_-8px_rgba(20,184,166,0.25)]"
+          >
+            {/* Accent bar */}
+            <div
+              aria-hidden
+              className="h-1 w-full shrink-0"
+              style={{
+                background:
+                  "linear-gradient(to right, #0f766e, #14b8a6, #22d3ee)",
+              }}
+            />
+
+            {/* "Most powerful" badge */}
+            {!hasActivePlan && (
+              <span
+                className="absolute top-4 right-4 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-teal-300"
+                style={{
+                  background: "rgba(20,184,166,0.12)",
+                  border: "1px solid rgba(20,184,166,0.3)",
+                }}
+              >
+                Most powerful
               </span>
-              <span className="text-muted-foreground">/month</span>
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>Everything in WISK AI</li>
-              <li>Email integration (Gmail + Outlook)</li>
-              <li>Higher usage limits</li>
-              <li>Priority support</li>
-            </ul>
-          </CardContent>
-          <CardFooter>
-            {hasActivePlan ? (
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={openPortal}
-                disabled={portalLoading}
-              >
-                {portalLoading ? (
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                ) : null}
-                Manage subscription
-              </Button>
-            ) : (
-              <Link
-                href="/upgrade/ai-pro"
-                className={cn(buttonVariants({ variant: "outline" }), "w-full")}
-              >
-                Get started
-              </Link>
             )}
-          </CardFooter>
-        </Card>
-      </div>
 
-      {/* ── Current plan card ─────────────────────────────────────────────────── */}
-      <Card className="mt-8 border-border/60 bg-card/60">
-        <CardContent className="space-y-2 px-6 py-5 text-sm">
-          <p className="font-medium text-foreground">Your current plan</p>
-          {plan === "free" ? (
-            <p className="text-muted-foreground">
-              You&apos;re on the free Core plan.
-            </p>
-          ) : (
-            <p className="text-muted-foreground">You&apos;re on {planLabel}.</p>
-          )}
-          {periodEndLabel ? (
-            <p className="text-muted-foreground">
-              Current period ends {periodEndLabel}.
-            </p>
-          ) : null}
-          {hasActivePlan && (
-            <p className="pt-1">
-              <button
-                onClick={openPortal}
-                disabled={portalLoading}
-                className={cn(
-                  buttonVariants({ variant: "link" }),
-                  "h-auto p-0 text-wisk-teal"
-                )}
-              >
-                {portalLoading && (
-                  <Loader2 className="mr-1 size-3 animate-spin" />
-                )}
-                Manage billing
-              </button>
-            </p>
-          )}
-          {!hasActivePlan && (
-            <p className="pt-2 text-xs text-muted-foreground">
-              Secure checkout via Stripe.{" "}
-              <Link
-                href="/settings?tab=preferences"
-                className="text-wisk-teal hover:underline"
-              >
-                Manage in Settings
-              </Link>
-            </p>
-          )}
-        </CardContent>
-      </Card>
+            {/* Header */}
+            <div className="px-6 pt-6 pb-4">
+              <div className="mb-1 flex items-center gap-2">
+                <div
+                  className="flex size-8 items-center justify-center rounded-lg"
+                  style={{
+                    background: "rgba(20,184,166,0.12)",
+                    border: "1px solid rgba(20,184,166,0.25)",
+                  }}
+                >
+                  <Mail className="size-4 text-teal-400" aria-hidden />
+                </div>
+                <p className="text-sm font-semibold text-teal-400">WISK AI Pro</p>
+              </div>
+              <div className="mt-3 flex items-baseline gap-1">
+                <span className="text-4xl font-bold tracking-tight text-foreground">
+                  £19
+                </span>
+                <span className="text-sm text-muted-foreground">/month</span>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Billed monthly. Cancel any time.
+              </p>
+            </div>
+
+            {/* Features */}
+            <div className="flex-1 px-6 pb-5">
+              <ul className="space-y-2.5">
+                {AI_PRO_FEATURES.map((f) => (
+                  <li key={f} className="flex items-center gap-2.5 text-sm text-muted-foreground">
+                    <span
+                      className="size-1.5 shrink-0 rounded-full"
+                      style={{ background: "#14b8a6" }}
+                      aria-hidden
+                    />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* CTA */}
+            <div className="px-6 pb-6">
+              {hasActivePlan ? (
+                <ManageButton
+                  onClick={openPortal}
+                  loading={portalLoading}
+                  accentColor="teal"
+                />
+              ) : (
+                <GetStartedLink
+                  href="/upgrade/ai-pro"
+                  gradient="linear-gradient(135deg, #0f766e 0%, #14b8a6 50%, #22d3ee 100%)"
+                />
+              )}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── Section 3: Current plan ────────────────────────────────────────────── */}
+      <motion.section
+        initial={noMotion ? false : { opacity: 0, y: 16 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.35, ease: MOTION_EASE.easeOut }}
+        aria-label="Current plan"
+        className="rounded-2xl border border-border/40 bg-card/50 px-6 py-5"
+      >
+        <p className="mb-1.5 text-sm font-medium text-foreground">
+          Your current plan
+        </p>
+        {plan === "free" ? (
+          <p className="text-sm text-muted-foreground">
+            You&apos;re on the free Core plan.
+          </p>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            You&apos;re on {planLabel}.
+          </p>
+        )}
+        {periodEndLabel && (
+          <p className="mt-1 text-sm text-muted-foreground">
+            Current period ends {periodEndLabel}.
+          </p>
+        )}
+        {hasActivePlan && (
+          <p className="mt-3">
+            <button
+              onClick={openPortal}
+              disabled={portalLoading}
+              className={cn(
+                buttonVariants({ variant: "link" }),
+                "h-auto p-0 text-teal-500 hover:text-teal-400"
+              )}
+            >
+              {portalLoading && (
+                <Loader2 className="mr-1 size-3 animate-spin" aria-hidden />
+              )}
+              Manage billing
+            </button>
+          </p>
+        )}
+        {!hasActivePlan && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Secure checkout via Stripe.{" "}
+            <Link
+              href="/settings?tab=preferences"
+              className="text-teal-500 hover:underline"
+            >
+              Manage in Settings
+            </Link>
+          </p>
+        )}
+      </motion.section>
     </PageTransition>
   );
 }

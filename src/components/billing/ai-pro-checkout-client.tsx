@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ArrowLeft,
   Check,
@@ -89,7 +89,6 @@ function ConnectionDiagram({ noMotion }: { noMotion: boolean }) {
 
       {/* Connecting line with animated data dots */}
       <div className="relative mx-3 h-px w-24 shrink-0 overflow-visible">
-        {/* Static line */}
         <div
           className="absolute top-0 left-0 h-px w-full"
           style={{
@@ -97,7 +96,6 @@ function ConnectionDiagram({ noMotion }: { noMotion: boolean }) {
               "linear-gradient(to right, rgba(20,184,166,0.5), rgba(34,211,238,0.8), rgba(20,184,166,0.5))",
           }}
         />
-        {/* Animated dots */}
         {!noMotion &&
           [0, 0.9].map((delay, i) => (
             <motion.div
@@ -170,28 +168,35 @@ function StaggerWords({
   );
 }
 
-// ─── Pricing CTA button ───────────────────────────────────────────────────────
+// ─── Checkout button (shared between main CTA and sticky bar) ─────────────────
 
 function CheckoutButton({
   loading,
   disabled,
   onClick,
+  label = "Unlock AI Pro",
+  compact = false,
 }: {
   loading: boolean;
   disabled: boolean;
   onClick: () => void;
+  label?: string;
+  compact?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      aria-label={loading ? "Redirecting to Stripe" : "Unlock AI Pro — secure checkout"}
+      aria-label={loading ? "Redirecting to Stripe" : `${label} — secure checkout`}
       className={cn(
-        "group relative w-full overflow-hidden rounded-xl py-3.5 text-sm font-semibold text-white",
+        "group relative overflow-hidden rounded-xl text-sm font-semibold text-white",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2",
         "disabled:cursor-not-allowed disabled:opacity-50",
-        "min-h-[48px] transition-opacity hover:opacity-90"
+        "transition-opacity hover:opacity-90",
+        compact
+          ? "min-h-[44px] px-5 py-2.5"
+          : "w-full min-h-[48px] py-3.5"
       )}
       style={{
         background: "linear-gradient(135deg, #0f766e 0%, #14b8a6 50%, #22d3ee 100%)",
@@ -203,7 +208,7 @@ function CheckoutButton({
       />
       <span className="relative flex items-center justify-center gap-2">
         {loading && <Loader2 className="size-4 animate-spin" aria-hidden />}
-        {loading ? "Redirecting to Stripe…" : "Unlock AI Pro"}
+        {loading ? "Redirecting…" : label}
       </span>
     </button>
   );
@@ -215,6 +220,21 @@ export function AIProCheckoutClient({ priceId }: Props) {
   const [loading, setLoading] = useState(false);
   const reduced = useReducedMotion();
   const noMotion = reduced === true;
+
+  // IntersectionObserver: track when the main CTA button is in view
+  const ctaRef = useRef<HTMLDivElement>(null);
+  const [ctaInView, setCtaInView] = useState(false);
+
+  useEffect(() => {
+    const el = ctaRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setCtaInView(Boolean(entry?.isIntersecting)),
+      { threshold: 0.5 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   async function handleCheckout() {
     if (loading || !priceId) return;
@@ -478,14 +498,12 @@ export function AIProCheckoutClient({ priceId }: Props) {
               }}
               className="relative rounded-2xl border border-border/50 bg-card/80 p-6"
             >
-              {/* Step number */}
               <p
                 className="mb-3 text-xs font-bold tracking-[0.15em]"
                 style={{ color: "rgba(20,184,166,0.5)" }}
               >
                 {step}
               </p>
-              {/* Icon */}
               <div
                 className="mb-4 flex size-10 items-center justify-center rounded-xl"
                 style={{
@@ -569,18 +587,65 @@ export function AIProCheckoutClient({ priceId }: Props) {
             ))}
           </ul>
 
-          {/* CTA */}
-          <CheckoutButton
-            loading={loading}
-            disabled={loading || !priceId}
-            onClick={handleCheckout}
-          />
+          {/* Main CTA — observed by IntersectionObserver */}
+          <div ref={ctaRef}>
+            <CheckoutButton
+              loading={loading}
+              disabled={loading || !priceId}
+              onClick={handleCheckout}
+            />
+          </div>
 
           <p className="mt-3 text-center text-xs text-muted-foreground">
             Secure checkout via Stripe
           </p>
         </motion.div>
       </section>
+
+      {/* ── Sticky bottom CTA bar ─────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {!ctaInView && (
+          <motion.div
+            key="sticky-cta"
+            initial={noMotion ? { opacity: 0 } : { y: "100%" }}
+            animate={noMotion ? { opacity: 1 } : { y: 0 }}
+            exit={noMotion ? { opacity: 0 } : { y: "100%" }}
+            transition={
+              noMotion
+                ? { duration: 0.15, ease: "easeOut" }
+                : { type: "spring", stiffness: 400, damping: 35 }
+            }
+            className={cn(
+              "fixed inset-x-0 z-50",
+              "bottom-[calc(3.25rem+env(safe-area-inset-bottom))]",
+              "md:bottom-0"
+            )}
+            aria-label="Quick checkout"
+          >
+            <div
+              className="border-t bg-background/95 backdrop-blur-md"
+              style={{ borderTopColor: "rgba(20, 184, 166, 0.4)" }}
+            >
+              <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-2.5 md:px-6 lg:px-8">
+                {/* Plan info */}
+                <div>
+                  <p className="text-sm font-semibold text-foreground">WISK AI Pro</p>
+                  <p className="text-xs text-muted-foreground">£19 / month</p>
+                </div>
+
+                {/* CTA button */}
+                <CheckoutButton
+                  loading={loading}
+                  disabled={loading || !priceId}
+                  onClick={handleCheckout}
+                  label="Unlock AI Pro"
+                  compact
+                />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

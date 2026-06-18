@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ArrowLeft,
   ArrowRight,
@@ -63,7 +63,6 @@ const FEATURES = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Splits a string into word-staggered motion.span elements */
 function StaggerWords({
   text,
   baseDelay = 0,
@@ -128,41 +127,47 @@ function CapabilityCard({
   );
 }
 
-// ─── Pricing CTA button ───────────────────────────────────────────────────────
+// ─── Checkout button (shared between main CTA and sticky bar) ─────────────────
 
 function CheckoutButton({
   loading,
   disabled,
   onClick,
+  label = "Unlock Winston",
+  compact = false,
 }: {
   loading: boolean;
   disabled: boolean;
   onClick: () => void;
+  label?: string;
+  compact?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      aria-label={loading ? "Redirecting to Stripe" : "Unlock Winston — secure checkout"}
+      aria-label={loading ? "Redirecting to Stripe" : `${label} — secure checkout`}
       className={cn(
-        "group relative w-full overflow-hidden rounded-xl py-3.5 text-sm font-semibold text-white",
+        "group relative overflow-hidden rounded-xl text-sm font-semibold text-white",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2",
         "disabled:cursor-not-allowed disabled:opacity-50",
-        "min-h-[48px] transition-opacity hover:opacity-90"
+        "transition-opacity hover:opacity-90",
+        compact
+          ? "min-h-[44px] px-5 py-2.5"
+          : "w-full min-h-[48px] py-3.5"
       )}
       style={{
         background: "linear-gradient(135deg, #6d28d9 0%, #a855f7 50%, #14b8a6 100%)",
       }}
     >
-      {/* CSS shimmer sweep */}
       <span
         aria-hidden
         className="pointer-events-none absolute inset-0 -translate-x-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)] transition-transform duration-700 ease-in-out group-hover:translate-x-full"
       />
       <span className="relative flex items-center justify-center gap-2">
         {loading && <Loader2 className="size-4 animate-spin" aria-hidden />}
-        {loading ? "Redirecting to Stripe…" : "Unlock Winston"}
+        {loading ? "Redirecting…" : label}
       </span>
     </button>
   );
@@ -174,6 +179,21 @@ export function AICheckoutClient({ priceId }: Props) {
   const [loading, setLoading] = useState(false);
   const reduced = useReducedMotion();
   const noMotion = reduced === true;
+
+  // IntersectionObserver: track when the main CTA button is in view
+  const ctaRef = useRef<HTMLDivElement>(null);
+  const [ctaInView, setCtaInView] = useState(false);
+
+  useEffect(() => {
+    const el = ctaRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setCtaInView(Boolean(entry?.isIntersecting)),
+      { threshold: 0.5 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   async function handleCheckout() {
     if (loading || !priceId) return;
@@ -272,7 +292,6 @@ export function AICheckoutClient({ priceId }: Props) {
 
           {/* Headline */}
           <h1 className="mb-5 text-4xl font-bold tracking-tight md:text-5xl lg:text-[3.5rem] lg:leading-[1.1]">
-            {/* First line: gradient block */}
             <motion.span
               className="block"
               style={{
@@ -293,7 +312,6 @@ export function AICheckoutClient({ priceId }: Props) {
               Meet Winston.
             </motion.span>
 
-            {/* Second line: white words staggered */}
             <span className="mt-1 block text-white">
               <StaggerWords
                 text="Your AI business assistant."
@@ -417,12 +435,14 @@ export function AICheckoutClient({ priceId }: Props) {
             ))}
           </ul>
 
-          {/* CTA */}
-          <CheckoutButton
-            loading={loading}
-            disabled={loading || !priceId}
-            onClick={handleCheckout}
-          />
+          {/* Main CTA — observed by IntersectionObserver */}
+          <div ref={ctaRef}>
+            <CheckoutButton
+              loading={loading}
+              disabled={loading || !priceId}
+              onClick={handleCheckout}
+            />
+          </div>
 
           <p className="mt-3 text-center text-xs text-muted-foreground">
             Secure checkout via Stripe
@@ -454,6 +474,53 @@ export function AICheckoutClient({ priceId }: Props) {
           </Link>
         </motion.div>
       </section>
+
+      {/* ── Sticky bottom CTA bar ─────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {!ctaInView && (
+          <motion.div
+            key="sticky-cta"
+            initial={noMotion ? { opacity: 0 } : { y: "100%" }}
+            animate={noMotion ? { opacity: 1 } : { y: 0 }}
+            exit={noMotion ? { opacity: 0 } : { y: "100%" }}
+            transition={
+              noMotion
+                ? { duration: 0.15, ease: "easeOut" }
+                : { type: "spring", stiffness: 400, damping: 35 }
+            }
+            className={cn(
+              "fixed inset-x-0 z-50",
+              // On mobile: sit above the bottom nav (~52px + safe area)
+              "bottom-[calc(3.25rem+env(safe-area-inset-bottom))]",
+              // On desktop: bottom nav is hidden, go to bottom edge
+              "md:bottom-0"
+            )}
+            aria-label="Quick checkout"
+          >
+            <div
+              className="border-t bg-background/95 backdrop-blur-md"
+              style={{ borderTopColor: "rgba(168, 85, 247, 0.4)" }}
+            >
+              <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-2.5 md:px-6 lg:px-8">
+                {/* Plan info */}
+                <div>
+                  <p className="text-sm font-semibold text-foreground">WISK AI</p>
+                  <p className="text-xs text-muted-foreground">£9 / month</p>
+                </div>
+
+                {/* CTA button */}
+                <CheckoutButton
+                  loading={loading}
+                  disabled={loading || !priceId}
+                  onClick={handleCheckout}
+                  label="Unlock Winston"
+                  compact
+                />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
