@@ -872,14 +872,70 @@ Features:
 
 #### Properties Package
 
-Target: small landlords, property managers, real estate operators
+Target: small landlords managing 1-10 properties
 
-Features:
-- Property management with tenant data and communication
-- Maintenance ticket workflow with contractor assignment
-- Rental income tracking and projections
-- Connected to core tasks/projects for property work
-- Document storage for leases, certificates, inspections
+Core concept: WISK becomes the command centre for a
+small landlord's entire portfolio. Connected to projects,
+tasks, and Winston for intelligent property management.
+
+**AI integration:**
+- Tenant portal includes Winston triage — tenants describe
+  their issue, Winston troubleshoots common problems first
+  (e.g. boiler pressure, tripped fuse, blocked drain guidance)
+- If Winston cannot resolve the issue or it's flagged as
+  severe/urgent, it escalates automatically to the landlord
+  with a structured report: issue description, troubleshooting
+  steps attempted, urgency level
+- Winston surfaces maintenance patterns in the weekly digest
+  ("Flat 2 has had 3 maintenance requests this month")
+- Rent payment tracking with overdue alerts
+
+**Tenant portal:**
+- Lightweight separate portal created by the landlord when
+  setting up a tenancy
+- Tenant accesses via a unique link (no full WISK account needed)
+- Portal shows: their property details, active maintenance
+  requests, documents
+- Maintenance request flow:
+  1. Tenant describes issue
+  2. Winston attempts to troubleshoot
+  3. If unresolved/severe → escalates to landlord with full context
+  4. Landlord creates a maintenance task in WISK automatically
+  5. Tenant receives status updates
+
+**Landlord features:**
+- Property management dashboard (address, type, bedrooms, rent amount)
+- Tenant records per property (name, contact, tenancy start/end,
+  rent amount, payment history)
+- Maintenance ticket workflow:
+  New → In progress → Resolved
+  Assign to contractor (contacts list)
+  Link to WISK tasks for follow-up
+- Rent tracking:
+  Expected vs received per month
+  Overdue rent notifications
+  Payment history per tenant
+- Document storage per property:
+  Lease agreements, gas safety certificates, EPC, inspection reports
+- Rental income connected to Goals (track income against targets)
+- Winston insights:
+  Yield calculations per property
+  Maintenance cost tracking
+  Tenant payment reliability scores
+  Portfolio health in weekly digest
+
+**Pricing:**
+- £9-12/mo as part of vertical packages
+- Included in WISK Max bundle
+
+**Technical notes:**
+- Tenant portal is a separate lightweight Next.js route
+  (`/portal/[tenantToken]`) accessible without a WISK account
+- Winston triage in tenant portal uses the Claude API with
+  property-specific context
+- Documents stored in Supabase Storage (requires Supabase Pro upgrade)
+- Tenant portal tokens are UUID-based, stored encrypted,
+  expire on tenancy end
 
 #### Integration Architecture (shared across all packages)
 
@@ -935,6 +991,54 @@ Build order:
 - This touches every major table — do after Stripe to avoid multiple simultaneous schema changes
 - Phase A is purely additive — no existing RLS policies touched
 
+### Team & Collaboration (Phase 4.2)
+
+A dedicated Team section for collaborative work across
+multiple WISK users.
+
+**Prerequisites:**
+- Stripe billing live (Phase 3.2)
+- Collaboration Phase A complete (done)
+- Phase B RLS updates per shareable table
+
+**New data model required:**
+- `teams` table (`id`, `name`, `description`, `owner_id`, `created_at`)
+- `team_members` table (`team_id`, `user_id`, `role`: owner/admin/member, `joined_at`)
+- Team-scoped projects and tasks
+- `team_updates` table (feed/announcements per team)
+
+**Features:**
+- Create and manage teams
+- Invite members via @username (uses existing connections system)
+- Shared project views (all members see the same projects/tasks)
+- Task assignment to specific team members
+- Team activity feed (who did what, when)
+- Role-based permissions (owner/admin/member)
+- Winston team digest (weekly summary for the whole team)
+
+**Pricing:**
+- Team features as a paid tier (WISK Pro or Team add-on)
+- Per-seat pricing for larger teams
+- Solo users on free/AI plan unaffected
+
+**Build order:**
+
+Phase A (foundation) — already complete:
+- Username system, `user_connections`, `item_shares` tables
+
+Phase B (RLS + sharing UI) — after Stripe:
+- Share button on projects and tasks
+- Permission picker (view/edit)
+- Shared with me section
+- RLS updates per shareable table
+
+Phase C (full team features) — Phase 4:
+- `teams` and `team_members` tables
+- Team-scoped projects and tasks
+- Team activity feed
+- Task assignment
+- Winston team digest
+
 ### Coming Soon strategy
 
 WISK uses a deliberate "coming soon" approach:
@@ -945,14 +1049,6 @@ WISK uses a deliberate "coming soon" approach:
   - Settings page "What's coming" section
   - Social content and build-in-public posts
 - Core product must always feel complete and polished — no building site feeling for daily users
-
-### Team and Agency Features
-- Multi-user workspaces
-- Role-based permissions
-- Shared projects and leads pipeline
-- Task assignment to team members
-- Activity feed
-- Agency/white-label version
 
 ### WISK Stays (separate product)
 - Short-term rental management
