@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
+import { hasAIAccess } from "@/lib/billing/access";
 import {
   buildNotificationCandidates,
   candidateKey,
@@ -13,6 +14,7 @@ import {
   mergeNotificationCandidates,
   suggestionsToNotificationCandidates,
 } from "@/lib/suggestions";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export type NotificationsSnapshot = {
   notifications: Notification[];
@@ -22,7 +24,7 @@ export type NotificationsSnapshot = {
 export async function generateNotifications(): Promise<void> {
   const { supabase, userId } = await getScopedSupabase();
 
-  const [tasksRes, projectsRes, goalsRes, leadsRes, existingRes, pendingConnectionsRes] =
+  const [tasksRes, projectsRes, goalsRes, leadsRes, existingRes, pendingConnectionsRes, prefsRes] =
     await Promise.all([
       supabase
         .from("tasks")
@@ -49,6 +51,11 @@ export async function generateNotifications(): Promise<void> {
         .select("id, requester_id")
         .eq("recipient_id", userId)
         .eq("status", "pending"),
+      supabase
+        .from("user_preferences")
+        .select("ai_access")
+        .eq("user_id", userId)
+        .maybeSingle(),
     ]);
 
   if (tasksRes.error) throw new Error(tasksRes.error.message);
@@ -70,21 +77,33 @@ export async function generateNotifications(): Promise<void> {
     }
   }
 
+  const canAccessWinston = await hasAIAccess(
+    userId,
+    createAdminClient(),
+    prefsRes.data?.ai_access ?? false
+  );
+
+  const standardCandidates = buildNotificationCandidates(
+    tasksRes.data ?? [],
+    projectsRes.data ?? [],
+    goalsRes.data ?? [],
+    leadsRes.data ?? [],
+    pendingConnections.map((c) => ({
+      id: c.id,
+      requester_username: usernameMap.get(c.requester_id) ?? "someone",
+    }))
+  );
+
+  const suggestionCandidates = canAccessWinston
+    ? suggestionsToNotificationCandidates(
+        await buildSuggestions(userId, supabase),
+        userId
+      )
+    : [];
+
   const candidates = mergeNotificationCandidates(
-    buildNotificationCandidates(
-      tasksRes.data ?? [],
-      projectsRes.data ?? [],
-      goalsRes.data ?? [],
-      leadsRes.data ?? [],
-      pendingConnections.map((c) => ({
-        id: c.id,
-        requester_username: usernameMap.get(c.requester_id) ?? "someone",
-      }))
-    ),
-    suggestionsToNotificationCandidates(
-      await buildSuggestions(userId, supabase),
-      userId
-    )
+    standardCandidates,
+    suggestionCandidates
   );
 
   const validKeys = new Set(candidates.map(candidateKey));

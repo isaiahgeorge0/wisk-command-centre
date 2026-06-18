@@ -8,14 +8,16 @@ import { OverviewPageClient } from "@/components/overview/overview-page-client";
 import { resolveDisplayName } from "@/lib/auth/resolve-display-name";
 import { getUserProfile } from "@/lib/auth/get-user-profile";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
+import { hasAIAccess } from "@/lib/billing/access";
 import { getOrCreateUserPreferences } from "@/lib/preferences/get-user-preferences";
 import { buildOverviewSnapshot } from "@/lib/overview/selectors";
 import { buildSuggestions } from "@/lib/suggestions";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export default async function OverviewPage() {
   const { supabase, userId } = await getScopedSupabase();
 
-  const [projects, tasks, goals, ideas, leads, contentPosts, profile, preferences, suggestions] =
+  const [projects, tasks, goals, ideas, leads, contentPosts, profile, preferences, prefsRow] =
     await Promise.all([
       getProjects(),
       getTasks(),
@@ -25,8 +27,22 @@ export default async function OverviewPage() {
       getContentPosts(),
       getUserProfile(),
       getOrCreateUserPreferences(),
-      buildSuggestions(userId, supabase),
+      supabase
+        .from("user_preferences")
+        .select("ai_access")
+        .eq("user_id", userId)
+        .maybeSingle(),
     ]);
+
+  const canAccessWinston = await hasAIAccess(
+    userId,
+    createAdminClient(),
+    prefsRow.data?.ai_access ?? false
+  );
+
+  const suggestions = canAccessWinston
+    ? await buildSuggestions(userId, supabase)
+    : [];
 
   const displayName = resolveDisplayName({
     displayName: preferences.displayName,
