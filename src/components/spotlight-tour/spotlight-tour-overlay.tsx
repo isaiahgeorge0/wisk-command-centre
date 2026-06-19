@@ -482,8 +482,10 @@ export function SpotlightTourOverlay() {
     if (!isActive) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    document.body.classList.add("spotlight-tour-active");
     return () => {
       document.body.style.overflow = previousOverflow;
+      document.body.classList.remove("spotlight-tour-active");
     };
   }, [isActive]);
 
@@ -498,12 +500,20 @@ export function SpotlightTourOverlay() {
   const tooltipStep = displayedStep ?? step;
 
   return createPortal(
-    <motion.div
-      className="pointer-events-none fixed inset-0 z-[200]"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: reduced ? 0 : MOTION_DURATION.fast }}
-    >
+    <>
+      <style>{`
+        body.spotlight-tour-active [data-slot="select-content"],
+        body.spotlight-tour-active [data-slot="select-content"] ~ *,
+        body.spotlight-tour-active .isolate.z-50:has([data-slot="select-content"]) {
+          z-index: 210 !important;
+        }
+      `}</style>
+      <motion.div
+        className="pointer-events-none fixed inset-0 z-[200]"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: reduced ? 0 : MOTION_DURATION.fast }}
+      >
       <AnimatedSpotlightPanels
         rect={renderRect}
         viewportWidth={viewportSize.width}
@@ -529,7 +539,8 @@ export function SpotlightTourOverlay() {
           void skipTour();
         }}
       />
-    </motion.div>,
+    </motion.div>
+    </>,
     document.body
   );
 }

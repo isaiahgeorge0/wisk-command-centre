@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { ExpandableSection } from "@/components/motion/expandable-section";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ResponsiveSelect } from "@/components/ui/responsive-select";
 import {
   Select,
   SelectContent,
@@ -15,9 +15,159 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { PROJECT_STATUS_LABELS } from "@/lib/projects/constants";
-import { buildProjectTypeDatalistOptions } from "@/lib/projects/recent-project-types";
 import type { ProjectFormInput, ProjectStatus } from "@/lib/projects/types";
 import { PROJECT_STATUSES } from "@/lib/projects/types";
+import { cn } from "@/lib/utils";
+
+const PROJECT_TYPE_SUGGESTION_LIMIT = 5;
+
+function getProjectTypeSuggestions(
+  query: string,
+  recentProjectTypes: string[],
+  savedProjectTypes: string[]
+): string[] {
+  const seen = new Set<string>();
+  const all: string[] = [];
+
+  for (const type of [...recentProjectTypes, ...savedProjectTypes]) {
+    const trimmed = type.trim();
+    if (!trimmed) continue;
+
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) continue;
+
+    seen.add(key);
+    all.push(trimmed);
+  }
+
+  const normalizedQuery = query.trim().toLowerCase();
+
+  if (!normalizedQuery) {
+    return [...all]
+      .sort((a, b) => a.localeCompare(b))
+      .slice(0, PROJECT_TYPE_SUGGESTION_LIMIT);
+  }
+
+  function matchScore(type: string): number {
+    const lower = type.toLowerCase();
+    if (lower.startsWith(normalizedQuery)) return 0;
+    if (lower.includes(normalizedQuery)) return 1;
+    return 2;
+  }
+
+  return [...all]
+    .sort((a, b) => {
+      const scoreDiff = matchScore(a) - matchScore(b);
+      if (scoreDiff !== 0) return scoreDiff;
+      return a.localeCompare(b);
+    })
+    .slice(0, PROJECT_TYPE_SUGGESTION_LIMIT);
+}
+
+function ProjectTypeField({
+  formId,
+  value,
+  onChange,
+  recentProjectTypes,
+  projectTypeOptions,
+  disabled,
+}: {
+  formId: string;
+  value: string;
+  onChange: (value: string) => void;
+  recentProjectTypes: string[];
+  projectTypeOptions: string[];
+  disabled?: boolean;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [open, setOpen] = useState(false);
+  const [dropdownRect, setDropdownRect] = useState<DOMRect | null>(null);
+
+  const suggestions = useMemo(
+    () =>
+      getProjectTypeSuggestions(value, recentProjectTypes, projectTypeOptions),
+    [value, recentProjectTypes, projectTypeOptions]
+  );
+
+  useLayoutEffect(() => {
+    if (!open || !inputRef.current) {
+      setDropdownRect(null);
+      return;
+    }
+
+    const updateRect = () => {
+      if (inputRef.current) {
+        setDropdownRect(inputRef.current.getBoundingClientRect());
+      }
+    };
+
+    updateRect();
+    window.addEventListener("resize", updateRect);
+    window.addEventListener("scroll", updateRect, true);
+
+    return () => {
+      window.removeEventListener("resize", updateRect);
+      window.removeEventListener("scroll", updateRect, true);
+    };
+  }, [open, value, suggestions.length]);
+
+  const showDropdown = open && suggestions.length > 0;
+
+  return (
+    <>
+      <Input
+        ref={inputRef}
+        id={`${formId}-service_type`}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onFocus={() => setOpen(true)}
+        onBlur={() => {
+          window.setTimeout(() => setOpen(false), 150);
+        }}
+        disabled={disabled}
+        required
+        autoComplete="off"
+        aria-autocomplete="list"
+        aria-expanded={showDropdown}
+        aria-controls={showDropdown ? `${formId}-project-types-list` : undefined}
+      />
+      {showDropdown && dropdownRect
+        ? createPortal(
+            <ul
+              id={`${formId}-project-types-list`}
+              role="listbox"
+              className="fixed z-[210] overflow-hidden rounded-lg border border-border/60 bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10"
+              style={{
+                top: dropdownRect.bottom + 4,
+                left: dropdownRect.left,
+                width: dropdownRect.width,
+              }}
+            >
+              {suggestions.map((type) => (
+                <li key={type} role="option" aria-selected={type === value}>
+                  <button
+                    type="button"
+                    className={cn(
+                      "flex w-full px-3 py-2 text-left text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
+                      type === value && "bg-accent/50"
+                    )}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => {
+                      onChange(type);
+                      setOpen(false);
+                    }}
+                  >
+                    {type}
+                  </button>
+                </li>
+              ))}
+            </ul>,
+            document.body
+          )
+        : null}
+    </>
+  );
+}
 
 type ProjectFormProps = {
   formId: string;
@@ -67,16 +217,6 @@ export function ProjectForm({
     values.github_repo
   );
 
-  const datalistOptions = useMemo(
-    () =>
-      buildProjectTypeDatalistOptions(
-        values.service_type,
-        recentProjectTypes,
-        projectTypeOptions
-      ),
-    [values.service_type, recentProjectTypes, projectTypeOptions]
-  );
-
   return (
     <div className="grid gap-4">
       <div className="grid gap-2" data-tour="project-name">
@@ -107,54 +247,34 @@ export function ProjectForm({
 
       <div className="grid gap-2" data-tour="service-type">
         <Label htmlFor={`${formId}-service_type`}>Project type *</Label>
-        <Input
-          id={`${formId}-service_type`}
-          list={`${formId}-project-types`}
+        <ProjectTypeField
+          formId={formId}
           value={values.service_type}
-          onChange={(e) => setField("service_type", e.target.value)}
+          onChange={(nextValue) => setField("service_type", nextValue)}
+          recentProjectTypes={recentProjectTypes}
+          projectTypeOptions={projectTypeOptions}
           disabled={disabled}
-          required
         />
-        <datalist id={`${formId}-project-types`}>
-          {datalistOptions.map((type) => (
-            <option key={type} value={type} />
-          ))}
-        </datalist>
       </div>
 
       <div className="grid gap-2" data-tour="status">
         <Label htmlFor={`${formId}-status`}>Status *</Label>
-        <ResponsiveSelect
-          id={`${formId}-status`}
+        <Select
           value={values.status}
-          onValueChange={(value) =>
-            setField("status", value as ProjectStatus)
-          }
+          onValueChange={(value) => setField("status", value as ProjectStatus)}
           disabled={disabled}
-          options={PROJECT_STATUSES.map((status) => ({
-            value: status,
-            label: PROJECT_STATUS_LABELS[status],
-          }))}
         >
-          <Select
-            value={values.status}
-            onValueChange={(value) =>
-              setField("status", value as ProjectStatus)
-            }
-            disabled={disabled}
-          >
-            <SelectTrigger id={`${formId}-status`} className="w-full">
-              <SelectValue placeholder="Select status" />
-            </SelectTrigger>
-            <SelectContent>
-              {PROJECT_STATUSES.map((status) => (
-                <SelectItem key={status} value={status}>
-                  {PROJECT_STATUS_LABELS[status]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </ResponsiveSelect>
+          <SelectTrigger id={`${formId}-status`} className="w-full">
+            <SelectValue placeholder="Select status" />
+          </SelectTrigger>
+          <SelectContent className="z-[210]">
+            {PROJECT_STATUSES.map((status) => (
+              <SelectItem key={status} value={status}>
+                {PROJECT_STATUS_LABELS[status]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <ExpandableSection open={showDevFields} className="grid gap-4">
