@@ -793,6 +793,164 @@ export async function generateUserDigest(userId: string): Promise<ActionResult> 
   }
 }
 
+const DELETE_USER_ERROR = "Could not delete user. Please try again.";
+
+function logDeleteUserFailure(step: string, error: unknown): ActionResult {
+  console.error(`deleteUser ${step}:`, error);
+  return { success: false, error: DELETE_USER_ERROR };
+}
+
+export async function deleteUser(userId: string): Promise<ActionResult> {
+  await requireAdmin();
+
+  const trimmedUserId = userId.trim();
+  if (!trimmedUserId) {
+    return { success: false, error: DELETE_USER_ERROR };
+  }
+
+  const supabase = createAdminClient();
+
+  const { data: authData, error: authLookupError } =
+    await supabase.auth.admin.getUserById(trimmedUserId);
+
+  if (authLookupError || !authData.user?.email) {
+    return logDeleteUserFailure("auth lookup", authLookupError ?? "missing email");
+  }
+
+  const userEmail = authData.user.email.trim().toLowerCase();
+
+  const steps: Array<{ step: string; error: { message: string } | null }> = [];
+
+  steps.push({
+    step: "ai_usage_log",
+    error: (await supabase.from("ai_usage_log").delete().eq("user_id", trimmedUserId))
+      .error,
+  });
+  steps.push({
+    step: "ai_conversation_messages",
+    error: (
+      await supabase
+        .from("ai_conversation_messages")
+        .delete()
+        .eq("user_id", trimmedUserId)
+    ).error,
+  });
+  steps.push({
+    step: "ai_conversations",
+    error: (
+      await supabase.from("ai_conversations").delete().eq("user_id", trimmedUserId)
+    ).error,
+  });
+  steps.push({
+    step: "ai_context_cache",
+    error: (
+      await supabase.from("ai_context_cache").delete().eq("user_id", trimmedUserId)
+    ).error,
+  });
+  steps.push({
+    step: "ai_reports",
+    error: (await supabase.from("ai_reports").delete().eq("user_id", trimmedUserId))
+      .error,
+  });
+  steps.push({
+    step: "lead_activities",
+    error: (
+      await supabase.from("lead_activities").delete().eq("user_id", trimmedUserId)
+    ).error,
+  });
+  steps.push({
+    step: "notifications",
+    error: (
+      await supabase.from("notifications").delete().eq("user_id", trimmedUserId)
+    ).error,
+  });
+  steps.push({
+    step: "announcement_dismissals",
+    error: (
+      await supabase
+        .from("announcement_dismissals")
+        .delete()
+        .eq("user_id", trimmedUserId)
+    ).error,
+  });
+  steps.push({
+    step: "feedback",
+    error: (await supabase.from("feedback").delete().eq("user_id", trimmedUserId))
+      .error,
+  });
+  steps.push({
+    step: "access_requests",
+    error: (
+      await supabase.from("access_requests").delete().eq("email", userEmail)
+    ).error,
+  });
+  steps.push({
+    step: "user_connections",
+    error: (
+      await supabase
+        .from("user_connections")
+        .delete()
+        .or(`requester_id.eq.${trimmedUserId},recipient_id.eq.${trimmedUserId}`)
+    ).error,
+  });
+  steps.push({
+    step: "item_shares",
+    error: (
+      await supabase
+        .from("item_shares")
+        .delete()
+        .or(`owner_id.eq.${trimmedUserId},recipient_id.eq.${trimmedUserId}`)
+    ).error,
+  });
+  steps.push({
+    step: "user_subscriptions",
+    error: (
+      await supabase
+        .from("user_subscriptions")
+        .delete()
+        .eq("user_id", trimmedUserId)
+    ).error,
+  });
+  steps.push({
+    step: "user_integrations",
+    error: (
+      await supabase
+        .from("user_integrations")
+        .delete()
+        .eq("user_id", trimmedUserId)
+    ).error,
+  });
+  steps.push({
+    step: "user_preferences",
+    error: (
+      await supabase
+        .from("user_preferences")
+        .delete()
+        .eq("user_id", trimmedUserId)
+    ).error,
+  });
+  steps.push({
+    step: "public.users",
+    error: (await supabase.from("users").delete().eq("id", trimmedUserId)).error,
+  });
+
+  for (const { step, error } of steps) {
+    if (error) {
+      return logDeleteUserFailure(step, error);
+    }
+  }
+
+  const { error: authDeleteError } =
+    await supabase.auth.admin.deleteUser(trimmedUserId);
+
+  if (authDeleteError) {
+    return logDeleteUserFailure("auth.users", authDeleteError);
+  }
+
+  revalidatePath("/admin/users");
+  return { success: true };
+}
+
 export async function getUserHealthSummary(): Promise<UserHealthSummary> {
   const users = await getUsersWithHealth();
   return users.reduce(

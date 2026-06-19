@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useOptimistic, useState, useTransition } from "react";
+import { useEffect, useMemo, useOptimistic, useState, useTransition } from "react";
 import { Check, Loader2, Sparkles, X, Zap } from "lucide-react";
 
 import { generateUserDigest, toggleAIAccess } from "@/app/(dashboard)/admin/actions";
+import { DeleteUserDialog } from "@/components/admin/delete-user-dialog";
 import type {
   ActiveSubscriptionSummary,
   AdminUserHealth,
@@ -202,25 +203,67 @@ function SubscriptionBadges({
   );
 }
 
+// ─── Delete success toast ─────────────────────────────────────────────────────
+
+function UserDeletedToast({
+  open,
+  onDismiss,
+}: {
+  open: boolean;
+  onDismiss: () => void;
+}) {
+  useEffect(() => {
+    if (!open) return;
+    const timer = window.setTimeout(onDismiss, 4000);
+    return () => window.clearTimeout(timer);
+  }, [open, onDismiss]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      role="status"
+      className="fixed inset-x-4 bottom-20 z-50 mx-auto max-w-md rounded-xl border border-border/60 bg-card px-4 py-3 shadow-lg md:inset-x-auto md:right-6 md:bottom-6"
+    >
+      <p className="text-sm text-foreground">User deleted</p>
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function UsersHealthClient({ users, summary }: UsersHealthClientProps) {
   const [search, setSearch] = useState("");
+  const [localUsers, setLocalUsers] = useState(users);
+  const [showDeletedToast, setShowDeletedToast] = useState(false);
+
+  useEffect(() => {
+    setLocalUsers(users);
+  }, [users]);
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) {
-      return users;
+      return localUsers;
     }
-    return users.filter(
+    return localUsers.filter(
       (user) =>
         user.email.toLowerCase().includes(query) ||
         (user.name ?? "").toLowerCase().includes(query)
     );
-  }, [search, users]);
+  }, [search, localUsers]);
+
+  function handleUserDeleted(userId: string) {
+    setLocalUsers((current) => current.filter((user) => user.id !== userId));
+    setShowDeletedToast(true);
+  }
 
   return (
     <div className="space-y-4">
+      <UserDeletedToast
+        open={showDeletedToast}
+        onDismiss={() => setShowDeletedToast(false)}
+      />
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -248,7 +291,7 @@ export function UsersHealthClient({ users, summary }: UsersHealthClientProps) {
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
-          {users.length} user{users.length === 1 ? "" : "s"} total
+          {localUsers.length} user{localUsers.length === 1 ? "" : "s"} total
         </p>
         <Input
           value={search}
@@ -259,7 +302,7 @@ export function UsersHealthClient({ users, summary }: UsersHealthClientProps) {
       </div>
 
       <div className="overflow-x-auto rounded-xl ring-1 ring-foreground/10">
-        <table className="w-full min-w-[1200px] text-left text-sm">
+        <table className="w-full min-w-[1260px] text-left text-sm">
           <thead className="border-b bg-muted/40 text-muted-foreground">
             <tr>
               <th className="px-4 py-3 font-medium">Name</th>
@@ -280,13 +323,16 @@ export function UsersHealthClient({ users, summary }: UsersHealthClientProps) {
               <th className="px-4 py-3 font-medium text-muted-foreground">
                 Digest
               </th>
+              <th className="px-4 py-3 font-medium">
+                <span className="sr-only">Delete</span>
+              </th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
               <tr>
                 <td
-                  colSpan={11}
+                  colSpan={12}
                   className="px-4 py-8 text-center text-muted-foreground"
                 >
                   No users found.
@@ -340,6 +386,14 @@ export function UsersHealthClient({ users, summary }: UsersHealthClientProps) {
                     ) : (
                       <span className="text-xs text-muted-foreground/40">—</span>
                     )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <DeleteUserDialog
+                      userId={user.id}
+                      displayName={user.name}
+                      email={user.email}
+                      onDeleted={handleUserDeleted}
+                    />
                   </td>
                 </tr>
               ))
