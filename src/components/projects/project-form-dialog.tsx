@@ -84,7 +84,7 @@ export function ProjectFormDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form id={formId} onSubmit={handleSubmit}>
+        <form id={formId} onSubmit={handleSubmit} noValidate>
           <ProjectForm
             formId={formId}
             values={values}

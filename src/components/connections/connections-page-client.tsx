@@ -32,6 +32,20 @@ function timeAgo(iso: string): string {
   return `${days} days ago`;
 }
 
+function TimeAgoLabel({ iso }: { iso: string }) {
+  const [label, setLabel] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLabel(timeAgo(iso));
+  }, [iso]);
+
+  return (
+    <p className="mt-0.5 text-xs text-muted-foreground/60">
+      {label ?? "\u00a0"}
+    </p>
+  );
+}
+
 function ProfileAvatar({
   name,
   username,
@@ -239,9 +253,7 @@ function PendingRequestsSection({
                     @{user.username}
                   </p>
                 ) : null}
-                <p className="text-xs text-muted-foreground/60 mt-0.5">
-                  {timeAgo(conn.created_at)}
-                </p>
+                <TimeAgoLabel iso={conn.created_at} />
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 <Button

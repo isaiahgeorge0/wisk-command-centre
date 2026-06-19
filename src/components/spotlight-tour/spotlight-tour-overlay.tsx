@@ -123,7 +123,7 @@ function AnimatedSpotlightPanels({
   transition: SpringTransition;
 }) {
   const panels = getPanelDimensions(rect, viewportWidth, viewportHeight);
-  const panelClassName = "fixed bg-black/50";
+  const panelClassName = "pointer-events-none fixed bg-black/50";
 
   return (
     <>
@@ -499,7 +499,7 @@ export function SpotlightTourOverlay() {
 
   return createPortal(
     <motion.div
-      className="fixed inset-0 z-[200]"
+      className="pointer-events-none fixed inset-0 z-[200]"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: reduced ? 0 : MOTION_DURATION.fast }}

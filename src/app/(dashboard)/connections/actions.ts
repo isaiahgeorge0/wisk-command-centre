@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import type { PublicUserProfile, UserConnection } from "@/lib/collaboration/types";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export type ConnectionActionResult<T = void> =
   | { success: true; data?: T }
@@ -18,40 +19,60 @@ export async function searchUsers(
   }
 
   const { supabase, userId } = await getScopedSupabase();
+  const admin = createAdminClient();
 
-  // Fetch existing connections so we can exclude them
+  // Exclude users with a pending or accepted connection to the current user
   const { data: existing } = await supabase
     .from("user_connections")
     .select("requester_id, recipient_id")
-    .or(`requester_id.eq.${userId},recipient_id.eq.${userId}`);
+    .or(`requester_id.eq.${userId},recipient_id.eq.${userId}`)
+    .in("status", ["pending", "accepted"]);
 
-  const connectedIds = new Set<string>();
+  const excludedIds = new Set<string>([userId]);
   for (const row of existing ?? []) {
-    connectedIds.add(row.requester_id === userId ? row.recipient_id : row.requester_id);
+    excludedIds.add(
+      row.requester_id === userId ? row.recipient_id : row.requester_id
+    );
   }
-  connectedIds.add(userId);
 
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from("users")
     .select("id, username, name")
     .ilike("username", `%${trimmed}%`)
+    .neq("id", userId)
     .not("username", "is", null)
     .limit(20);
 
   if (error) {
-    return { success: false, error: error.message };
+    console.error("searchUsers:", error);
+    return { success: false, error: "Could not search users" };
   }
 
-  const filtered = (data ?? [])
-    .filter((u) => !connectedIds.has(u.id) && u.username)
-    .slice(0, 10)
-    .map((u) => ({
-      id: u.id,
-      username: u.username as string,
-      name: u.name,
-    }));
+  const candidates = (data ?? []).filter(
+    (u) => u.username && !excludedIds.has(u.id)
+  );
 
-  return { success: true, data: filtered };
+  const userIds = candidates.map((u) => u.id);
+  const displayNameMap = new Map<string, string | null>();
+
+  if (userIds.length > 0) {
+    const { data: prefs } = await admin
+      .from("user_preferences")
+      .select("user_id, display_name")
+      .in("user_id", userIds);
+
+    for (const pref of prefs ?? []) {
+      displayNameMap.set(pref.user_id, pref.display_name);
+    }
+  }
+
+  const results: PublicUserProfile[] = candidates.slice(0, 10).map((u) => ({
+    id: u.id,
+    username: u.username as string,
+    name: displayNameMap.get(u.id) ?? u.name,
+  }));
+
+  return { success: true, data: results };
 }
 
 export async function sendConnectionRequest(

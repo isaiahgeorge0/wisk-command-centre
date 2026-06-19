@@ -13,7 +13,6 @@ import {
 import { completeProjectTour } from "@/app/(dashboard)/spotlight-tour/actions";
 import { useQuickAdd } from "@/components/quick-add/quick-add-context";
 import {
-  PROJECT_TOUR_FORM_ID,
   PROJECT_TOUR_STEPS,
   SPOTLIGHT_STEP_TRANSITION_MS,
 } from "@/lib/spotlight-tour/project-tour-steps";
@@ -184,10 +183,9 @@ export function SpotlightTourProvider({
     }
 
     if (stepIndex === PROJECT_TOUR_STEPS.length - 1) {
-      const form = document.getElementById(PROJECT_TOUR_FORM_ID);
-      if (form instanceof HTMLFormElement) {
-        form.requestSubmit();
-      }
+      // Dismiss the overlay so the dialog's own submit button handles creation.
+      setIsActive(false);
+      setIsTransitioning(false);
       return;
     }
 
