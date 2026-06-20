@@ -5,7 +5,10 @@ import { z } from "zod";
 
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { VERCEL_IMPORT_SERVICE_TYPE } from "@/lib/integrations/constants";
-import { encryptIntegrationToken } from "@/lib/integrations/crypto";
+import {
+  decryptIntegrationToken,
+  encryptIntegrationToken,
+} from "@/lib/integrations/crypto";
 import {
   getImportedVercelProjectIds,
   getIntegrationAccessToken,
@@ -247,6 +250,43 @@ export async function connectGitHub(
     success: true,
     data: { login: profile.login, avatar_url: profile.avatar_url },
   };
+}
+
+export async function disconnectGmail(): Promise<IntegrationActionResult> {
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { data: row } = await supabase
+    .from("user_integrations")
+    .select("access_token")
+    .eq("user_id", userId)
+    .eq("provider", "gmail")
+    .maybeSingle();
+
+  if (row?.access_token) {
+    try {
+      const accessToken = decryptIntegrationToken(row.access_token);
+      await fetch(
+        `https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(accessToken)}`,
+        { method: "POST" }
+      );
+    } catch {
+      // Revocation failures are non-fatal — still remove the local record.
+    }
+  }
+
+  const { error } = await supabase
+    .from("user_integrations")
+    .delete()
+    .eq("user_id", userId)
+    .eq("provider", "gmail");
+
+  if (error) {
+    console.error("disconnectGmail:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/settings");
+  return { success: true };
 }
 
 export async function disconnectIntegration(

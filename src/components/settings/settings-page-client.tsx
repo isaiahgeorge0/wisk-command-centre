@@ -56,10 +56,53 @@ export function SettingsPageClient({
   const [activeTab, setActiveTab] = useState<SettingsTab>(() =>
     tabFromSearchParam(searchParams.get("tab"))
   );
+  const [integrationToast, setIntegrationToast] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
 
   useEffect(() => {
     setActiveTab(tabFromSearchParam(searchParams.get("tab")));
   }, [searchParams]);
+
+  useEffect(() => {
+    const connected = searchParams.get("connected");
+    const integrationError = searchParams.get("error");
+
+    if (connected !== "gmail" && integrationError !== "gmail") {
+      return;
+    }
+
+    setActiveTab("integrations");
+    setIntegrationToast(
+      connected === "gmail"
+        ? {
+            type: "success",
+            message: "Gmail connected successfully",
+          }
+        : {
+            type: "error",
+            message: "Could not connect Gmail. Please try again.",
+          }
+    );
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("connected");
+    params.delete("error");
+    params.set("tab", "integrations");
+    const query = params.toString();
+    router.replace(query ? `/settings?${query}` : "/settings", {
+      scroll: false,
+    });
+  }, [router, searchParams]);
+
+  useEffect(() => {
+    if (!integrationToast) return;
+    const timer = window.setTimeout(() => setIntegrationToast(null), 4000);
+    return () => window.clearTimeout(timer);
+  }, [integrationToast]);
+
+  const hasAiPro = billingPlan === "ai_pro" || billingPlan === "max";
 
   const handleTabChange = useCallback(
     (tab: SettingsTab) => {
@@ -80,6 +123,27 @@ export function SettingsPageClient({
 
   return (
     <div className="space-y-8">
+      {integrationToast ? (
+        <div
+          role="status"
+          className={
+            integrationToast.type === "success"
+              ? "fixed inset-x-4 bottom-20 z-50 mx-auto max-w-md rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 shadow-lg md:inset-x-auto md:right-6 md:bottom-6"
+              : "fixed inset-x-4 bottom-20 z-50 mx-auto max-w-md rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 shadow-lg md:inset-x-auto md:right-6 md:bottom-6"
+          }
+        >
+          <p
+            className={
+              integrationToast.type === "success"
+                ? "text-sm text-emerald-600 dark:text-emerald-400"
+                : "text-sm text-destructive"
+            }
+          >
+            {integrationToast.message}
+          </p>
+        </div>
+      ) : null}
+
       <SettingsTabs activeTab={activeTab} onChange={handleTabChange} />
 
       {activeTab === "profile" ? (
@@ -113,7 +177,10 @@ export function SettingsPageClient({
       ) : null}
 
       {activeTab === "integrations" ? (
-        <SettingsIntegrationsSection integrations={integrations} />
+        <SettingsIntegrationsSection
+          integrations={integrations}
+          hasAiPro={hasAiPro}
+        />
       ) : null}
 
       {activeTab === "help" ? <SettingsHelpSection /> : null}

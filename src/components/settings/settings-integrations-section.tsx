@@ -7,6 +7,7 @@ import {
   disconnectIntegration,
   listVercelProjectsForImport,
 } from "@/app/(dashboard)/settings/integrations/actions";
+import { GmailIntegrationCard } from "@/components/settings/gmail-integration-card";
 import { GitHubConnectForm } from "@/components/settings/github-connect-form";
 import { IntegrationCard } from "@/components/settings/integration-card";
 import { VercelConnectForm } from "@/components/settings/vercel-connect-form";
@@ -23,10 +24,12 @@ import type { SafeIntegration, VercelProjectSummary } from "@/lib/integrations/t
 
 type SettingsIntegrationsSectionProps = {
   integrations: SafeIntegration[];
+  hasAiPro: boolean;
 };
 
 export function SettingsIntegrationsSection({
   integrations,
+  hasAiPro,
 }: SettingsIntegrationsSectionProps) {
   const router = useRouter();
   const [importOpen, setImportOpen] = useState(false);
@@ -39,6 +42,9 @@ export function SettingsIntegrationsSection({
 
   const vercelIntegration = integrations.find((i) => i.provider === "vercel");
   const githubIntegration = integrations.find((i) => i.provider === "github");
+  const gmailIntegration = integrations.find(
+    (i) => (i.provider as string) === "gmail"
+  );
 
   const vercelConnected = Boolean(vercelIntegration);
   const githubConnected = Boolean(githubIntegration);
@@ -138,6 +144,11 @@ export function SettingsIntegrationsSection({
             ) : null}
           </div>
         </IntegrationCard>
+
+        <GmailIntegrationCard
+          integration={gmailIntegration}
+          hasAiPro={hasAiPro}
+        />
 
         <VercelImportDialog
           open={importOpen}
