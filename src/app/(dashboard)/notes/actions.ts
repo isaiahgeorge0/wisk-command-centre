@@ -99,7 +99,6 @@ export async function updateNoteContent(
     return { success: false, error: error.message };
   }
 
-  revalidatePath("/notes");
   return { success: true };
 }
 

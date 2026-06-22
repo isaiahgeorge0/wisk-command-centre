@@ -58,10 +58,13 @@ function ToolbarButton({
     <button
       type="button"
       aria-label={label}
+      aria-pressed={isActive}
       onClick={onClick}
       className={cn(
-        "inline-flex min-h-11 min-w-11 items-center justify-center rounded-md px-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:min-h-8 md:min-w-8",
-        isActive && "bg-muted text-foreground"
+        "inline-flex min-h-11 min-w-11 items-center justify-center rounded-md px-2 text-sm font-medium transition-colors md:min-h-8 md:min-w-8",
+        isActive
+          ? "bg-sky-500/20 text-sky-700 ring-1 ring-sky-500/40 dark:text-sky-300"
+          : "text-muted-foreground hover:bg-muted hover:text-foreground"
       )}
     >
       {children}
@@ -77,10 +80,39 @@ export function NoteEditor({
 }: NoteEditorProps) {
   const [title, setTitle] = useState("");
   const [saveState, setSaveState] = useState<SaveState>("idle");
+  const [, setToolbarRevision] = useState(0);
   const [isTitlePending, startTitleTransition] = useTransition();
-  const contentSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const noteIdRef = useRef<string | null>(null);
+
+  const scheduleContentSave = useCallback((serialized: string) => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    if (savedTimerRef.current) {
+      clearTimeout(savedTimerRef.current);
+    }
+
+    debounceRef.current = setTimeout(() => {
+      const noteId = noteIdRef.current;
+      if (!noteId) return;
+
+      setSaveState("saving");
+
+      void (async () => {
+        const result = await updateNoteContent(noteId, serialized);
+        if (result.success) {
+          setSaveState("saved");
+          savedTimerRef.current = setTimeout(() => {
+            setSaveState("idle");
+          }, 2000);
+        } else {
+          setSaveState("idle");
+        }
+      })();
+    }, 2000);
+  }, []);
 
   const editor = useEditor({
     extensions: [
@@ -100,60 +132,46 @@ export function NoteEditor({
     },
     onUpdate: ({ editor: currentEditor }) => {
       if (!noteIdRef.current) return;
-
-      setSaveState("saving");
-
-      if (contentSaveTimerRef.current) {
-        clearTimeout(contentSaveTimerRef.current);
-      }
-      if (savedTimerRef.current) {
-        clearTimeout(savedTimerRef.current);
-      }
-
-      contentSaveTimerRef.current = setTimeout(() => {
-        const noteId = noteIdRef.current;
-        if (!noteId) return;
-
-        const serialized = JSON.stringify(currentEditor.getJSON());
-
-        void (async () => {
-          const result = await updateNoteContent(noteId, serialized);
-          if (result.success) {
-            onNoteUpdated({
-              id: noteId,
-              content: serialized,
-              updated_at: new Date().toISOString(),
-            });
-            setSaveState("saved");
-            savedTimerRef.current = setTimeout(() => {
-              setSaveState("idle");
-            }, 2000);
-          } else {
-            setSaveState("idle");
-          }
-        })();
-      }, 1000);
+      scheduleContentSave(JSON.stringify(currentEditor.getJSON()));
+    },
+    onSelectionUpdate: () => {
+      setToolbarRevision((revision) => revision + 1);
+    },
+    onTransaction: () => {
+      setToolbarRevision((revision) => revision + 1);
     },
   });
 
   useEffect(() => {
-    noteIdRef.current = note?.id ?? null;
-    setTitle(note?.title ?? "");
+    const nextNoteId = note?.id ?? null;
+
+    if (noteIdRef.current === nextNoteId && nextNoteId !== null) {
+      return;
+    }
+
+    noteIdRef.current = nextNoteId;
     setSaveState("idle");
+
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
 
     if (!editor) return;
 
     if (!note) {
+      setTitle("");
       editor.commands.clearContent();
       return;
     }
 
+    setTitle(note.title);
     editor.commands.setContent(parseNoteContent(note.content));
   }, [editor, note]);
 
   useEffect(() => {
     return () => {
-      if (contentSaveTimerRef.current) clearTimeout(contentSaveTimerRef.current);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
       if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
     };
   }, []);
