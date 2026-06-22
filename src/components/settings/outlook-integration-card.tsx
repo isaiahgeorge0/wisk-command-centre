@@ -182,23 +182,23 @@ export function OutlookIntegrationCard({
                 Maximum accounts reached
               </p>
             ) : hasAiPro ? (
-              <Link
+              <a
                 href="/api/microsoft/connect"
                 className={cn(buttonVariants({ size: "sm", variant: "outline" }))}
               >
                 Add another Outlook account
-              </Link>
+              </a>
             ) : null}
           </div>
         ) : (
           <div className="flex flex-wrap items-center gap-3">
             {hasAiPro ? (
-              <Link
+              <a
                 href="/api/microsoft/connect"
                 className={cn(buttonVariants({ size: "sm" }))}
               >
                 Add Outlook account
-              </Link>
+              </a>
             ) : (
               <Button size="sm" disabled>
                 Add Outlook account

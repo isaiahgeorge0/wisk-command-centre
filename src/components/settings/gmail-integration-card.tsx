@@ -182,23 +182,23 @@ export function GmailIntegrationCard({
                 Maximum accounts reached
               </p>
             ) : hasAiPro ? (
-              <Link
+              <a
                 href="/api/google/connect"
                 className={cn(buttonVariants({ size: "sm", variant: "outline" }))}
               >
                 Add another Gmail account
-              </Link>
+              </a>
             ) : null}
           </div>
         ) : (
           <div className="flex flex-wrap items-center gap-3">
             {hasAiPro ? (
-              <Link
+              <a
                 href="/api/google/connect"
                 className={cn(buttonVariants({ size: "sm" }))}
               >
                 Add Gmail account
-              </Link>
+              </a>
             ) : (
               <Button size="sm" disabled>
                 Add Gmail account
