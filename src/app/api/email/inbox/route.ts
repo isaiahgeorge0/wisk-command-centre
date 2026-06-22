@@ -4,6 +4,7 @@ import { UnauthorizedError } from "@/lib/auth/errors";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { hasPackageAccess } from "@/lib/billing/access";
 import {
+  applyEmailRules,
   categoriseEmail,
   findLeadMatch,
 } from "@/lib/email/categoriser";
@@ -19,7 +20,12 @@ import {
   getValidGmailTokens,
   getValidOutlookTokens,
 } from "@/lib/email/token-manager";
-import type { EmailThread, InboxPageTokens } from "@/lib/email/types";
+import type {
+  CustomInbox,
+  EmailRule,
+  EmailThread,
+  InboxPageTokens,
+} from "@/lib/email/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -39,24 +45,30 @@ function enrichThread(
   email: Omit<
     EmailThread,
     | "category"
+    | "customInboxId"
     | "isFromKnownContact"
     | "linkedLeadId"
     | "linkedLeadName"
   >,
   leads: Array<{ id: string; name: string; email: string | null }>,
   knownLeadEmails: string[],
-  knownClientEmails: string[]
+  knownClientEmails: string[],
+  rules: EmailRule[],
+  customInboxes: CustomInbox[]
 ): EmailThread {
   const leadMatch = findLeadMatch(email, leads);
   const category = categoriseEmail(email, knownLeadEmails, knownClientEmails);
 
-  return {
+  const thread: EmailThread = {
     ...email,
     category,
+    customInboxId: null,
     isFromKnownContact: Boolean(leadMatch),
     linkedLeadId: leadMatch?.id ?? null,
     linkedLeadName: leadMatch?.name ?? null,
   };
+
+  return applyEmailRules(thread, rules, customInboxes);
 }
 
 export async function GET(request: Request) {
@@ -100,6 +112,18 @@ export async function GET(request: Request) {
     .filter((email): email is string => Boolean(email));
   const knownClientEmails: string[] = [];
 
+  const [{ data: customInboxRows }, { data: ruleRows }] = await Promise.all([
+    supabase
+      .from("custom_inboxes")
+      .select("*")
+      .eq("user_id", userId)
+      .order("display_order", { ascending: true }),
+    supabase.from("email_rules").select("*").eq("user_id", userId),
+  ]);
+
+  const customInboxes = (customInboxRows ?? []) as CustomInbox[];
+  const emailRules = (ruleRows ?? []) as EmailRule[];
+
   const nextPageTokens: InboxPageTokens = {
     gmail: null,
     outlook: null,
@@ -133,7 +157,9 @@ export async function GET(request: Request) {
             },
             leadRows,
             knownLeadEmails,
-            knownClientEmails
+            knownClientEmails,
+            emailRules,
+            customInboxes
           )
         );
       }
@@ -163,7 +189,9 @@ export async function GET(request: Request) {
             },
             leadRows,
             knownLeadEmails,
-            knownClientEmails
+            knownClientEmails,
+            emailRules,
+            customInboxes
           )
         );
       }
@@ -178,6 +206,7 @@ export async function GET(request: Request) {
     {
       emails,
       nextPageToken: nextPageTokens,
+      customInboxes,
     },
     { headers: CACHE_HEADERS }
   );

@@ -1,4 +1,4 @@
-import type { EmailThread } from "@/lib/email/types";
+import type { CustomInbox, EmailRule, EmailThread } from "@/lib/email/types";
 
 export type EmailCategory =
   | "leads"
@@ -72,4 +72,54 @@ export function findLeadMatch(
     (lead) => lead.email && normaliseEmail(lead.email) === fromEmail
   );
   return match ? { id: match.id, name: match.name } : null;
+}
+
+function normaliseRuleValue(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+export function emailMatchesRule(
+  email: Pick<EmailThread, "from">,
+  rule: Pick<EmailRule, "rule_type" | "value">
+): boolean {
+  const fromEmail = normaliseEmail(email.from.email);
+  const value = normaliseRuleValue(rule.value);
+
+  if (rule.rule_type === "sender") {
+    return fromEmail === value;
+  }
+
+  const domain = value.startsWith("@") ? value : `@${value}`;
+  return fromEmail.endsWith(domain);
+}
+
+export function applyEmailRules(
+  email: EmailThread,
+  rules: EmailRule[],
+  customInboxes: CustomInbox[]
+): EmailThread {
+  const inboxIds = new Set(customInboxes.map((inbox) => inbox.id));
+  const alwaysRules = rules.filter((rule) => rule.apply_type === "always");
+
+  for (const rule of alwaysRules) {
+    if (!emailMatchesRule(email, rule)) continue;
+
+    if (rule.target_type === "custom_inbox") {
+      if (!inboxIds.has(rule.target_id)) continue;
+      return {
+        ...email,
+        customInboxId: rule.target_id,
+      };
+    }
+
+    if (rule.target_type === "default_category") {
+      return {
+        ...email,
+        category: rule.target_id as EmailCategory,
+        customInboxId: null,
+      };
+    }
+  }
+
+  return email;
 }

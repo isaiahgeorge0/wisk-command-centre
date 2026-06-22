@@ -7,10 +7,21 @@ import { PageHeader } from "@/components/layout/page-header";
 import { PageTransition } from "@/components/layout/page-transition";
 import { EmailList } from "@/components/email/email-list";
 import { EmailReader } from "@/components/email/email-reader";
+import {
+  ManageInboxesPanel,
+  type RulePrefill,
+} from "@/components/email/manage-inboxes-panel";
+import {
+  applyEmailRules,
+  emailMatchesRule,
+} from "@/lib/email/categoriser";
+import type { EmailCategory } from "@/lib/email/categoriser";
 import type {
+  CustomInbox,
   Email,
   EmailActionItem,
   EmailProvider,
+  EmailRule,
   EmailThread,
   InboxPageTokens,
 } from "@/lib/email/types";
@@ -23,18 +34,38 @@ type ProviderFilter = "all" | EmailProvider;
 type EmailPageClientProps = {
   connectedProviders: EmailProvider[];
   connectedAccountCount: number;
+  initialCustomInboxes: CustomInbox[];
+  initialEmailRules: EmailRule[];
 };
 
 type InboxResponse = {
   emails: EmailThread[];
   nextPageToken: InboxPageTokens;
+  customInboxes?: CustomInbox[];
 };
+
+type OnceOverride = {
+  category?: EmailCategory;
+  customInboxId?: string | null;
+};
+
+function emailKey(email: EmailThread): string {
+  return `${email.integrationId}:${email.id}`;
+}
 
 export function EmailPageClient({
   connectedProviders,
   connectedAccountCount,
+  initialCustomInboxes,
+  initialEmailRules,
 }: EmailPageClientProps) {
   const [emails, setEmails] = useState<EmailThread[]>([]);
+  const [customInboxes, setCustomInboxes] =
+    useState<CustomInbox[]>(initialCustomInboxes);
+  const [emailRules, setEmailRules] = useState<EmailRule[]>(initialEmailRules);
+  const [onceOverrides, setOnceOverrides] = useState<Map<string, OnceOverride>>(
+    new Map()
+  );
   const [selectedEmail, setSelectedEmail] = useState<EmailThread | null>(null);
   const [selectedEmailFull, setSelectedEmailFull] = useState<Email | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -49,6 +80,36 @@ export function EmailPageClient({
   const [mobileShowReader, setMobileShowReader] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [actionItems, setActionItems] = useState<EmailActionItem[]>([]);
+  const [managePanelOpen, setManagePanelOpen] = useState(false);
+  const [rulePrefill, setRulePrefill] = useState<RulePrefill | null>(null);
+
+  const displayEmails = useMemo(() => {
+    return emails.map((email) => {
+      let thread = applyEmailRules(
+        { ...email, customInboxId: null },
+        emailRules,
+        customInboxes
+      );
+
+      const override = onceOverrides.get(emailKey(email));
+      if (override) {
+        thread = { ...thread, ...override };
+      }
+
+      return thread;
+    });
+  }, [customInboxes, emailRules, emails, onceOverrides]);
+
+  const selectedDisplayEmail = useMemo(() => {
+    if (!selectedEmail) return null;
+    return (
+      displayEmails.find(
+        (email) =>
+          email.id === selectedEmail.id &&
+          email.integrationId === selectedEmail.integrationId
+      ) ?? selectedEmail
+    );
+  }, [displayEmails, selectedEmail]);
 
   const hasMore = useMemo(() => {
     if (activeProvider === "gmail") return Boolean(nextPageTokens.gmail);
@@ -111,7 +172,11 @@ export function EmailPageClient({
         });
 
         setEmails(data.emails);
+        if (data.customInboxes) {
+          setCustomInboxes(data.customInboxes);
+        }
         setNextPageTokens(data.nextPageToken);
+        setOnceOverrides(new Map());
         setSelectedEmail(null);
         setSelectedEmailFull(null);
         setMobileShowReader(false);
@@ -213,7 +278,7 @@ export function EmailPageClient({
       setEmails((current) => {
         const merged = new Map<string, EmailThread>();
         for (const email of [...current, ...data.emails]) {
-          merged.set(`${email.integrationId}:${email.id}`, email);
+          merged.set(emailKey(email), email);
         }
         return Array.from(merged.values()).sort(
           (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -233,6 +298,57 @@ export function EmailPageClient({
     setMobileShowReader(false);
   }, []);
 
+  const handleAssignEmail = useCallback(
+    (
+      email: EmailThread,
+      assignment: {
+        targetType: "custom_inbox" | "default_category";
+        targetId: string;
+      }
+    ) => {
+      setOnceOverrides((current) => {
+        const next = new Map(current);
+        const key = emailKey(email);
+
+        if (assignment.targetType === "custom_inbox") {
+          next.set(key, { customInboxId: assignment.targetId });
+        } else {
+          next.set(key, {
+            category: assignment.targetId as EmailCategory,
+            customInboxId: null,
+          });
+        }
+
+        return next;
+      });
+    },
+    []
+  );
+
+  const handleCreateRuleForSender = useCallback((email: EmailThread) => {
+    setRulePrefill({
+      ruleType: "sender",
+      value: email.from.email,
+    });
+    setManagePanelOpen(true);
+  }, []);
+
+  const handleApplyAlwaysRuleToExisting = useCallback(
+    (rule: EmailRule) => {
+      if (rule.apply_type !== "always") return;
+
+      setOnceOverrides((current) => {
+        const next = new Map(current);
+        for (const email of emails) {
+          if (!emailMatchesRule(email, rule)) continue;
+          next.delete(emailKey(email));
+        }
+        return next;
+      });
+    },
+    [emails]
+  );
+
   return (
     <PageTransition>
       <div className="mb-4 md:mb-6">
@@ -251,7 +367,7 @@ export function EmailPageClient({
         </p>
       ) : null}
 
-      <div className="flex min-h-[calc(100dvh-12rem)] flex-col overflow-hidden rounded-xl border border-border/60 bg-card/40 md:h-[calc(100dvh-11rem)] md:min-h-0 md:flex-row">
+      <div className="relative flex min-h-[calc(100dvh-12rem)] flex-col overflow-hidden rounded-xl border border-border/60 bg-card/40 md:h-[calc(100dvh-11rem)] md:min-h-0 md:flex-row">
         <aside
           className={cn(
             "min-h-0 border-border/60 md:w-[320px] md:shrink-0 md:border-r",
@@ -261,7 +377,8 @@ export function EmailPageClient({
           )}
         >
           <EmailList
-            emails={emails}
+            emails={displayEmails}
+            customInboxes={customInboxes}
             selectedEmailId={selectedEmail?.id ?? null}
             connectedProviders={connectedProviders}
             connectedAccountCount={connectedAccountCount}
@@ -275,6 +392,9 @@ export function EmailPageClient({
             onProviderChange={setActiveProvider}
             onSearchChange={setSearchQuery}
             onLoadMore={handleLoadMore}
+            onOpenManagePanel={() => setManagePanelOpen(true)}
+            onAssignEmail={handleAssignEmail}
+            onCreateRuleForSender={handleCreateRuleForSender}
           />
         </aside>
 
@@ -286,12 +406,24 @@ export function EmailPageClient({
         >
           <EmailReader
             email={selectedEmailFull}
-            thread={selectedEmail}
+            thread={selectedDisplayEmail}
             isLoading={isLoadingMessage}
             onBack={handleMobileBack}
             showBackButton={mobileShowReader}
           />
         </section>
+
+        <ManageInboxesPanel
+          open={managePanelOpen}
+          onClose={() => setManagePanelOpen(false)}
+          customInboxes={customInboxes}
+          emailRules={emailRules}
+          onCustomInboxesChange={setCustomInboxes}
+          onEmailRulesChange={setEmailRules}
+          onApplyAlwaysRuleToExisting={handleApplyAlwaysRuleToExisting}
+          rulePrefill={rulePrefill}
+          onRulePrefillConsumed={() => setRulePrefill(null)}
+        />
       </div>
     </PageTransition>
   );

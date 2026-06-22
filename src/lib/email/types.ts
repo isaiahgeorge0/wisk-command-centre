@@ -18,6 +18,27 @@ export type Email = {
   labels: string[];
 };
 
+export type CustomInbox = {
+  id: string;
+  user_id: string;
+  name: string;
+  colour: string;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type EmailRule = {
+  id: string;
+  user_id: string;
+  rule_type: "sender" | "domain";
+  value: string;
+  target_type: "custom_inbox" | "default_category";
+  target_id: string;
+  apply_type: "always" | "once";
+  created_at: string;
+};
+
 export type EmailThread = {
   id: string;
   provider: EmailProvider;
@@ -31,6 +52,7 @@ export type EmailThread = {
   accountLabel: string | null;
   integrationId: string;
   category: EmailCategory;
+  customInboxId: string | null;
   isFromKnownContact: boolean;
   linkedLeadId: string | null;
   linkedLeadName: string | null;
@@ -42,6 +64,7 @@ export type EmailThreadBase = Omit<
   | "accountLabel"
   | "integrationId"
   | "category"
+  | "customInboxId"
   | "isFromKnownContact"
   | "linkedLeadId"
   | "linkedLeadName"

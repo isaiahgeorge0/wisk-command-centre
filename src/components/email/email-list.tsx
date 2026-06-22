@@ -1,22 +1,39 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { Mail, Search, User } from "lucide-react";
+import { FolderInput, Mail, Search, User } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { ManageInboxesButton } from "@/components/email/manage-inboxes-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import type { EmailCategory } from "@/lib/email/categoriser";
 import { MOTION_EASE } from "@/lib/motion/config";
 import { formatEmailRelativeTime } from "@/lib/email/utils";
-import type { EmailActionItem, EmailCategory, EmailProvider, EmailThread } from "@/lib/email/types";
+import type {
+  CustomInbox,
+  EmailActionItem,
+  EmailProvider,
+  EmailThread,
+} from "@/lib/email/types";
 import { cn } from "@/lib/utils";
 
 type ProviderFilter = "all" | EmailProvider;
 type CategoryFilter = "all" | EmailCategory;
+type TabFilter =
+  | { kind: "all" }
+  | { kind: "category"; id: CategoryFilter }
+  | { kind: "custom_inbox"; id: string };
 
 type EmailListProps = {
   emails: EmailThread[];
+  customInboxes: CustomInbox[];
   selectedEmailId: string | null;
   connectedProviders: EmailProvider[];
   connectedAccountCount: number;
@@ -30,10 +47,27 @@ type EmailListProps = {
   onProviderChange: (provider: ProviderFilter) => void;
   onSearchChange: (query: string) => void;
   onLoadMore: () => void;
+  onOpenManagePanel: () => void;
+  onAssignEmail: (
+    email: EmailThread,
+    assignment: {
+      targetType: "custom_inbox" | "default_category";
+      targetId: string;
+    }
+  ) => void;
+  onCreateRuleForSender: (email: EmailThread) => void;
 };
 
 const CATEGORY_TABS: { id: CategoryFilter; label: string }[] = [
   { id: "all", label: "All" },
+  { id: "leads", label: "Leads" },
+  { id: "clients", label: "Clients" },
+  { id: "admin", label: "Admin" },
+  { id: "newsletters", label: "Newsletters" },
+  { id: "other", label: "Other" },
+];
+
+const MOVE_TARGETS: { id: EmailCategory; label: string }[] = [
   { id: "leads", label: "Leads" },
   { id: "clients", label: "Clients" },
   { id: "admin", label: "Admin" },
@@ -117,8 +151,94 @@ function RelativeTime({ iso }: { iso: string }) {
   return <span>{label ?? "\u00a0"}</span>;
 }
 
+function MoveEmailPopover({
+  email,
+  customInboxes,
+  onAssignEmail,
+  onCreateRuleForSender,
+}: {
+  email: EmailThread;
+  customInboxes: CustomInbox[];
+  onAssignEmail: EmailListProps["onAssignEmail"];
+  onCreateRuleForSender: EmailListProps["onCreateRuleForSender"];
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger
+        className={cn(
+          "inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:min-h-8 md:min-w-8",
+          "opacity-100 md:opacity-0 md:group-hover/email-row:opacity-100"
+        )}
+        aria-label="Move email"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <FolderInput className="size-4" />
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-56 p-0">
+        <p className="border-b border-border/60 px-3 py-2 text-xs font-medium text-muted-foreground">
+          Move to:
+        </p>
+        <div className="max-h-64 overflow-y-auto p-1">
+          {MOVE_TARGETS.map((target) => (
+            <button
+              key={target.id}
+              type="button"
+              className="flex min-h-11 w-full items-center rounded-md px-3 text-left text-sm hover:bg-muted"
+              onClick={() => {
+                onAssignEmail(email, {
+                  targetType: "default_category",
+                  targetId: target.id,
+                });
+                setOpen(false);
+              }}
+            >
+              {target.label}
+            </button>
+          ))}
+          {customInboxes.map((inbox) => (
+            <button
+              key={inbox.id}
+              type="button"
+              className="flex min-h-11 w-full items-center gap-2 rounded-md px-3 text-left text-sm hover:bg-muted"
+              onClick={() => {
+                onAssignEmail(email, {
+                  targetType: "custom_inbox",
+                  targetId: inbox.id,
+                });
+                setOpen(false);
+              }}
+            >
+              <span
+                className="size-2.5 shrink-0 rounded-full"
+                style={{ backgroundColor: inbox.colour }}
+                aria-hidden
+              />
+              {inbox.name}
+            </button>
+          ))}
+        </div>
+        <div className="border-t border-border/60 p-1">
+          <button
+            type="button"
+            className="flex min-h-11 w-full items-center rounded-md px-3 text-left text-sm text-primary hover:bg-muted"
+            onClick={() => {
+              onCreateRuleForSender(email);
+              setOpen(false);
+            }}
+          >
+            Create a rule for this sender
+          </button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export function EmailList({
   emails,
+  customInboxes,
   selectedEmailId,
   connectedProviders,
   connectedAccountCount,
@@ -132,11 +252,14 @@ export function EmailList({
   onProviderChange,
   onSearchChange,
   onLoadMore,
+  onOpenManagePanel,
+  onAssignEmail,
+  onCreateRuleForSender,
 }: EmailListProps) {
   const reduced = useReducedMotion() ?? false;
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [localSearch, setLocalSearch] = useState(searchQuery);
-  const [activeCategory, setActiveCategory] = useState<CategoryFilter>("all");
+  const [activeTab, setActiveTab] = useState<TabFilter>({ kind: "all" });
   const showProviderBadges = connectedAccountCount > 1;
   const showProviderTabs = connectedProviders.length > 1;
 
@@ -156,16 +279,36 @@ export function EmailList({
     };
 
     for (const email of emails) {
+      if (email.customInboxId) continue;
       counts[email.category] += 1;
     }
 
     return counts;
   }, [emails]);
 
+  const customInboxCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const inbox of customInboxes) {
+      counts.set(inbox.id, 0);
+    }
+    for (const email of emails) {
+      if (email.customInboxId && counts.has(email.customInboxId)) {
+        counts.set(email.customInboxId, (counts.get(email.customInboxId) ?? 0) + 1);
+      }
+    }
+    return counts;
+  }, [customInboxes, emails]);
+
   const visibleEmails = useMemo(() => {
-    if (activeCategory === "all") return emails;
-    return emails.filter((email) => email.category === activeCategory);
-  }, [activeCategory, emails]);
+    if (activeTab.kind === "all") return emails;
+    if (activeTab.kind === "custom_inbox") {
+      return emails.filter((email) => email.customInboxId === activeTab.id);
+    }
+    if (activeTab.id === "all") return emails;
+    return emails.filter(
+      (email) => !email.customInboxId && email.category === activeTab.id
+    );
+  }, [activeTab, emails]);
 
   useEffect(() => {
     setLocalSearch(searchQuery);
@@ -214,6 +357,15 @@ export function EmailList({
       : []),
   ];
 
+  const emptyMessage =
+    searchQuery.trim()
+      ? "Try a different search term or clear the search."
+      : activeTab.kind === "custom_inbox"
+        ? "No emails in this inbox."
+        : activeTab.kind === "category" && activeTab.id !== "all"
+          ? "No emails in this category."
+          : "Your inbox is empty or no messages matched the selected provider.";
+
   return (
     <div className="flex h-full flex-col">
       <div className="space-y-3 border-b border-border/60 p-3">
@@ -247,25 +399,63 @@ export function EmailList({
           </div>
         ) : null}
 
-        <div className="flex flex-wrap gap-1">
-          {CATEGORY_TABS.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveCategory(tab.id)}
-              className={cn(
-                "inline-flex min-h-11 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors md:min-h-8",
-                activeCategory === tab.id
-                  ? "bg-muted text-foreground"
-                  : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
-              )}
-            >
-              <span>{tab.label}</span>
-              <span className="rounded-full bg-background/80 px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                {categoryCounts[tab.id]}
-              </span>
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-1">
+          {CATEGORY_TABS.map((tab) => {
+            const selected =
+              activeTab.kind === "category" && activeTab.id === tab.id;
+
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab({ kind: "category", id: tab.id })}
+                className={cn(
+                  "inline-flex min-h-11 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors md:min-h-8",
+                  selected
+                    ? "bg-muted text-foreground"
+                    : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                )}
+              >
+                <span>{tab.label}</span>
+                <span className="rounded-full bg-background/80 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                  {categoryCounts[tab.id]}
+                </span>
+              </button>
+            );
+          })}
+
+          {customInboxes.map((inbox) => {
+            const selected =
+              activeTab.kind === "custom_inbox" && activeTab.id === inbox.id;
+
+            return (
+              <button
+                key={inbox.id}
+                type="button"
+                onClick={() =>
+                  setActiveTab({ kind: "custom_inbox", id: inbox.id })
+                }
+                className={cn(
+                  "inline-flex min-h-11 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors md:min-h-8",
+                  selected
+                    ? "bg-muted text-foreground"
+                    : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                )}
+              >
+                <span
+                  className="size-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: inbox.colour }}
+                  aria-hidden
+                />
+                <span>{inbox.name}</span>
+                <span className="rounded-full bg-background/80 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                  {customInboxCounts.get(inbox.id) ?? 0}
+                </span>
+              </button>
+            );
+          })}
+
+          <ManageInboxesButton onClick={onOpenManagePanel} />
         </div>
       </div>
 
@@ -275,13 +465,7 @@ export function EmailList({
         <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 text-center">
           <Mail className="mb-4 size-10 text-muted-foreground" />
           <h2 className="text-lg font-medium text-foreground">No emails found</h2>
-          <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-            {searchQuery.trim()
-              ? "Try a different search term or clear the search."
-              : activeCategory === "all"
-                ? "Your inbox is empty or no messages matched the selected provider."
-                : "No emails in this category."}
-          </p>
+          <p className="mt-2 max-w-sm text-sm text-muted-foreground">{emptyMessage}</p>
         </div>
       ) : (
         <div className="min-h-0 flex-1 overflow-y-auto p-2">
@@ -302,78 +486,91 @@ export function EmailList({
                     ease: MOTION_EASE.easeOut,
                   }}
                 >
-                  <button
-                    type="button"
-                    onClick={() => onSelectEmail(email)}
+                  <div
                     className={cn(
-                      "w-full rounded-lg border border-transparent px-3 py-3 text-left transition-colors",
+                      "group/email-row relative flex w-full items-stretch rounded-lg border border-transparent transition-colors",
                       selected
                         ? "border-blue-500/30 bg-blue-500/10"
                         : "hover:bg-muted/50",
                       email.category === "leads" &&
+                        !email.customInboxId &&
                         "border-l-2 border-l-teal-500/60"
                     )}
                   >
-                    <div className="flex items-start gap-2">
-                      {actionItem ? (
-                        <ActionIndicator actionItem={actionItem} />
-                      ) : !email.isRead ? (
-                        <span
-                          className="mt-1.5 size-2 shrink-0 rounded-full bg-blue-500"
-                          aria-hidden
-                        />
-                      ) : (
-                        <span className="mt-1.5 size-2 shrink-0" aria-hidden />
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex min-w-0 items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => onSelectEmail(email)}
+                      className="min-w-0 flex-1 px-3 py-3 text-left"
+                    >
+                      <div className="flex items-start gap-2">
+                        {actionItem ? (
+                          <ActionIndicator actionItem={actionItem} />
+                        ) : !email.isRead ? (
+                          <span
+                            className="mt-1.5 size-2 shrink-0 rounded-full bg-blue-500"
+                            aria-hidden
+                          />
+                        ) : (
+                          <span className="mt-1.5 size-2 shrink-0" aria-hidden />
+                        )}
+                        <div className="min-w-0 flex-1 pr-8 md:pr-10">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex min-w-0 items-center gap-1.5">
+                              <p
+                                className={cn(
+                                  "truncate text-sm",
+                                  email.isRead
+                                    ? "font-medium text-foreground"
+                                    : "font-semibold text-foreground"
+                                )}
+                              >
+                                {email.from.name}
+                              </p>
+                              {email.isFromKnownContact ? (
+                                <span
+                                  className="inline-flex items-center gap-0.5 rounded-full bg-teal-500/10 px-1.5 py-0.5 text-[10px] font-medium text-teal-700 dark:text-teal-300"
+                                  title="Known contact"
+                                >
+                                  <User className="size-2.5" aria-hidden />
+                                  <span className="hidden sm:inline">Known</span>
+                                </span>
+                              ) : null}
+                            </div>
+                            <span className="shrink-0 text-[11px] text-muted-foreground">
+                              <RelativeTime iso={email.date} />
+                            </span>
+                          </div>
+                          <div className="mt-0.5 flex flex-wrap items-center gap-2">
                             <p
                               className={cn(
-                                "truncate text-sm",
+                                "min-w-0 flex-1 truncate text-sm",
                                 email.isRead
-                                  ? "font-medium text-foreground"
-                                  : "font-semibold text-foreground"
+                                  ? "text-foreground/80"
+                                  : "font-medium text-foreground"
                               )}
                             >
-                              {email.from.name}
+                              {email.subject}
                             </p>
-                            {email.isFromKnownContact ? (
-                              <span
-                                className="inline-flex items-center gap-0.5 rounded-full bg-teal-500/10 px-1.5 py-0.5 text-[10px] font-medium text-teal-700 dark:text-teal-300"
-                                title="Known contact"
-                              >
-                                <User className="size-2.5" aria-hidden />
-                                <span className="hidden sm:inline">Known</span>
-                              </span>
-                            ) : null}
+                            <ProviderBadge
+                              email={email}
+                              show={showProviderBadges}
+                            />
                           </div>
-                          <span className="shrink-0 text-[11px] text-muted-foreground">
-                            <RelativeTime iso={email.date} />
-                          </span>
-                        </div>
-                        <div className="mt-0.5 flex flex-wrap items-center gap-2">
-                          <p
-                            className={cn(
-                              "min-w-0 flex-1 truncate text-sm",
-                              email.isRead
-                                ? "text-foreground/80"
-                                : "font-medium text-foreground"
-                            )}
-                          >
-                            {email.subject}
+                          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                            {email.preview}
                           </p>
-                          <ProviderBadge
-                            email={email}
-                            show={showProviderBadges}
-                          />
                         </div>
-                        <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-                          {email.preview}
-                        </p>
                       </div>
+                    </button>
+                    <div className="absolute top-2 right-2">
+                      <MoveEmailPopover
+                        email={email}
+                        customInboxes={customInboxes}
+                        onAssignEmail={onAssignEmail}
+                        onCreateRuleForSender={onCreateRuleForSender}
+                      />
                     </div>
-                  </button>
+                  </div>
                 </motion.li>
               );
             })}

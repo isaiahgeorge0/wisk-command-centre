@@ -1,5 +1,6 @@
 import { EmailPageClient } from "@/components/email/email-page-client";
 import { EmailTeaserPage } from "@/components/email/email-teaser-page";
+import { getCustomInboxes, getEmailRules } from "@/app/(dashboard)/email/actions";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { hasPackageAccess } from "@/lib/billing/access";
 import type { EmailProvider } from "@/lib/email/types";
@@ -32,10 +33,17 @@ export default async function EmailPage() {
   ];
   const connectedAccountCount = rows.length;
 
+  const [customInboxes, emailRules] = await Promise.all([
+    getCustomInboxes(),
+    getEmailRules(),
+  ]);
+
   return (
     <EmailPageClient
       connectedProviders={connectedProviders}
       connectedAccountCount={connectedAccountCount}
+      initialCustomInboxes={customInboxes}
+      initialEmailRules={emailRules}
     />
   );
 }

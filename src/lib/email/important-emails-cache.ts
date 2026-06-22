@@ -144,6 +144,7 @@ async function buildThread(
     accountLabel: account.label,
     integrationId: account.integrationId,
     category: "other",
+    customInboxId: null,
     isFromKnownContact: false,
     linkedLeadId: null,
     linkedLeadName: null,
