@@ -289,6 +289,24 @@ export async function disconnectGmail(): Promise<IntegrationActionResult> {
   return { success: true };
 }
 
+export async function disconnectOutlook(): Promise<IntegrationActionResult> {
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { error } = await supabase
+    .from("user_integrations")
+    .delete()
+    .eq("user_id", userId)
+    .eq("provider", "outlook");
+
+  if (error) {
+    console.error("disconnectOutlook:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/settings");
+  return { success: true };
+}
+
 export async function disconnectIntegration(
   provider: IntegrationProvider
 ): Promise<IntegrationActionResult> {

@@ -69,20 +69,38 @@ export function SettingsPageClient({
     const connected = searchParams.get("connected");
     const integrationError = searchParams.get("error");
 
-    if (connected !== "gmail" && integrationError !== "gmail") {
+    const integrationMessages = {
+      gmail: {
+        success: "Gmail connected successfully",
+        error: "Could not connect Gmail. Please try again.",
+      },
+      outlook: {
+        success: "Outlook connected successfully",
+        error: "Could not connect Outlook. Please try again.",
+      },
+    } as const;
+
+    const provider =
+      connected === "gmail" || connected === "outlook"
+        ? connected
+        : integrationError === "gmail" || integrationError === "outlook"
+          ? integrationError
+          : null;
+
+    if (!provider) {
       return;
     }
 
     setActiveTab("integrations");
     setIntegrationToast(
-      connected === "gmail"
+      connected === provider
         ? {
             type: "success",
-            message: "Gmail connected successfully",
+            message: integrationMessages[provider].success,
           }
         : {
             type: "error",
-            message: "Could not connect Gmail. Please try again.",
+            message: integrationMessages[provider].error,
           }
     );
 

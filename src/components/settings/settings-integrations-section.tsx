@@ -8,6 +8,7 @@ import {
   listVercelProjectsForImport,
 } from "@/app/(dashboard)/settings/integrations/actions";
 import { GmailIntegrationCard } from "@/components/settings/gmail-integration-card";
+import { OutlookIntegrationCard } from "@/components/settings/outlook-integration-card";
 import { GitHubConnectForm } from "@/components/settings/github-connect-form";
 import { IntegrationCard } from "@/components/settings/integration-card";
 import { VercelConnectForm } from "@/components/settings/vercel-connect-form";
@@ -44,6 +45,9 @@ export function SettingsIntegrationsSection({
   const githubIntegration = integrations.find((i) => i.provider === "github");
   const gmailIntegration = integrations.find(
     (i) => (i.provider as string) === "gmail"
+  );
+  const outlookIntegration = integrations.find(
+    (i) => (i.provider as string) === "outlook"
   );
 
   const vercelConnected = Boolean(vercelIntegration);
@@ -147,6 +151,11 @@ export function SettingsIntegrationsSection({
 
         <GmailIntegrationCard
           integration={gmailIntegration}
+          hasAiPro={hasAiPro}
+        />
+
+        <OutlookIntegrationCard
+          integration={outlookIntegration}
           hasAiPro={hasAiPro}
         />
 
