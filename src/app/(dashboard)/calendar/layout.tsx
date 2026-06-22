@@ -4,6 +4,7 @@ const PLAN_NAV = [
   { label: "Calendar", href: "/calendar" },
   { label: "Content", href: "/content" },
   { label: "Ideas", href: "/ideas" },
+  { label: "Notes", href: "/notes" },
 ];
 
 export default function CalendarLayout({

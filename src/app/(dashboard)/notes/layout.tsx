@@ -7,7 +7,7 @@ const PLAN_NAV = [
   { label: "Notes", href: "/notes" },
 ];
 
-export default function ContentLayout({
+export default function NotesLayout({
   children,
 }: {
   children: React.ReactNode;

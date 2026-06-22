@@ -34,6 +34,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Calendar", href: "/calendar" },
       { label: "Content", href: "/content" },
       { label: "Ideas", href: "/ideas" },
+      { label: "Notes", href: "/notes" },
     ],
   },
   {
@@ -58,6 +59,7 @@ export const NAV_ITEMS = [
   { label: "Tasks", href: "/tasks" },
   { label: "Goals", href: "/goals" },
   { label: "Ideas", href: "/ideas" },
+  { label: "Notes", href: "/notes" },
   { label: "Calendar", href: "/calendar" },
   { label: "Leads", href: "/leads" },
   { label: "Content", href: "/content" },
