@@ -23,24 +23,33 @@ export const NAV_GROUPS: NavGroup[] = [
     children: [
       { label: "Projects", href: "/projects" },
       { label: "Tasks", href: "/tasks" },
-      { label: "Goals", href: "/goals" },
     ],
   },
   {
     label: "Plan",
-    href: "/calendar",
+    href: "/goals",
     icon: "CalendarDays",
     children: [
-      { label: "Calendar", href: "/calendar" },
-      { label: "Content", href: "/content" },
+      { label: "Goals", href: "/goals" },
       { label: "Ideas", href: "/ideas" },
       { label: "Notes", href: "/notes" },
+      { label: "Calendar", href: "/calendar" },
     ],
   },
   {
     label: "Grow",
     href: "/leads",
     icon: "TrendingUp",
+    children: [
+      { label: "Leads", href: "/leads" },
+      { label: "Content", href: "/content" },
+    ],
+  },
+  {
+    label: "Social",
+    href: "/email",
+    icon: "MessageSquare",
+    children: [{ label: "Email", href: "/email" }],
   },
   {
     label: "Winston",
@@ -63,6 +72,7 @@ export const NAV_ITEMS = [
   { label: "Calendar", href: "/calendar" },
   { label: "Leads", href: "/leads" },
   { label: "Content", href: "/content" },
+  { label: "Email", href: "/email" },
   { label: "Winston", href: "/ai-digest" },
 ] as const;
 

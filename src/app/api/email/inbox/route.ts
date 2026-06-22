@@ -1,0 +1,115 @@
+import { NextResponse } from "next/server";
+
+import { UnauthorizedError } from "@/lib/auth/errors";
+import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
+import { hasPackageAccess } from "@/lib/billing/access";
+import {
+  fetchGmailInbox,
+  searchGmail,
+} from "@/lib/email/gmail";
+import {
+  fetchOutlookInbox,
+  searchOutlook,
+} from "@/lib/email/outlook";
+import {
+  getValidGmailToken,
+  getValidOutlookToken,
+} from "@/lib/email/token-manager";
+import type { EmailThread, InboxPageTokens } from "@/lib/email/types";
+
+export const runtime = "nodejs";
+
+const CACHE_HEADERS = {
+  "Cache-Control": "private, max-age=300, s-maxage=300",
+};
+
+type ProviderFilter = "gmail" | "outlook" | "all";
+
+function parseProvider(value: string | null): ProviderFilter {
+  if (value === "gmail" || value === "outlook") return value;
+  return "all";
+}
+
+export async function GET(request: Request) {
+  let supabase;
+  let userId: string;
+
+  try {
+    ({ supabase, userId } = await getScopedSupabase());
+  } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    throw error;
+  }
+
+  const hasAiPro = await hasPackageAccess(userId, "ai_pro", supabase);
+
+  if (!hasAiPro) {
+    return NextResponse.json(
+      { error: "AI Pro subscription required" },
+      { status: 403 }
+    );
+  }
+
+  const { searchParams } = new URL(request.url);
+  const provider = parseProvider(searchParams.get("provider"));
+  const search = searchParams.get("search")?.trim() ?? "";
+  const pageToken = searchParams.get("pageToken");
+  const gmailPageToken = searchParams.get("gmailPageToken") ?? pageToken;
+  const outlookPageToken = searchParams.get("outlookPageToken") ?? pageToken;
+
+  const nextPageTokens: InboxPageTokens = {
+    gmail: null,
+    outlook: null,
+  };
+
+  const threadMap = new Map<string, EmailThread>();
+
+  const includeGmail = provider === "all" || provider === "gmail";
+  const includeOutlook = provider === "all" || provider === "outlook";
+
+  if (includeGmail) {
+    const token = await getValidGmailToken(userId);
+
+    if (token) {
+      const result = search
+        ? await searchGmail(token, search)
+        : await fetchGmailInbox(token, gmailPageToken ?? undefined);
+
+      nextPageTokens.gmail = result.nextPageToken;
+
+      for (const email of result.emails) {
+        threadMap.set(`gmail:${email.id}`, email);
+      }
+    }
+  }
+
+  if (includeOutlook) {
+    const token = await getValidOutlookToken(userId);
+
+    if (token) {
+      const result = search
+        ? await searchOutlook(token, search)
+        : await fetchOutlookInbox(token, outlookPageToken ?? undefined);
+
+      nextPageTokens.outlook = result.nextPageToken;
+
+      for (const email of result.emails) {
+        threadMap.set(`outlook:${email.id}`, email);
+      }
+    }
+  }
+
+  const emails = Array.from(threadMap.values()).sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
+  return NextResponse.json(
+    {
+      emails,
+      nextPageToken: nextPageTokens,
+    },
+    { headers: CACHE_HEADERS }
+  );
+}

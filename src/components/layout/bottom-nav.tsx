@@ -4,6 +4,7 @@ import {
   Briefcase,
   CalendarDays,
   LayoutDashboard,
+  MessageSquare,
   Sparkles,
   TrendingUp,
   type LucideIcon,
@@ -19,6 +20,7 @@ const GROUP_ICONS: Record<string, LucideIcon> = {
   Briefcase,
   CalendarDays,
   TrendingUp,
+  MessageSquare,
   Sparkles,
 };
 

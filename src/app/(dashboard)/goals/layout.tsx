@@ -1,9 +1,10 @@
 import { SectionSubNav } from "@/components/layout/section-sub-nav";
 
-const WORK_NAV = [
-  { label: "Projects", href: "/projects" },
-  { label: "Tasks", href: "/tasks" },
+const PLAN_NAV = [
   { label: "Goals", href: "/goals" },
+  { label: "Ideas", href: "/ideas" },
+  { label: "Notes", href: "/notes" },
+  { label: "Calendar", href: "/calendar" },
 ];
 
 export default function GoalsLayout({
@@ -13,7 +14,7 @@ export default function GoalsLayout({
 }) {
   return (
     <div>
-      <SectionSubNav items={WORK_NAV} desktopHidden />
+      <SectionSubNav items={PLAN_NAV} desktopHidden />
       {children}
     </div>
   );

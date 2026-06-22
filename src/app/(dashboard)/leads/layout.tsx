@@ -5,7 +5,7 @@ const GROW_NAV = [
   { label: "Content", href: "/content" },
 ];
 
-export default function ContentLayout({
+export default function LeadsLayout({
   children,
 }: {
   children: React.ReactNode;
