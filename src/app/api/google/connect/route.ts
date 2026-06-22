@@ -11,6 +11,8 @@ export const runtime = "nodejs";
 const GMAIL_SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
   "https://www.googleapis.com/auth/userinfo.email",
+  "https://www.googleapis.com/auth/gmail.settings.basic",
+  "https://www.googleapis.com/auth/gmail.drafts.readonly",
 ].join(" ");
 
 export async function GET() {
