@@ -47,60 +47,6 @@ type GmailSendAsResponse = {
   }>;
 };
 
-async function fetchGmailSignature(accessToken: string): Promise<{
-  signature: string | null;
-  signaturePlain: string | null;
-}> {
-  try {
-    const response = await fetch(
-      `https://gmail.googleapis.com/gmail/v1/users/me/settings/sendAs?access_token=${encodeURIComponent(accessToken)}`
-    );
-
-    if (!response.ok) {
-      return { signature: null, signaturePlain: null };
-    }
-
-    const data = (await response.json()) as GmailSendAsResponse;
-    const defaultSendAs = data.sendAs?.find((entry) => entry.isDefault);
-    const signatureHtml = defaultSendAs?.signature?.trim();
-
-    if (!signatureHtml) {
-      return { signature: null, signaturePlain: null };
-    }
-
-    return {
-      signature: signatureHtml,
-      signaturePlain: htmlToPlainText(signatureHtml),
-    };
-  } catch {
-    return { signature: null, signaturePlain: null };
-  }
-}
-
-async function persistGmailSignature(
-  supabase: Awaited<ReturnType<typeof getScopedSupabase>>["supabase"],
-  userId: string,
-  email: string,
-  accessToken: string,
-  existingMetadata: Record<string, unknown>
-) {
-  const { signature, signaturePlain } = await fetchGmailSignature(accessToken);
-
-  await supabase
-    .from("user_integrations")
-    .update({
-      signature,
-      signature_plain: signaturePlain,
-      metadata: {
-        ...existingMetadata,
-        signature_auto_fetched: Boolean(signature),
-      },
-    })
-    .eq("user_id", userId)
-    .eq("provider", "gmail")
-    .eq("email_address", email);
-}
-
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
@@ -239,13 +185,55 @@ export async function GET(request: Request) {
       return clearOAuthStateCookie(response);
     }
 
-    await persistGmailSignature(
-      supabase,
-      userId,
-      userInfo.email,
-      tokenData.access_token,
-      integrationMetadata
-    );
+    let signature: string | null = null;
+    let signaturePlain: string | null = null;
+
+    try {
+      const sendAsResponse = await fetch(
+        "https://gmail.googleapis.com/gmail/v1/users/me/settings/sendAs",
+        {
+          headers: {
+            Authorization: `Bearer ${tokenData.access_token}`,
+          },
+        }
+      );
+
+      if (sendAsResponse.ok) {
+        const data = (await sendAsResponse.json()) as GmailSendAsResponse;
+        const defaultSendAs = data.sendAs?.find((entry) => entry.isDefault);
+        const signatureHtml = defaultSendAs?.signature?.trim();
+
+        if (signatureHtml) {
+          signature = signatureHtml;
+          signaturePlain = htmlToPlainText(signatureHtml);
+        }
+      }
+    } catch (err) {
+      console.error("Gmail signature fetch failed (non-blocking):", err);
+    }
+
+    if (signature !== null || signaturePlain !== null) {
+      const { error: signatureError } = await supabase
+        .from("user_integrations")
+        .update({
+          signature,
+          signature_plain: signaturePlain,
+          metadata: {
+            ...integrationMetadata,
+            signature_auto_fetched: Boolean(signature),
+          },
+        })
+        .eq("user_id", userId)
+        .eq("provider", "gmail")
+        .eq("email_address", userInfo.email);
+
+      if (signatureError) {
+        console.error(
+          "[auth/google/callback] Failed to persist Gmail signature (non-blocking):",
+          signatureError
+        );
+      }
+    }
 
     const response = NextResponse.redirect(`${baseUrl}/settings?connected=gmail`);
     return clearOAuthStateCookie(response);
