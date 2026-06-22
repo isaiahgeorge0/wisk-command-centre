@@ -12,7 +12,8 @@ export type SuggestionCategory =
   | "tasks"
   | "goals"
   | "content"
-  | "ideas";
+  | "ideas"
+  | "email";
 
 export type SuggestionPriority = "high" | "medium" | "low";
 

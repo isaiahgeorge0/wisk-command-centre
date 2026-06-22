@@ -9,6 +9,7 @@ import {
   Flame,
   FolderKanban,
   Lightbulb,
+  Mail,
   Phone,
   Sparkles,
   Target,
@@ -38,6 +39,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Flame,
   CalendarPlus,
   Lightbulb,
+  Mail,
 };
 
 const PRIORITY_BADGE: Record<

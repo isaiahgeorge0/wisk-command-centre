@@ -1,16 +1,18 @@
 "use client";
 
-import { ArrowLeft } from "lucide-react";
-import { useMemo } from "react";
+import { ArrowLeft, Sparkles } from "lucide-react";
+import { useMemo, useState } from "react";
 
+import { WinstonDraftPanel } from "@/components/email/winston-draft-panel";
 import { sanitizeEmailHtml } from "@/lib/email/utils";
-import type { Email, EmailProvider } from "@/lib/email/types";
+import type { Email, EmailProvider, EmailThread } from "@/lib/email/types";
 import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 
 type EmailReaderProps = {
   email: Email | null;
+  thread: EmailThread | null;
   isLoading: boolean;
   showBackButton?: boolean;
   onBack?: () => void;
@@ -48,10 +50,13 @@ function ProviderBadge({ provider }: { provider: EmailProvider }) {
 
 export function EmailReader({
   email,
+  thread,
   isLoading,
   showBackButton = false,
   onBack,
 }: EmailReaderProps) {
+  const [draftOpen, setDraftOpen] = useState(false);
+
   const renderedBody = useMemo(() => {
     if (!email?.body) return "";
 
@@ -87,7 +92,7 @@ export function EmailReader({
   }).format(new Date(email.date));
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="relative flex h-full min-h-0 flex-col">
       <div className="flex items-center gap-2 border-b border-border/60 px-3 py-2 md:hidden">
         {showBackButton ? (
           <Button
@@ -104,8 +109,19 @@ export function EmailReader({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 md:px-6">
-        <div className="mb-4 flex flex-wrap items-center gap-2">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <ProviderBadge provider={email.provider} />
+          {thread ? (
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => setDraftOpen(true)}
+              className="gap-1.5 bg-gradient-to-r from-wisk-purple to-wisk-teal text-white hover:opacity-90"
+            >
+              <Sparkles className="size-3.5" aria-hidden />
+              Ask Winston
+            </Button>
+          ) : null}
         </div>
 
         <h2 className="text-2xl font-semibold tracking-tight text-foreground">
@@ -146,6 +162,15 @@ export function EmailReader({
           )}
         </div>
       </div>
+
+      {thread ? (
+        <WinstonDraftPanel
+          email={email}
+          thread={thread}
+          open={draftOpen}
+          onClose={() => setDraftOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }

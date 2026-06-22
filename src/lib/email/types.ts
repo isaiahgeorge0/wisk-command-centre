@@ -1,3 +1,6 @@
+export type { EmailCategory } from "@/lib/email/categoriser";
+import type { EmailCategory } from "@/lib/email/categoriser";
+
 export type EmailProvider = "gmail" | "outlook";
 
 export type Email = {
@@ -27,11 +30,21 @@ export type EmailThread = {
   accountEmail: string;
   accountLabel: string | null;
   integrationId: string;
+  category: EmailCategory;
+  isFromKnownContact: boolean;
+  linkedLeadId: string | null;
+  linkedLeadName: string | null;
 };
 
 export type EmailThreadBase = Omit<
   EmailThread,
-  "accountEmail" | "accountLabel" | "integrationId"
+  | "accountEmail"
+  | "accountLabel"
+  | "integrationId"
+  | "category"
+  | "isFromKnownContact"
+  | "linkedLeadId"
+  | "linkedLeadName"
 >;
 
 export type InboxResult = {
@@ -49,4 +62,21 @@ export type ValidEmailToken = {
   email: string;
   label: string | null;
   accessToken: string;
+};
+
+export type DraftTone = "professional" | "friendly" | "casual";
+
+export type WinstonDraft = {
+  subject: string;
+  body: string;
+  tone: DraftTone;
+  provider: EmailProvider;
+  accountEmail: string;
+};
+
+export type EmailActionItem = {
+  emailId: string;
+  action: string;
+  urgency: "high" | "medium" | "low";
+  suggestTask: boolean;
 };

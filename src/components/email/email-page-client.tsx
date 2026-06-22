@@ -9,6 +9,7 @@ import { EmailList } from "@/components/email/email-list";
 import { EmailReader } from "@/components/email/email-reader";
 import type {
   Email,
+  EmailActionItem,
   EmailProvider,
   EmailThread,
   InboxPageTokens,
@@ -47,6 +48,7 @@ export function EmailPageClient({
   const [activeProvider, setActiveProvider] = useState<ProviderFilter>("all");
   const [mobileShowReader, setMobileShowReader] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [actionItems, setActionItems] = useState<EmailActionItem[]>([]);
 
   const hasMore = useMemo(() => {
     if (activeProvider === "gmail") return Boolean(nextPageTokens.gmail);
@@ -113,6 +115,31 @@ export function EmailPageClient({
         setSelectedEmail(null);
         setSelectedEmailFull(null);
         setMobileShowReader(false);
+
+        const unreadRecent = data.emails
+          .filter((email) => !email.isRead)
+          .slice(0, 10);
+
+        if (unreadRecent.length > 0) {
+          void fetch("/api/email/action-items", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ emails: unreadRecent }),
+          })
+            .then(async (response) => {
+              const payload = (await response.json()) as {
+                actionItems?: EmailActionItem[];
+              };
+              if (response.ok && payload.actionItems) {
+                setActionItems(payload.actionItems);
+              }
+            })
+            .catch(() => {
+              setActionItems([]);
+            });
+        } else {
+          setActionItems([]);
+        }
       } catch (loadError) {
         setError(
           loadError instanceof Error
@@ -243,6 +270,7 @@ export function EmailPageClient({
             isLoading={isLoading}
             isLoadingMore={isLoadingMore}
             hasMore={hasMore}
+            actionItems={actionItems}
             onSelectEmail={handleSelectEmail}
             onProviderChange={setActiveProvider}
             onSearchChange={setSearchQuery}
@@ -258,6 +286,7 @@ export function EmailPageClient({
         >
           <EmailReader
             email={selectedEmailFull}
+            thread={selectedEmail}
             isLoading={isLoadingMessage}
             onBack={handleMobileBack}
             showBackButton={mobileShowReader}

@@ -4,6 +4,10 @@ import { UnauthorizedError } from "@/lib/auth/errors";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { hasPackageAccess } from "@/lib/billing/access";
 import {
+  categoriseEmail,
+  findLeadMatch,
+} from "@/lib/email/categoriser";
+import {
   fetchGmailInbox,
   searchGmail,
 } from "@/lib/email/gmail";
@@ -16,6 +20,7 @@ import {
   getValidOutlookTokens,
 } from "@/lib/email/token-manager";
 import type { EmailThread, InboxPageTokens } from "@/lib/email/types";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
@@ -28,6 +33,30 @@ type ProviderFilter = "gmail" | "outlook" | "all";
 function parseProvider(value: string | null): ProviderFilter {
   if (value === "gmail" || value === "outlook") return value;
   return "all";
+}
+
+function enrichThread(
+  email: Omit<
+    EmailThread,
+    | "category"
+    | "isFromKnownContact"
+    | "linkedLeadId"
+    | "linkedLeadName"
+  >,
+  leads: Array<{ id: string; name: string; email: string | null }>,
+  knownLeadEmails: string[],
+  knownClientEmails: string[]
+): EmailThread {
+  const leadMatch = findLeadMatch(email, leads);
+  const category = categoriseEmail(email, knownLeadEmails, knownClientEmails);
+
+  return {
+    ...email,
+    category,
+    isFromKnownContact: Boolean(leadMatch),
+    linkedLeadId: leadMatch?.id ?? null,
+    linkedLeadName: leadMatch?.name ?? null,
+  };
 }
 
 export async function GET(request: Request) {
@@ -59,6 +88,18 @@ export async function GET(request: Request) {
   const gmailPageToken = searchParams.get("gmailPageToken") ?? pageToken;
   const outlookPageToken = searchParams.get("outlookPageToken") ?? pageToken;
 
+  const admin = createAdminClient();
+  const { data: leads } = await admin
+    .from("leads")
+    .select("id, name, email")
+    .eq("user_id", userId);
+
+  const leadRows = leads ?? [];
+  const knownLeadEmails = leadRows
+    .map((lead) => lead.email)
+    .filter((email): email is string => Boolean(email));
+  const knownClientEmails: string[] = [];
+
   const nextPageTokens: InboxPageTokens = {
     gmail: null,
     outlook: null,
@@ -82,12 +123,19 @@ export async function GET(request: Request) {
       }
 
       for (const email of result.emails) {
-        threads.push({
-          ...email,
-          accountEmail: account.email,
-          accountLabel: account.label,
-          integrationId: account.integrationId,
-        });
+        threads.push(
+          enrichThread(
+            {
+              ...email,
+              accountEmail: account.email,
+              accountLabel: account.label,
+              integrationId: account.integrationId,
+            },
+            leadRows,
+            knownLeadEmails,
+            knownClientEmails
+          )
+        );
       }
     }
   }
@@ -105,12 +153,19 @@ export async function GET(request: Request) {
       }
 
       for (const email of result.emails) {
-        threads.push({
-          ...email,
-          accountEmail: account.email,
-          accountLabel: account.label,
-          integrationId: account.integrationId,
-        });
+        threads.push(
+          enrichThread(
+            {
+              ...email,
+              accountEmail: account.email,
+              accountLabel: account.label,
+              integrationId: account.integrationId,
+            },
+            leadRows,
+            knownLeadEmails,
+            knownClientEmails
+          )
+        );
       }
     }
   }

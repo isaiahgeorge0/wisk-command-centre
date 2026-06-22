@@ -4,6 +4,25 @@ import { buildUserContext, type UserContext } from "@/lib/ai/context-builder";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const EMAIL_SUGGESTIONS_KEY = "email_suggestions";
+
+function preserveEmailSuggestions(
+  existingContext: unknown
+): Record<string, unknown> | null {
+  if (
+    !existingContext ||
+    typeof existingContext !== "object" ||
+    Array.isArray(existingContext)
+  ) {
+    return null;
+  }
+
+  const emailSuggestions = (existingContext as Record<string, unknown>)[
+    EMAIL_SUGGESTIONS_KEY
+  ];
+
+  return emailSuggestions ? { [EMAIL_SUGGESTIONS_KEY]: emailSuggestions } : null;
+}
 
 export async function getCachedContext(
   userId: string,
@@ -23,14 +42,13 @@ export async function getCachedContext(
     return data.context as UserContext;
   }
 
-  // Cache is stale or missing — rebuild.
   const context = await buildUserContext(userId, supabase);
+  const preserved = preserveEmailSuggestions(data?.context);
 
-  // Admin client is required for writing to this table (no user insert policy).
   const admin = createAdminClient();
   await admin.from("ai_context_cache").upsert({
     user_id: userId,
-    context,
+    context: preserved ? { ...context, ...preserved } : context,
     generated_at: new Date().toISOString(),
   });
 

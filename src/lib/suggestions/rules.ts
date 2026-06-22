@@ -25,11 +25,12 @@ const PRIORITY_RANK: Record<SuggestionPriority, number> = {
 
 const CATEGORY_RANK: Record<SmartSuggestion["category"], number> = {
   leads: 0,
-  tasks: 1,
-  projects: 2,
-  goals: 3,
-  content: 4,
-  ideas: 5,
+  email: 1,
+  tasks: 2,
+  projects: 3,
+  goals: 4,
+  content: 5,
+  ideas: 6,
 };
 
 function isOlderThanDays(isoTimestamp: string, days: number, now: Date): boolean {

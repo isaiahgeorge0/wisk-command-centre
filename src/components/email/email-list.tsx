@@ -1,18 +1,19 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { Mail, Search } from "lucide-react";
+import { Mail, Search, User } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MOTION_EASE } from "@/lib/motion/config";
 import { formatEmailRelativeTime } from "@/lib/email/utils";
-import type { EmailProvider, EmailThread } from "@/lib/email/types";
+import type { EmailActionItem, EmailCategory, EmailProvider, EmailThread } from "@/lib/email/types";
 import { cn } from "@/lib/utils";
 
 type ProviderFilter = "all" | EmailProvider;
+type CategoryFilter = "all" | EmailCategory;
 
 type EmailListProps = {
   emails: EmailThread[];
@@ -24,11 +25,21 @@ type EmailListProps = {
   isLoading: boolean;
   isLoadingMore: boolean;
   hasMore: boolean;
+  actionItems: EmailActionItem[];
   onSelectEmail: (email: EmailThread) => void;
   onProviderChange: (provider: ProviderFilter) => void;
   onSearchChange: (query: string) => void;
   onLoadMore: () => void;
 };
+
+const CATEGORY_TABS: { id: CategoryFilter; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "leads", label: "Leads" },
+  { id: "clients", label: "Clients" },
+  { id: "admin", label: "Admin" },
+  { id: "newsletters", label: "Newsletters" },
+  { id: "other", label: "Other" },
+];
 
 function ListSkeleton() {
   return (
@@ -73,6 +84,29 @@ function ProviderBadge({
   );
 }
 
+function ActionIndicator({
+  actionItem,
+}: {
+  actionItem: EmailActionItem | undefined;
+}) {
+  if (!actionItem) return null;
+
+  const colourClass =
+    actionItem.urgency === "high"
+      ? "bg-wisk-coral"
+      : actionItem.urgency === "medium"
+        ? "bg-amber-500"
+        : "bg-muted-foreground";
+
+  return (
+    <span
+      className={cn("mt-1.5 size-2 shrink-0 rounded-full", colourClass)}
+      title={actionItem.action}
+      aria-label={actionItem.action}
+    />
+  );
+}
+
 function RelativeTime({ iso }: { iso: string }) {
   const [label, setLabel] = useState<string | null>(null);
 
@@ -93,6 +127,7 @@ export function EmailList({
   isLoading,
   isLoadingMore,
   hasMore,
+  actionItems,
   onSelectEmail,
   onProviderChange,
   onSearchChange,
@@ -101,8 +136,36 @@ export function EmailList({
   const reduced = useReducedMotion() ?? false;
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [localSearch, setLocalSearch] = useState(searchQuery);
+  const [activeCategory, setActiveCategory] = useState<CategoryFilter>("all");
   const showProviderBadges = connectedAccountCount > 1;
   const showProviderTabs = connectedProviders.length > 1;
+
+  const actionItemMap = useMemo(
+    () => new Map(actionItems.map((item) => [item.emailId, item])),
+    [actionItems]
+  );
+
+  const categoryCounts = useMemo(() => {
+    const counts: Record<CategoryFilter, number> = {
+      all: emails.length,
+      leads: 0,
+      clients: 0,
+      admin: 0,
+      newsletters: 0,
+      other: 0,
+    };
+
+    for (const email of emails) {
+      counts[email.category] += 1;
+    }
+
+    return counts;
+  }, [emails]);
+
+  const visibleEmails = useMemo(() => {
+    if (activeCategory === "all") return emails;
+    return emails.filter((email) => email.category === activeCategory);
+  }, [activeCategory, emails]);
 
   useEffect(() => {
     setLocalSearch(searchQuery);
@@ -183,25 +246,49 @@ export function EmailList({
             ))}
           </div>
         ) : null}
+
+        <div className="flex flex-wrap gap-1">
+          {CATEGORY_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveCategory(tab.id)}
+              className={cn(
+                "inline-flex min-h-11 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors md:min-h-8",
+                activeCategory === tab.id
+                  ? "bg-muted text-foreground"
+                  : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+              )}
+            >
+              <span>{tab.label}</span>
+              <span className="rounded-full bg-background/80 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                {categoryCounts[tab.id]}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {isLoading ? (
         <ListSkeleton />
-      ) : emails.length === 0 ? (
+      ) : visibleEmails.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 text-center">
           <Mail className="mb-4 size-10 text-muted-foreground" />
           <h2 className="text-lg font-medium text-foreground">No emails found</h2>
           <p className="mt-2 max-w-sm text-sm text-muted-foreground">
             {searchQuery.trim()
               ? "Try a different search term or clear the search."
-              : "Your inbox is empty or no messages matched the selected provider."}
+              : activeCategory === "all"
+                ? "Your inbox is empty or no messages matched the selected provider."
+                : "No emails in this category."}
           </p>
         </div>
       ) : (
         <div className="min-h-0 flex-1 overflow-y-auto p-2">
           <ul className="space-y-1">
-            {emails.map((email, index) => {
+            {visibleEmails.map((email, index) => {
               const selected = email.id === selectedEmailId;
+              const actionItem = actionItemMap.get(email.id);
 
               return (
                 <motion.li
@@ -222,11 +309,15 @@ export function EmailList({
                       "w-full rounded-lg border border-transparent px-3 py-3 text-left transition-colors",
                       selected
                         ? "border-blue-500/30 bg-blue-500/10"
-                        : "hover:bg-muted/50"
+                        : "hover:bg-muted/50",
+                      email.category === "leads" &&
+                        "border-l-2 border-l-teal-500/60"
                     )}
                   >
                     <div className="flex items-start gap-2">
-                      {!email.isRead ? (
+                      {actionItem ? (
+                        <ActionIndicator actionItem={actionItem} />
+                      ) : !email.isRead ? (
                         <span
                           className="mt-1.5 size-2 shrink-0 rounded-full bg-blue-500"
                           aria-hidden
@@ -236,16 +327,27 @@ export function EmailList({
                       )}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
-                          <p
-                            className={cn(
-                              "truncate text-sm",
-                              email.isRead
-                                ? "font-medium text-foreground"
-                                : "font-semibold text-foreground"
-                            )}
-                          >
-                            {email.from.name}
-                          </p>
+                          <div className="flex min-w-0 items-center gap-1.5">
+                            <p
+                              className={cn(
+                                "truncate text-sm",
+                                email.isRead
+                                  ? "font-medium text-foreground"
+                                  : "font-semibold text-foreground"
+                              )}
+                            >
+                              {email.from.name}
+                            </p>
+                            {email.isFromKnownContact ? (
+                              <span
+                                className="inline-flex items-center gap-0.5 rounded-full bg-teal-500/10 px-1.5 py-0.5 text-[10px] font-medium text-teal-700 dark:text-teal-300"
+                                title="Known contact"
+                              >
+                                <User className="size-2.5" aria-hidden />
+                                <span className="hidden sm:inline">Known</span>
+                              </span>
+                            ) : null}
+                          </div>
                           <span className="shrink-0 text-[11px] text-muted-foreground">
                             <RelativeTime iso={email.date} />
                           </span>
