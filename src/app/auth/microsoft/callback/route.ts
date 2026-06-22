@@ -37,6 +37,88 @@ function clearOAuthStateCookie(response: NextResponse) {
   return response;
 }
 
+function htmlToPlainText(html: string): string {
+  return html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+type OutlookMailboxSettings = {
+  automaticRepliesSetting?: {
+    externalReplyMessage?: string;
+    internalReplyMessage?: string;
+  };
+  userPurpose?: string;
+};
+
+async function fetchOutlookSignature(accessToken: string): Promise<{
+  signature: string | null;
+  signaturePlain: string | null;
+}> {
+  try {
+    const response = await fetch(
+      "https://graph.microsoft.com/v1.0/me/mailboxSettings",
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      return { signature: null, signaturePlain: null };
+    }
+
+    const data = (await response.json()) as OutlookMailboxSettings & {
+      signature?: string;
+    };
+
+    const signatureHtml =
+      typeof data.signature === "string" && data.signature.trim()
+        ? data.signature.trim()
+        : null;
+
+    if (!signatureHtml) {
+      return { signature: null, signaturePlain: null };
+    }
+
+    return {
+      signature: signatureHtml,
+      signaturePlain: htmlToPlainText(signatureHtml),
+    };
+  } catch {
+    return { signature: null, signaturePlain: null };
+  }
+}
+
+async function persistOutlookSignature(
+  supabase: Awaited<ReturnType<typeof getScopedSupabase>>["supabase"],
+  userId: string,
+  email: string,
+  accessToken: string,
+  existingMetadata: Record<string, unknown>
+) {
+  const { signature, signaturePlain } = await fetchOutlookSignature(accessToken);
+
+  await supabase
+    .from("user_integrations")
+    .update({
+      signature,
+      signature_plain: signaturePlain,
+      metadata: {
+        ...existingMetadata,
+        signature_auto_fetched: Boolean(signature),
+      },
+    })
+    .eq("user_id", userId)
+    .eq("provider", "outlook")
+    .eq("email_address", email);
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
@@ -150,6 +232,10 @@ export async function GET(request: Request) {
       ? encryptIntegrationToken(tokenData.refresh_token)
       : null;
     const now = new Date().toISOString();
+    const integrationMetadata = {
+      email,
+      expires_at: Date.now() + expiresIn * 1000,
+    };
 
     const { error } = await supabase.from("user_integrations").upsert(
       {
@@ -160,10 +246,7 @@ export async function GET(request: Request) {
         display_order: existingCount ?? 0,
         access_token: encryptedAccessToken,
         refresh_token: encryptedRefreshToken,
-        metadata: {
-          email,
-          expires_at: Date.now() + expiresIn * 1000,
-        },
+        metadata: integrationMetadata,
         connected_at: now,
         last_synced_at: now,
       },
@@ -175,6 +258,14 @@ export async function GET(request: Request) {
       const response = NextResponse.redirect(`${baseUrl}/settings?error=outlook`);
       return clearOAuthStateCookie(response);
     }
+
+    await persistOutlookSignature(
+      supabase,
+      userId,
+      email,
+      tokenData.access_token,
+      integrationMetadata
+    );
 
     const response = NextResponse.redirect(`${baseUrl}/settings?connected=outlook`);
     return clearOAuthStateCookie(response);

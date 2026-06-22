@@ -72,6 +72,8 @@ export type WinstonDraft = {
   tone: DraftTone;
   provider: EmailProvider;
   accountEmail: string;
+  signature: string | null;
+  signaturePlain: string | null;
 };
 
 export type EmailActionItem = {

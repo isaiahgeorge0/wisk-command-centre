@@ -30,6 +30,77 @@ function clearOAuthStateCookie(response: NextResponse) {
   return response;
 }
 
+function htmlToPlainText(html: string): string {
+  return html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+type GmailSendAsResponse = {
+  sendAs?: Array<{
+    isDefault?: boolean;
+    signature?: string;
+  }>;
+};
+
+async function fetchGmailSignature(accessToken: string): Promise<{
+  signature: string | null;
+  signaturePlain: string | null;
+}> {
+  try {
+    const response = await fetch(
+      `https://gmail.googleapis.com/gmail/v1/users/me/settings/sendAs?access_token=${encodeURIComponent(accessToken)}`
+    );
+
+    if (!response.ok) {
+      return { signature: null, signaturePlain: null };
+    }
+
+    const data = (await response.json()) as GmailSendAsResponse;
+    const defaultSendAs = data.sendAs?.find((entry) => entry.isDefault);
+    const signatureHtml = defaultSendAs?.signature?.trim();
+
+    if (!signatureHtml) {
+      return { signature: null, signaturePlain: null };
+    }
+
+    return {
+      signature: signatureHtml,
+      signaturePlain: htmlToPlainText(signatureHtml),
+    };
+  } catch {
+    return { signature: null, signaturePlain: null };
+  }
+}
+
+async function persistGmailSignature(
+  supabase: Awaited<ReturnType<typeof getScopedSupabase>>["supabase"],
+  userId: string,
+  email: string,
+  accessToken: string,
+  existingMetadata: Record<string, unknown>
+) {
+  const { signature, signaturePlain } = await fetchGmailSignature(accessToken);
+
+  await supabase
+    .from("user_integrations")
+    .update({
+      signature,
+      signature_plain: signaturePlain,
+      metadata: {
+        ...existingMetadata,
+        signature_auto_fetched: Boolean(signature),
+      },
+    })
+    .eq("user_id", userId)
+    .eq("provider", "gmail")
+    .eq("email_address", email);
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
@@ -141,6 +212,10 @@ export async function GET(request: Request) {
       ? encryptIntegrationToken(tokenData.refresh_token)
       : null;
     const now = new Date().toISOString();
+    const integrationMetadata = {
+      email: userInfo.email,
+      expires_at: Date.now() + expiresIn * 1000,
+    };
 
     const { error } = await supabase.from("user_integrations").upsert(
       {
@@ -151,10 +226,7 @@ export async function GET(request: Request) {
         display_order: existingCount ?? 0,
         access_token: encryptedAccessToken,
         refresh_token: encryptedRefreshToken,
-        metadata: {
-          email: userInfo.email,
-          expires_at: Date.now() + expiresIn * 1000,
-        },
+        metadata: integrationMetadata,
         connected_at: now,
         last_synced_at: now,
       },
@@ -166,6 +238,14 @@ export async function GET(request: Request) {
       const response = NextResponse.redirect(`${baseUrl}/settings?error=gmail`);
       return clearOAuthStateCookie(response);
     }
+
+    await persistGmailSignature(
+      supabase,
+      userId,
+      userInfo.email,
+      tokenData.access_token,
+      integrationMetadata
+    );
 
     const response = NextResponse.redirect(`${baseUrl}/settings?connected=gmail`);
     return clearOAuthStateCookie(response);

@@ -54,7 +54,15 @@ Tone: ${TONE_GUIDANCE[options.tone]}
 Account context: This is their ${accountLabel} email account.
 ${options.leadContext ? `\n${options.leadContext}` : ""}
 
-Draft a response to the email below. Return ONLY the email body — no subject line, no greeting label, just the body text ready to send. Keep it concise and appropriate to the tone.`;
+Begin your response with a personalised greeting using the sender's first name.
+Extract the first name from the sender's display name or email address.
+Examples: 'Hi Sarah,' or 'Hello James,' or 'Good morning David,'
+Match the greeting formality to the tone:
+- Professional: 'Dear [Name],' or 'Hello [Name],'
+- Friendly: 'Hi [Name],'
+- Casual: 'Hey [Name],' or just 'Hi [Name],'
+
+Draft a response to the email below. Return ONLY the email body — include the greeting and message content, but no subject line or sign-off/signature. Keep it concise and appropriate to the tone.`;
 }
 
 export async function POST(request: Request) {
@@ -120,7 +128,7 @@ export async function POST(request: Request) {
       .maybeSingle(),
     supabase
       .from("user_integrations")
-      .select("label, email_address")
+      .select("label, email_address, signature, signature_plain")
       .eq("id", integrationId)
       .eq("user_id", userId)
       .maybeSingle(),
@@ -231,6 +239,8 @@ ${email.body}`;
       provider,
       accountEmail:
         integration?.email_address ?? email.to[0]?.email ?? email.from.email,
+      signature: integration?.signature ?? null,
+      signaturePlain: integration?.signature_plain ?? null,
     };
 
     return NextResponse.json({ draft });

@@ -36,7 +36,11 @@ export async function getConversationHistory(): Promise<
 
 // ─── Monthly usage ────────────────────────────────────────────────────────────
 
-export async function getMonthlyUsage(): Promise<ActionResult<MonthlyUsage>> {
+export type WinstonSettingsUsage = MonthlyUsage & {
+  emailDraftTokens: number;
+};
+
+export async function getMonthlyUsage(): Promise<ActionResult<WinstonSettingsUsage>> {
   const { supabase, userId } = await getScopedSupabase();
 
   const monthStart = new Date();
@@ -59,14 +63,16 @@ export async function getMonthlyUsage(): Promise<ActionResult<MonthlyUsage>> {
 
   let chatTokens = 0;
   let digestTokens = 0;
+  let emailDraftTokens = 0;
 
   for (const row of data ?? []) {
     const tokens = (row.input_tokens ?? 0) + (row.output_tokens ?? 0);
     if (row.feature === "chat") chatTokens += tokens;
     else if (row.feature === "digest") digestTokens += tokens;
+    else if (row.feature === "email_draft") emailDraftTokens += tokens;
   }
 
-  const total = chatTokens + digestTokens;
+  const total = chatTokens + digestTokens + emailDraftTokens;
   const limit = WINSTON_MONTHLY_TOKEN_LIMIT;
   const percentage = Math.min(100, Math.round((total / limit) * 100));
 
@@ -75,6 +81,7 @@ export async function getMonthlyUsage(): Promise<ActionResult<MonthlyUsage>> {
     data: {
       chatTokens,
       digestTokens,
+      emailDraftTokens,
       total,
       limit,
       percentage,

@@ -11,6 +11,9 @@ export type SafeIntegration = {
   email_address?: string | null;
   label?: string | null;
   display_order?: number;
+  signature?: string | null;
+  signature_plain?: string | null;
+  signature_auto_fetched?: boolean;
 };
 
 export type IntegrationsSummary = {

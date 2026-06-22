@@ -1,6 +1,7 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
+import { Mail, MessageSquare, Newspaper, Sparkles } from "lucide-react";
+import type { ReactNode } from "react";
 
 import {
   Card,
@@ -13,13 +14,48 @@ import type { MonthlyUsage } from "@/lib/ai/types";
 import { cn } from "@/lib/utils";
 
 type SettingsWinstonSectionProps = {
-  usage: MonthlyUsage;
+  usage: MonthlyUsage & { emailDraftTokens?: number };
 };
+
+type FeatureRowProps = {
+  icon: ReactNode;
+  label: string;
+  tokens: number;
+  total: number;
+  emptyLabel?: string;
+};
+
+function FeatureRow({ icon, label, tokens, total, emptyLabel }: FeatureRowProps) {
+  const proportion = total > 0 ? Math.round((tokens / total) * 100) : 0;
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="text-muted-foreground">{icon}</span>
+          <span className="text-sm font-medium text-foreground">{label}</span>
+        </div>
+        <span className="shrink-0 text-sm text-muted-foreground">
+          {tokens === 0 && emptyLabel
+            ? emptyLabel
+            : `${tokens.toLocaleString()} tokens`}
+        </span>
+      </div>
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-border/40">
+        <div
+          className="h-full rounded-full bg-muted-foreground/40 transition-all duration-500"
+          style={{ width: `${proportion}%` }}
+        />
+      </div>
+    </div>
+  );
+}
 
 export function SettingsWinstonSection({ usage }: SettingsWinstonSectionProps) {
   const {
     chatTokens,
     digestTokens,
+    emailDraftTokens = 0,
     total,
     limit,
     percentage,
@@ -72,15 +108,26 @@ export function SettingsWinstonSection({ usage }: SettingsWinstonSectionProps) {
             </div>
           </div>
 
-          <div className="space-y-1 text-sm text-muted-foreground">
-            <p>
-              <span className="text-foreground">Chat:</span>{" "}
-              {chatTokens.toLocaleString()} tokens
-            </p>
-            <p>
-              <span className="text-foreground">Weekly Digest:</span>{" "}
-              {digestTokens.toLocaleString()} tokens
-            </p>
+          <div className="space-y-4">
+            <FeatureRow
+              icon={<Newspaper className="size-4" aria-hidden />}
+              label="AI Digest"
+              tokens={digestTokens}
+              total={total}
+            />
+            <FeatureRow
+              icon={<MessageSquare className="size-4" aria-hidden />}
+              label="WISK Chat"
+              tokens={chatTokens}
+              total={total}
+            />
+            <FeatureRow
+              icon={<Mail className="size-4" aria-hidden />}
+              label="Email Drafts"
+              tokens={emailDraftTokens}
+              total={total}
+              emptyLabel="0 tokens"
+            />
           </div>
 
           <p className="text-sm text-muted-foreground">

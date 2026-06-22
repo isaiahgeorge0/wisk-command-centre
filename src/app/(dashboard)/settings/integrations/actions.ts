@@ -50,18 +50,27 @@ function toSafeIntegration(row: {
   email_address?: string | null;
   label?: string | null;
   display_order?: number;
+  signature?: string | null;
+  signature_plain?: string | null;
 }): SafeIntegration {
+  const metadata = (row.metadata ?? {}) as Record<string, unknown>;
+
   return {
     id: row.id,
     provider: row.provider as IntegrationProvider,
-    metadata: (row.metadata ?? {}) as Record<string, unknown>,
+    metadata,
     connected_at: row.connected_at,
     last_synced_at: row.last_synced_at,
     email_address: row.email_address ?? null,
     label: row.label ?? null,
     display_order: row.display_order ?? 0,
+    signature: row.signature ?? null,
+    signature_plain: row.signature_plain ?? null,
+    signature_auto_fetched: metadata.signature_auto_fetched === true,
   };
 }
+
+export type EmailAccountIntegration = SafeIntegration;
 
 export async function getIntegrations(): Promise<SafeIntegration[]> {
   const { supabase, userId } = await getScopedSupabase();
@@ -69,7 +78,7 @@ export async function getIntegrations(): Promise<SafeIntegration[]> {
   const { data, error } = await supabase
     .from("user_integrations")
     .select(
-      "id, provider, metadata, connected_at, last_synced_at, email_address, label, display_order"
+      "id, provider, metadata, connected_at, last_synced_at, email_address, label, display_order, signature, signature_plain"
     )
     .eq("user_id", userId)
     .order("display_order", { ascending: true })
@@ -276,6 +285,66 @@ export async function updateIntegrationLabel(
 
   if (error) {
     console.error("updateIntegrationLabel:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/settings");
+  return { success: true };
+}
+
+function appendPhoneToSignature(
+  signature: string,
+  signaturePlain: string,
+  phoneNumber?: string
+): { signature: string; signaturePlain: string } {
+  const trimmedPhone = phoneNumber?.trim();
+  if (!trimmedPhone) {
+    return { signature, signaturePlain };
+  }
+
+  const html = signature.trim()
+    ? `${signature.trim()}<p>${trimmedPhone}</p>`
+    : `<p>${trimmedPhone}</p>`;
+  const plain = signaturePlain.trim()
+    ? `${signaturePlain.trim()}\n${trimmedPhone}`
+    : trimmedPhone;
+
+  return { signature: html, signaturePlain: plain };
+}
+
+export async function updateSignature(
+  integrationId: string,
+  signature: string,
+  signaturePlain: string,
+  phoneNumber?: string
+): Promise<IntegrationActionResult> {
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { data: existing } = await supabase
+    .from("user_integrations")
+    .select("metadata")
+    .eq("id", integrationId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  const withPhone = appendPhoneToSignature(signature, signaturePlain, phoneNumber);
+  const metadata = {
+    ...((existing?.metadata ?? {}) as Record<string, unknown>),
+    signature_auto_fetched: false,
+  };
+
+  const { error } = await supabase
+    .from("user_integrations")
+    .update({
+      signature: withPhone.signature.trim() || null,
+      signature_plain: withPhone.signaturePlain.trim() || null,
+      metadata,
+    })
+    .eq("id", integrationId)
+    .eq("user_id", userId);
+
+  if (error) {
+    console.error("updateSignature:", error);
     return { success: false, error: error.message };
   }
 

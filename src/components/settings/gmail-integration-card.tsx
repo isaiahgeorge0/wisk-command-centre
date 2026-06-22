@@ -22,6 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { IntegrationSignatureSection } from "@/components/settings/integration-signature-section";
 import type { SafeIntegration } from "@/lib/integrations/types";
 import { cn } from "@/lib/utils";
 
@@ -167,6 +168,10 @@ export function GmailIntegrationCard({
                     onBlur={() => handleLabelBlur(integration.id)}
                     placeholder="Add a label (e.g. Work, Personal)"
                     className="h-9"
+                  />
+                  <IntegrationSignatureSection
+                    integration={integration}
+                    providerLabel="Gmail"
                   />
                 </div>
               );

@@ -28,6 +28,11 @@ const TONES: { id: DraftTone; label: string }[] = [
   { id: "casual", label: "Casual" },
 ];
 
+function buildComposeBody(draft: WinstonDraft): string {
+  if (!draft.signaturePlain?.trim()) return draft.body;
+  return `${draft.body}\n\n--\n${draft.signaturePlain.trim()}`;
+}
+
 export function WinstonDraftPanel({
   email,
   thread,
@@ -98,7 +103,8 @@ export function WinstonDraftPanel({
 
   const handleCopy = async () => {
     if (!draft?.body) return;
-    await navigator.clipboard.writeText(draft.body);
+    const text = buildComposeBody(draft);
+    await navigator.clipboard.writeText(text);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 2000);
   };
@@ -109,7 +115,7 @@ export function WinstonDraftPanel({
       provider: draft.provider,
       toEmail: email.from.email,
       subject: email.subject,
-      body: draft.body,
+      body: buildComposeBody(draft),
     });
 
   const openLabel =
@@ -212,6 +218,19 @@ export function WinstonDraftPanel({
                       {draft.body}
                     </p>
                   </div>
+                  {draft.signature ? (
+                    <div className="rounded-lg border border-border/60 bg-muted/10 p-3">
+                      <div className="mb-2 border-b border-border/40 pb-2">
+                        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                          Signature
+                        </p>
+                      </div>
+                      <div
+                        className="prose-email text-sm leading-relaxed text-foreground [&_a]:text-primary [&_a]:underline"
+                        dangerouslySetInnerHTML={{ __html: draft.signature }}
+                      />
+                    </div>
+                  ) : null}
                   <Button
                     type="button"
                     variant="outline"
