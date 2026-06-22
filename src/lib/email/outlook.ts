@@ -1,4 +1,4 @@
-import type { Email, EmailThread, InboxResult } from "@/lib/email/types";
+import type { Email, EmailThreadBase, InboxResult } from "@/lib/email/types";
 import { stripHtml, toPreview } from "@/lib/email/utils";
 
 type OutlookAddress = {
@@ -58,7 +58,7 @@ function mapOutlookMessage(message: OutlookMessage): Email {
   };
 }
 
-function mapOutlookThread(message: OutlookMessage): EmailThread {
+function mapOutlookThread(message: OutlookMessage): EmailThreadBase {
   return {
     id: message.id,
     provider: "outlook",

@@ -115,6 +115,26 @@ export async function GET(request: Request) {
       return clearOAuthStateCookie(response);
     }
 
+    const { count: duplicateCount } = await supabase
+      .from("user_integrations")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("provider", "gmail")
+      .eq("email_address", userInfo.email);
+
+    if ((duplicateCount ?? 0) > 0) {
+      const response = NextResponse.redirect(
+        `${baseUrl}/settings?error=gmail-duplicate`
+      );
+      return clearOAuthStateCookie(response);
+    }
+
+    const { count: existingCount } = await supabase
+      .from("user_integrations")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("provider", "gmail");
+
     const expiresIn = tokenData.expires_in ?? 3600;
     const encryptedAccessToken = encryptIntegrationToken(tokenData.access_token);
     const encryptedRefreshToken = tokenData.refresh_token
@@ -126,6 +146,9 @@ export async function GET(request: Request) {
       {
         user_id: userId,
         provider: "gmail",
+        email_address: userInfo.email,
+        label: null,
+        display_order: existingCount ?? 0,
         access_token: encryptedAccessToken,
         refresh_token: encryptedRefreshToken,
         metadata: {
@@ -135,7 +158,7 @@ export async function GET(request: Request) {
         connected_at: now,
         last_synced_at: now,
       },
-      { onConflict: "user_id,provider" }
+      { onConflict: "user_id,provider,email_address" }
     );
 
     if (error) {

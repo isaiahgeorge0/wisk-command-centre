@@ -1,4 +1,4 @@
-import type { Email, EmailThread, InboxResult } from "@/lib/email/types";
+import type { Email, EmailThreadBase, InboxResult } from "@/lib/email/types";
 import {
   decodeBase64Url,
   parseMailbox,
@@ -120,7 +120,7 @@ function mapGmailMessage(message: GmailMessageResponse): Email {
   };
 }
 
-function groupGmailThreads(emails: Email[]): EmailThread[] {
+function groupGmailThreads(emails: Email[]): EmailThreadBase[] {
   const threads = new Map<string, Email[]>();
 
   for (const email of emails) {

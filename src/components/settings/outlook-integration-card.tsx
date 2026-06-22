@@ -3,9 +3,12 @@
 import { Mail } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
-import { disconnectOutlook } from "@/app/(dashboard)/settings/integrations/actions";
+import {
+  disconnectOutlook,
+  updateIntegrationLabel,
+} from "@/app/(dashboard)/settings/integrations/actions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,31 +21,74 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type { SafeIntegration } from "@/lib/integrations/types";
 import { cn } from "@/lib/utils";
 
+const MAX_ACCOUNTS = 3;
+
 type OutlookIntegrationCardProps = {
-  integration: SafeIntegration | undefined;
+  integrations: SafeIntegration[];
   hasAiPro: boolean;
 };
 
+function getAccountEmail(integration: SafeIntegration): string {
+  return (
+    integration.email_address ??
+    (typeof integration.metadata?.email === "string"
+      ? integration.metadata.email
+      : "")
+  );
+}
+
 export function OutlookIntegrationCard({
-  integration,
+  integrations,
   hasAiPro,
 }: OutlookIntegrationCardProps) {
   const router = useRouter();
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [labels, setLabels] = useState<Record<string, string>>({});
 
-  const connected = Boolean(integration);
-  const email = integration?.metadata?.email as string | undefined;
+  const connected = integrations.length > 0;
+  const atMax = integrations.length >= MAX_ACCOUNTS;
 
-  const handleDisconnect = () => {
+  useEffect(() => {
+    setLabels(
+      Object.fromEntries(
+        integrations.map((integration) => [
+          integration.id,
+          integration.label ?? "",
+        ])
+      )
+    );
+  }, [integrations]);
+
+  const handleLabelBlur = (integrationId: string) => {
+    const label = labels[integrationId] ?? "";
+    const existing = integrations.find((i) => i.id === integrationId);
+    const existingLabel = existing?.label ?? "";
+
+    if (label === existingLabel) return;
+
+    startTransition(async () => {
+      const result = await updateIntegrationLabel(integrationId, label);
+      if (!result.success) {
+        setError(result.error);
+        setLabels((current) => ({
+          ...current,
+          [integrationId]: existingLabel,
+        }));
+      }
+    });
+  };
+
+  const handleDisconnect = (integrationId: string) => {
     setError(null);
     startTransition(async () => {
-      const result = await disconnectOutlook();
-      setConfirmOpen(false);
+      const result = await disconnectOutlook(integrationId);
+      setConfirmId(null);
 
       if (!result.success) {
         setError(result.error);
@@ -79,9 +125,6 @@ export function OutlookIntegrationCard({
               ? "Winston can read your Outlook inbox. Email integration features are active."
               : "Connect your Outlook account to let Winston read and organise your inbox."}
           </p>
-          {connected && email ? (
-            <p className="mt-2 text-xs text-muted-foreground">{email}</p>
-          ) : null}
         </div>
       </div>
 
@@ -91,41 +134,57 @@ export function OutlookIntegrationCard({
         ) : null}
 
         {connected ? (
-          <>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              className="text-muted-foreground"
-              disabled={isPending}
-              onClick={() => setConfirmOpen(true)}
-            >
-              Disconnect
-            </Button>
-            <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Disconnect Outlook?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Winston will no longer be able to read your Outlook inbox.
-                    You can reconnect at any time.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    disabled={isPending}
-                    onClick={(event) => {
-                      event.preventDefault();
-                      handleDisconnect();
-                    }}
-                  >
-                    {isPending ? "Disconnecting…" : "Disconnect"}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </>
+          <div className="space-y-3">
+            {integrations.map((integration) => {
+              const email = getAccountEmail(integration);
+
+              return (
+                <div
+                  key={integration.id}
+                  className="space-y-2 rounded-lg border border-border/50 bg-muted/20 p-3"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <p className="text-sm font-medium text-foreground">{email}</p>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 text-muted-foreground"
+                      disabled={isPending}
+                      onClick={() => setConfirmId(integration.id)}
+                    >
+                      Disconnect
+                    </Button>
+                  </div>
+                  <Input
+                    value={labels[integration.id] ?? ""}
+                    onChange={(event) =>
+                      setLabels((current) => ({
+                        ...current,
+                        [integration.id]: event.target.value,
+                      }))
+                    }
+                    onBlur={() => handleLabelBlur(integration.id)}
+                    placeholder="Add a label (e.g. Work, Personal)"
+                    className="h-9"
+                  />
+                </div>
+              );
+            })}
+
+            {atMax ? (
+              <p className="text-xs text-muted-foreground">
+                Maximum accounts reached
+              </p>
+            ) : hasAiPro ? (
+              <Link
+                href="/api/microsoft/connect"
+                className={cn(buttonVariants({ size: "sm", variant: "outline" }))}
+              >
+                Add another Outlook account
+              </Link>
+            ) : null}
+          </div>
         ) : (
           <div className="flex flex-wrap items-center gap-3">
             {hasAiPro ? (
@@ -133,11 +192,11 @@ export function OutlookIntegrationCard({
                 href="/api/microsoft/connect"
                 className={cn(buttonVariants({ size: "sm" }))}
               >
-                Connect Outlook
+                Add Outlook account
               </Link>
             ) : (
               <Button size="sm" disabled>
-                Connect Outlook
+                Add Outlook account
               </Button>
             )}
             {!hasAiPro ? (
@@ -153,6 +212,35 @@ export function OutlookIntegrationCard({
           </div>
         )}
       </div>
+
+      <AlertDialog
+        open={confirmId !== null}
+        onOpenChange={(open) => {
+          if (!open) setConfirmId(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Disconnect Outlook account?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Winston will no longer be able to read this inbox. You can
+              reconnect at any time.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                if (confirmId) handleDisconnect(confirmId);
+              }}
+            >
+              {isPending ? "Disconnecting…" : "Disconnect"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

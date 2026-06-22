@@ -18,6 +18,7 @@ type EmailListProps = {
   emails: EmailThread[];
   selectedEmailId: string | null;
   connectedProviders: EmailProvider[];
+  connectedAccountCount: number;
   activeProvider: ProviderFilter;
   searchQuery: string;
   isLoading: boolean;
@@ -44,24 +45,30 @@ function ListSkeleton() {
 }
 
 function ProviderBadge({
-  provider,
+  email,
   show,
 }: {
-  provider: EmailProvider;
+  email: EmailThread;
   show: boolean;
 }) {
   if (!show) return null;
 
+  const label =
+    email.accountLabel?.trim() ||
+    email.accountEmail ||
+    (email.provider === "gmail" ? "Gmail" : "Outlook");
+
   return (
     <span
       className={cn(
-        "rounded-full px-2 py-0.5 text-[10px] font-medium",
-        provider === "gmail"
+        "max-w-[140px] truncate rounded-full px-2 py-0.5 text-[10px] font-medium",
+        email.provider === "gmail"
           ? "bg-teal-500/15 text-teal-700 dark:text-teal-300"
           : "bg-blue-500/15 text-blue-700 dark:text-blue-300"
       )}
+      title={label}
     >
-      {provider === "gmail" ? "Gmail" : "Outlook"}
+      {label}
     </span>
   );
 }
@@ -80,6 +87,7 @@ export function EmailList({
   emails,
   selectedEmailId,
   connectedProviders,
+  connectedAccountCount,
   activeProvider,
   searchQuery,
   isLoading,
@@ -93,7 +101,7 @@ export function EmailList({
   const reduced = useReducedMotion() ?? false;
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [localSearch, setLocalSearch] = useState(searchQuery);
-  const showProviderBadges = connectedProviders.length > 1;
+  const showProviderBadges = connectedAccountCount > 1;
   const showProviderTabs = connectedProviders.length > 1;
 
   useEffect(() => {
@@ -197,7 +205,7 @@ export function EmailList({
 
               return (
                 <motion.li
-                  key={`${email.provider}:${email.id}`}
+                  key={`${email.integrationId}:${email.id}`}
                   initial={reduced ? false : { opacity: 0, y: 8 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-40px" }}
@@ -254,7 +262,7 @@ export function EmailList({
                             {email.subject}
                           </p>
                           <ProviderBadge
-                            provider={email.provider}
+                            email={email}
                             show={showProviderBadges}
                           />
                         </div>

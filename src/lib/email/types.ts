@@ -24,14 +24,29 @@ export type EmailThread = {
   preview: string;
   isRead: boolean;
   messageCount: number;
+  accountEmail: string;
+  accountLabel: string | null;
+  integrationId: string;
 };
 
+export type EmailThreadBase = Omit<
+  EmailThread,
+  "accountEmail" | "accountLabel" | "integrationId"
+>;
+
 export type InboxResult = {
-  emails: EmailThread[];
+  emails: EmailThreadBase[];
   nextPageToken: string | null;
 };
 
 export type InboxPageTokens = {
   gmail: string | null;
   outlook: string | null;
+};
+
+export type ValidEmailToken = {
+  integrationId: string;
+  email: string;
+  label: string | null;
+  accessToken: string;
 };

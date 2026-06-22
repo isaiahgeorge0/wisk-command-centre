@@ -43,12 +43,12 @@ export function SettingsIntegrationsSection({
 
   const vercelIntegration = integrations.find((i) => i.provider === "vercel");
   const githubIntegration = integrations.find((i) => i.provider === "github");
-  const gmailIntegration = integrations.find(
-    (i) => (i.provider as string) === "gmail"
-  );
-  const outlookIntegration = integrations.find(
-    (i) => (i.provider as string) === "outlook"
-  );
+  const gmailIntegrations = integrations
+    .filter((i) => (i.provider as string) === "gmail")
+    .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
+  const outlookIntegrations = integrations
+    .filter((i) => (i.provider as string) === "outlook")
+    .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
 
   const vercelConnected = Boolean(vercelIntegration);
   const githubConnected = Boolean(githubIntegration);
@@ -150,12 +150,12 @@ export function SettingsIntegrationsSection({
         </IntegrationCard>
 
         <GmailIntegrationCard
-          integration={gmailIntegration}
+          integrations={gmailIntegrations}
           hasAiPro={hasAiPro}
         />
 
         <OutlookIntegrationCard
-          integration={outlookIntegration}
+          integrations={outlookIntegrations}
           hasAiPro={hasAiPro}
         />
 

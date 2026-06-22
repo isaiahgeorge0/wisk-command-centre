@@ -21,6 +21,7 @@ type ProviderFilter = "all" | EmailProvider;
 
 type EmailPageClientProps = {
   connectedProviders: EmailProvider[];
+  connectedAccountCount: number;
 };
 
 type InboxResponse = {
@@ -28,7 +29,10 @@ type InboxResponse = {
   nextPageToken: InboxPageTokens;
 };
 
-export function EmailPageClient({ connectedProviders }: EmailPageClientProps) {
+export function EmailPageClient({
+  connectedProviders,
+  connectedAccountCount,
+}: EmailPageClientProps) {
   const [emails, setEmails] = useState<EmailThread[]>([]);
   const [selectedEmail, setSelectedEmail] = useState<EmailThread | null>(null);
   const [selectedEmailFull, setSelectedEmailFull] = useState<Email | null>(null);
@@ -147,7 +151,7 @@ export function EmailPageClient({ connectedProviders }: EmailPageClientProps) {
 
     try {
       const response = await fetch(
-        `/api/email/message/${email.id}?provider=${email.provider}`
+        `/api/email/message/${email.id}?provider=${email.provider}&integrationId=${email.integrationId}`
       );
       const data = (await response.json()) as Email & { error?: string };
 
@@ -182,7 +186,7 @@ export function EmailPageClient({ connectedProviders }: EmailPageClientProps) {
       setEmails((current) => {
         const merged = new Map<string, EmailThread>();
         for (const email of [...current, ...data.emails]) {
-          merged.set(`${email.provider}:${email.id}`, email);
+          merged.set(`${email.integrationId}:${email.id}`, email);
         }
         return Array.from(merged.values()).sort(
           (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -233,6 +237,7 @@ export function EmailPageClient({ connectedProviders }: EmailPageClientProps) {
             emails={emails}
             selectedEmailId={selectedEmail?.id ?? null}
             connectedProviders={connectedProviders}
+            connectedAccountCount={connectedAccountCount}
             activeProvider={activeProvider}
             searchQuery={searchQuery}
             isLoading={isLoading}

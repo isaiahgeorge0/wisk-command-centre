@@ -6,6 +6,7 @@ import { hasPackageAccess } from "@/lib/billing/access";
 import { fetchGmailMessage } from "@/lib/email/gmail";
 import { fetchOutlookMessage } from "@/lib/email/outlook";
 import {
+  getValidEmailTokenForIntegration,
   getValidGmailToken,
   getValidOutlookToken,
 } from "@/lib/email/token-manager";
@@ -46,13 +47,15 @@ export async function GET(request: Request, context: RouteContext) {
   const { id } = await context.params;
   const { searchParams } = new URL(request.url);
   const provider = searchParams.get("provider") as EmailProvider | null;
+  const integrationId = searchParams.get("integrationId");
 
   if (provider !== "gmail" && provider !== "outlook") {
     return NextResponse.json({ error: "Invalid provider" }, { status: 400 });
   }
 
-  const token =
-    provider === "gmail"
+  const token = integrationId
+    ? await getValidEmailTokenForIntegration(userId, integrationId)
+    : provider === "gmail"
       ? await getValidGmailToken(userId)
       : await getValidOutlookToken(userId);
 

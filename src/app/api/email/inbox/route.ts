@@ -12,8 +12,8 @@ import {
   searchOutlook,
 } from "@/lib/email/outlook";
 import {
-  getValidGmailToken,
-  getValidOutlookToken,
+  getValidGmailTokens,
+  getValidOutlookTokens,
 } from "@/lib/email/token-manager";
 import type { EmailThread, InboxPageTokens } from "@/lib/email/types";
 
@@ -64,44 +64,58 @@ export async function GET(request: Request) {
     outlook: null,
   };
 
-  const threadMap = new Map<string, EmailThread>();
+  const threads: EmailThread[] = [];
 
   const includeGmail = provider === "all" || provider === "gmail";
   const includeOutlook = provider === "all" || provider === "outlook";
 
   if (includeGmail) {
-    const token = await getValidGmailToken(userId);
+    const accounts = await getValidGmailTokens(userId);
 
-    if (token) {
+    for (const account of accounts) {
       const result = search
-        ? await searchGmail(token, search)
-        : await fetchGmailInbox(token, gmailPageToken ?? undefined);
+        ? await searchGmail(account.accessToken, search)
+        : await fetchGmailInbox(account.accessToken, gmailPageToken ?? undefined);
 
-      nextPageTokens.gmail = result.nextPageToken;
+      if (!nextPageTokens.gmail && result.nextPageToken) {
+        nextPageTokens.gmail = result.nextPageToken;
+      }
 
       for (const email of result.emails) {
-        threadMap.set(`gmail:${email.id}`, email);
+        threads.push({
+          ...email,
+          accountEmail: account.email,
+          accountLabel: account.label,
+          integrationId: account.integrationId,
+        });
       }
     }
   }
 
   if (includeOutlook) {
-    const token = await getValidOutlookToken(userId);
+    const accounts = await getValidOutlookTokens(userId);
 
-    if (token) {
+    for (const account of accounts) {
       const result = search
-        ? await searchOutlook(token, search)
-        : await fetchOutlookInbox(token, outlookPageToken ?? undefined);
+        ? await searchOutlook(account.accessToken, search)
+        : await fetchOutlookInbox(account.accessToken, outlookPageToken ?? undefined);
 
-      nextPageTokens.outlook = result.nextPageToken;
+      if (!nextPageTokens.outlook && result.nextPageToken) {
+        nextPageTokens.outlook = result.nextPageToken;
+      }
 
       for (const email of result.emails) {
-        threadMap.set(`outlook:${email.id}`, email);
+        threads.push({
+          ...email,
+          accountEmail: account.email,
+          accountLabel: account.label,
+          integrationId: account.integrationId,
+        });
       }
     }
   }
 
-  const emails = Array.from(threadMap.values()).sort(
+  const emails = threads.sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 

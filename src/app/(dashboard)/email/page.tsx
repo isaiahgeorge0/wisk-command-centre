@@ -19,12 +19,23 @@ export default async function EmailPage() {
     .eq("user_id", userId)
     .in("provider", ["gmail", "outlook"]);
 
-  const connectedProviders = (integrations ?? [])
-    .map((row) => row.provider)
-    .filter(
-      (provider): provider is EmailProvider =>
-        provider === "gmail" || provider === "outlook"
-    );
+  const rows = integrations ?? [];
+  const connectedProviders = [
+    ...new Set(
+      rows
+        .map((row) => row.provider)
+        .filter(
+          (provider): provider is EmailProvider =>
+            provider === "gmail" || provider === "outlook"
+        )
+    ),
+  ];
+  const connectedAccountCount = rows.length;
 
-  return <EmailPageClient connectedProviders={connectedProviders} />;
+  return (
+    <EmailPageClient
+      connectedProviders={connectedProviders}
+      connectedAccountCount={connectedAccountCount}
+    />
+  );
 }

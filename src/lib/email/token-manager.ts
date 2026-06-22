@@ -3,36 +3,38 @@ import {
   encryptIntegrationToken,
 } from "@/lib/integrations/crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { ValidEmailToken } from "@/lib/email/types";
 
 const REFRESH_BUFFER_MS = 5 * 60 * 1000;
 
 type IntegrationRow = {
+  id: string;
   access_token: string;
   refresh_token: string | null;
+  email_address: string | null;
+  label: string | null;
   metadata: Record<string, unknown> | null;
 };
 
-async function fetchIntegrationRow(
+async function fetchIntegrationRows(
   userId: string,
   provider: "gmail" | "outlook"
-): Promise<IntegrationRow | null> {
+): Promise<IntegrationRow[]> {
   const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("user_integrations")
-    .select("access_token, refresh_token, metadata")
+    .select("id, access_token, refresh_token, email_address, label, metadata")
     .eq("user_id", userId)
     .eq("provider", provider)
-    .maybeSingle();
+    .order("display_order", { ascending: true });
 
-  if (error || !data?.access_token) {
-    if (error) {
-      console.error(`getValid${provider}Token: failed to load integration`, error);
-    }
-    return null;
+  if (error) {
+    console.error(`getValid${provider}Tokens: failed to load integrations`, error);
+    return [];
   }
 
-  return data as IntegrationRow;
+  return (data ?? []) as IntegrationRow[];
 }
 
 function getExpiresAt(metadata: Record<string, unknown> | null): number | null {
@@ -40,9 +42,16 @@ function getExpiresAt(metadata: Record<string, unknown> | null): number | null {
   return typeof expiresAt === "number" ? expiresAt : null;
 }
 
+function getAccountEmail(row: IntegrationRow): string {
+  return (
+    row.email_address ??
+    (typeof row.metadata?.email === "string" ? row.metadata.email : "") ??
+    ""
+  );
+}
+
 async function persistTokens(
-  userId: string,
-  provider: "gmail" | "outlook",
+  integrationId: string,
   accessToken: string,
   refreshToken: string | null,
   expiresIn: number,
@@ -64,18 +73,14 @@ async function persistTokens(
       },
       last_synced_at: now,
     })
-    .eq("user_id", userId)
-    .eq("provider", provider);
+    .eq("id", integrationId);
 
   if (error) {
-    console.error(`getValid${provider}Token: failed to persist refreshed token`, error);
+    console.error("persistTokens: failed to persist refreshed token", error);
   }
 }
 
-async function refreshGmailToken(
-  userId: string,
-  row: IntegrationRow
-): Promise<string | null> {
+async function refreshGmailToken(row: IntegrationRow): Promise<string | null> {
   if (!row.refresh_token) return null;
 
   const clientId = process.env.GOOGLE_CLIENT_ID;
@@ -113,8 +118,7 @@ async function refreshGmailToken(
   }
 
   await persistTokens(
-    userId,
-    "gmail",
+    row.id,
     data.access_token,
     data.refresh_token ?? refreshToken,
     data.expires_in ?? 3600,
@@ -124,10 +128,7 @@ async function refreshGmailToken(
   return data.access_token;
 }
 
-async function refreshOutlookToken(
-  userId: string,
-  row: IntegrationRow
-): Promise<string | null> {
+async function refreshOutlookToken(row: IntegrationRow): Promise<string | null> {
   if (!row.refresh_token) return null;
 
   const clientId = process.env.AZURE_CLIENT_ID;
@@ -173,8 +174,7 @@ async function refreshOutlookToken(
   }
 
   await persistTokens(
-    userId,
-    "outlook",
+    row.id,
     data.access_token,
     data.refresh_token ?? refreshToken,
     data.expires_in ?? 3600,
@@ -184,39 +184,91 @@ async function refreshOutlookToken(
   return data.access_token;
 }
 
-async function getValidToken(
+async function getValidTokensForProvider(
   userId: string,
   provider: "gmail" | "outlook",
-  refresh: (userId: string, row: IntegrationRow) => Promise<string | null>
-): Promise<string | null> {
-  const row = await fetchIntegrationRow(userId, provider);
-  if (!row) return null;
+  refresh: (row: IntegrationRow) => Promise<string | null>
+): Promise<ValidEmailToken[]> {
+  const rows = await fetchIntegrationRows(userId, provider);
+  const tokens: ValidEmailToken[] = [];
 
-  let accessToken: string;
-  try {
-    accessToken = decryptIntegrationToken(row.access_token);
-  } catch {
-    return null;
+  for (const row of rows) {
+    if (!row.access_token) continue;
+
+    let accessToken: string;
+    try {
+      accessToken = decryptIntegrationToken(row.access_token);
+    } catch (error) {
+      console.error(`getValid${provider}Tokens: decrypt failed`, error);
+      continue;
+    }
+
+    const expiresAt = getExpiresAt(row.metadata);
+    const needsRefresh =
+      expiresAt !== null && expiresAt - Date.now() < REFRESH_BUFFER_MS;
+
+    if (needsRefresh) {
+      const refreshed = await refresh(row);
+      if (!refreshed) {
+        console.error(
+          `getValid${provider}Tokens: refresh failed for integration ${row.id}`
+        );
+        continue;
+      }
+      accessToken = refreshed;
+    }
+
+    const email = getAccountEmail(row);
+    if (!email) continue;
+
+    tokens.push({
+      integrationId: row.id,
+      email,
+      label: row.label,
+      accessToken,
+    });
   }
 
-  const expiresAt = getExpiresAt(row.metadata);
-  const needsRefresh =
-    expiresAt !== null && expiresAt - Date.now() < REFRESH_BUFFER_MS;
-
-  if (!needsRefresh) {
-    return accessToken;
-  }
-
-  const refreshed = await refresh(userId, row);
-  return refreshed ?? accessToken;
+  return tokens;
 }
 
+export async function getValidGmailTokens(
+  userId: string
+): Promise<ValidEmailToken[]> {
+  return getValidTokensForProvider(userId, "gmail", refreshGmailToken);
+}
+
+export async function getValidOutlookTokens(
+  userId: string
+): Promise<ValidEmailToken[]> {
+  return getValidTokensForProvider(userId, "outlook", refreshOutlookToken);
+}
+
+/** @deprecated Use getValidGmailTokens for multi-account support. */
 export async function getValidGmailToken(userId: string): Promise<string | null> {
-  return getValidToken(userId, "gmail", refreshGmailToken);
+  const tokens = await getValidGmailTokens(userId);
+  return tokens[0]?.accessToken ?? null;
 }
 
+/** @deprecated Use getValidOutlookTokens for multi-account support. */
 export async function getValidOutlookToken(
   userId: string
 ): Promise<string | null> {
-  return getValidToken(userId, "outlook", refreshOutlookToken);
+  const tokens = await getValidOutlookTokens(userId);
+  return tokens[0]?.accessToken ?? null;
+}
+
+export async function getValidEmailTokenForIntegration(
+  userId: string,
+  integrationId: string
+): Promise<string | null> {
+  const gmailTokens = await getValidGmailTokens(userId);
+  const gmailMatch = gmailTokens.find((token) => token.integrationId === integrationId);
+  if (gmailMatch) return gmailMatch.accessToken;
+
+  const outlookTokens = await getValidOutlookTokens(userId);
+  const outlookMatch = outlookTokens.find(
+    (token) => token.integrationId === integrationId
+  );
+  return outlookMatch?.accessToken ?? null;
 }

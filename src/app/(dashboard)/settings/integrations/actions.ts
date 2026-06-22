@@ -47,6 +47,9 @@ function toSafeIntegration(row: {
   metadata: unknown;
   connected_at: string;
   last_synced_at: string | null;
+  email_address?: string | null;
+  label?: string | null;
+  display_order?: number;
 }): SafeIntegration {
   return {
     id: row.id,
@@ -54,6 +57,9 @@ function toSafeIntegration(row: {
     metadata: (row.metadata ?? {}) as Record<string, unknown>,
     connected_at: row.connected_at,
     last_synced_at: row.last_synced_at,
+    email_address: row.email_address ?? null,
+    label: row.label ?? null,
+    display_order: row.display_order ?? 0,
   };
 }
 
@@ -62,8 +68,11 @@ export async function getIntegrations(): Promise<SafeIntegration[]> {
 
   const { data, error } = await supabase
     .from("user_integrations")
-    .select("id, provider, metadata, connected_at, last_synced_at")
+    .select(
+      "id, provider, metadata, connected_at, last_synced_at, email_address, label, display_order"
+    )
     .eq("user_id", userId)
+    .order("display_order", { ascending: true })
     .order("connected_at", { ascending: false });
 
   if (error) {
@@ -252,12 +261,37 @@ export async function connectGitHub(
   };
 }
 
-export async function disconnectGmail(): Promise<IntegrationActionResult> {
+export async function updateIntegrationLabel(
+  integrationId: string,
+  label: string
+): Promise<IntegrationActionResult> {
+  const { supabase, userId } = await getScopedSupabase();
+  const trimmed = label.trim();
+
+  const { error } = await supabase
+    .from("user_integrations")
+    .update({ label: trimmed || null })
+    .eq("id", integrationId)
+    .eq("user_id", userId);
+
+  if (error) {
+    console.error("updateIntegrationLabel:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/settings");
+  return { success: true };
+}
+
+export async function disconnectGmail(
+  integrationId: string
+): Promise<IntegrationActionResult> {
   const { supabase, userId } = await getScopedSupabase();
 
   const { data: row } = await supabase
     .from("user_integrations")
     .select("access_token")
+    .eq("id", integrationId)
     .eq("user_id", userId)
     .eq("provider", "gmail")
     .maybeSingle();
@@ -277,6 +311,7 @@ export async function disconnectGmail(): Promise<IntegrationActionResult> {
   const { error } = await supabase
     .from("user_integrations")
     .delete()
+    .eq("id", integrationId)
     .eq("user_id", userId)
     .eq("provider", "gmail");
 
@@ -289,12 +324,15 @@ export async function disconnectGmail(): Promise<IntegrationActionResult> {
   return { success: true };
 }
 
-export async function disconnectOutlook(): Promise<IntegrationActionResult> {
+export async function disconnectOutlook(
+  integrationId: string
+): Promise<IntegrationActionResult> {
   const { supabase, userId } = await getScopedSupabase();
 
   const { error } = await supabase
     .from("user_integrations")
     .delete()
+    .eq("id", integrationId)
     .eq("user_id", userId)
     .eq("provider", "outlook");
 

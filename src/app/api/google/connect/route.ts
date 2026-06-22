@@ -34,6 +34,19 @@ export async function GET() {
     );
   }
 
+  const { count } = await supabase
+    .from("user_integrations")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("provider", "gmail");
+
+  if ((count ?? 0) >= 3) {
+    return NextResponse.json(
+      { error: "Maximum of 3 Gmail accounts allowed" },
+      { status: 400 }
+    );
+  }
+
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 

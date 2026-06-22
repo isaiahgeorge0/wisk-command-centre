@@ -8,6 +8,9 @@ export type SafeIntegration = {
   metadata: Record<string, unknown>;
   connected_at: string;
   last_synced_at: string | null;
+  email_address?: string | null;
+  label?: string | null;
+  display_order?: number;
 };
 
 export type IntegrationsSummary = {

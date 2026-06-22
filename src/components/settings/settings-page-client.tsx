@@ -80,6 +80,32 @@ export function SettingsPageClient({
       },
     } as const;
 
+    const duplicateMessages = {
+      "gmail-duplicate": "That Gmail account is already connected",
+      "outlook-duplicate": "That Outlook account is already connected",
+    } as const;
+
+    if (
+      integrationError === "gmail-duplicate" ||
+      integrationError === "outlook-duplicate"
+    ) {
+      setActiveTab("integrations");
+      setIntegrationToast({
+        type: "error",
+        message: duplicateMessages[integrationError],
+      });
+
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("connected");
+      params.delete("error");
+      params.set("tab", "integrations");
+      const query = params.toString();
+      router.replace(query ? `/settings?${query}` : "/settings", {
+        scroll: false,
+      });
+      return;
+    }
+
     const provider =
       connected === "gmail" || connected === "outlook"
         ? connected
