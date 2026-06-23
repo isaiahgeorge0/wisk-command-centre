@@ -24,7 +24,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { TENANT_STATUS_LABELS, TENANT_STATUSES } from "@/lib/properties/constants";
+import { TENANT_STATUSES } from "@/lib/properties/constants";
+import {
+  getRentFrequencyDisplayName,
+  getTenantStatusDisplayName,
+} from "@/lib/properties/display-names";
 import {
   EMPTY_TENANT_FORM,
   tenantToFormInput,
@@ -126,20 +130,24 @@ export function TenantFormDialog({
             <div className="space-y-2">
               <Label>Frequency</Label>
               <Select value={values.rent_frequency} onValueChange={(v) => v && updateField("rent_frequency", v as TenantFormInput["rent_frequency"])} disabled={isPending}>
-                <SelectTrigger className="min-h-11 w-full"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="min-h-11 w-full">
+                  <SelectValue>{getRentFrequencyDisplayName(values.rent_frequency)}</SelectValue>
+                </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="monthly">{getRentFrequencyDisplayName("monthly")}</SelectItem>
+                  <SelectItem value="weekly">{getRentFrequencyDisplayName("weekly")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
               <Label>Status</Label>
               <Select value={values.status} onValueChange={(v) => v && updateField("status", v as TenantFormInput["status"])} disabled={isPending}>
-                <SelectTrigger className="min-h-11 w-full"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="min-h-11 w-full">
+                  <SelectValue>{getTenantStatusDisplayName(values.status)}</SelectValue>
+                </SelectTrigger>
                 <SelectContent>
                   {TENANT_STATUSES.map((s) => (
-                    <SelectItem key={s} value={s}>{TENANT_STATUS_LABELS[s]}</SelectItem>
+                    <SelectItem key={s} value={s}>{getTenantStatusDisplayName(s)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

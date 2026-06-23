@@ -18,13 +18,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  MAINTENANCE_CATEGORY_LABELS,
   MAINTENANCE_PRIORITIES,
-  MAINTENANCE_PRIORITY_LABELS,
   MAINTENANCE_STATUSES,
-  MAINTENANCE_STATUS_LABELS,
   PROPERTIES_ACCENT,
 } from "@/lib/properties/constants";
+import {
+  getMaintenanceCategoryDisplayName,
+  getMaintenancePriorityDisplayName,
+  getMaintenanceStatusDisplayName,
+} from "@/lib/properties/display-names";
 import { formatPropertyDate } from "@/lib/properties/format";
 import { buildMaintenancePortfolioStats } from "@/lib/properties/selectors";
 import type {
@@ -118,13 +120,17 @@ export function MaintenancePageClient({
           }
         >
           <SelectTrigger className="min-h-11 w-full sm:w-[180px]">
-            <SelectValue />
+            <SelectValue>
+              {statusFilter === "all"
+                ? "All statuses"
+                : getMaintenanceStatusDisplayName(statusFilter)}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All statuses</SelectItem>
             {MAINTENANCE_STATUSES.map((status) => (
               <SelectItem key={status} value={status}>
-                {MAINTENANCE_STATUS_LABELS[status]}
+                {getMaintenanceStatusDisplayName(status)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -136,13 +142,17 @@ export function MaintenancePageClient({
           }
         >
           <SelectTrigger className="min-h-11 w-full sm:w-[180px]">
-            <SelectValue />
+            <SelectValue>
+              {priorityFilter === "all"
+                ? "All priorities"
+                : getMaintenancePriorityDisplayName(priorityFilter)}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All priorities</SelectItem>
             {MAINTENANCE_PRIORITIES.map((priority) => (
               <SelectItem key={priority} value={priority}>
-                {MAINTENANCE_PRIORITY_LABELS[priority]}
+                {getMaintenancePriorityDisplayName(priority)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -177,7 +187,7 @@ export function MaintenancePageClient({
                   }
                 >
                   <span className="font-medium text-foreground">
-                    {MAINTENANCE_STATUS_LABELS[status]} ({items.length})
+                    {getMaintenanceStatusDisplayName(status)} ({items.length})
                   </span>
                   <ChevronDown
                     className={cn(
@@ -201,7 +211,7 @@ export function MaintenancePageClient({
                           <MaintenancePriorityBadge priority={ticket.priority} />
                           {ticket.category ? (
                             <Badge variant="outline">
-                              {MAINTENANCE_CATEGORY_LABELS[ticket.category]}
+                              {getMaintenanceCategoryDisplayName(ticket.category)}
                             </Badge>
                           ) : null}
                         </div>

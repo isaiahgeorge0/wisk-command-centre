@@ -30,10 +30,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  MAINTENANCE_CATEGORY_LABELS,
   MAINTENANCE_STATUSES,
-  MAINTENANCE_STATUS_LABELS,
 } from "@/lib/properties/constants";
+import {
+  getMaintenanceCategoryDisplayName,
+  getMaintenanceStatusDisplayName,
+} from "@/lib/properties/display-names";
 import {
   formatPropertyCurrency,
   formatPropertyDate,
@@ -139,7 +141,7 @@ export function PropertyMaintenanceTab({
               onClick={() => setCollapsed((prev) => ({ ...prev, [status]: !isCollapsed }))}
             >
               <span className="font-medium text-foreground">
-                {MAINTENANCE_STATUS_LABELS[status]} ({items.length})
+                {getMaintenanceStatusDisplayName(status)} ({items.length})
               </span>
               <ChevronDown className={cn("size-4 transition-transform", !isCollapsed && "rotate-180")} />
             </button>
@@ -153,7 +155,7 @@ export function PropertyMaintenanceTab({
                           <h3 className="font-medium text-foreground">{ticket.title}</h3>
                           <MaintenancePriorityBadge priority={ticket.priority} />
                           {ticket.category ? (
-                            <Badge variant="outline">{MAINTENANCE_CATEGORY_LABELS[ticket.category]}</Badge>
+                            <Badge variant="outline">{getMaintenanceCategoryDisplayName(ticket.category)}</Badge>
                           ) : null}
                         </div>
                         <div className="text-sm text-muted-foreground">
@@ -166,10 +168,12 @@ export function PropertyMaintenanceTab({
                       </div>
                       <div className="flex flex-wrap gap-2">
                         <Select value={ticket.status} onValueChange={(v) => handleStatusChange(ticket, v ?? ticket.status)} disabled={isPending}>
-                          <SelectTrigger className="min-h-11 w-[140px]"><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="min-h-11 w-[140px]">
+                            <SelectValue>{getMaintenanceStatusDisplayName(ticket.status)}</SelectValue>
+                          </SelectTrigger>
                           <SelectContent>
                             {MAINTENANCE_STATUSES.map((s) => (
-                              <SelectItem key={s} value={s}>{MAINTENANCE_STATUS_LABELS[s]}</SelectItem>
+                              <SelectItem key={s} value={s}>{getMaintenanceStatusDisplayName(s)}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>

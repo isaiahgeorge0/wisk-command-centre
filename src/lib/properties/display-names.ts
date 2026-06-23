@@ -151,6 +151,14 @@ export function getRentPaymentStatusDisplayName(status: string | null | undefine
   return status?.replace(/_/g, " ") ?? "Unknown";
 }
 
+export function getRentFrequencyDisplayName(
+  frequency: string | null | undefined
+): string {
+  if (frequency === "weekly") return "Weekly";
+  if (frequency === "monthly") return "Monthly";
+  return frequency?.replace(/_/g, " ") ?? "Unknown";
+}
+
 export function getPropertyDocumentTypeDisplayName(
   type: string | null | undefined
 ): string {

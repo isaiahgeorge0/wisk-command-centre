@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 
 import {
   createRentPayment,
@@ -26,10 +26,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  RENT_PAYMENT_STATUS_LABELS,
-  RENT_PAYMENT_STATUSES,
-} from "@/lib/properties/constants";
+import { RENT_PAYMENT_STATUSES } from "@/lib/properties/constants";
+import { getRentPaymentStatusDisplayName } from "@/lib/properties/display-names";
 import type {
   RentPayment,
   RentPaymentFormInput,
@@ -89,6 +87,11 @@ export function RentPaymentFormDialog({
   const [isPending, startTransition] = useTransition();
   const formId = isEditing ? `edit-payment-${payment?.id}` : "add-payment-form";
 
+  const selectedTenant = useMemo(
+    () => tenants.find((t) => t.id === values.tenant_id),
+    [tenants, values.tenant_id]
+  );
+
   useEffect(() => {
     if (!open) return;
     setValues(
@@ -135,7 +138,11 @@ export function RentPaymentFormDialog({
               onValueChange={(v) => v && updateField("tenant_id", v)}
               disabled={isPending || tenants.length === 0}
             >
-              <SelectTrigger className="min-h-11 w-full"><SelectValue placeholder="Select tenant" /></SelectTrigger>
+              <SelectTrigger className="min-h-11 w-full">
+                <SelectValue placeholder="Select tenant">
+                  {selectedTenant ? getTenantFullName(selectedTenant) : null}
+                </SelectValue>
+              </SelectTrigger>
               <SelectContent>
                 {tenants.map((t) => (
                   <SelectItem key={t.id} value={t.id}>{getTenantFullName(t)}</SelectItem>
@@ -151,10 +158,12 @@ export function RentPaymentFormDialog({
             <div className="space-y-2">
               <Label>Status</Label>
               <Select value={values.status} onValueChange={(v) => v && updateField("status", v as RentPaymentFormInput["status"])} disabled={isPending}>
-                <SelectTrigger className="min-h-11 w-full"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="min-h-11 w-full">
+                  <SelectValue>{getRentPaymentStatusDisplayName(values.status)}</SelectValue>
+                </SelectTrigger>
                 <SelectContent>
                   {RENT_PAYMENT_STATUSES.map((s) => (
-                    <SelectItem key={s} value={s}>{RENT_PAYMENT_STATUS_LABELS[s]}</SelectItem>
+                    <SelectItem key={s} value={s}>{getRentPaymentStatusDisplayName(s)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

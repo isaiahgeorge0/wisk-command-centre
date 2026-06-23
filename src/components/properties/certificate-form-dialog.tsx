@@ -26,10 +26,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  CERTIFICATE_TYPE_LABELS,
-  CERTIFICATE_TYPES,
-} from "@/lib/properties/constants";
+import { CERTIFICATE_TYPES } from "@/lib/properties/constants";
+import { getCertificateTypeDisplayName } from "@/lib/properties/display-names";
 import type {
   PropertyCertificate,
   PropertyCertificateFormInput,
@@ -140,12 +138,14 @@ export function CertificateFormDialog({
               disabled={isPending}
             >
               <SelectTrigger className="min-h-11 w-full">
-                <SelectValue />
+                <SelectValue>
+                  {getCertificateTypeDisplayName(values.certificate_type)}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {CERTIFICATE_TYPES.map((type) => (
                   <SelectItem key={type} value={type}>
-                    {CERTIFICATE_TYPE_LABELS[type]}
+                    {getCertificateTypeDisplayName(type)}
                   </SelectItem>
                 ))}
               </SelectContent>

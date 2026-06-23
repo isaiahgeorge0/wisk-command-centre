@@ -15,9 +15,9 @@ import {
 } from "@/components/ui/select";
 import {
   PROPERTIES_ACCENT,
-  RENT_PAYMENT_STATUS_LABELS,
   RENT_PAYMENT_STATUSES,
 } from "@/lib/properties/constants";
+import { getRentPaymentStatusDisplayName } from "@/lib/properties/display-names";
 import {
   formatPropertyCurrency,
   formatPropertyDate,
@@ -112,13 +112,17 @@ export function FinancesPageClient({
           }
         >
           <SelectTrigger className="min-h-11 w-full sm:w-[180px]">
-            <SelectValue />
+            <SelectValue>
+              {statusFilter === "all"
+                ? "All statuses"
+                : getRentPaymentStatusDisplayName(statusFilter)}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All statuses</SelectItem>
             {RENT_PAYMENT_STATUSES.map((status) => (
               <SelectItem key={status} value={status}>
-                {RENT_PAYMENT_STATUS_LABELS[status]}
+                {getRentPaymentStatusDisplayName(status)}
               </SelectItem>
             ))}
           </SelectContent>

@@ -1,9 +1,9 @@
 import { Badge } from "@/components/ui/badge";
 import {
   TENANT_STATUS_BADGE_CLASS,
-  TENANT_STATUS_LABELS,
   TENANT_STATUSES,
 } from "@/lib/properties/constants";
+import { getTenantStatusDisplayName } from "@/lib/properties/display-names";
 import type { TenantStatus } from "@/lib/properties/types";
 import { cn } from "@/lib/utils";
 
@@ -28,7 +28,7 @@ export function TenantStatusBadge({
         className
       )}
     >
-      {TENANT_STATUS_LABELS[normalized]}
+      {getTenantStatusDisplayName(normalized)}
     </Badge>
   );
 }

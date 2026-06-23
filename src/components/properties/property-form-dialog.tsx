@@ -26,12 +26,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { PROPERTY_STATUSES, PROPERTY_TYPES } from "@/lib/properties/constants";
 import {
-  PROPERTY_STATUS_LABELS,
-  PROPERTY_STATUSES,
-  PROPERTY_TYPE_LABELS,
-  PROPERTY_TYPES,
-} from "@/lib/properties/constants";
+  getPropertyStatusDisplayName,
+  getPropertyTypeDisplayName,
+} from "@/lib/properties/display-names";
 import { EMPTY_PROPERTY_FORM, propertyToFormInput } from "@/lib/properties/form";
 import type { Property, PropertyFormInput } from "@/lib/properties/types";
 
@@ -183,12 +182,14 @@ export function PropertyFormDialog({
                 disabled={isPending}
               >
                 <SelectTrigger className="min-h-11 w-full">
-                  <SelectValue />
+                  <SelectValue>
+                    {getPropertyTypeDisplayName(values.property_type)}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {PROPERTY_TYPES.map((type) => (
                     <SelectItem key={type} value={type}>
-                      {PROPERTY_TYPE_LABELS[type]}
+                      {getPropertyTypeDisplayName(type)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -204,12 +205,14 @@ export function PropertyFormDialog({
                 disabled={isPending}
               >
                 <SelectTrigger className="min-h-11 w-full">
-                  <SelectValue />
+                  <SelectValue>
+                    {getPropertyStatusDisplayName(values.status)}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {PROPERTY_STATUSES.map((status) => (
                     <SelectItem key={status} value={status}>
-                      {PROPERTY_STATUS_LABELS[status]}
+                      {getPropertyStatusDisplayName(status)}
                     </SelectItem>
                   ))}
                 </SelectContent>

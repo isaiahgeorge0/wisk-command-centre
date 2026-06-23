@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   CERTIFICATE_ALERT_TYPE_LABELS,
-  CERTIFICATE_TYPE_LABELS,
+  getCertificateTypeDisplayName,
 } from "@/lib/properties/display-names";
 import {
   daysUntilDate,
@@ -154,7 +154,7 @@ export function PropertyCertificatesTab({
                   <div className="space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-medium text-foreground">
-                        {CERTIFICATE_TYPE_LABELS[certificate.certificate_type]}
+                        {getCertificateTypeDisplayName(certificate.certificate_type)}
                       </p>
                       {certAlerts.map((alert) => (
                         <Badge

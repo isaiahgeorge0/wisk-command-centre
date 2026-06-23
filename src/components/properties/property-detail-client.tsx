@@ -28,7 +28,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
   getPropertyStatusDisplayName,
-  PROPERTY_TYPE_LABELS,
+  getPropertyTypeDisplayName,
 } from "@/lib/properties/display-names";
 import {
   calculateAnnualYield,
@@ -253,7 +253,7 @@ function OverviewTab({
         <dl className="mt-4 grid gap-4 sm:grid-cols-2">
           <DetailField
             label="Property type"
-            value={PROPERTY_TYPE_LABELS[property.property_type]}
+            value={getPropertyTypeDisplayName(property.property_type)}
           />
           <DetailField
             label="Status"

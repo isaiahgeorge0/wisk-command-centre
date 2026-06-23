@@ -2,8 +2,8 @@ import { Badge } from "@/components/ui/badge";
 import {
   MAINTENANCE_PRIORITIES,
   MAINTENANCE_PRIORITY_BADGE_CLASS,
-  MAINTENANCE_PRIORITY_LABELS,
 } from "@/lib/properties/constants";
+import { getMaintenancePriorityDisplayName } from "@/lib/properties/display-names";
 import type { MaintenancePriority } from "@/lib/properties/types";
 import { cn } from "@/lib/utils";
 
@@ -28,7 +28,7 @@ export function MaintenancePriorityBadge({
         className
       )}
     >
-      {MAINTENANCE_PRIORITY_LABELS[normalized]}
+      {getMaintenancePriorityDisplayName(normalized)}
     </Badge>
   );
 }

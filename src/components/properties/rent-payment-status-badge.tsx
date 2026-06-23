@@ -1,9 +1,9 @@
 import { Badge } from "@/components/ui/badge";
 import {
   RENT_PAYMENT_STATUS_BADGE_CLASS,
-  RENT_PAYMENT_STATUS_LABELS,
   RENT_PAYMENT_STATUSES,
 } from "@/lib/properties/constants";
+import { getRentPaymentStatusDisplayName } from "@/lib/properties/display-names";
 import type { RentPaymentStatus } from "@/lib/properties/types";
 import { cn } from "@/lib/utils";
 
@@ -28,7 +28,7 @@ export function RentPaymentStatusBadge({
         className
       )}
     >
-      {RENT_PAYMENT_STATUS_LABELS[normalized]}
+      {getRentPaymentStatusDisplayName(normalized)}
     </Badge>
   );
 }

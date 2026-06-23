@@ -38,6 +38,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  getPropertyDocumentTypeDisplayName,
   PROPERTY_DOCUMENT_TYPE_LABELS,
   type PropertyDocumentType,
 } from "@/lib/properties/display-names";
@@ -175,12 +176,14 @@ export function PropertyDocumentsTab({
               disabled={uploading || isPending}
             >
               <SelectTrigger className="min-h-11 w-full">
-                <SelectValue />
+                <SelectValue>
+                  {getPropertyDocumentTypeDisplayName(documentType)}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {DOCUMENT_TYPES.map((type) => (
                   <SelectItem key={type} value={type}>
-                    {PROPERTY_DOCUMENT_TYPE_LABELS[type]}
+                    {getPropertyDocumentTypeDisplayName(type)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -240,7 +243,7 @@ export function PropertyDocumentsTab({
           {grouped.map(({ type, items }) => (
             <section key={type}>
               <h3 className="mb-3 text-sm font-semibold text-foreground">
-                {PROPERTY_DOCUMENT_TYPE_LABELS[type]}
+                {getPropertyDocumentTypeDisplayName(type)}
               </h3>
               <div className="space-y-3">
                 {items.map((doc) => (
@@ -314,7 +317,7 @@ function DocumentRow({
           <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
             {doc.document_type ? (
               <Badge variant="outline">
-                {PROPERTY_DOCUMENT_TYPE_LABELS[doc.document_type]}
+                {getPropertyDocumentTypeDisplayName(doc.document_type)}
               </Badge>
             ) : null}
             <span>{formatFileSize(doc.file_size)}</span>

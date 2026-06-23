@@ -1,8 +1,6 @@
 import { Badge } from "@/components/ui/badge";
-import {
-  PROPERTY_TYPE_LABELS,
-  PROPERTY_TYPES,
-} from "@/lib/properties/constants";
+import { PROPERTY_TYPES } from "@/lib/properties/constants";
+import { getPropertyTypeDisplayName } from "@/lib/properties/display-names";
 import type { PropertyType } from "@/lib/properties/types";
 import { cn } from "@/lib/utils";
 
@@ -30,7 +28,7 @@ export function PropertyTypeBadge({
         className
       )}
     >
-      {PROPERTY_TYPE_LABELS[normalized]}
+      {getPropertyTypeDisplayName(normalized)}
     </Badge>
   );
 }

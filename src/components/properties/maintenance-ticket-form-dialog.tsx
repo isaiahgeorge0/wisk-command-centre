@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 
 import {
   createMaintenanceTicket,
@@ -28,12 +28,15 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import {
   MAINTENANCE_CATEGORIES,
-  MAINTENANCE_CATEGORY_LABELS,
   MAINTENANCE_PRIORITIES,
-  MAINTENANCE_PRIORITY_LABELS,
   MAINTENANCE_STATUSES,
-  MAINTENANCE_STATUS_LABELS,
 } from "@/lib/properties/constants";
+import {
+  getMaintenanceCategoryDisplayName,
+  getMaintenancePriorityDisplayName,
+  getMaintenanceStatusDisplayName,
+} from "@/lib/properties/display-names";
+import { getTenantFullName } from "@/lib/properties/tenant-form";
 import type {
   MaintenanceTicket,
   MaintenanceTicketFormInput,
@@ -99,6 +102,16 @@ export function MaintenanceTicketFormDialog({
   const [isPending, startTransition] = useTransition();
   const formId = isEditing ? `edit-ticket-${ticket?.id}` : "add-ticket-form";
 
+  const selectedProperty = useMemo(
+    () => properties?.find((p) => p.id === values.property_id),
+    [properties, values.property_id]
+  );
+
+  const selectedTenant = useMemo(
+    () => tenants.find((t) => t.id === values.tenant_id),
+    [tenants, values.tenant_id]
+  );
+
   useEffect(() => {
     if (!open) return;
     setValues(ticket ? ticketToFormInput(ticket) : emptyMaintenanceForm(propertyId));
@@ -128,12 +141,16 @@ export function MaintenanceTicketFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[90dvh] flex-col sm:max-w-lg">
+        <DialogHeader className="shrink-0">
           <DialogTitle>{isEditing ? "Edit ticket" : "Add maintenance ticket"}</DialogTitle>
           <DialogDescription>Track repairs, contractors, and costs.</DialogDescription>
         </DialogHeader>
-        <form id={formId} onSubmit={handleSubmit} className="space-y-4">
+        <form
+          id={formId}
+          onSubmit={handleSubmit}
+          className="min-h-0 flex-1 space-y-4 overflow-y-auto px-0.5 py-1"
+        >
           {properties && properties.length > 0 ? (
             <div className="space-y-2">
               <Label>Property *</Label>
@@ -142,10 +159,16 @@ export function MaintenanceTicketFormDialog({
                 onValueChange={(v) => v && updateField("property_id", v)}
                 disabled={isPending || isEditing}
               >
-                <SelectTrigger className="min-h-11 w-full"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="min-h-11 w-full">
+                  <SelectValue placeholder="Select property">
+                    {selectedProperty?.name}
+                  </SelectValue>
+                </SelectTrigger>
                 <SelectContent>
                   {properties.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -163,10 +186,14 @@ export function MaintenanceTicketFormDialog({
             <div className="space-y-2">
               <Label>Status</Label>
               <Select value={values.status} onValueChange={(v) => v && updateField("status", v as MaintenanceTicketFormInput["status"])} disabled={isPending}>
-                <SelectTrigger className="min-h-11 w-full"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="min-h-11 w-full">
+                  <SelectValue>{getMaintenanceStatusDisplayName(values.status)}</SelectValue>
+                </SelectTrigger>
                 <SelectContent>
                   {MAINTENANCE_STATUSES.map((s) => (
-                    <SelectItem key={s} value={s}>{MAINTENANCE_STATUS_LABELS[s]}</SelectItem>
+                    <SelectItem key={s} value={s}>
+                      {getMaintenanceStatusDisplayName(s)}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -174,10 +201,14 @@ export function MaintenanceTicketFormDialog({
             <div className="space-y-2">
               <Label>Priority</Label>
               <Select value={values.priority} onValueChange={(v) => v && updateField("priority", v as MaintenanceTicketFormInput["priority"])} disabled={isPending}>
-                <SelectTrigger className="min-h-11 w-full"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="min-h-11 w-full">
+                  <SelectValue>{getMaintenancePriorityDisplayName(values.priority)}</SelectValue>
+                </SelectTrigger>
                 <SelectContent>
                   {MAINTENANCE_PRIORITIES.map((p) => (
-                    <SelectItem key={p} value={p}>{MAINTENANCE_PRIORITY_LABELS[p]}</SelectItem>
+                    <SelectItem key={p} value={p}>
+                      {getMaintenancePriorityDisplayName(p)}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -187,10 +218,18 @@ export function MaintenanceTicketFormDialog({
             <div className="space-y-2">
               <Label>Category</Label>
               <Select value={values.category ?? ""} onValueChange={(v) => updateField("category", v ? (v as MaintenanceTicketFormInput["category"]) : undefined)} disabled={isPending}>
-                <SelectTrigger className="min-h-11 w-full"><SelectValue placeholder="Select category" /></SelectTrigger>
+                <SelectTrigger className="min-h-11 w-full">
+                  <SelectValue placeholder="Select category">
+                    {values.category
+                      ? getMaintenanceCategoryDisplayName(values.category)
+                      : null}
+                  </SelectValue>
+                </SelectTrigger>
                 <SelectContent>
                   {MAINTENANCE_CATEGORIES.map((c) => (
-                    <SelectItem key={c} value={c}>{MAINTENANCE_CATEGORY_LABELS[c]}</SelectItem>
+                    <SelectItem key={c} value={c}>
+                      {getMaintenanceCategoryDisplayName(c)}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -199,10 +238,16 @@ export function MaintenanceTicketFormDialog({
               <div className="space-y-2">
                 <Label>Tenant</Label>
                 <Select value={values.tenant_id ?? ""} onValueChange={(v) => updateField("tenant_id", v || undefined)} disabled={isPending}>
-                  <SelectTrigger className="min-h-11 w-full"><SelectValue placeholder="Optional" /></SelectTrigger>
+                  <SelectTrigger className="min-h-11 w-full">
+                    <SelectValue placeholder="Optional">
+                      {selectedTenant ? getTenantFullName(selectedTenant) : null}
+                    </SelectValue>
+                  </SelectTrigger>
                   <SelectContent>
                     {tenants.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>{t.first_name} {t.last_name}</SelectItem>
+                      <SelectItem key={t.id} value={t.id}>
+                        {getTenantFullName(t)}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -235,7 +280,7 @@ export function MaintenanceTicketFormDialog({
           </div>
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
         </form>
-        <DialogFooter>
+        <DialogFooter className="shrink-0 border-t border-border/50 pt-4">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending} className="min-h-11">Cancel</Button>
           <Button type="submit" form={formId} disabled={isPending} className="min-h-11">{isPending ? "Saving…" : isEditing ? "Save changes" : "Add ticket"}</Button>
         </DialogFooter>

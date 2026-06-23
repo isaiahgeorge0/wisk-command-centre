@@ -15,7 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PROPERTIES_ACCENT, TENANT_STATUS_LABELS, TENANT_STATUSES } from "@/lib/properties/constants";
+import { PROPERTIES_ACCENT, TENANT_STATUSES } from "@/lib/properties/constants";
+import { getTenantStatusDisplayName } from "@/lib/properties/display-names";
 import {
   formatPropertyDate,
   formatRentFrequency,
@@ -63,13 +64,17 @@ export function TenantsPageClient({ tenants }: TenantsPageClientProps) {
           onValueChange={(v) => v && setStatusFilter(v as TenantStatus | "all")}
         >
           <SelectTrigger className="min-h-11 w-full sm:w-[180px]">
-            <SelectValue />
+            <SelectValue>
+              {statusFilter === "all"
+                ? "All statuses"
+                : getTenantStatusDisplayName(statusFilter)}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All statuses</SelectItem>
             {TENANT_STATUSES.map((status) => (
               <SelectItem key={status} value={status}>
-                {TENANT_STATUS_LABELS[status]}
+                {getTenantStatusDisplayName(status)}
               </SelectItem>
             ))}
           </SelectContent>

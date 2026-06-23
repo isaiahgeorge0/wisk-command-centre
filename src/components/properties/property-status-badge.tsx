@@ -1,9 +1,9 @@
 import { Badge } from "@/components/ui/badge";
 import {
   PROPERTY_STATUS_BADGE_CLASS,
-  PROPERTY_STATUS_LABELS,
   PROPERTY_STATUSES,
 } from "@/lib/properties/constants";
+import { getPropertyStatusDisplayName } from "@/lib/properties/display-names";
 import type { PropertyStatus } from "@/lib/properties/types";
 import { cn } from "@/lib/utils";
 
@@ -32,7 +32,7 @@ export function PropertyStatusBadge({
         className
       )}
     >
-      {PROPERTY_STATUS_LABELS[normalized]}
+      {getPropertyStatusDisplayName(normalized)}
     </Badge>
   );
 }
