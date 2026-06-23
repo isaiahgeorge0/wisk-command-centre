@@ -1,13 +1,22 @@
-import { PoundSterling } from "lucide-react";
+import {
+  getAllRentPayments,
+  getAllTenants,
+  getProperties,
+} from "@/app/(dashboard)/properties/actions";
+import { FinancesPageClient } from "@/components/properties/finances-page-client";
 
-import { PropertiesPlaceholder } from "@/components/properties/properties-placeholder";
+export default async function PropertiesFinancesPage() {
+  const [properties, payments, tenants] = await Promise.all([
+    getProperties(),
+    getAllRentPayments(),
+    getAllTenants(),
+  ]);
 
-export default function PropertiesFinancesPage() {
   return (
-    <PropertiesPlaceholder
-      title="Finances"
-      description="Rent payments, arrears, and financial tracking."
-      icon={PoundSterling}
+    <FinancesPageClient
+      properties={properties}
+      payments={payments}
+      tenants={tenants}
     />
   );
 }

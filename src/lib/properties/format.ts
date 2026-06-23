@@ -55,3 +55,29 @@ export function formatYieldPercent(yieldPercent: number | null): string {
   if (yieldPercent == null) return "—";
   return `${yieldPercent.toFixed(1)}%`;
 }
+
+export function formatPropertyDate(date: string | null | undefined): string {
+  if (!date) return "—";
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(date));
+}
+
+export function formatRentFrequency(
+  amount: number,
+  frequency: "weekly" | "monthly"
+): string {
+  const formatted = formatPropertyCurrency(amount);
+  return frequency === "weekly" ? `${formatted}/wk` : `${formatted}/mo`;
+}
+
+export function daysUntilDate(date: string | null): number | null {
+  if (!date) return null;
+  const target = new Date(date);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  target.setHours(0, 0, 0, 0);
+  return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+}

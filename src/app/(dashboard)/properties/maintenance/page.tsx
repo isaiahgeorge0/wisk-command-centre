@@ -1,13 +1,16 @@
-import { Wrench } from "lucide-react";
+import {
+  getAllMaintenance,
+  getProperties,
+} from "@/app/(dashboard)/properties/actions";
+import { MaintenancePageClient } from "@/components/properties/maintenance-page-client";
 
-import { PropertiesPlaceholder } from "@/components/properties/properties-placeholder";
+export default async function PropertiesMaintenancePage() {
+  const [tickets, properties] = await Promise.all([
+    getAllMaintenance(),
+    getProperties(),
+  ]);
 
-export default function PropertiesMaintenancePage() {
   return (
-    <PropertiesPlaceholder
-      title="Maintenance"
-      description="Track tickets, contractors, and repair costs."
-      icon={Wrench}
-    />
+    <MaintenancePageClient tickets={tickets} properties={properties} />
   );
 }

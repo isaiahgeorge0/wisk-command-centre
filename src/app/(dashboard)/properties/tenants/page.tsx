@@ -1,13 +1,7 @@
-import { Users } from "lucide-react";
+import { getAllTenants } from "@/app/(dashboard)/properties/actions";
+import { TenantsPageClient } from "@/components/properties/tenants-page-client";
 
-import { PropertiesPlaceholder } from "@/components/properties/properties-placeholder";
-
-export default function PropertiesTenantsPage() {
-  return (
-    <PropertiesPlaceholder
-      title="Tenants"
-      description="Tenant records, tenancies, and deposits."
-      icon={Users}
-    />
-  );
+export default async function PropertiesTenantsPage() {
+  const tenants = await getAllTenants();
+  return <TenantsPageClient tenants={tenants} />;
 }

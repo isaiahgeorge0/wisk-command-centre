@@ -6,10 +6,8 @@ import {
   BedDouble,
   FileText,
   PoundSterling,
-  Shield,
   Trash2,
   Users,
-  Wrench,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -17,8 +15,12 @@ import { useCallback, useState } from "react";
 
 import { PageTransition } from "@/components/layout/page-transition";
 import { DeletePropertyDialog } from "@/components/properties/delete-property-dialog";
+import { PropertyCertificatesTab } from "@/components/properties/property-certificates-tab";
+import { PropertyFinancesTab } from "@/components/properties/property-finances-tab";
 import { PropertyFormDialog } from "@/components/properties/property-form-dialog";
+import { PropertyMaintenanceTab } from "@/components/properties/property-maintenance-tab";
 import { PropertyStatusBadge } from "@/components/properties/property-status-badge";
+import { PropertyTenantsTab } from "@/components/properties/property-tenants-tab";
 import { PropertyTypeBadge } from "@/components/properties/property-type-badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,10 +30,16 @@ import {
   formatYieldPercent,
 } from "@/lib/properties/format";
 import { PROPERTY_TYPE_LABELS } from "@/lib/properties/constants";
-import type { PropertyWithStats } from "@/lib/properties/types";
+import type {
+  MaintenanceTicket,
+  PropertyCertificate,
+  PropertyWithStats,
+  RentPaymentWithDetails,
+  Tenant,
+} from "@/lib/properties/types";
 import { cn } from "@/lib/utils";
 
-type PropertyDetailTab =
+export type PropertyDetailTab =
   | "overview"
   | "tenants"
   | "maintenance"
@@ -50,11 +58,23 @@ const TABS: { id: PropertyDetailTab; label: string }[] = [
 
 type PropertyDetailClientProps = {
   property: PropertyWithStats;
+  tenants: Tenant[];
+  maintenanceTickets: MaintenanceTicket[];
+  rentPayments: RentPaymentWithDetails[];
+  certificates: PropertyCertificate[];
+  initialTab?: PropertyDetailTab;
 };
 
-export function PropertyDetailClient({ property }: PropertyDetailClientProps) {
+export function PropertyDetailClient({
+  property,
+  tenants,
+  maintenanceTickets,
+  rentPayments,
+  certificates,
+  initialTab = "overview",
+}: PropertyDetailClientProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<PropertyDetailTab>("overview");
+  const [activeTab, setActiveTab] = useState<PropertyDetailTab>(initialTab);
   const [formOpen, setFormOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -120,7 +140,7 @@ export function PropertyDetailClient({ property }: PropertyDetailClientProps) {
             type="button"
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              "shrink-0 rounded-md px-3 py-2 text-sm font-medium transition-colors min-h-11",
+              "min-h-11 shrink-0 rounded-md px-3 py-2 text-sm font-medium transition-colors",
               activeTab === tab.id
                 ? "bg-amber-500/10 text-amber-700 dark:text-amber-300"
                 : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
@@ -133,8 +153,27 @@ export function PropertyDetailClient({ property }: PropertyDetailClientProps) {
 
       {activeTab === "overview" ? (
         <OverviewTab property={property} annualYield={annualYield} />
+      ) : activeTab === "tenants" ? (
+        <PropertyTenantsTab propertyId={property.id} tenants={tenants} />
+      ) : activeTab === "maintenance" ? (
+        <PropertyMaintenanceTab
+          propertyId={property.id}
+          tickets={maintenanceTickets}
+          tenants={tenants}
+        />
+      ) : activeTab === "finances" ? (
+        <PropertyFinancesTab
+          propertyId={property.id}
+          payments={rentPayments}
+          tenants={tenants}
+        />
+      ) : activeTab === "certificates" ? (
+        <PropertyCertificatesTab
+          propertyId={property.id}
+          certificates={certificates}
+        />
       ) : (
-        <PlaceholderTab tab={activeTab} />
+        <DocumentsPlaceholder />
       )}
 
       <PropertyFormDialog
@@ -188,7 +227,10 @@ function OverviewTab({
       <div className="rounded-xl border border-border/60 bg-card/40 p-5">
         <h2 className="text-sm font-semibold text-foreground">Property details</h2>
         <dl className="mt-4 grid gap-4 sm:grid-cols-2">
-          <DetailField label="Property type" value={PROPERTY_TYPE_LABELS[property.property_type]} />
+          <DetailField
+            label="Property type"
+            value={PROPERTY_TYPE_LABELS[property.property_type]}
+          />
           <DetailField label="Status" value={property.status} />
           <DetailField
             label="Purchase price"
@@ -235,56 +277,19 @@ function OverviewTab({
   );
 }
 
-function PlaceholderTab({
-  tab,
-}: {
-  tab: Exclude<PropertyDetailTab, "overview">;
-}) {
-  const config = PLACEHOLDER_CONFIG[tab];
-
+function DocumentsPlaceholder() {
   return (
     <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-amber-500/20 bg-card/40 px-6 py-16 text-center">
       <div className="mb-4 flex size-12 items-center justify-center rounded-xl bg-amber-500/10">
-        <config.icon className="size-6 text-amber-500" aria-hidden />
+        <FileText className="size-6 text-amber-500" aria-hidden />
       </div>
-      <h2 className="text-lg font-medium text-foreground">{config.title}</h2>
+      <h2 className="text-lg font-medium text-foreground">No documents yet</h2>
       <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-        {config.description}
+        Document storage is coming in the next release.
       </p>
     </div>
   );
 }
-
-const PLACEHOLDER_CONFIG: Record<
-  Exclude<PropertyDetailTab, "overview">,
-  { title: string; description: string; icon: typeof Users }
-> = {
-  tenants: {
-    title: "No tenants yet",
-    description: "Tenant management is coming in the next release.",
-    icon: Users,
-  },
-  maintenance: {
-    title: "No maintenance tickets yet",
-    description: "Maintenance tracking is coming in the next release.",
-    icon: Wrench,
-  },
-  finances: {
-    title: "Finances coming soon",
-    description: "Rent tracking and payment history will appear here.",
-    icon: PoundSterling,
-  },
-  documents: {
-    title: "No documents yet",
-    description: "Document storage is coming in the next release.",
-    icon: FileText,
-  },
-  certificates: {
-    title: "No certificates yet",
-    description: "Certificate alerts and tracking are coming soon.",
-    icon: Shield,
-  },
-};
 
 function StatCard({
   label,
