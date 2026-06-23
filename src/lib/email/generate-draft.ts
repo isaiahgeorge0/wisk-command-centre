@@ -2,6 +2,7 @@ import * as Sentry from "@sentry/nextjs";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { logUsage } from "@/lib/ai/usage-logger";
+import type { UsageFeature } from "@/lib/ai/usage-logger";
 import { buildReplySubject } from "@/lib/email/compose-urls";
 import { fetchGmailMessage } from "@/lib/email/gmail";
 import { fetchOutlookMessage } from "@/lib/email/outlook";
@@ -59,12 +60,14 @@ export type GenerateEmailDraftInput = {
   integrationId: string;
   provider: EmailProvider;
   tone: DraftTone;
+  usageFeature?: Extract<UsageFeature, "email_draft" | "email_picks_draft">;
 };
 
 export async function generateEmailDraft(
   input: GenerateEmailDraftInput
 ): Promise<WinstonDraft | null> {
-  const { userId, supabase, emailId, integrationId, provider, tone } = input;
+  const { userId, supabase, emailId, integrationId, provider, tone, usageFeature } =
+    input;
 
   const accessToken = await getValidEmailTokenForIntegration(
     userId,
@@ -187,7 +190,7 @@ ${email.body}`;
 
     await logUsage(
       userId,
-      "email_draft",
+      usageFeature ?? "email_draft",
       claudeData.usage?.input_tokens ?? 0,
       claudeData.usage?.output_tokens ?? 0
     );

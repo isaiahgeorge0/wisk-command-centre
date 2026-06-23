@@ -19,6 +19,7 @@ type SettingsPageShellProps = {
   integrations: SafeIntegration[];
   showAdminLink?: boolean;
   aiAccess?: boolean;
+  emailPicksEnabled?: boolean;
   winstonUsage?: MonthlyUsage | null;
   billingPlan?: BillingPlan;
   billingPlanLabel?: string;

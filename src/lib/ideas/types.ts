@@ -25,6 +25,14 @@ export type IdeaFormInput = {
   status?: IdeaStatus;
 };
 
+export type IdeaStatusFilter = IdeaStatus | "all";
+
+export type IdeaFilters = {
+  search: string;
+  category: string | "all";
+  status: IdeaStatusFilter;
+};
+
 export type ActionResult<T = void> =
   | { success: true; data?: T }
   | { success: false; error: string };

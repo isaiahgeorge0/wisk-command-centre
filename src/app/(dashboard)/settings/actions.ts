@@ -381,3 +381,29 @@ export async function setUsername(
   revalidatePath("/settings");
   return { success: true };
 }
+
+export async function updateWinstonFeatureToggle(
+  feature: "email_picks",
+  enabled: boolean
+): Promise<SettingsActionResult> {
+  if (feature !== "email_picks") {
+    return { success: false, error: "Invalid feature" };
+  }
+
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { error } = await supabase
+    .from("user_preferences")
+    .update({
+      winston_email_picks_enabled: enabled,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", userId);
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/settings");
+  return { success: true };
+}

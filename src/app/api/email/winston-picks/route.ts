@@ -167,6 +167,7 @@ async function generatePicks(
       integrationId: email.integrationId,
       provider: email.provider,
       tone: "professional",
+      usageFeature: "email_picks_draft",
     });
 
     if (!draft) continue;
@@ -214,6 +215,16 @@ export async function GET(request: Request) {
       { error: "AI Pro subscription required" },
       { status: 403 }
     );
+  }
+
+  const { data: prefs } = await supabase
+    .from("user_preferences")
+    .select("winston_email_picks_enabled")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (prefs?.winston_email_picks_enabled === false) {
+    return NextResponse.json({ picks: [], window: null, disabled: true });
   }
 
   const window = getCurrentEmailWindow();

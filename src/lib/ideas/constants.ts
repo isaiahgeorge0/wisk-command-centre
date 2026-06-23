@@ -1,4 +1,5 @@
-import type { IdeaStatus } from "@/lib/ideas/types";
+import type { IdeaFilters, IdeaStatus, IdeaStatusFilter } from "@/lib/ideas/types";
+import { IDEA_STATUSES } from "@/lib/ideas/types";
 
 export const IDEA_CATEGORY_SUGGESTIONS = [
   "Content",
@@ -22,3 +23,20 @@ export const IDEA_STATUS_BADGE_CLASS: Record<IdeaStatus, string> = {
   parked: "border-border bg-muted text-muted-foreground",
   dropped: "border-red-500/20 bg-red-500/10 text-muted-foreground",
 };
+
+export const DEFAULT_IDEA_FILTERS: IdeaFilters = {
+  search: "",
+  category: "all",
+  status: "all",
+};
+
+export const IDEA_STATUS_FILTER_OPTIONS: {
+  value: IdeaStatusFilter;
+  label: string;
+}[] = [
+  { value: "all", label: "All" },
+  ...IDEA_STATUSES.map((status) => ({
+    value: status,
+    label: IDEA_STATUS_LABELS[status],
+  })),
+];

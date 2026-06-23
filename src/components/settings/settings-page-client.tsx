@@ -31,6 +31,7 @@ type SettingsPageClientProps = {
   serviceTypes: string[];
   integrations: SafeIntegration[];
   aiAccess?: boolean;
+  emailPicksEnabled?: boolean;
   winstonUsage?: MonthlyUsage | null;
   billingPlan?: BillingPlan;
   billingPlanLabel?: string;
@@ -46,6 +47,7 @@ export function SettingsPageClient({
   serviceTypes,
   integrations,
   aiAccess = false,
+  emailPicksEnabled = true,
   winstonUsage = null,
   billingPlan = "free",
   billingPlanLabel = "Free",
@@ -211,7 +213,10 @@ export function SettingsPageClient({
             currentPeriodEnd={billingPeriodEnd}
           />
           {aiAccess && winstonUsage ? (
-            <SettingsWinstonSection usage={winstonUsage} />
+            <SettingsWinstonSection
+              usage={winstonUsage}
+              emailPicksEnabled={emailPicksEnabled}
+            />
           ) : null}
         </div>
       ) : null}

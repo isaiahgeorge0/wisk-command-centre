@@ -20,7 +20,7 @@ export default async function SettingsPage() {
       getIntegrations(),
       supabase
         .from("user_preferences")
-        .select("ai_access")
+        .select("ai_access, winston_email_picks_enabled")
         .eq("user_id", userId)
         .maybeSingle(),
       getMonthlyUsage(),
@@ -33,6 +33,7 @@ export default async function SettingsPage() {
     ]);
 
   const aiAccess = prefsRow.data?.ai_access === true;
+  const emailPicksEnabled = prefsRow.data?.winston_email_picks_enabled !== false;
   const winstonUsage = usageResult.success ? usageResult.data : null;
 
   const displayName = resolveDisplayName({
@@ -58,6 +59,7 @@ export default async function SettingsPage() {
         integrations={integrations}
         showAdminLink={isAdminEmail(profile.email)}
         aiAccess={aiAccess}
+        emailPicksEnabled={emailPicksEnabled}
         winstonUsage={winstonUsage}
         billingPlan={billing.plan}
         billingPlanLabel={billing.planLabel}

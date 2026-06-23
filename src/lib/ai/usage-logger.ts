@@ -1,8 +1,15 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 
+export type UsageFeature =
+  | "chat"
+  | "digest"
+  | "email_draft"
+  | "property_insights"
+  | "email_picks_draft";
+
 export async function logUsage(
   userId: string,
-  feature: "chat" | "digest" | "email_draft" | "property_insights",
+  feature: UsageFeature,
   inputTokens: number,
   outputTokens: number
 ): Promise<void> {

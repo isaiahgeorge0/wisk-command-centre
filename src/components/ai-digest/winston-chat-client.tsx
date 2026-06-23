@@ -466,7 +466,7 @@ export function WinstonChatClient({
   // ── Usage / limits ──────────────────────────────────────────────────────────
   const [usage, setUsage] = useState(initialUsage);
   const [monthlyLimitHit, setMonthlyLimitHit] = useState(
-    initialUsage.chatTokens >= initialUsage.limit
+    initialUsage.userInitiatedTokens >= initialUsage.limit
   );
 
   // ── Input / send state ──────────────────────────────────────────────────────
@@ -650,14 +650,22 @@ export function WinstonChatClient({
 
       if (json.usedTokens) {
         setUsage((prev) => {
+          const userInitiatedTokens =
+            prev.userInitiatedTokens + (json.usedTokens ?? 0);
           const chatTokens = prev.chatTokens + (json.usedTokens ?? 0);
-          const total = chatTokens + prev.digestTokens;
+          const total = userInitiatedTokens;
           const percentage = Math.min(
             100,
             Math.round((total / prev.limit) * 100)
           );
-          if (chatTokens >= prev.limit) setMonthlyLimitHit(true);
-          return { ...prev, chatTokens, total, percentage };
+          if (userInitiatedTokens >= prev.limit) setMonthlyLimitHit(true);
+          return {
+            ...prev,
+            chatTokens,
+            userInitiatedTokens,
+            total,
+            percentage,
+          };
         });
       }
     } catch {

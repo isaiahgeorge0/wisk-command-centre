@@ -249,10 +249,11 @@ export function EmailPageClient({
       const response = await fetch(url);
       const data = (await response.json()) as WinstonPicksResult & {
         outsideWindow?: boolean;
+        disabled?: boolean;
         error?: string;
       };
 
-      if (!response.ok || data.outsideWindow) {
+      if (!response.ok || data.outsideWindow || data.disabled) {
         setWinstonPicks(null);
         return;
       }

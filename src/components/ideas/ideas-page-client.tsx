@@ -2,17 +2,24 @@
 
 import { Lightbulb, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { PageTransition } from "@/components/layout/page-transition";
 import { DeleteIdeaDialog } from "@/components/ideas/delete-idea-dialog";
+import { IdeaFiltersBar } from "@/components/ideas/idea-filters-bar";
 import { IdeaFormDialog } from "@/components/ideas/idea-form-dialog";
 import { IdeasEmptyState } from "@/components/ideas/ideas-empty-state";
 import { IdeasList } from "@/components/ideas/ideas-list";
 import { useQuickAdd } from "@/components/quick-add/quick-add-context";
 import { Button } from "@/components/ui/button";
-import type { Idea } from "@/lib/ideas/types";
+import { DEFAULT_IDEA_FILTERS } from "@/lib/ideas/constants";
+import {
+  applyIdeaFilters,
+  countActiveIdeaFilters,
+  getUniqueIdeaCategories,
+} from "@/lib/ideas/selectors";
+import type { Idea, IdeaFilters } from "@/lib/ideas/types";
 
 type IdeasPageClientProps = {
   initialIdeas: Idea[];
@@ -22,6 +29,7 @@ export function IdeasPageClient({ initialIdeas }: IdeasPageClientProps) {
   const router = useRouter();
   const { ideaAddOpen, setIdeaAddOpen, openIdeaAdd } = useQuickAdd();
   const [ideas, setIdeas] = useState(initialIdeas);
+  const [filters, setFilters] = useState<IdeaFilters>(DEFAULT_IDEA_FILTERS);
   const [deleteTarget, setDeleteTarget] = useState<{
     id: string;
     title: string;
@@ -30,6 +38,21 @@ export function IdeasPageClient({ initialIdeas }: IdeasPageClientProps) {
   useEffect(() => {
     setIdeas(initialIdeas);
   }, [initialIdeas]);
+
+  const categories = useMemo(() => getUniqueIdeaCategories(ideas), [ideas]);
+
+  const filteredIdeas = useMemo(
+    () => applyIdeaFilters(ideas, filters),
+    [ideas, filters]
+  );
+
+  const isSearching = filters.search.trim().length > 0;
+  const hasActiveFilters = countActiveIdeaFilters(filters) > 0;
+  const showEmptyGroupMessages = !hasActiveFilters;
+
+  const handleFiltersChange = useCallback((next: IdeaFilters) => {
+    setFilters(next);
+  }, []);
 
   const handleDeleted = useCallback(
     (id: string) => {
@@ -62,7 +85,42 @@ export function IdeasPageClient({ initialIdeas }: IdeasPageClientProps) {
       {ideas.length === 0 ? (
         <IdeasEmptyState onAdd={openIdeaAdd} />
       ) : (
-        <IdeasList ideas={ideas} onIdeaDelete={handleDeleteRequest} />
+        <>
+          <IdeaFiltersBar
+            filters={filters}
+            categories={categories}
+            onChange={handleFiltersChange}
+          />
+
+          {filteredIdeas.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-xl border border-border/60 bg-card/40 px-6 py-12 text-center">
+              <p className="text-sm text-muted-foreground">
+                {isSearching
+                  ? `No ideas matching '${filters.search.trim()}'`
+                  : "No ideas match your filters."}
+              </p>
+              {hasActiveFilters ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="mt-3 text-muted-foreground"
+                  onClick={() => handleFiltersChange(DEFAULT_IDEA_FILTERS)}
+                >
+                  Clear filters
+                </Button>
+              ) : null}
+            </div>
+          ) : (
+            <IdeasList
+              ideas={filteredIdeas}
+              isSearching={isSearching}
+              statusFilter={filters.status}
+              showEmptyGroupMessages={showEmptyGroupMessages}
+              onIdeaDelete={handleDeleteRequest}
+            />
+          )}
+        </>
       )}
 
       <IdeaFormDialog open={ideaAddOpen} onOpenChange={setIdeaAddOpen} />

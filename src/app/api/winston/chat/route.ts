@@ -7,6 +7,7 @@ import {
   WINSTON_MONTHLY_TOKEN_LIMIT,
   WINSTON_SHORT_TERM_LIMIT,
   WINSTON_SHORT_TERM_WINDOW_MS,
+  WINSTON_USER_INITIATED_FEATURES,
 } from "@/lib/ai/constants";
 import { logUsage } from "@/lib/ai/usage-logger";
 import { hasAIAccess } from "@/lib/billing/access";
@@ -103,7 +104,7 @@ export async function POST(request: Request) {
       .from("ai_usage_log")
       .select("input_tokens, output_tokens")
       .eq("user_id", userId)
-      .eq("feature", "chat")
+      .in("feature", [...WINSTON_USER_INITIATED_FEATURES])
       .gte("created_at", monthStart.toISOString());
 
     const totalTokens = (usageRows ?? []).reduce(
