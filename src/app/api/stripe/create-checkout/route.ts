@@ -28,6 +28,7 @@ export async function POST(request: Request) {
   try {
     const aiPriceId = process.env.STRIPE_PRICE_AI_MONTHLY;
     const aiProPriceId = process.env.STRIPE_PRICE_AI_PRO_MONTHLY;
+    const propertiesPriceId = process.env.STRIPE_PRICE_PROPERTIES_MONTHLY;
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
     if (!aiPriceId || !aiProPriceId || !siteUrl) {
@@ -55,25 +56,55 @@ export async function POST(request: Request) {
 
     const { priceId } = parsed.data;
 
-    if (priceId !== aiPriceId && priceId !== aiProPriceId) {
+    if (priceId === propertiesPriceId && !propertiesPriceId) {
+      return NextResponse.json(
+        { error: "Properties billing not configured" },
+        { status: 500 }
+      );
+    }
+
+    if (
+      priceId !== aiPriceId &&
+      priceId !== aiProPriceId &&
+      priceId !== propertiesPriceId
+    ) {
       return NextResponse.json({ error: "Invalid price ID" }, { status: 400 });
     }
 
     // ── Duplicate-subscription guard ────────────────────────────────────────────
     const admin = createAdminClient();
-    const { data: existing } = await admin
-      .from("user_subscriptions")
-      .select("id")
-      .eq("user_id", userId)
-      .in("status", ["active", "trialing"])
-      .limit(1)
-      .maybeSingle();
 
-    if (existing) {
-      return NextResponse.json(
-        { error: "Already subscribed" },
-        { status: 400 }
-      );
+    if (priceId === propertiesPriceId) {
+      const { data: existingProperties } = await admin
+        .from("user_subscriptions")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("package", "properties")
+        .in("status", ["active", "trialing"])
+        .limit(1)
+        .maybeSingle();
+
+      if (existingProperties) {
+        return NextResponse.json(
+          { error: "Already subscribed to Properties" },
+          { status: 400 }
+        );
+      }
+    } else {
+      const { data: existing } = await admin
+        .from("user_subscriptions")
+        .select("id")
+        .eq("user_id", userId)
+        .in("status", ["active", "trialing"])
+        .limit(1)
+        .maybeSingle();
+
+      if (existing) {
+        return NextResponse.json(
+          { error: "Already subscribed" },
+          { status: 400 }
+        );
+      }
     }
 
     // ── Create Stripe checkout session ──────────────────────────────────────────

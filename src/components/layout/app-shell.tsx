@@ -9,6 +9,7 @@ import { OnboardingOverlay } from "@/components/onboarding/onboarding-overlay";
 import { UsernamePromptModal } from "@/components/username/username-prompt-modal";
 import { OnboardingProvider } from "@/components/onboarding/onboarding-context";
 import { BottomNav } from "@/components/layout/bottom-nav";
+import { NavModeProvider } from "@/components/layout/nav-mode-context";
 import { QuickAddFab } from "@/components/layout/quick-add-fab";
 import { TopNav } from "@/components/layout/top-nav";
 import { PreferencesProvider } from "@/components/preferences/preferences-context";
@@ -111,10 +112,11 @@ export function AppShell({
     <OnboardingProvider initialOpen={!onboardingCompleted}>
       <PreferencesProvider value={{ fieldVisibility, serviceTypes }}>
         <QuickAddProvider>
-          <SpotlightTourProvider
-            hasProjects={hasProjects}
-            projectTourCompleted={projectTourCompleted}
-          >
+          <NavModeProvider>
+            <SpotlightTourProvider
+              hasProjects={hasProjects}
+              projectTourCompleted={projectTourCompleted}
+            >
             <div className="min-h-screen overflow-x-hidden">
               <TopNav
                 userEmail={userEmail}
@@ -149,6 +151,7 @@ export function AppShell({
               ) : null}
             </div>
           </SpotlightTourProvider>
+          </NavModeProvider>
         </QuickAddProvider>
       </PreferencesProvider>
     </OnboardingProvider>

@@ -33,6 +33,15 @@ const PACKAGE_FEATURES: Record<string, string[]> = {
     "Higher usage limits",
     "Priority support",
   ],
+  "WISK Properties": [
+    "Portfolio dashboard",
+    "Tenant management",
+    "Maintenance tracking",
+    "Rent tracking",
+    "Certificate alerts",
+    "Document storage",
+    "Winston property insights",
+  ],
 };
 
 // ─── Package CTA destinations ─────────────────────────────────────────────────
@@ -40,6 +49,7 @@ const PACKAGE_FEATURES: Record<string, string[]> = {
 const PACKAGE_CTA_URLS: Record<string, string> = {
   "WISK AI": "https://app.wiskapp.com/ai-digest",
   "WISK AI Pro": "https://app.wiskapp.com/ai-digest",
+  "WISK Properties": "https://app.wiskapp.com/properties",
 };
 
 function getPackageCtaUrl(packageName: string): string {

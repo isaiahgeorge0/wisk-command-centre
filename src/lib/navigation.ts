@@ -74,6 +74,7 @@ export const NAV_ITEMS = [
   { label: "Content", href: "/content" },
   { label: "Email", href: "/email" },
   { label: "Winston", href: "/ai-digest" },
+  { label: "Properties", href: "/properties" },
 ] as const;
 
 export type NavItem = (typeof NAV_ITEMS)[number];

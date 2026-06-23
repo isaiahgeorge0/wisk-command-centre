@@ -3,7 +3,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Mail, Sparkles, X } from "lucide-react";
+import { Loader2, Building2, Mail, Sparkles, X } from "lucide-react";
 import Link from "next/link";
 
 import { PageTransition } from "@/components/layout/page-transition";
@@ -18,6 +18,7 @@ type UpgradePageClientProps = {
   plan: BillingPlan;
   planLabel: string;
   currentPeriodEnd: string | null;
+  hasPropertiesSubscription: boolean;
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -45,6 +46,16 @@ const AI_PRO_FEATURES = [
   "Email integration (Gmail + Outlook)",
   "Higher usage limits",
   "Priority support",
+];
+
+const PROPERTIES_FEATURES = [
+  "Portfolio dashboard",
+  "Tenant management",
+  "Maintenance tracking",
+  "Rent tracking",
+  "Certificate alerts",
+  "Document storage",
+  "Winston property insights",
 ];
 
 // ─── Shared CTA link (for unsubscribed state) ─────────────────────────────────
@@ -109,6 +120,7 @@ export function UpgradePageClient({
   plan,
   planLabel,
   currentPeriodEnd,
+  hasPropertiesSubscription,
 }: UpgradePageClientProps) {
   const searchParams = useSearchParams();
   const [portalLoading, setPortalLoading] = useState(false);
@@ -263,7 +275,7 @@ export function UpgradePageClient({
 
       {/* ── Section 2: Pricing cards ──────────────────────────────────────────── */}
       <section className="mb-8" aria-label="Pricing plans">
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
           {/* ── WISK AI ─────────────────────────────────────────────────────── */}
           <motion.div
             initial={noMotion ? false : { opacity: 0, y: 24 }}
@@ -434,6 +446,81 @@ export function UpgradePageClient({
               )}
             </div>
           </motion.div>
+
+          {!hasPropertiesSubscription ? (
+            <motion.div
+              initial={noMotion ? false : { opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{
+                duration: 0.4,
+                delay: noMotion ? 0 : 0.2,
+                ease: MOTION_EASE.easeOut,
+              }}
+              whileHover={{ scale: 1.01 }}
+              className="group flex flex-col overflow-hidden rounded-2xl border border-amber-500/20 bg-card/90 shadow-[0_4px_24px_-4px_rgba(245,158,11,0.12)] transition-shadow hover:border-amber-500/40 hover:shadow-[0_8px_40px_-8px_rgba(245,158,11,0.25)]"
+            >
+              <div
+                aria-hidden
+                className="h-1 w-full shrink-0"
+                style={{
+                  background:
+                    "linear-gradient(to right, #b45309, #f59e0b, #f97316)",
+                }}
+              />
+
+              <div className="px-6 pt-6 pb-4">
+                <div className="mb-1 flex items-center gap-2">
+                  <div
+                    className="flex size-8 items-center justify-center rounded-lg"
+                    style={{
+                      background: "rgba(245,158,11,0.12)",
+                      border: "1px solid rgba(245,158,11,0.25)",
+                    }}
+                  >
+                    <Building2 className="size-4 text-amber-400" aria-hidden />
+                  </div>
+                  <p className="text-sm font-semibold text-amber-400">
+                    WISK Properties
+                  </p>
+                </div>
+                <div className="mt-3 flex items-baseline gap-1">
+                  <span className="text-4xl font-bold tracking-tight text-foreground">
+                    £17
+                  </span>
+                  <span className="text-sm text-muted-foreground">/month</span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Billed monthly. Cancel any time.
+                </p>
+              </div>
+
+              <div className="flex-1 px-6 pb-5">
+                <ul className="space-y-2.5">
+                  {PROPERTIES_FEATURES.map((feature) => (
+                    <li
+                      key={feature}
+                      className="flex items-center gap-2.5 text-sm text-muted-foreground"
+                    >
+                      <span
+                        className="size-1.5 shrink-0 rounded-full"
+                        style={{ background: "#f59e0b" }}
+                        aria-hidden
+                      />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="px-6 pb-6">
+                <GetStartedLink
+                  href="/upgrade/properties"
+                  gradient="linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #f97316 100%)"
+                />
+              </div>
+            </motion.div>
+          ) : null}
         </div>
       </section>
 
