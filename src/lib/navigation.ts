@@ -1,3 +1,89 @@
+export type NavDropdownItem = {
+  label: string;
+  href: string;
+  description: string;
+  icon:
+    | "FolderKanban"
+    | "CheckSquare"
+    | "Target"
+    | "Lightbulb"
+    | "FileText"
+    | "Calendar"
+    | "TrendingUp"
+    | "CalendarDays";
+};
+
+export type NavDropdownGroupConfig = {
+  label: string;
+  items: NavDropdownItem[];
+};
+
+export const DESKTOP_DROPDOWN_GROUPS: NavDropdownGroupConfig[] = [
+  {
+    label: "Work",
+    items: [
+      {
+        label: "Projects",
+        href: "/projects",
+        description: "Client work and active projects",
+        icon: "FolderKanban",
+      },
+      {
+        label: "Tasks",
+        href: "/tasks",
+        description: "Your daily task list",
+        icon: "CheckSquare",
+      },
+    ],
+  },
+  {
+    label: "Plan",
+    items: [
+      {
+        label: "Goals",
+        href: "/goals",
+        description: "Track progress toward targets",
+        icon: "Target",
+      },
+      {
+        label: "Ideas",
+        href: "/ideas",
+        description: "Capture and develop ideas",
+        icon: "Lightbulb",
+      },
+      {
+        label: "Notes",
+        href: "/notes",
+        description: "Your notes and documents",
+        icon: "FileText",
+      },
+      {
+        label: "Calendar",
+        href: "/calendar",
+        description: "Schedule and upcoming events",
+        icon: "Calendar",
+      },
+    ],
+  },
+  {
+    label: "Grow",
+    items: [
+      {
+        label: "Leads",
+        href: "/leads",
+        description: "Pipeline and sales tracking",
+        icon: "TrendingUp",
+      },
+      {
+        label: "Content",
+        href: "/content",
+        description: "Content calendar and board",
+        icon: "CalendarDays",
+      },
+    ],
+  },
+];
+
 export type NavChild = {
   label: string;
   href: string;
@@ -9,6 +95,13 @@ export type NavGroup = {
   icon: string;
   children?: NavChild[];
 };
+
+export const DESKTOP_STANDALONE_NAV = [
+  { label: "Overview", href: "/" },
+  { label: "Email", href: "/email" },
+  { label: "Winston", href: "/ai-digest" },
+  { label: "Properties", href: "/properties", requiresProperties: true },
+] as const;
 
 export const NAV_GROUPS: NavGroup[] = [
   {
@@ -90,6 +183,13 @@ export function isNavActive(pathname: string, href: string): boolean {
     return pathname === "/";
   }
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+export function isDropdownGroupActive(
+  pathname: string,
+  items: NavDropdownItem[]
+): boolean {
+  return items.some((item) => isNavActive(pathname, item.href));
 }
 
 export function isGroupActive(pathname: string, group: NavGroup): boolean {

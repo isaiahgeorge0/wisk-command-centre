@@ -8,7 +8,7 @@ import { OverviewPageClient } from "@/components/overview/overview-page-client";
 import { resolveDisplayName } from "@/lib/auth/resolve-display-name";
 import { getUserProfile } from "@/lib/auth/get-user-profile";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
-import { hasAIAccess } from "@/lib/billing/access";
+import { hasAIAccess, hasPackageAccess } from "@/lib/billing/access";
 import { getOrCreateUserPreferences } from "@/lib/preferences/get-user-preferences";
 import { buildOverviewSnapshot } from "@/lib/overview/selectors";
 import { buildSuggestions } from "@/lib/suggestions";
@@ -40,6 +40,12 @@ export default async function OverviewPage() {
     prefsRow.data?.ai_access ?? false
   );
 
+  const hasProperties = await hasPackageAccess(
+    userId,
+    "properties",
+    createAdminClient()
+  );
+
   const suggestions = canAccessWinston
     ? await buildSuggestions(userId, supabase)
     : [];
@@ -61,5 +67,11 @@ export default async function OverviewPage() {
     displayName
   );
 
-  return <OverviewPageClient snapshot={snapshot} suggestions={suggestions} />;
+  return (
+    <OverviewPageClient
+      snapshot={snapshot}
+      suggestions={suggestions}
+      hasProperties={hasProperties}
+    />
+  );
 }

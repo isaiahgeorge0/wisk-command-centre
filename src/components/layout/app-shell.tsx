@@ -45,6 +45,7 @@ type AppShellProps = {
   projectOptions: ProjectOption[];
   contentGoals: Pick<Goal, "id" | "title">[];
   usernameSet: boolean;
+  hasProperties: boolean;
 };
 
 function GlobalTaskFormDialog({
@@ -98,6 +99,7 @@ export function AppShell({
   projectOptions,
   contentGoals,
   usernameSet,
+  hasProperties,
 }: AppShellProps) {
   const [showUsernamePrompt, setShowUsernamePrompt] = React.useState(
     !usernameSet
@@ -125,6 +127,7 @@ export function AppShell({
                 unreadNotificationCount={unreadNotificationCount}
                 changelogEntries={changelogEntries}
                 unreadChangelogCount={unreadChangelogCount}
+                hasProperties={hasProperties}
               />
               <main className="mx-auto max-w-7xl px-4 pt-16 pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:px-6 md:pb-24 lg:px-8">
                 <AnnouncementBanner announcements={announcements} />

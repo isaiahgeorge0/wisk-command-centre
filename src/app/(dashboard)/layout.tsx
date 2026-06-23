@@ -16,7 +16,9 @@ import { ThemePreferenceSync } from "@/components/theme/theme-preference-sync";
 import { getAuthContext } from "@/lib/auth/get-auth-context";
 import { resolveDisplayName } from "@/lib/auth/resolve-display-name";
 import { getUserProfile } from "@/lib/auth/get-user-profile";
+import { hasPackageAccess } from "@/lib/billing/access";
 import { getOrCreateUserPreferences } from "@/lib/preferences/get-user-preferences";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export default async function DashboardLayout({
   children,
@@ -46,17 +48,27 @@ export default async function DashboardLayout({
   }
 
   await generateNotifications();
-  const [profile, preferences, notificationSnapshot, projects, goals, announcements, changelogEntries, unreadChangelogCount] =
-    await Promise.all([
-      getUserProfile(),
-      getOrCreateUserPreferences(),
-      getNotifications(),
-      getProjects(),
-      getGoals(),
-      getActiveAnnouncements(user.id),
-      getPublishedChangelog(10),
-      getUnreadChangelogCount(),
-    ]);
+  const [
+    profile,
+    preferences,
+    notificationSnapshot,
+    projects,
+    goals,
+    announcements,
+    changelogEntries,
+    unreadChangelogCount,
+    hasProperties,
+  ] = await Promise.all([
+    getUserProfile(),
+    getOrCreateUserPreferences(),
+    getNotifications(),
+    getProjects(),
+    getGoals(),
+    getActiveAnnouncements(user.id),
+    getPublishedChangelog(10),
+    getUnreadChangelogCount(),
+    hasPackageAccess(user.id, "properties", createAdminClient()),
+  ]);
 
   const displayName = resolveDisplayName({
     displayName: preferences.displayName,
@@ -95,6 +107,7 @@ export default async function DashboardLayout({
           id: goal.id,
           title: goal.title,
         }))}
+        hasProperties={hasProperties}
       >
         {children}
       </AppShell>

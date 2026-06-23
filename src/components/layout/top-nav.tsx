@@ -5,6 +5,7 @@ import { Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { NavDropdown } from "@/components/layout/nav-dropdown";
 import { NavLink } from "@/components/layout/nav-link";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { WhatsNewButton } from "@/components/changelog/whats-new-button";
@@ -13,7 +14,7 @@ import { UserMenu } from "@/components/layout/user-menu";
 import { cn } from "@/lib/utils";
 import type { Notification } from "@/lib/notifications/types";
 import type { ChangelogEntry } from "@/lib/changelog/types";
-import { isNavActive, NAV_ITEMS } from "@/lib/navigation";
+import { isNavActive, DESKTOP_DROPDOWN_GROUPS, DESKTOP_STANDALONE_NAV } from "@/lib/navigation";
 
 type TopNavProps = {
   userEmail: string;
@@ -22,6 +23,7 @@ type TopNavProps = {
   unreadNotificationCount: number;
   changelogEntries: ChangelogEntry[];
   unreadChangelogCount: number;
+  hasProperties: boolean;
 };
 
 export function TopNav({
@@ -31,6 +33,7 @@ export function TopNav({
   unreadNotificationCount,
   changelogEntries,
   unreadChangelogCount,
+  hasProperties,
 }: TopNavProps) {
   const pathname = usePathname();
   const reduced = useReducedMotion();
@@ -48,13 +51,20 @@ export function TopNav({
         </Link>
 
         <nav className="hidden min-w-0 flex-1 items-center gap-4 overflow-x-auto md:flex lg:gap-6">
-          {NAV_ITEMS.map((item) => (
+          {DESKTOP_STANDALONE_NAV.filter(
+            (item) =>
+              !("requiresProperties" in item && item.requiresProperties) ||
+              hasProperties
+          ).map((item) => (
             <NavLink
               key={item.href}
               href={item.href}
               label={item.label}
               active={isNavActive(pathname, item.href)}
             />
+          ))}
+          {DESKTOP_DROPDOWN_GROUPS.map((group) => (
+            <NavDropdown key={group.label} group={group} />
           ))}
         </nav>
 

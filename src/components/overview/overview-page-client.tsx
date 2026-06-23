@@ -23,11 +23,13 @@ import type { SmartSuggestion } from "@/lib/suggestions/types";
 type OverviewPageClientProps = {
   snapshot: OverviewSnapshot;
   suggestions: SmartSuggestion[];
+  hasProperties: boolean;
 };
 
 export function OverviewPageClient({
   snapshot,
   suggestions,
+  hasProperties,
 }: OverviewPageClientProps) {
   const [view, setView] = useState<OverviewView>("overview");
   const { setNavMode } = useNavMode();
@@ -37,16 +39,22 @@ export function OverviewPageClient({
   }, []);
 
   useEffect(() => {
+    if (!hasProperties) {
+      setNavMode("standard");
+      return;
+    }
     setNavMode(view === "properties" ? "properties" : "standard");
-  }, [setNavMode, view]);
+  }, [hasProperties, setNavMode, view]);
 
   return (
     <PageTransition>
-      <div className="mb-6">
-        <OverviewViewToggle value={view} onChange={setView} />
-      </div>
+      {hasProperties ? (
+        <div className="mb-6">
+          <OverviewViewToggle value={view} onChange={setView} />
+        </div>
+      ) : null}
 
-      {view === "properties" ? (
+      {hasProperties && view === "properties" ? (
         <>
           <OverviewHeader header={snapshot.header} />
           <PropertiesOverviewSummary />
