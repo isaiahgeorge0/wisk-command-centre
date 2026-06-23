@@ -1,29 +1,38 @@
 import { Building2, PoundSterling, Users, Wrench } from "lucide-react";
 
-const STATS = [
-  {
-    label: "Total properties",
-    value: "0",
-    icon: Building2,
-  },
-  {
-    label: "Occupied vs vacant",
-    value: "0 / 0",
-    icon: Users,
-  },
-  {
-    label: "Rent due this month",
-    value: "£0",
-    icon: PoundSterling,
-  },
-  {
-    label: "Open maintenance",
-    value: "0",
-    icon: Wrench,
-  },
-];
+import type { PortfolioStats } from "@/lib/properties/types";
+import { formatPropertyCurrency } from "@/lib/properties/format";
 
-export function PropertiesOverviewSummary() {
+type PropertiesOverviewSummaryProps = {
+  stats: PortfolioStats;
+};
+
+export function PropertiesOverviewSummary({
+  stats,
+}: PropertiesOverviewSummaryProps) {
+  const items = [
+    {
+      label: "Total properties",
+      value: String(stats.totalProperties),
+      icon: Building2,
+    },
+    {
+      label: "Occupied vs vacant",
+      value: `${stats.occupiedCount} / ${stats.vacantCount}`,
+      icon: Users,
+    },
+    {
+      label: "Rent due this month",
+      value: formatPropertyCurrency(stats.totalMonthlyRent),
+      icon: PoundSterling,
+    },
+    {
+      label: "Open maintenance",
+      value: String(stats.openMaintenanceCount),
+      icon: Wrench,
+    },
+  ];
+
   return (
     <section className="mb-8" aria-label="Properties portfolio summary">
       <div className="mb-4">
@@ -34,7 +43,7 @@ export function PropertiesOverviewSummary() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {STATS.map((stat) => {
+        {items.map((stat) => {
           const Icon = stat.icon;
           return (
             <div

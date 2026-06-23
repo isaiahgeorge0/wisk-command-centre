@@ -4,12 +4,14 @@ import { getGoals } from "@/app/(dashboard)/goals/actions";
 import { getLeads } from "@/app/(dashboard)/leads/actions";
 import { getProjects } from "@/app/(dashboard)/projects/actions";
 import { getTasks } from "@/app/(dashboard)/tasks/actions";
+import { getProperties } from "@/app/(dashboard)/properties/actions";
 import { OverviewPageClient } from "@/components/overview/overview-page-client";
 import { resolveDisplayName } from "@/lib/auth/resolve-display-name";
 import { getUserProfile } from "@/lib/auth/get-user-profile";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { hasAIAccess, hasPackageAccess } from "@/lib/billing/access";
 import { getOrCreateUserPreferences } from "@/lib/preferences/get-user-preferences";
+import { buildPortfolioStats } from "@/lib/properties/selectors";
 import { buildOverviewSnapshot } from "@/lib/overview/selectors";
 import { buildSuggestions } from "@/lib/suggestions";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -46,6 +48,11 @@ export default async function OverviewPage() {
     createAdminClient()
   );
 
+  const properties = hasProperties ? await getProperties() : [];
+  const portfolioStats = hasProperties
+    ? buildPortfolioStats(properties)
+    : null;
+
   const suggestions = canAccessWinston
     ? await buildSuggestions(userId, supabase)
     : [];
@@ -72,6 +79,7 @@ export default async function OverviewPage() {
       snapshot={snapshot}
       suggestions={suggestions}
       hasProperties={hasProperties}
+      portfolioStats={portfolioStats}
     />
   );
 }

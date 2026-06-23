@@ -18,18 +18,21 @@ import { OverviewWeekStrip } from "@/components/overview/overview-week-strip";
 import { ThisWeekSection } from "@/components/overview/this-week-section";
 import { WinstonSuggestsSection } from "@/components/overview/winston-suggests-section";
 import type { OverviewSnapshot } from "@/lib/overview/selectors";
+import type { PortfolioStats } from "@/lib/properties/types";
 import type { SmartSuggestion } from "@/lib/suggestions/types";
 
 type OverviewPageClientProps = {
   snapshot: OverviewSnapshot;
   suggestions: SmartSuggestion[];
   hasProperties: boolean;
+  portfolioStats: PortfolioStats | null;
 };
 
 export function OverviewPageClient({
   snapshot,
   suggestions,
   hasProperties,
+  portfolioStats,
 }: OverviewPageClientProps) {
   const [view, setView] = useState<OverviewView>("overview");
   const { setNavMode } = useNavMode();
@@ -57,7 +60,7 @@ export function OverviewPageClient({
       {hasProperties && view === "properties" ? (
         <>
           <OverviewHeader header={snapshot.header} />
-          <PropertiesOverviewSummary />
+          <PropertiesOverviewSummary stats={portfolioStats!} />
         </>
       ) : (
         <>

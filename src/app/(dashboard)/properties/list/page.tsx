@@ -1,13 +1,8 @@
-import { Building2 } from "lucide-react";
+import { getProperties } from "@/app/(dashboard)/properties/actions";
+import { PropertiesListClient } from "@/components/properties/properties-list-client";
 
-import { PropertiesPlaceholder } from "@/components/properties/properties-placeholder";
+export default async function PropertiesListPage() {
+  const properties = await getProperties();
 
-export default function PropertiesListPage() {
-  return (
-    <PropertiesPlaceholder
-      title="Properties"
-      description="Manage your property portfolio."
-      icon={Building2}
-    />
-  );
+  return <PropertiesListClient initialProperties={properties} />;
 }

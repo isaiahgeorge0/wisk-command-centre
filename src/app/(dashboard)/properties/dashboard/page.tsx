@@ -1,13 +1,8 @@
-import { LayoutDashboard } from "lucide-react";
+import { getProperties } from "@/app/(dashboard)/properties/actions";
+import { PropertiesDashboardClient } from "@/components/properties/properties-dashboard-client";
 
-import { PropertiesPlaceholder } from "@/components/properties/properties-placeholder";
+export default async function PropertiesDashboardPage() {
+  const properties = await getProperties();
 
-export default function PropertiesDashboardPage() {
-  return (
-    <PropertiesPlaceholder
-      title="Dashboard"
-      description="Portfolio overview and key metrics at a glance."
-      icon={LayoutDashboard}
-    />
-  );
+  return <PropertiesDashboardClient properties={properties} />;
 }
