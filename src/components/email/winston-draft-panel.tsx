@@ -20,6 +20,7 @@ type WinstonDraftPanelProps = {
   thread: EmailThread;
   open: boolean;
   onClose: () => void;
+  preGeneratedDraft?: WinstonDraft | null;
 };
 
 const TONES: { id: DraftTone; label: string }[] = [
@@ -38,8 +39,11 @@ export function WinstonDraftPanel({
   thread,
   open,
   onClose,
+  preGeneratedDraft = null,
 }: WinstonDraftPanelProps) {
-  const [tone, setTone] = useState<DraftTone>("professional");
+  const [tone, setTone] = useState<DraftTone>(
+    preGeneratedDraft?.tone ?? "professional"
+  );
   const [draft, setDraft] = useState<WinstonDraft | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -91,10 +95,24 @@ export function WinstonDraftPanel({
 
   useEffect(() => {
     if (!open) return;
-    setDraft(null);
     setCopied(false);
+
+    if (preGeneratedDraft && tone === preGeneratedDraft.tone) {
+      setDraft(preGeneratedDraft);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
+
+    setDraft(null);
     void generateDraft(tone);
-  }, [open, generateDraft, tone]);
+  }, [open, preGeneratedDraft, generateDraft, tone]);
+
+  useEffect(() => {
+    if (open && preGeneratedDraft) {
+      setTone(preGeneratedDraft.tone);
+    }
+  }, [open, preGeneratedDraft]);
 
   const handleToneChange = (nextTone: DraftTone) => {
     if (nextTone === tone) return;

@@ -24,6 +24,7 @@ import type {
   EmailRule,
   EmailThread,
   InboxPageTokens,
+  WinstonPicksResult,
 } from "@/lib/email/types";
 import { cn } from "@/lib/utils";
 
@@ -82,6 +83,10 @@ export function EmailPageClient({
   const [actionItems, setActionItems] = useState<EmailActionItem[]>([]);
   const [managePanelOpen, setManagePanelOpen] = useState(false);
   const [rulePrefill, setRulePrefill] = useState<RulePrefill | null>(null);
+  const [winstonPicks, setWinstonPicks] = useState<WinstonPicksResult | null>(
+    null
+  );
+  const [isLoadingPicks, setIsLoadingPicks] = useState(false);
 
   const displayEmails = useMemo(() => {
     return emails.map((email) => {
@@ -233,6 +238,37 @@ export function EmailPageClient({
 
     void loadInbox(activeProvider, searchQuery);
   }, [activeProvider, connectedProviders.length, loadInbox, searchQuery]);
+
+  const fetchWinstonPicks = useCallback(async (regenerate = false) => {
+    setIsLoadingPicks(true);
+
+    try {
+      const url = regenerate
+        ? "/api/email/winston-picks?regenerate=true"
+        : "/api/email/winston-picks";
+      const response = await fetch(url);
+      const data = (await response.json()) as WinstonPicksResult & {
+        outsideWindow?: boolean;
+        error?: string;
+      };
+
+      if (!response.ok || data.outsideWindow) {
+        setWinstonPicks(null);
+        return;
+      }
+
+      setWinstonPicks(data);
+    } catch {
+      setWinstonPicks(null);
+    } finally {
+      setIsLoadingPicks(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isLoading || connectedProviders.length === 0) return;
+    void fetchWinstonPicks();
+  }, [connectedProviders.length, fetchWinstonPicks, isLoading]);
 
   const handleSelectEmail = useCallback(async (email: EmailThread) => {
     setSelectedEmail(email);
@@ -395,6 +431,9 @@ export function EmailPageClient({
             onOpenManagePanel={() => setManagePanelOpen(true)}
             onAssignEmail={handleAssignEmail}
             onCreateRuleForSender={handleCreateRuleForSender}
+            winstonPicks={winstonPicks}
+            isLoadingPicks={isLoadingPicks}
+            onRegeneratePicks={() => void fetchWinstonPicks(true)}
           />
         </aside>
 

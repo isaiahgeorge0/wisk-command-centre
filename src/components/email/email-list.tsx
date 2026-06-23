@@ -1,11 +1,12 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
-import { FolderInput, Mail, Search, User } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { ChevronDown, FolderInput, Mail, Search, Sparkles, User } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { ManageInboxesButton } from "@/components/email/manage-inboxes-panel";
+import { WinstonDraftPanel } from "@/components/email/winston-draft-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,13 +15,17 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import type { EmailCategory } from "@/lib/email/categoriser";
+import { emailWindowLabel } from "@/lib/email/uk-window";
 import { MOTION_EASE } from "@/lib/motion/config";
 import { formatEmailRelativeTime } from "@/lib/email/utils";
 import type {
   CustomInbox,
+  Email,
   EmailActionItem,
   EmailProvider,
   EmailThread,
+  WinstonPick,
+  WinstonPicksResult,
 } from "@/lib/email/types";
 import { cn } from "@/lib/utils";
 
@@ -56,6 +61,9 @@ type EmailListProps = {
     }
   ) => void;
   onCreateRuleForSender: (email: EmailThread) => void;
+  winstonPicks: WinstonPicksResult | null;
+  isLoadingPicks: boolean;
+  onRegeneratePicks: () => void;
 };
 
 const CATEGORY_TABS: { id: CategoryFilter; label: string }[] = [
@@ -149,6 +157,202 @@ function RelativeTime({ iso }: { iso: string }) {
   }, [iso]);
 
   return <span>{label ?? "\u00a0"}</span>;
+}
+
+function pickToEmail(pick: WinstonPick): Email {
+  return {
+    id: pick.emailId,
+    provider: pick.provider,
+    threadId: pick.emailId,
+    subject: pick.subject,
+    from: { name: pick.fromName, email: pick.fromEmail },
+    to: [],
+    date: new Date().toISOString(),
+    preview: "",
+    body: pick.draft.body,
+    isRead: false,
+    isStarred: false,
+    labels: [],
+  };
+}
+
+function pickToThread(pick: WinstonPick): EmailThread {
+  return {
+    id: pick.emailId,
+    provider: pick.provider,
+    subject: pick.subject,
+    from: { name: pick.fromName, email: pick.fromEmail },
+    date: new Date().toISOString(),
+    preview: "",
+    isRead: false,
+    messageCount: 1,
+    accountEmail: pick.draft.accountEmail,
+    accountLabel: pick.accountLabel,
+    integrationId: pick.integrationId,
+    category: "other",
+    customInboxId: null,
+    isFromKnownContact: false,
+    linkedLeadId: null,
+    linkedLeadName: null,
+  };
+}
+
+function WinstonPicksSection({
+  winstonPicks,
+  isLoading,
+  onRegeneratePicks,
+}: {
+  winstonPicks: WinstonPicksResult | null;
+  isLoading: boolean;
+  onRegeneratePicks: () => void;
+}) {
+  const reduced = useReducedMotion() ?? false;
+  const [expanded, setExpanded] = useState(false);
+  const [selectedPick, setSelectedPick] = useState<WinstonPick | null>(null);
+  const [draftOpen, setDraftOpen] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
+
+  const showSection =
+    isLoading || (winstonPicks !== null && winstonPicks.picks.length > 0);
+
+  useEffect(() => {
+    if (!isLoading) {
+      setIsRegenerating(false);
+    }
+  }, [isLoading, winstonPicks]);
+
+  if (!showSection) return null;
+
+  const pickCount = winstonPicks?.picks.length ?? 0;
+  const windowLabel = winstonPicks
+    ? emailWindowLabel(winstonPicks.window)
+    : "Winston's picks";
+
+  const handleRegenerate = () => {
+    setIsRegenerating(true);
+    onRegeneratePicks();
+  };
+
+  return (
+    <>
+      <div className="border-b border-border/60 px-3 pt-3 pb-2">
+        <div className="overflow-hidden rounded-lg border border-border/60 border-l-[3px] border-l-wisk-purple bg-gradient-to-r from-wisk-purple/5 to-wisk-teal/5">
+          <button
+            type="button"
+            onClick={() => {
+              if (!isLoading) setExpanded((current) => !current);
+            }}
+            className="flex min-h-11 w-full items-center gap-2 px-3 py-2.5 text-left"
+          >
+            <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-wisk-purple to-wisk-teal">
+              <Sparkles className="size-3.5 text-white" aria-hidden />
+            </div>
+
+            {isLoading ? (
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <div className="h-3.5 w-28 animate-pulse rounded bg-muted" />
+                <div className="h-3 w-20 animate-pulse rounded bg-muted/70" />
+              </div>
+            ) : (
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-medium text-foreground">
+                    Winston&apos;s picks
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {windowLabel}
+                  </span>
+                  <span className="rounded-full bg-background/80 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                    {pickCount}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {!isLoading ? (
+              <ChevronDown
+                className={cn(
+                  "size-4 shrink-0 text-muted-foreground transition-transform",
+                  expanded && "rotate-180"
+                )}
+                aria-hidden
+              />
+            ) : null}
+          </button>
+
+          <AnimatePresence initial={false}>
+            {expanded && !isLoading && winstonPicks ? (
+              <motion.div
+                initial={reduced ? false : { height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={reduced ? undefined : { height: 0, opacity: 0 }}
+                transition={{ duration: reduced ? 0 : 0.25, ease: MOTION_EASE.easeOut }}
+                className="overflow-hidden"
+              >
+                <ul className="space-y-2 border-t border-border/40 px-3 py-3">
+                  {winstonPicks.picks.map((pick) => (
+                    <li
+                      key={`${pick.integrationId}:${pick.emailId}`}
+                      className="rounded-lg border border-border/50 bg-background/60 px-3 py-2.5"
+                    >
+                      <p className="truncate text-sm font-medium text-foreground">
+                        {pick.fromName}
+                      </p>
+                      <p className="truncate text-xs text-foreground/80">
+                        {pick.subject}
+                      </p>
+                      <p className="mt-1 text-[11px] text-muted-foreground">
+                        {pick.priorityReason}
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="mt-2 h-8 min-h-8 gap-1 text-xs"
+                        onClick={() => {
+                          setSelectedPick(pick);
+                          setDraftOpen(true);
+                        }}
+                      >
+                        <Sparkles className="size-3" aria-hidden />
+                        View draft
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="border-t border-border/40 px-3 py-2.5">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-9 min-h-9 w-full text-xs"
+                    disabled={isLoading || isRegenerating}
+                    onClick={handleRegenerate}
+                  >
+                    {isRegenerating ? "Regenerating…" : "Regenerate"}
+                  </Button>
+                </div>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {selectedPick ? (
+        <WinstonDraftPanel
+          email={pickToEmail(selectedPick)}
+          thread={pickToThread(selectedPick)}
+          open={draftOpen}
+          onClose={() => {
+            setDraftOpen(false);
+            setSelectedPick(null);
+          }}
+          preGeneratedDraft={selectedPick.draft}
+        />
+      ) : null}
+    </>
+  );
 }
 
 function MoveEmailPopover({
@@ -255,6 +459,9 @@ export function EmailList({
   onOpenManagePanel,
   onAssignEmail,
   onCreateRuleForSender,
+  winstonPicks,
+  isLoadingPicks,
+  onRegeneratePicks,
 }: EmailListProps) {
   const reduced = useReducedMotion() ?? false;
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -368,6 +575,12 @@ export function EmailList({
 
   return (
     <div className="flex h-full flex-col">
+      <WinstonPicksSection
+        winstonPicks={winstonPicks}
+        isLoading={isLoadingPicks}
+        onRegeneratePicks={onRegeneratePicks}
+      />
+
       <div className="space-y-3 border-b border-border/60 p-3">
         <div className="relative">
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />

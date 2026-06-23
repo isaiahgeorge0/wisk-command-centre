@@ -128,6 +128,28 @@ export async function fetchOutlookInbox(
   );
 }
 
+export async function fetchOutlookUnreadInbox(
+  accessToken: string,
+  skipToken?: string
+): Promise<InboxResult> {
+  const params = new URLSearchParams({
+    $top: "50",
+    $orderby: "receivedDateTime desc",
+    $filter: "isRead eq false",
+    $select:
+      "id,subject,from,toRecipients,receivedDateTime,bodyPreview,isRead,flag,conversationId",
+  });
+
+  if (skipToken) {
+    params.set("$skiptoken", skipToken);
+  }
+
+  return fetchOutlookMessages(
+    accessToken,
+    `https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages?${params.toString()}`
+  );
+}
+
 export async function searchOutlook(
   accessToken: string,
   query: string

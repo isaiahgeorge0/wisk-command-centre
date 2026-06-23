@@ -1,27 +1,13 @@
 import { NextResponse } from "next/server";
-import * as Sentry from "@sentry/nextjs";
 import { z } from "zod";
 
 import { UnauthorizedError } from "@/lib/auth/errors";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
-import { logUsage } from "@/lib/ai/usage-logger";
 import { hasPackageAccess } from "@/lib/billing/access";
-import { buildReplySubject } from "@/lib/email/compose-urls";
-import { fetchGmailMessage } from "@/lib/email/gmail";
-import { fetchOutlookMessage } from "@/lib/email/outlook";
-import { getValidEmailTokenForIntegration } from "@/lib/email/token-manager";
+import { generateEmailDraft } from "@/lib/email/generate-draft";
 import type { DraftTone, WinstonDraft } from "@/lib/email/types";
-import { LEAD_STATUS_LABELS } from "@/lib/leads/constants";
-import { LEAD_STATUSES } from "@/lib/leads/types";
 
 export const runtime = "nodejs";
-
-type AnthropicTextBlock = { type: "text"; text: string };
-type AnthropicContentBlock = AnthropicTextBlock | { type: string };
-type AnthropicResponse = {
-  content: AnthropicContentBlock[];
-  usage?: { input_tokens: number; output_tokens: number };
-};
 
 const bodySchema = z.object({
   emailId: z.string().min(1),
@@ -29,41 +15,6 @@ const bodySchema = z.object({
   provider: z.enum(["gmail", "outlook"]),
   tone: z.enum(["professional", "friendly", "casual"]),
 });
-
-const TONE_GUIDANCE: Record<DraftTone, string> = {
-  professional:
-    "Professional: formal, concise, clear. No contractions. Business-appropriate.",
-  friendly:
-    "Friendly: warm but professional. Conversational. Light contractions ok.",
-  casual:
-    "Casual: relaxed, personal, natural. Write like a human not a business.",
-};
-
-function buildSystemPrompt(options: {
-  displayName: string;
-  tone: DraftTone;
-  accountLabel: string | null;
-  leadContext: string | null;
-}): string {
-  const accountLabel = options.accountLabel?.trim() || "business";
-
-  return `You are Winston, an AI business assistant for WISK. You are drafting an email response on behalf of ${options.displayName}.
-
-Tone: ${TONE_GUIDANCE[options.tone]}
-
-Account context: This is their ${accountLabel} email account.
-${options.leadContext ? `\n${options.leadContext}` : ""}
-
-Begin your response with a personalised greeting using the sender's first name.
-Extract the first name from the sender's display name or email address.
-Examples: 'Hi Sarah,' or 'Hello James,' or 'Good morning David,'
-Match the greeting formality to the tone:
-- Professional: 'Dear [Name],' or 'Hello [Name],'
-- Friendly: 'Hi [Name],'
-- Casual: 'Hey [Name],' or just 'Hi [Name],'
-
-Draft a response to the email below. Return ONLY the email body — include the greeting and message content, but no subject line or sign-off/signature. Keep it concise and appropriate to the tone.`;
-}
 
 export async function POST(request: Request) {
   let supabase;
@@ -103,158 +54,21 @@ export async function POST(request: Request) {
 
   const { emailId, integrationId, provider, tone } = parsed.data;
 
-  const accessToken = await getValidEmailTokenForIntegration(userId, integrationId);
-  if (!accessToken) {
-    return NextResponse.json(
-      { error: "Email account not connected" },
-      { status: 404 }
-    );
-  }
-
-  const email =
-    provider === "gmail"
-      ? await fetchGmailMessage(accessToken, emailId)
-      : await fetchOutlookMessage(accessToken, emailId);
-
-  if (!email) {
-    return NextResponse.json({ error: "Email not found" }, { status: 404 });
-  }
-
-  const [{ data: prefs }, { data: integration }] = await Promise.all([
-    supabase
-      .from("user_preferences")
-      .select("display_name")
-      .eq("user_id", userId)
-      .maybeSingle(),
-    supabase
-      .from("user_integrations")
-      .select("label, email_address, signature, signature_plain")
-      .eq("id", integrationId)
-      .eq("user_id", userId)
-      .maybeSingle(),
-  ]);
-
-  const displayName = prefs?.display_name?.trim() || "the user";
-
-  const { data: lead } = await supabase
-    .from("leads")
-    .select("id, name, status, notes")
-    .eq("user_id", userId)
-    .ilike("email", email.from.email)
-    .maybeSingle();
-
-  let leadContext: string | null = null;
-
-  if (lead) {
-    const stageLabel =
-      LEAD_STATUS_LABELS[
-        LEAD_STATUSES.includes(lead.status as (typeof LEAD_STATUSES)[number])
-          ? (lead.status as (typeof LEAD_STATUSES)[number])
-          : "new"
-      ];
-
-    const { data: activities } = await supabase
-      .from("lead_activities")
-      .select("title, content, created_at")
-      .eq("lead_id", lead.id)
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(1);
-
-    const lastActivity = activities?.[0];
-    const lastNote =
-      lead.notes?.trim() ||
-      lastActivity?.content?.trim() ||
-      lastActivity?.title?.trim() ||
-      "No recent notes";
-
-    leadContext = `This sender is a lead in their pipeline — status: ${stageLabel}, last note: ${lastNote}.`;
-  }
-
-  const systemPrompt = buildSystemPrompt({
-    displayName,
-    tone,
-    accountLabel: integration?.label ?? null,
-    leadContext,
+  const draft = await generateEmailDraft({
+    userId,
+    supabase,
+    emailId,
+    integrationId,
+    provider,
+    tone: tone as DraftTone,
   });
 
-  const userPrompt = `Subject: ${email.subject}
-From: ${email.from.name} <${email.from.email}>
-Date: ${email.date}
-
-${email.body}`;
-
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
+  if (!draft) {
     return NextResponse.json(
-      { error: "AI service is not configured" },
+      { error: "Could not generate draft" },
       { status: 500 }
     );
   }
 
-  try {
-    Sentry.setUser({ id: userId });
-
-    const claudeResponse = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 600,
-        system: systemPrompt,
-        messages: [{ role: "user", content: userPrompt }],
-      }),
-    });
-
-    if (!claudeResponse.ok) {
-      const err = await claudeResponse.text();
-      console.error("[email/draft] Claude API error:", err);
-      throw new Error(`Claude API error: ${claudeResponse.status}`);
-    }
-
-    const claudeData = (await claudeResponse.json()) as AnthropicResponse;
-    const replyBlock = claudeData.content.find(
-      (block): block is AnthropicTextBlock => block.type === "text"
-    );
-
-    if (!replyBlock?.text?.trim()) {
-      throw new Error("No text content in Claude response");
-    }
-
-    await logUsage(
-      userId,
-      "email_draft",
-      claudeData.usage?.input_tokens ?? 0,
-      claudeData.usage?.output_tokens ?? 0
-    );
-
-    const draft: WinstonDraft = {
-      subject: buildReplySubject(email.subject),
-      body: replyBlock.text.trim(),
-      tone,
-      provider,
-      accountEmail:
-        integration?.email_address ?? email.to[0]?.email ?? email.from.email,
-      signature: integration?.signature ?? null,
-      signaturePlain: integration?.signature_plain ?? null,
-    };
-
-    return NextResponse.json({ draft });
-  } catch (error) {
-    console.error("[email/draft] error:", error);
-    Sentry.captureException(error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Could not generate draft",
-      },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json({ draft } satisfies { draft: WinstonDraft });
 }

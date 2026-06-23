@@ -105,3 +105,25 @@ export type EmailActionItem = {
   urgency: "high" | "medium" | "low";
   suggestTask: boolean;
 };
+
+export type EmailWindow = "morning" | "afternoon";
+
+export type WinstonPick = {
+  emailId: string;
+  integrationId: string;
+  provider: EmailProvider;
+  subject: string;
+  fromName: string;
+  fromEmail: string;
+  accountLabel: string | null;
+  priorityReason: string;
+  draft: WinstonDraft;
+};
+
+export type WinstonPicksResult = {
+  window: EmailWindow;
+  date: string;
+  picks: WinstonPick[];
+  generatedAt: string;
+  isFromCache: boolean;
+};
