@@ -3,20 +3,31 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { isAdminEmail } from "@/lib/auth/is-admin";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
+import { logUsage } from "@/lib/ai/usage-logger";
+import {
+  buildPropertyPortfolioContext,
+  generatePropertyInsights,
+  startOfMonthUtc,
+  startOfWeekUtc,
+} from "@/lib/properties/insights-generator";
 import {
   emptyToNull,
   parseOptionalNumber,
 } from "@/lib/properties/format";
 import type {
   ActionResult,
+  CertificateAlertLog,
   MaintenanceTicket,
   MaintenanceTicketFormInput,
   MaintenanceTicketWithProperty,
   Property,
   PropertyCertificate,
   PropertyCertificateFormInput,
+  PropertyDocument,
   PropertyFormInput,
+  PropertyInsight,
   PropertyWithStats,
   RentPayment,
   RentPaymentFormInput,
@@ -840,4 +851,320 @@ export async function deleteCertificate(id: string): Promise<ActionResult> {
   }
   revalidatePropertyPaths(existing?.property_id);
   return { success: true };
+}
+
+// ─── Certificate alerts ─────────────────────────────────────────────────────
+
+export async function togglePropertyAlerts(
+  propertyId: string,
+  enabled: boolean
+): Promise<ActionResult> {
+  const { supabase, userId } = await getScopedSupabase();
+  const { error } = await supabase
+    .from("properties")
+    .update({ alerts_enabled: enabled })
+    .eq("id", propertyId)
+    .eq("user_id", userId);
+  if (error) {
+    console.error("togglePropertyAlerts:", error);
+    return { success: false, error: error.message };
+  }
+  revalidatePropertyPaths(propertyId);
+  return { success: true };
+}
+
+export async function acknowledgeCertificateAlert(
+  alertId: string
+): Promise<ActionResult> {
+  const { supabase, userId } = await getScopedSupabase();
+  const { data, error } = await supabase
+    .from("certificate_alert_log")
+    .update({
+      acknowledged: true,
+      acknowledged_at: new Date().toISOString(),
+    })
+    .eq("id", alertId)
+    .eq("user_id", userId)
+    .select("property_id")
+    .single();
+  if (error) {
+    console.error("acknowledgeCertificateAlert:", error);
+    return { success: false, error: error.message };
+  }
+  revalidatePropertyPaths(data?.property_id as string);
+  return { success: true };
+}
+
+export async function getCertificateAlertsByProperty(
+  propertyId: string
+): Promise<CertificateAlertLog[]> {
+  const { supabase, userId } = await getScopedSupabase();
+  const { data, error } = await supabase
+    .from("certificate_alert_log")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("property_id", propertyId)
+    .order("sent_at", { ascending: false });
+  if (error) {
+    console.error("getCertificateAlertsByProperty:", error);
+    return [];
+  }
+  return (data ?? []) as CertificateAlertLog[];
+}
+
+// ─── Documents ──────────────────────────────────────────────────────────────
+
+const ALLOWED_DOCUMENT_TYPES = [
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+] as const;
+
+const MAX_DOCUMENT_SIZE = 10 * 1024 * 1024;
+
+const documentTypeSchema = z.enum([
+  "lease",
+  "certificate",
+  "inspection",
+  "correspondence",
+  "other",
+]);
+
+export async function getDocumentsByProperty(
+  propertyId: string
+): Promise<PropertyDocument[]> {
+  const { supabase, userId } = await getScopedSupabase();
+  const { data, error } = await supabase
+    .from("property_documents")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("property_id", propertyId)
+    .order("created_at", { ascending: false });
+  if (error) {
+    console.error("getDocumentsByProperty:", error);
+    return [];
+  }
+  return (data ?? []) as PropertyDocument[];
+}
+
+export async function uploadPropertyDocument(
+  propertyId: string,
+  file: File,
+  documentType: string,
+  name: string
+): Promise<ActionResult<PropertyDocument>> {
+  const parsedType = documentTypeSchema.safeParse(documentType);
+  if (!parsedType.success) {
+    return { success: false, error: "Invalid document type" };
+  }
+  if (!name.trim()) {
+    return { success: false, error: "Document name is required" };
+  }
+  if (!ALLOWED_DOCUMENT_TYPES.includes(file.type as (typeof ALLOWED_DOCUMENT_TYPES)[number])) {
+    return {
+      success: false,
+      error: "Invalid file type. Allowed: PDF, JPEG, PNG, WebP, HEIC",
+    };
+  }
+  if (file.size > MAX_DOCUMENT_SIZE) {
+    return { success: false, error: "File exceeds 10MB limit" };
+  }
+
+  const { supabase, userId } = await getScopedSupabase();
+  const sanitized = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const filePath = `${userId}/${propertyId}/${parsedType.data}/${Date.now()}_${sanitized}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("property-documents")
+    .upload(filePath, file, { contentType: file.type, upsert: false });
+
+  if (uploadError) {
+    console.error("uploadPropertyDocument:", uploadError);
+    return { success: false, error: uploadError.message };
+  }
+
+  const { data, error } = await supabase
+    .from("property_documents")
+    .insert({
+      user_id: userId,
+      property_id: propertyId,
+      name: name.trim(),
+      file_path: filePath,
+      file_size: file.size,
+      file_type: file.type,
+      document_type: parsedType.data,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error("uploadPropertyDocument insert:", error);
+    await supabase.storage.from("property-documents").remove([filePath]);
+    return { success: false, error: error.message };
+  }
+
+  revalidatePropertyPaths(propertyId);
+  return { success: true, data: data as PropertyDocument };
+}
+
+export async function getDocumentUrl(filePath: string): Promise<string | null> {
+  const { supabase, userId } = await getScopedSupabase();
+  if (!filePath.startsWith(`${userId}/`)) {
+    return null;
+  }
+  const { data, error } = await supabase.storage
+    .from("property-documents")
+    .createSignedUrl(filePath, 3600);
+  if (error) {
+    console.error("getDocumentUrl:", error);
+    return null;
+  }
+  return data.signedUrl;
+}
+
+export async function deletePropertyDocument(
+  documentId: string
+): Promise<ActionResult> {
+  const { supabase, userId } = await getScopedSupabase();
+  const { data: existing } = await supabase
+    .from("property_documents")
+    .select("property_id, file_path")
+    .eq("id", documentId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (!existing) {
+    return { success: false, error: "Document not found" };
+  }
+
+  await supabase.storage
+    .from("property-documents")
+    .remove([existing.file_path as string]);
+
+  const { error } = await supabase
+    .from("property_documents")
+    .delete()
+    .eq("id", documentId)
+    .eq("user_id", userId);
+
+  if (error) {
+    console.error("deletePropertyDocument:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidatePropertyPaths(existing.property_id as string);
+  return { success: true };
+}
+
+// ─── Property insights ──────────────────────────────────────────────────────
+
+export async function getLatestPropertyInsight(): Promise<PropertyInsight | null> {
+  const { supabase, userId } = await getScopedSupabase();
+  const { data, error } = await supabase
+    .from("property_insights")
+    .select("*")
+    .eq("user_id", userId)
+    .in("insight_type", ["weekly_digest", "monthly_digest"])
+    .order("generated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) {
+    console.error("getLatestPropertyInsight:", error);
+    return null;
+  }
+  return data as PropertyInsight | null;
+}
+
+export async function triggerPropertyInsightsGeneration(): Promise<ActionResult> {
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { data: authUser } = await supabase.auth.getUser();
+  const isAdmin = isAdminEmail(authUser.user?.email);
+
+  const { count } = await supabase
+    .from("properties")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId);
+
+  const propertyCount = count ?? 0;
+  if (propertyCount === 0) {
+    return { success: false, error: "Add a property before generating insights" };
+  }
+
+  const insightType = propertyCount >= 3 ? "weekly_digest" : "monthly_digest";
+  const now = new Date();
+  const periodStart =
+    insightType === "weekly_digest"
+      ? startOfWeekUtc(now).toISOString()
+      : startOfMonthUtc(now).toISOString();
+
+  if (!isAdmin) {
+    const { data: existing } = await supabase
+      .from("property_insights")
+      .select("generated_at")
+      .eq("user_id", userId)
+      .eq("insight_type", insightType)
+      .gte("generated_at", periodStart)
+      .limit(1);
+
+    if (existing?.length) {
+      return {
+        success: false,
+        error: "Insights already generated for this period",
+      };
+    }
+
+    const { data: latest } = await supabase
+      .from("property_insights")
+      .select("generated_at")
+      .eq("user_id", userId)
+      .order("generated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (latest?.generated_at) {
+      const minWaitMs =
+        insightType === "weekly_digest"
+          ? 7 * 24 * 60 * 60 * 1000
+          : 30 * 24 * 60 * 60 * 1000;
+      const elapsed = Date.now() - new Date(latest.generated_at as string).getTime();
+      if (elapsed < minWaitMs) {
+        return {
+          success: false,
+          error: "Please wait before generating again",
+        };
+      }
+    }
+  }
+
+  try {
+    const context = await buildPropertyPortfolioContext(userId, supabase);
+    const { content, inputTokens, outputTokens } =
+      await generatePropertyInsights(context);
+
+    const { error } = await supabase.from("property_insights").insert({
+      user_id: userId,
+      insight_type: insightType,
+      content,
+      period_start: context.periodStart,
+      period_end: context.periodEnd,
+    });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    await logUsage(userId, "property_insights", inputTokens, outputTokens);
+    revalidatePath("/properties/winston");
+    revalidatePath("/properties/dashboard");
+    return { success: true };
+  } catch (err) {
+    console.error("triggerPropertyInsightsGeneration:", err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Generation failed",
+    };
+  }
 }

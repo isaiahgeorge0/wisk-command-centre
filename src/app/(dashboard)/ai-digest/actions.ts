@@ -38,6 +38,7 @@ export async function getConversationHistory(): Promise<
 
 export type WinstonSettingsUsage = MonthlyUsage & {
   emailDraftTokens: number;
+  propertyInsightsTokens: number;
 };
 
 export async function getMonthlyUsage(): Promise<ActionResult<WinstonSettingsUsage>> {
@@ -64,15 +65,18 @@ export async function getMonthlyUsage(): Promise<ActionResult<WinstonSettingsUsa
   let chatTokens = 0;
   let digestTokens = 0;
   let emailDraftTokens = 0;
+  let propertyInsightsTokens = 0;
 
   for (const row of data ?? []) {
     const tokens = (row.input_tokens ?? 0) + (row.output_tokens ?? 0);
     if (row.feature === "chat") chatTokens += tokens;
     else if (row.feature === "digest") digestTokens += tokens;
     else if (row.feature === "email_draft") emailDraftTokens += tokens;
+    else if (row.feature === "property_insights") propertyInsightsTokens += tokens;
   }
 
-  const total = chatTokens + digestTokens + emailDraftTokens;
+  const total =
+    chatTokens + digestTokens + emailDraftTokens + propertyInsightsTokens;
   const limit = WINSTON_MONTHLY_TOKEN_LIMIT;
   const percentage = Math.min(100, Math.round((total / limit) * 100));
 
@@ -82,6 +86,7 @@ export async function getMonthlyUsage(): Promise<ActionResult<WinstonSettingsUsa
       chatTokens,
       digestTokens,
       emailDraftTokens,
+      propertyInsightsTokens,
       total,
       limit,
       percentage,

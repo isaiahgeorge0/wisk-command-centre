@@ -1,5 +1,17 @@
 import type { PropertyStatus, PropertyType } from "@/lib/properties/types";
 
+export {
+  CERTIFICATE_TYPE_LABELS,
+  MAINTENANCE_CATEGORY_LABELS,
+  MAINTENANCE_PRIORITY_LABELS,
+  MAINTENANCE_STATUS_LABELS,
+  PROPERTY_DOCUMENT_TYPE_LABELS,
+  PROPERTY_STATUS_LABELS,
+  PROPERTY_TYPE_LABELS,
+  RENT_PAYMENT_STATUS_LABELS,
+  TENANT_STATUS_LABELS,
+} from "@/lib/properties/display-names";
+
 export const PROPERTY_STATUSES: PropertyStatus[] = [
   "occupied",
   "vacant",
@@ -14,21 +26,6 @@ export const PROPERTY_TYPES: PropertyType[] = [
   "commercial",
   "other",
 ];
-
-export const PROPERTY_STATUS_LABELS: Record<PropertyStatus, string> = {
-  occupied: "Occupied",
-  vacant: "Vacant",
-  maintenance: "Maintenance",
-  listed: "Listed",
-};
-
-export const PROPERTY_TYPE_LABELS: Record<PropertyType, string> = {
-  flat: "Flat",
-  house: "House",
-  hmo: "HMO",
-  commercial: "Commercial",
-  other: "Other",
-};
 
 export const PROPERTY_STATUS_BADGE_CLASS: Record<PropertyStatus, string> = {
   occupied: "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
@@ -47,11 +44,6 @@ export const PROPERTY_STATUS_SORT_ORDER: Record<PropertyStatus, number> = {
 export const PROPERTIES_ACCENT = "#f59e0b";
 
 export const TENANT_STATUSES = ["active", "notice", "ended"] as const;
-export const TENANT_STATUS_LABELS = {
-  active: "Active",
-  notice: "Notice",
-  ended: "Ended",
-} as const;
 export const TENANT_STATUS_BADGE_CLASS = {
   active:
     "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
@@ -61,23 +53,12 @@ export const TENANT_STATUS_BADGE_CLASS = {
 } as const;
 
 export const MAINTENANCE_STATUSES = ["new", "in_progress", "resolved"] as const;
-export const MAINTENANCE_STATUS_LABELS = {
-  new: "New",
-  in_progress: "In Progress",
-  resolved: "Resolved",
-} as const;
 export const MAINTENANCE_PRIORITIES = [
   "low",
   "medium",
   "high",
   "emergency",
 ] as const;
-export const MAINTENANCE_PRIORITY_LABELS = {
-  low: "Low",
-  medium: "Medium",
-  high: "High",
-  emergency: "Emergency",
-} as const;
 export const MAINTENANCE_PRIORITY_BADGE_CLASS = {
   emergency:
     "border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400",
@@ -94,14 +75,6 @@ export const MAINTENANCE_CATEGORIES = [
   "appliance",
   "other",
 ] as const;
-export const MAINTENANCE_CATEGORY_LABELS = {
-  plumbing: "Plumbing",
-  electrical: "Electrical",
-  heating: "Heating",
-  structural: "Structural",
-  appliance: "Appliance",
-  other: "Other",
-} as const;
 
 export const RENT_PAYMENT_STATUSES = [
   "pending",
@@ -110,13 +83,6 @@ export const RENT_PAYMENT_STATUSES = [
   "partial",
   "missed",
 ] as const;
-export const RENT_PAYMENT_STATUS_LABELS = {
-  pending: "Pending",
-  paid: "Paid",
-  late: "Late",
-  partial: "Partial",
-  missed: "Missed",
-} as const;
 export const RENT_PAYMENT_STATUS_BADGE_CLASS = {
   paid: "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
   pending:
@@ -136,11 +102,3 @@ export const CERTIFICATE_TYPES = [
   "pat_testing",
   "other",
 ] as const;
-export const CERTIFICATE_TYPE_LABELS = {
-  gas_safety: "Gas Safety",
-  epc: "EPC",
-  eicr: "EICR",
-  fire_alarm: "Fire Alarm",
-  pat_testing: "PAT Testing",
-  other: "Other",
-} as const;

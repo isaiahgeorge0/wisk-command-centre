@@ -1,10 +1,13 @@
 "use client";
 
-import { AlertTriangle, Pencil, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Check, Pencil, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-import { deleteCertificate } from "@/app/(dashboard)/properties/actions";
+import {
+  acknowledgeCertificateAlert,
+  deleteCertificate,
+} from "@/app/(dashboard)/properties/actions";
 import { CertificateFormDialog } from "@/components/properties/certificate-form-dialog";
 import {
   AlertDialog,
@@ -16,25 +19,32 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  CERTIFICATE_ALERT_TYPE_LABELS,
   CERTIFICATE_TYPE_LABELS,
-} from "@/lib/properties/constants";
+} from "@/lib/properties/display-names";
 import {
   daysUntilDate,
   formatPropertyDate,
 } from "@/lib/properties/format";
-import type { PropertyCertificate } from "@/lib/properties/types";
+import type {
+  CertificateAlertLog,
+  PropertyCertificate,
+} from "@/lib/properties/types";
 import { cn } from "@/lib/utils";
 
 type PropertyCertificatesTabProps = {
   propertyId: string;
   certificates: PropertyCertificate[];
+  alerts: CertificateAlertLog[];
 };
 
 export function PropertyCertificatesTab({
   propertyId,
   certificates,
+  alerts,
 }: PropertyCertificatesTabProps) {
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
@@ -44,6 +54,16 @@ export function PropertyCertificatesTab({
     null
   );
   const [isPending, startTransition] = useTransition();
+
+  const alertsByCertificate = useMemo(() => {
+    const map = new Map<string, CertificateAlertLog[]>();
+    for (const alert of alerts) {
+      const list = map.get(alert.certificate_id) ?? [];
+      list.push(alert);
+      map.set(alert.certificate_id, list);
+    }
+    return map;
+  }, [alerts]);
 
   const warningCertificates = useMemo(
     () =>
@@ -59,6 +79,13 @@ export function PropertyCertificatesTab({
     startTransition(async () => {
       await deleteCertificate(deleteTarget.id);
       setDeleteTarget(null);
+      router.refresh();
+    });
+  };
+
+  const handleAcknowledge = (alertId: string) => {
+    startTransition(async () => {
+      await acknowledgeCertificateAlert(alertId);
       router.refresh();
     });
   };
@@ -107,6 +134,8 @@ export function PropertyCertificatesTab({
         <div className="space-y-3">
           {certificates.map((certificate) => {
             const days = daysUntilDate(certificate.expiry_date);
+            const certAlerts = alertsByCertificate.get(certificate.id) ?? [];
+            const unacknowledged = certAlerts.filter((a) => !a.acknowledged);
             const expiryClass =
               days == null
                 ? "text-muted-foreground"
@@ -122,10 +151,25 @@ export function PropertyCertificatesTab({
                 className="rounded-xl border border-border/60 bg-card/40 p-4"
               >
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="space-y-1">
-                    <p className="font-medium text-foreground">
-                      {CERTIFICATE_TYPE_LABELS[certificate.certificate_type]}
-                    </p>
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-medium text-foreground">
+                        {CERTIFICATE_TYPE_LABELS[certificate.certificate_type]}
+                      </p>
+                      {certAlerts.map((alert) => (
+                        <Badge
+                          key={alert.id}
+                          variant="outline"
+                          className={cn(
+                            alert.alert_type === "expired"
+                              ? "border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                              : "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                          )}
+                        >
+                          {CERTIFICATE_ALERT_TYPE_LABELS[alert.alert_type]} sent
+                        </Badge>
+                      ))}
+                    </div>
                     <p className="text-sm text-muted-foreground">
                       Issued {formatPropertyDate(certificate.issue_date)} ·
                       Expires {formatPropertyDate(certificate.expiry_date)}
@@ -137,6 +181,23 @@ export function PropertyCertificatesTab({
                           ? `Expired ${Math.abs(days)} days ago`
                           : `${days} days until expiry`}
                     </p>
+                    {unacknowledged.length > 0 ? (
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {unacknowledged.map((alert) => (
+                          <Button
+                            key={alert.id}
+                            variant="outline"
+                            size="sm"
+                            className="min-h-9 gap-1.5"
+                            onClick={() => handleAcknowledge(alert.id)}
+                            disabled={isPending}
+                          >
+                            <Check className="size-3.5" />
+                            Acknowledge {CERTIFICATE_ALERT_TYPE_LABELS[alert.alert_type]}
+                          </Button>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                   <div className="flex gap-2">
                     <Button

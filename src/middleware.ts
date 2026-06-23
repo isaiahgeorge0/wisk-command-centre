@@ -14,6 +14,8 @@ const PUBLIC_PATHS = [
   "/api/auth/update-password",
   "/api/ai-digest/generate",
   "/api/ai-digest/generate-for-user",
+  "/api/properties/check-certificate-alerts",
+  "/api/properties/generate-insights",
   "/api/winston/chat",
   "/api/stripe/webhook",
   "/monitoring",

@@ -1,8 +1,15 @@
 "use client";
 
-import { Building2, ChevronRight, LayoutDashboard, Plus } from "lucide-react";
+import {
+  Building2,
+  ChevronRight,
+  LayoutDashboard,
+  Plus,
+  Sparkles,
+  X,
+} from "lucide-react";
 import Link from "next/link";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { PageTransition } from "@/components/layout/page-transition";
@@ -18,19 +25,37 @@ import {
   buildPortfolioStats,
   sortPropertiesByStatus,
 } from "@/lib/properties/selectors";
-import type { PropertyWithStats } from "@/lib/properties/types";
+import type {
+  PropertyInsight,
+  PropertyInsightContent,
+  PropertyWithStats,
+} from "@/lib/properties/types";
 import { cn } from "@/lib/utils";
 
 type PropertiesDashboardClientProps = {
   properties: PropertyWithStats[];
+  latestInsight: PropertyInsight | null;
 };
 
 export function PropertiesDashboardClient({
   properties,
+  latestInsight,
 }: PropertiesDashboardClientProps) {
   const [formOpen, setFormOpen] = useState(false);
+  const [insightDismissed, setInsightDismissed] = useState(false);
   const stats = buildPortfolioStats(properties);
   const sortedProperties = sortPropertiesByStatus(properties);
+
+  const showInsightCard = useMemo(() => {
+    if (insightDismissed || !latestInsight) return false;
+    const ageMs =
+      Date.now() - new Date(latestInsight.generated_at).getTime();
+    return ageMs < 7 * 24 * 60 * 60 * 1000;
+  }, [insightDismissed, latestInsight]);
+
+  const insightContent = latestInsight?.content as
+    | PropertyInsightContent
+    | undefined;
 
   const handleAdd = useCallback(() => {
     setFormOpen(true);
@@ -94,6 +119,49 @@ export function PropertiesDashboardClient({
               value={String(stats.openMaintenanceCount)}
             />
           </div>
+
+          {showInsightCard && insightContent ? (
+            <div className="mb-8 rounded-xl border border-border/60 border-l-4 border-l-amber-500 bg-card/80 p-5">
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="size-4 text-amber-500" />
+                  <h2 className="text-sm font-semibold text-foreground">
+                    Winston&apos;s take
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setInsightDismissed(true)}
+                  className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                  aria-label="Dismiss"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+              <p className="text-sm leading-relaxed text-foreground">
+                {insightContent.portfolio_health}
+              </p>
+              {insightContent.attention.length > 0 ? (
+                <ul className="mt-3 space-y-1.5">
+                  {insightContent.attention.slice(0, 3).map((item, i) => (
+                    <li
+                      key={i}
+                      className="flex items-start gap-2 text-sm text-muted-foreground"
+                    >
+                      <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-amber-500" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              <Link
+                href="/properties/winston"
+                className="mt-4 inline-flex text-sm font-medium text-amber-600 hover:text-amber-500 dark:text-amber-400"
+              >
+                View full insights →
+              </Link>
+            </div>
+          ) : null}
 
           <section aria-label="Portfolio overview">
             <div className="mb-4">

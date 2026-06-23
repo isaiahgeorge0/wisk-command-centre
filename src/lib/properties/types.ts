@@ -18,6 +18,7 @@ export type Property = {
   current_value: number | null;
   monthly_rent: number | null;
   notes: string | null;
+  alerts_enabled?: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -213,4 +214,61 @@ export type PropertyCertificateFormInput = {
   issue_date?: string;
   expiry_date?: string;
   notes?: string;
+};
+
+export type CertificateAlertType = "90_days" | "30_days" | "7_days" | "expired";
+
+export type CertificateAlertLog = {
+  id: string;
+  user_id: string;
+  property_id: string;
+  certificate_id: string;
+  alert_type: CertificateAlertType;
+  sent_at: string;
+  acknowledged: boolean;
+  acknowledged_at: string | null;
+};
+
+export type PropertyCertificateWithAlerts = PropertyCertificate & {
+  alerts: CertificateAlertLog[];
+};
+
+export type PropertyDocumentType =
+  | "lease"
+  | "certificate"
+  | "inspection"
+  | "correspondence"
+  | "other";
+
+export type PropertyDocument = {
+  id: string;
+  user_id: string;
+  property_id: string;
+  name: string;
+  file_path: string;
+  file_size: number | null;
+  file_type: string | null;
+  document_type: PropertyDocumentType | null;
+  created_at: string;
+};
+
+export type PropertyInsightType = "weekly_digest" | "monthly_digest" | "inline";
+
+export type PropertyInsightContent = {
+  portfolio_health: string;
+  wins: string[];
+  attention: string[];
+  financial_snapshot: string;
+  winstons_insight: string;
+  maintenance_summary: string;
+};
+
+export type PropertyInsight = {
+  id: string;
+  user_id: string;
+  insight_type: PropertyInsightType;
+  content: PropertyInsightContent;
+  generated_at: string;
+  period_start: string | null;
+  period_end: string | null;
 };

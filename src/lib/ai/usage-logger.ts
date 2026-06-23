@@ -2,7 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function logUsage(
   userId: string,
-  feature: "chat" | "digest" | "email_draft",
+  feature: "chat" | "digest" | "email_draft" | "property_insights",
   inputTokens: number,
   outputTokens: number
 ): Promise<void> {

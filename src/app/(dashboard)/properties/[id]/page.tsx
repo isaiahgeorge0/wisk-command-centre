@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 
 import {
+  getCertificateAlertsByProperty,
   getCertificatesByProperty,
+  getDocumentsByProperty,
   getMaintenanceByProperty,
   getProperty,
   getRentPaymentsByProperty,
@@ -33,13 +35,15 @@ export default async function PropertyDetailPage({
   const { id } = await params;
   const { tab } = await searchParams;
 
-  const [property, tenants, maintenanceTickets, rentPayments, certificates] =
+  const [property, tenants, maintenanceTickets, rentPayments, certificates, documents, certificateAlerts] =
     await Promise.all([
       getProperty(id),
       getTenantsByProperty(id),
       getMaintenanceByProperty(id),
       getRentPaymentsByProperty(id),
       getCertificatesByProperty(id),
+      getDocumentsByProperty(id),
+      getCertificateAlertsByProperty(id),
     ]);
 
   if (!property) {
@@ -58,6 +62,8 @@ export default async function PropertyDetailPage({
       maintenanceTickets={maintenanceTickets}
       rentPayments={rentPayments}
       certificates={certificates}
+      documents={documents}
+      certificateAlerts={certificateAlerts}
       initialTab={initialTab}
     />
   );

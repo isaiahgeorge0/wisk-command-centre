@@ -1,6 +1,6 @@
 "use client";
 
-import { Mail, MessageSquare, Newspaper, Sparkles } from "lucide-react";
+import { Building2, Mail, MessageSquare, Newspaper, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 
 import {
@@ -14,7 +14,10 @@ import type { MonthlyUsage } from "@/lib/ai/types";
 import { cn } from "@/lib/utils";
 
 type SettingsWinstonSectionProps = {
-  usage: MonthlyUsage & { emailDraftTokens?: number };
+  usage: MonthlyUsage & {
+    emailDraftTokens?: number;
+    propertyInsightsTokens?: number;
+  };
 };
 
 type FeatureRowProps = {
@@ -56,6 +59,7 @@ export function SettingsWinstonSection({ usage }: SettingsWinstonSectionProps) {
     chatTokens,
     digestTokens,
     emailDraftTokens = 0,
+    propertyInsightsTokens = 0,
     total,
     limit,
     percentage,
@@ -125,6 +129,13 @@ export function SettingsWinstonSection({ usage }: SettingsWinstonSectionProps) {
               icon={<Mail className="size-4" aria-hidden />}
               label="Email Drafts"
               tokens={emailDraftTokens}
+              total={total}
+              emptyLabel="0 tokens"
+            />
+            <FeatureRow
+              icon={<Building2 className="size-4" aria-hidden />}
+              label="Property Insights"
+              tokens={propertyInsightsTokens}
               total={total}
               emptyLabel="0 tokens"
             />

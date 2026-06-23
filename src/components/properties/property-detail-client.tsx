@@ -4,18 +4,19 @@ import {
   ArrowLeft,
   Bath,
   BedDouble,
-  FileText,
   PoundSterling,
   Trash2,
   Users,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useTransition } from "react";
 
+import { togglePropertyAlerts } from "@/app/(dashboard)/properties/actions";
 import { PageTransition } from "@/components/layout/page-transition";
 import { DeletePropertyDialog } from "@/components/properties/delete-property-dialog";
 import { PropertyCertificatesTab } from "@/components/properties/property-certificates-tab";
+import { PropertyDocumentsTab } from "@/components/properties/property-documents-tab";
 import { PropertyFinancesTab } from "@/components/properties/property-finances-tab";
 import { PropertyFormDialog } from "@/components/properties/property-form-dialog";
 import { PropertyMaintenanceTab } from "@/components/properties/property-maintenance-tab";
@@ -23,16 +24,23 @@ import { PropertyStatusBadge } from "@/components/properties/property-status-bad
 import { PropertyTenantsTab } from "@/components/properties/property-tenants-tab";
 import { PropertyTypeBadge } from "@/components/properties/property-type-badge";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import {
+  getPropertyStatusDisplayName,
+  PROPERTY_TYPE_LABELS,
+} from "@/lib/properties/display-names";
 import {
   calculateAnnualYield,
   formatPropertyAddress,
   formatPropertyCurrency,
   formatYieldPercent,
 } from "@/lib/properties/format";
-import { PROPERTY_TYPE_LABELS } from "@/lib/properties/constants";
 import type {
+  CertificateAlertLog,
   MaintenanceTicket,
   PropertyCertificate,
+  PropertyDocument,
   PropertyWithStats,
   RentPaymentWithDetails,
   Tenant,
@@ -62,6 +70,8 @@ type PropertyDetailClientProps = {
   maintenanceTickets: MaintenanceTicket[];
   rentPayments: RentPaymentWithDetails[];
   certificates: PropertyCertificate[];
+  documents: PropertyDocument[];
+  certificateAlerts: CertificateAlertLog[];
   initialTab?: PropertyDetailTab;
 };
 
@@ -71,6 +81,8 @@ export function PropertyDetailClient({
   maintenanceTickets,
   rentPayments,
   certificates,
+  documents,
+  certificateAlerts,
   initialTab = "overview",
 }: PropertyDetailClientProps) {
   const router = useRouter();
@@ -171,9 +183,10 @@ export function PropertyDetailClient({
         <PropertyCertificatesTab
           propertyId={property.id}
           certificates={certificates}
+          alerts={certificateAlerts}
         />
       ) : (
-        <DocumentsPlaceholder />
+        <PropertyDocumentsTab propertyId={property.id} documents={documents} />
       )}
 
       <PropertyFormDialog
@@ -199,6 +212,17 @@ function OverviewTab({
   property: PropertyWithStats;
   annualYield: number | null;
 }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const alertsEnabled = property.alerts_enabled ?? true;
+
+  const handleAlertsToggle = (enabled: boolean) => {
+    startTransition(async () => {
+      await togglePropertyAlerts(property.id, enabled);
+      router.refresh();
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -231,7 +255,10 @@ function OverviewTab({
             label="Property type"
             value={PROPERTY_TYPE_LABELS[property.property_type]}
           />
-          <DetailField label="Status" value={property.status} />
+          <DetailField
+            label="Status"
+            value={getPropertyStatusDisplayName(property.status)}
+          />
           <DetailField
             label="Purchase price"
             value={formatPropertyCurrency(property.purchase_price)}
@@ -273,20 +300,27 @@ function OverviewTab({
           </p>
         </div>
       ) : null}
-    </div>
-  );
-}
 
-function DocumentsPlaceholder() {
-  return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-amber-500/20 bg-card/40 px-6 py-16 text-center">
-      <div className="mb-4 flex size-12 items-center justify-center rounded-xl bg-amber-500/10">
-        <FileText className="size-6 text-amber-500" aria-hidden />
+      <div className="rounded-xl border border-border/60 bg-card/40 p-5">
+        <h2 className="text-sm font-semibold text-foreground">Alert settings</h2>
+        <div className="mt-4 flex items-start justify-between gap-4">
+          <div className="space-y-1">
+            <Label htmlFor="cert-alerts" className="text-sm font-medium">
+              Certificate expiry alerts
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              Receive email reminders at 90, 30, and 7 days before certificates
+              expire.
+            </p>
+          </div>
+          <Switch
+            id="cert-alerts"
+            checked={alertsEnabled}
+            onCheckedChange={handleAlertsToggle}
+            disabled={isPending}
+          />
+        </div>
       </div>
-      <h2 className="text-lg font-medium text-foreground">No documents yet</h2>
-      <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-        Document storage is coming in the next release.
-      </p>
     </div>
   );
 }
@@ -317,7 +351,7 @@ function DetailField({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="mt-1 text-sm font-medium capitalize text-foreground">{value}</dd>
+      <dd className="mt-1 text-sm font-medium text-foreground">{value}</dd>
     </div>
   );
 }

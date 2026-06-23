@@ -1,0 +1,26 @@
+name: Property Certificate Alerts
+
+on:
+  schedule:
+    # 08:00 UTC daily
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+
+jobs:
+  check-alerts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check certificate expiry alerts
+        run: |
+          response=$(curl -s -w "\n%{http_code}" -X POST \
+            "https://app.wiskapp.com/api/properties/check-certificate-alerts" \
+            -H "Authorization: Bearer ${{ secrets.PROPERTY_ALERTS_SECRET }}" \
+            -H "Content-Type: application/json")
+          body=$(echo "$response" | head -n -1)
+          status=$(echo "$response" | tail -n 1)
+          echo "Response: $body"
+          echo "HTTP status: $status"
+          if [ "$status" != "200" ]; then
+            echo "Certificate alert check failed with status $status"
+            exit 1
+          fi
