@@ -182,11 +182,19 @@ export function PropertyDetailClient({
       ) : activeTab === "certificates" ? (
         <PropertyCertificatesTab
           propertyId={property.id}
+          propertyType={property.property_type}
           certificates={certificates}
+          documents={documents}
           alerts={certificateAlerts}
+          onNavigateToDocuments={() => setActiveTab("documents")}
         />
       ) : (
-        <PropertyDocumentsTab propertyId={property.id} documents={documents} />
+        <PropertyDocumentsTab
+          propertyId={property.id}
+          documents={documents}
+          certificates={certificates}
+          onNavigateToCertificates={() => setActiveTab("certificates")}
+        />
       )}
 
       <PropertyFormDialog

@@ -780,7 +780,8 @@ export async function getCertificatesByProperty(
 }
 
 export async function createCertificate(
-  input: PropertyCertificateFormInput
+  input: PropertyCertificateFormInput,
+  documentId?: string
 ): Promise<ActionResult<PropertyCertificate>> {
   const parsed = certificateFormSchema.safeParse(input);
   if (!parsed.success) {
@@ -800,13 +801,27 @@ export async function createCertificate(
     console.error("createCertificate:", error);
     return { success: false, error: error.message };
   }
+
+  const certificate = data as PropertyCertificate;
+
+  if (documentId) {
+    const linkResult = await linkDocumentToCertificate(
+      documentId,
+      certificate.id
+    );
+    if (!linkResult.success) {
+      return { success: false, error: linkResult.error };
+    }
+  }
+
   revalidatePropertyPaths(payload.property_id);
-  return { success: true, data: data as PropertyCertificate };
+  return { success: true, data: certificate };
 }
 
 export async function updateCertificate(
   id: string,
-  input: PropertyCertificateFormInput
+  input: PropertyCertificateFormInput,
+  documentId?: string | null
 ): Promise<ActionResult<PropertyCertificate>> {
   const parsed = certificateFormSchema.safeParse(input);
   if (!parsed.success) {
@@ -828,6 +843,24 @@ export async function updateCertificate(
     console.error("updateCertificate:", error);
     return { success: false, error: error.message };
   }
+
+  if (documentId) {
+    const linkResult = await linkDocumentToCertificate(documentId, id);
+    if (!linkResult.success) {
+      return { success: false, error: linkResult.error };
+    }
+  } else if (documentId === null) {
+    const { error: unlinkError } = await supabase
+      .from("property_documents")
+      .update({ certificate_id: null })
+      .eq("certificate_id", id)
+      .eq("user_id", userId);
+    if (unlinkError) {
+      console.error("updateCertificate unlink:", unlinkError);
+      return { success: false, error: unlinkError.message };
+    }
+  }
+
   revalidatePropertyPaths(payload.property_id);
   return { success: true, data: data as PropertyCertificate };
 }
@@ -938,7 +971,9 @@ export async function getDocumentsByProperty(
   const { supabase, userId } = await getScopedSupabase();
   const { data, error } = await supabase
     .from("property_documents")
-    .select("*")
+    .select(
+      "*, property_certificates(certificate_type, expiry_date)"
+    )
     .eq("user_id", userId)
     .eq("property_id", propertyId)
     .order("created_at", { ascending: false });
@@ -946,14 +981,75 @@ export async function getDocumentsByProperty(
     console.error("getDocumentsByProperty:", error);
     return [];
   }
-  return (data ?? []) as PropertyDocument[];
+  return (data ?? []).map((row) => {
+    const { property_certificates, ...document } = row as PropertyDocument & {
+      property_certificates: {
+        certificate_type: string;
+        expiry_date: string | null;
+      } | null;
+    };
+    return {
+      ...(document as PropertyDocument),
+      certificate_type:
+        (property_certificates?.certificate_type as PropertyDocument["certificate_type"]) ??
+        null,
+      certificate_expiry: property_certificates?.expiry_date ?? null,
+    };
+  });
+}
+
+export async function linkDocumentToCertificate(
+  documentId: string,
+  certificateId: string | null
+): Promise<ActionResult> {
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { data: document, error: fetchError } = await supabase
+    .from("property_documents")
+    .select("property_id")
+    .eq("id", documentId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (fetchError || !document) {
+    return { success: false, error: "Document not found" };
+  }
+
+  if (certificateId) {
+    const { data: certificate, error: certError } = await supabase
+      .from("property_certificates")
+      .select("id")
+      .eq("id", certificateId)
+      .eq("user_id", userId)
+      .eq("property_id", document.property_id)
+      .maybeSingle();
+
+    if (certError || !certificate) {
+      return { success: false, error: "Certificate not found" };
+    }
+  }
+
+  const { error } = await supabase
+    .from("property_documents")
+    .update({ certificate_id: certificateId })
+    .eq("id", documentId)
+    .eq("user_id", userId);
+
+  if (error) {
+    console.error("linkDocumentToCertificate:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidatePropertyPaths(document.property_id as string);
+  return { success: true };
 }
 
 export async function uploadPropertyDocument(
   propertyId: string,
   file: File,
   documentType: string,
-  name: string
+  name: string,
+  certificateId?: string
 ): Promise<ActionResult<PropertyDocument>> {
   const parsedType = documentTypeSchema.safeParse(documentType);
   if (!parsedType.success) {
@@ -995,8 +1091,11 @@ export async function uploadPropertyDocument(
       file_size: file.size,
       file_type: file.type,
       document_type: parsedType.data,
+      certificate_id: certificateId ?? null,
     })
-    .select()
+    .select(
+      "*, property_certificates(certificate_type, expiry_date)"
+    )
     .single();
 
   if (error) {
@@ -1005,8 +1104,24 @@ export async function uploadPropertyDocument(
     return { success: false, error: error.message };
   }
 
+  const { property_certificates, ...document } = data as PropertyDocument & {
+    property_certificates: {
+      certificate_type: string;
+      expiry_date: string | null;
+    } | null;
+  };
+
   revalidatePropertyPaths(propertyId);
-  return { success: true, data: data as PropertyDocument };
+  return {
+    success: true,
+    data: {
+      ...(document as PropertyDocument),
+      certificate_type:
+        (property_certificates?.certificate_type as PropertyDocument["certificate_type"]) ??
+        null,
+      certificate_expiry: property_certificates?.expiry_date ?? null,
+    },
+  };
 }
 
 export async function getDocumentUrl(filePath: string): Promise<string | null> {

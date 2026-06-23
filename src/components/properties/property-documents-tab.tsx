@@ -38,6 +38,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  getCertificateTypeDisplayName,
   getPropertyDocumentTypeDisplayName,
   PROPERTY_DOCUMENT_TYPE_LABELS,
   type PropertyDocumentType,
@@ -46,7 +47,7 @@ import {
   formatFileSize,
   formatPropertyDate,
 } from "@/lib/properties/format";
-import type { PropertyDocument } from "@/lib/properties/types";
+import type { PropertyCertificate, PropertyDocument } from "@/lib/properties/types";
 import { cn } from "@/lib/utils";
 
 const DOCUMENT_TYPES = Object.keys(
@@ -59,11 +60,15 @@ const ACCEPTED_TYPES =
 type PropertyDocumentsTabProps = {
   propertyId: string;
   documents: PropertyDocument[];
+  certificates: PropertyCertificate[];
+  onNavigateToCertificates?: () => void;
 };
 
 export function PropertyDocumentsTab({
   propertyId,
   documents,
+  certificates,
+  onNavigateToCertificates,
 }: PropertyDocumentsTabProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -72,6 +77,9 @@ export function PropertyDocumentsTab({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [documentType, setDocumentType] = useState<PropertyDocumentType>("other");
   const [documentName, setDocumentName] = useState("");
+  const [linkedCertificateId, setLinkedCertificateId] = useState<string | null>(
+    null
+  );
   const [deleteTarget, setDeleteTarget] = useState<PropertyDocument | null>(
     null
   );
@@ -100,7 +108,8 @@ export function PropertyDocumentsTab({
         propertyId,
         file,
         documentType,
-        name
+        name,
+        linkedCertificateId ?? undefined
       );
       setUploading(false);
       if (!result.success) {
@@ -108,9 +117,10 @@ export function PropertyDocumentsTab({
         return;
       }
       setDocumentName("");
+      setLinkedCertificateId(null);
       router.refresh();
     },
-    [documentName, documentType, propertyId, router]
+    [documentName, documentType, linkedCertificateId, propertyId, router]
   );
 
   const onFileSelected = (files: FileList | null) => {
@@ -191,6 +201,43 @@ export function PropertyDocumentsTab({
           </div>
         </div>
 
+        {certificates.length > 0 ? (
+          <div className="space-y-2">
+            <Label>Link to certificate</Label>
+            <Select
+              value={linkedCertificateId ?? "none"}
+              onValueChange={(v) =>
+                setLinkedCertificateId(v === "none" ? null : v)
+              }
+              disabled={uploading || isPending}
+            >
+              <SelectTrigger className="min-h-11 w-full">
+                <SelectValue placeholder="None">
+                  {linkedCertificateId
+                    ? (() => {
+                        const cert = certificates.find(
+                          (c) => c.id === linkedCertificateId
+                        );
+                        return cert
+                          ? `${getCertificateTypeDisplayName(cert.certificate_type)} — expires ${formatPropertyDate(cert.expiry_date)}`
+                          : "None";
+                      })()
+                    : "None"}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                {certificates.map((cert) => (
+                  <SelectItem key={cert.id} value={cert.id}>
+                    {getCertificateTypeDisplayName(cert.certificate_type)} —
+                    expires {formatPropertyDate(cert.expiry_date)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ) : null}
+
         <input
           ref={fileInputRef}
           type="file"
@@ -252,6 +299,7 @@ export function PropertyDocumentsTab({
                     doc={doc}
                     onView={() => void handleView(doc)}
                     onDelete={() => setDeleteTarget(doc)}
+                    onNavigateToCertificates={onNavigateToCertificates}
                     disabled={isPending}
                   />
                 ))}
@@ -296,11 +344,13 @@ function DocumentRow({
   doc,
   onView,
   onDelete,
+  onNavigateToCertificates,
   disabled,
 }: {
   doc: PropertyDocument;
   onView: () => void;
   onDelete: () => void;
+  onNavigateToCertificates?: () => void;
   disabled: boolean;
 }) {
   const isPdf = doc.file_type === "application/pdf";
@@ -319,6 +369,21 @@ function DocumentRow({
               <Badge variant="outline">
                 {getPropertyDocumentTypeDisplayName(doc.document_type)}
               </Badge>
+            ) : null}
+            {doc.certificate_id && doc.certificate_type ? (
+              <button
+                type="button"
+                onClick={onNavigateToCertificates}
+                title={`Linked to ${getCertificateTypeDisplayName(doc.certificate_type)}${doc.certificate_expiry ? ` — expires ${formatPropertyDate(doc.certificate_expiry)}` : ""}`}
+                className="inline-flex"
+              >
+                <Badge
+                  variant="outline"
+                  className="border-amber-500/30 bg-amber-500/10 text-amber-700 hover:bg-amber-500/15 dark:text-amber-300"
+                >
+                  {getCertificateTypeDisplayName(doc.certificate_type)}
+                </Badge>
+              </button>
             ) : null}
             <span>{formatFileSize(doc.file_size)}</span>
             <span>·</span>

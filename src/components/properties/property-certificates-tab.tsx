@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Check, Pencil, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Check, Paperclip, Pencil, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
@@ -32,19 +32,27 @@ import {
 import type {
   CertificateAlertLog,
   PropertyCertificate,
+  PropertyDocument,
+  PropertyType,
 } from "@/lib/properties/types";
 import { cn } from "@/lib/utils";
 
 type PropertyCertificatesTabProps = {
   propertyId: string;
+  propertyType: PropertyType;
   certificates: PropertyCertificate[];
+  documents: PropertyDocument[];
   alerts: CertificateAlertLog[];
+  onNavigateToDocuments?: () => void;
 };
 
 export function PropertyCertificatesTab({
   propertyId,
+  propertyType,
   certificates,
+  documents,
   alerts,
+  onNavigateToDocuments,
 }: PropertyCertificatesTabProps) {
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
@@ -64,6 +72,17 @@ export function PropertyCertificatesTab({
     }
     return map;
   }, [alerts]);
+
+  const documentsByCertificate = useMemo(() => {
+    const map = new Map<string, PropertyDocument[]>();
+    for (const doc of documents) {
+      if (!doc.certificate_id) continue;
+      const list = map.get(doc.certificate_id) ?? [];
+      list.push(doc);
+      map.set(doc.certificate_id, list);
+    }
+    return map;
+  }, [documents]);
 
   const warningCertificates = useMemo(
     () =>
@@ -135,6 +154,7 @@ export function PropertyCertificatesTab({
           {certificates.map((certificate) => {
             const days = daysUntilDate(certificate.expiry_date);
             const certAlerts = alertsByCertificate.get(certificate.id) ?? [];
+            const linkedDocs = documentsByCertificate.get(certificate.id) ?? [];
             const unacknowledged = certAlerts.filter((a) => !a.acknowledged);
             const expiryClass =
               days == null
@@ -156,6 +176,17 @@ export function PropertyCertificatesTab({
                       <p className="font-medium text-foreground">
                         {getCertificateTypeDisplayName(certificate.certificate_type)}
                       </p>
+                      {linkedDocs.length > 0 ? (
+                        <button
+                          type="button"
+                          onClick={onNavigateToDocuments}
+                          title={linkedDocs.map((d) => d.name).join(", ")}
+                          className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-muted/30 px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                        >
+                          <Paperclip className="size-3" />
+                          {linkedDocs.length}
+                        </button>
+                      ) : null}
                       {certAlerts.map((alert) => (
                         <Badge
                           key={alert.id}
@@ -231,6 +262,8 @@ export function PropertyCertificatesTab({
         open={formOpen}
         onOpenChange={setFormOpen}
         propertyId={propertyId}
+        propertyType={propertyType}
+        documents={documents}
         certificate={editingCertificate}
       />
 

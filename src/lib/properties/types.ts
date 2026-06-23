@@ -249,6 +249,9 @@ export type PropertyDocument = {
   file_size: number | null;
   file_type: string | null;
   document_type: PropertyDocumentType | null;
+  certificate_id: string | null;
+  certificate_type: CertificateType | null;
+  certificate_expiry: string | null;
   created_at: string;
 };
 
