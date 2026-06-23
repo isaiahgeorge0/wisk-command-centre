@@ -166,116 +166,118 @@ export function PropertyDocumentsTab({
           onFileSelected(e.dataTransfer.files);
         }}
       >
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-          <div className="flex-1 space-y-2">
-            <Label htmlFor="doc-name">Document name</Label>
-            <Input
-              id="doc-name"
-              value={documentName}
-              onChange={(e) => setDocumentName(e.target.value)}
-              placeholder="e.g. Tenancy agreement 2026"
-              className="min-h-11"
-              disabled={uploading || isPending}
-            />
+        <div className="space-y-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+            <div className="flex-1 space-y-2">
+              <Label htmlFor="doc-name">Document name</Label>
+              <Input
+                id="doc-name"
+                value={documentName}
+                onChange={(e) => setDocumentName(e.target.value)}
+                placeholder="e.g. Tenancy agreement 2026"
+                className="min-h-11"
+                disabled={uploading || isPending}
+              />
+            </div>
+            <div className="space-y-2 sm:w-[200px]">
+              <Label>Type</Label>
+              <Select
+                value={documentType}
+                onValueChange={(v) => v && setDocumentType(v as PropertyDocumentType)}
+                disabled={uploading || isPending}
+              >
+                <SelectTrigger className="min-h-11 w-full">
+                  <SelectValue>
+                    {getPropertyDocumentTypeDisplayName(documentType)}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {DOCUMENT_TYPES.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {getPropertyDocumentTypeDisplayName(type)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div className="space-y-2 sm:w-[200px]">
-            <Label>Type</Label>
-            <Select
-              value={documentType}
-              onValueChange={(v) => v && setDocumentType(v as PropertyDocumentType)}
-              disabled={uploading || isPending}
-            >
-              <SelectTrigger className="min-h-11 w-full">
-                <SelectValue>
-                  {getPropertyDocumentTypeDisplayName(documentType)}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {DOCUMENT_TYPES.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {getPropertyDocumentTypeDisplayName(type)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+
+          {certificates.length > 0 ? (
+            <div className="space-y-2">
+              <Label>Link to certificate</Label>
+              <Select
+                value={linkedCertificateId ?? "none"}
+                onValueChange={(v) =>
+                  setLinkedCertificateId(v === "none" ? null : v)
+                }
+                disabled={uploading || isPending}
+              >
+                <SelectTrigger className="min-h-11 w-full">
+                  <SelectValue placeholder="None">
+                    {linkedCertificateId
+                      ? (() => {
+                          const cert = certificates.find(
+                            (c) => c.id === linkedCertificateId
+                          );
+                          return cert
+                            ? `${getCertificateTypeDisplayName(cert.certificate_type)} — expires ${formatPropertyDate(cert.expiry_date)}`
+                            : "None";
+                        })()
+                      : "None"}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  {certificates.map((cert) => (
+                    <SelectItem key={cert.id} value={cert.id}>
+                      {getCertificateTypeDisplayName(cert.certificate_type)} —
+                      expires {formatPropertyDate(cert.expiry_date)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : null}
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={ACCEPTED_TYPES}
+            className="hidden"
+            onChange={(e) => onFileSelected(e.target.files)}
+          />
+
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading || isPending}
+            className="flex min-h-24 w-full flex-col items-center justify-center gap-2 rounded-lg border border-border/60 bg-muted/20 px-4 py-6 text-center transition-colors hover:bg-muted/40 disabled:opacity-50"
+          >
+            {uploading ? (
+              <>
+                <Loader2 className="size-6 animate-spin text-amber-500" />
+                <span className="text-sm text-muted-foreground">Uploading…</span>
+              </>
+            ) : (
+              <>
+                <Upload className="size-6 text-amber-500" />
+                <span className="text-sm font-medium text-foreground">
+                  Drag and drop or click to upload
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  PDF, JPEG, PNG, WebP, HEIC · Max 10MB
+                </span>
+              </>
+            )}
+          </button>
+
+          {uploadError ? (
+            <p className="flex items-center gap-2 text-sm text-destructive">
+              <AlertTriangle className="size-4 shrink-0" />
+              {uploadError}
+            </p>
+          ) : null}
         </div>
-
-        {certificates.length > 0 ? (
-          <div className="space-y-2">
-            <Label>Link to certificate</Label>
-            <Select
-              value={linkedCertificateId ?? "none"}
-              onValueChange={(v) =>
-                setLinkedCertificateId(v === "none" ? null : v)
-              }
-              disabled={uploading || isPending}
-            >
-              <SelectTrigger className="min-h-11 w-full">
-                <SelectValue placeholder="None">
-                  {linkedCertificateId
-                    ? (() => {
-                        const cert = certificates.find(
-                          (c) => c.id === linkedCertificateId
-                        );
-                        return cert
-                          ? `${getCertificateTypeDisplayName(cert.certificate_type)} — expires ${formatPropertyDate(cert.expiry_date)}`
-                          : "None";
-                      })()
-                    : "None"}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">None</SelectItem>
-                {certificates.map((cert) => (
-                  <SelectItem key={cert.id} value={cert.id}>
-                    {getCertificateTypeDisplayName(cert.certificate_type)} —
-                    expires {formatPropertyDate(cert.expiry_date)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        ) : null}
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept={ACCEPTED_TYPES}
-          className="hidden"
-          onChange={(e) => onFileSelected(e.target.files)}
-        />
-
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploading || isPending}
-          className="mt-4 flex min-h-24 w-full flex-col items-center justify-center gap-2 rounded-lg border border-border/60 bg-muted/20 px-4 py-6 text-center transition-colors hover:bg-muted/40 disabled:opacity-50"
-        >
-          {uploading ? (
-            <>
-              <Loader2 className="size-6 animate-spin text-amber-500" />
-              <span className="text-sm text-muted-foreground">Uploading…</span>
-            </>
-          ) : (
-            <>
-              <Upload className="size-6 text-amber-500" />
-              <span className="text-sm font-medium text-foreground">
-                Drag and drop or click to upload
-              </span>
-              <span className="text-xs text-muted-foreground">
-                PDF, JPEG, PNG, WebP, HEIC · Max 10MB
-              </span>
-            </>
-          )}
-        </button>
-
-        {uploadError ? (
-          <p className="mt-3 flex items-center gap-2 text-sm text-destructive">
-            <AlertTriangle className="size-4 shrink-0" />
-            {uploadError}
-          </p>
-        ) : null}
       </div>
 
       {documents.length === 0 ? (

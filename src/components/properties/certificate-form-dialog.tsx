@@ -1,13 +1,15 @@
 "use client";
 
-import { Info } from "lucide-react";
+import { Info, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 
 import {
   createCertificate,
+  getDocumentUrl,
   linkDocumentToCertificate,
   updateCertificate,
+  uploadPropertyDocument,
 } from "@/app/(dashboard)/properties/actions";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,6 +39,7 @@ import {
   getCertificateTypeDisplayName,
   getPropertyDocumentTypeDisplayName,
 } from "@/lib/properties/display-names";
+import { formatFileSize } from "@/lib/properties/format";
 import type {
   CertificateType,
   PropertyCertificate,
@@ -44,6 +47,20 @@ import type {
   PropertyDocument,
   PropertyType,
 } from "@/lib/properties/types";
+import { cn } from "@/lib/utils";
+
+const ACCEPTED_FILE_TYPES = [
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+] as const;
+
+const ACCEPTED_TYPES =
+  "application/pdf,image/jpeg,image/png,image/webp,image/heic";
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 function emptyCertificateForm(
   propertyId: string
@@ -69,10 +86,32 @@ function certificateToFormInput(
   };
 }
 
+function buildCertificateDocumentName(
+  certificateType: CertificateType,
+  propertyName: string
+): string {
+  return `${getCertificateTypeDisplayName(certificateType)} Certificate — ${propertyName}`;
+}
+
+function validateSelectedFile(file: File): string | null {
+  if (
+    !ACCEPTED_FILE_TYPES.includes(
+      file.type as (typeof ACCEPTED_FILE_TYPES)[number]
+    )
+  ) {
+    return "Invalid file type. Allowed: PDF, JPEG, PNG, WebP, HEIC";
+  }
+  if (file.size > MAX_FILE_SIZE) {
+    return "File exceeds 10MB limit";
+  }
+  return null;
+}
+
 type CertificateFormDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   propertyId: string;
+  propertyName: string;
   propertyType: PropertyType;
   documents: PropertyDocument[];
   certificate?: PropertyCertificate | null;
@@ -82,11 +121,13 @@ export function CertificateFormDialog({
   open,
   onOpenChange,
   propertyId,
+  propertyName,
   propertyType,
   documents,
   certificate,
 }: CertificateFormDialogProps) {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const isEditing = Boolean(certificate);
   const [values, setValues] = useState<PropertyCertificateFormInput>(
     emptyCertificateForm(propertyId)
@@ -95,8 +136,14 @@ export function CertificateFormDialog({
   const [initialLinkedDocumentId, setInitialLinkedDocumentId] = useState<
     string | null
   >(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [showReplaceUpload, setShowReplaceUpload] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
   const [autoPopulatedExpiry, setAutoPopulatedExpiry] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [uploadWarning, setUploadWarning] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [isPending, startTransition] = useTransition();
   const formId = isEditing
     ? `edit-certificate-${certificate?.id}`
@@ -107,10 +154,23 @@ export function CertificateFormDialog({
     [values.certificate_type, propertyType]
   );
 
+  const linkedCertificateDocuments = useMemo(
+    () =>
+      certificate
+        ? documents.filter((d) => d.certificate_id === certificate.id)
+        : [],
+    [certificate, documents]
+  );
+
+  const primaryLinkedDocument = linkedCertificateDocuments[0] ?? null;
+
   const selectedDocument = useMemo(
     () => documents.find((d) => d.id === linkedDocumentId),
     [documents, linkedDocumentId]
   );
+
+  const showUploadArea =
+    !primaryLinkedDocument || showReplaceUpload || Boolean(selectedFile);
 
   const applyAutoExpiry = useCallback(
     (
@@ -143,9 +203,15 @@ export function CertificateFormDialog({
       setLinkedDocumentId(null);
       setInitialLinkedDocumentId(null);
     }
+    setSelectedFile(null);
+    setFileError(null);
+    setShowReplaceUpload(false);
+    setDragOver(false);
     setAutoPopulatedExpiry(false);
     setError(null);
-  }, [open, certificate, propertyId, documents, applyAutoExpiry]);
+    setUploadWarning(null);
+    setIsUploading(false);
+  }, [open, certificate, propertyId, documents]);
 
   const updateField = <K extends keyof PropertyCertificateFormInput>(
     key: K,
@@ -167,43 +233,100 @@ export function CertificateFormDialog({
     updateField("expiry_date", expiryDate);
   };
 
+  const handleFileChosen = (file: File | undefined) => {
+    if (!file) return;
+    const validationError = validateSelectedFile(file);
+    if (validationError) {
+      setFileError(validationError);
+      setSelectedFile(null);
+      return;
+    }
+    setFileError(null);
+    setSelectedFile(file);
+    setUploadWarning(null);
+  };
+
+  const handleViewDocument = async (doc: PropertyDocument) => {
+    const url = await getDocumentUrl(doc.file_path);
+    if (url) window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setUploadWarning(null);
 
     startTransition(async () => {
       if (
         isEditing &&
         initialLinkedDocumentId &&
-        initialLinkedDocumentId !== linkedDocumentId
+        initialLinkedDocumentId !== linkedDocumentId &&
+        !selectedFile
       ) {
         await linkDocumentToCertificate(initialLinkedDocumentId, null);
       }
 
       let documentArg: string | null | undefined = undefined;
-      if (linkedDocumentId) {
-        documentArg = linkedDocumentId;
-      } else if (isEditing && initialLinkedDocumentId) {
-        documentArg = null;
+      if (!selectedFile) {
+        if (linkedDocumentId) {
+          documentArg = linkedDocumentId;
+        } else if (isEditing && initialLinkedDocumentId) {
+          documentArg = null;
+        }
       }
 
       const result = isEditing
         ? await updateCertificate(certificate!.id, values, documentArg)
-        : await createCertificate(values, linkedDocumentId ?? undefined);
+        : await createCertificate(
+            values,
+            selectedFile ? undefined : linkedDocumentId ?? undefined
+          );
 
       if (!result.success) {
         setError(result.error);
         return;
       }
+
+      const certificateId = result.data!.id;
+
+      if (selectedFile) {
+        setIsUploading(true);
+        const uploadResult = await uploadPropertyDocument(
+          propertyId,
+          selectedFile,
+          "certificate",
+          buildCertificateDocumentName(values.certificate_type, propertyName),
+          certificateId
+        );
+        setIsUploading(false);
+
+        if (!uploadResult.success) {
+          setUploadWarning(
+            "Certificate saved but document upload failed. You can upload it from the Documents tab."
+          );
+          router.refresh();
+          return;
+        }
+      }
+
       onOpenChange(false);
       router.refresh();
     });
   };
 
+  const isBusy = isPending || isUploading;
+  const submitLabel = isUploading
+    ? "Uploading…"
+    : isPending
+      ? "Saving…"
+      : isEditing
+        ? "Save changes"
+        : "Add certificate";
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[90dvh] flex-col sm:max-w-lg">
+        <DialogHeader className="shrink-0">
           <DialogTitle>
             {isEditing ? "Edit certificate" : "Add certificate"}
           </DialogTitle>
@@ -211,7 +334,11 @@ export function CertificateFormDialog({
             Track compliance certificates and expiry dates.
           </DialogDescription>
         </DialogHeader>
-        <form id={formId} onSubmit={handleSubmit} className="space-y-4">
+        <form
+          id={formId}
+          onSubmit={handleSubmit}
+          className="min-h-0 flex-1 space-y-4 overflow-y-auto px-0.5 py-1"
+        >
           <div className="space-y-2">
             <Label>Certificate type *</Label>
             <Select
@@ -219,7 +346,7 @@ export function CertificateFormDialog({
               onValueChange={(v) =>
                 v && handleCertificateTypeChange(v as CertificateType)
               }
-              disabled={isPending}
+              disabled={isBusy}
             >
               <SelectTrigger className="min-h-11 w-full">
                 <SelectValue>
@@ -246,6 +373,7 @@ export function CertificateFormDialog({
               </div>
             ) : null}
           </div>
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor={`${formId}-issue`}>Issue date</Label>
@@ -254,7 +382,7 @@ export function CertificateFormDialog({
                 type="date"
                 value={values.issue_date ?? ""}
                 onChange={(e) => handleIssueDateChange(e.target.value)}
-                disabled={isPending}
+                disabled={isBusy}
               />
             </div>
             <div className="space-y-2">
@@ -264,7 +392,7 @@ export function CertificateFormDialog({
                 type="date"
                 value={values.expiry_date ?? ""}
                 onChange={(e) => handleExpiryDateChange(e.target.value)}
-                disabled={isPending}
+                disabled={isBusy}
               />
               {autoPopulatedExpiry && activeDuration ? (
                 <p className="text-xs text-muted-foreground">
@@ -276,18 +404,137 @@ export function CertificateFormDialog({
               ) : null}
             </div>
           </div>
+
           <div className="space-y-2">
             <Label htmlFor={`${formId}-notes`}>Notes</Label>
             <Textarea
               id={`${formId}-notes`}
               value={values.notes ?? ""}
               onChange={(e) => updateField("notes", e.target.value)}
-              disabled={isPending}
+              disabled={isBusy}
               rows={3}
             />
           </div>
 
-          {documents.length > 0 ? (
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label className="text-sm font-medium">
+                Certificate document{" "}
+                <span className="font-normal text-muted-foreground">
+                  (optional)
+                </span>
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Upload the certificate PDF or image
+              </p>
+            </div>
+
+            {primaryLinkedDocument && !showReplaceUpload && !selectedFile ? (
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="min-h-11"
+                  onClick={() => void handleViewDocument(primaryLinkedDocument)}
+                  disabled={isBusy}
+                >
+                  View document
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="min-h-11"
+                  onClick={() => setShowReplaceUpload(true)}
+                  disabled={isBusy}
+                >
+                  Replace document
+                </Button>
+              </div>
+            ) : null}
+
+            {showUploadArea ? (
+              <div className="space-y-3">
+                {selectedFile ? (
+                  <div className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-muted/20 px-4 py-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-foreground">
+                        {selectedFile.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatFileSize(selectedFile.size)}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="min-h-9 shrink-0 gap-1.5"
+                      onClick={() => {
+                        setSelectedFile(null);
+                        setFileError(null);
+                        if (primaryLinkedDocument) {
+                          setShowReplaceUpload(false);
+                        }
+                      }}
+                      disabled={isBusy}
+                    >
+                      <X className="size-4" />
+                      Remove
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept={ACCEPTED_TYPES}
+                      className="hidden"
+                      onChange={(e) => {
+                        handleFileChosen(e.target.files?.[0]);
+                        e.target.value = "";
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isBusy}
+                      onDragOver={(ev) => {
+                        ev.preventDefault();
+                        setDragOver(true);
+                      }}
+                      onDragLeave={() => setDragOver(false)}
+                      onDrop={(ev) => {
+                        ev.preventDefault();
+                        setDragOver(false);
+                        handleFileChosen(ev.dataTransfer.files?.[0]);
+                      }}
+                      className={cn(
+                        "flex min-h-24 w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-6 text-center transition-colors disabled:opacity-50",
+                        dragOver
+                          ? "border-amber-500 bg-amber-500/5"
+                          : "border-border/60 bg-muted/20 hover:bg-muted/40"
+                      )}
+                    >
+                      <Upload className="size-6 text-amber-500" />
+                      <span className="text-sm font-medium text-foreground">
+                        Drag and drop or click to select
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        PDF, JPEG, PNG, WebP, HEIC · Max 10MB
+                      </span>
+                    </button>
+                  </>
+                )}
+                {fileError ? (
+                  <p className="text-sm text-destructive">{fileError}</p>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+
+          {documents.length > 0 && !selectedFile ? (
             <div className="space-y-2">
               <Label>Link to document</Label>
               <Select
@@ -295,7 +542,7 @@ export function CertificateFormDialog({
                 onValueChange={(v) =>
                   setLinkedDocumentId(v === "none" ? null : v)
                 }
-                disabled={isPending}
+                disabled={isBusy}
               >
                 <SelectTrigger className="min-h-11 w-full">
                   <SelectValue placeholder="None">
@@ -315,19 +562,25 @@ export function CertificateFormDialog({
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Optionally link an uploaded document to this certificate.
+                Optionally link an existing uploaded document to this
+                certificate.
               </p>
             </div>
           ) : null}
 
+          {uploadWarning ? (
+            <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-800 dark:text-amber-200">
+              {uploadWarning}
+            </p>
+          ) : null}
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
         </form>
-        <DialogFooter>
+        <DialogFooter className="shrink-0 border-t border-border/50 pt-4">
           <Button
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={isPending}
+            disabled={isBusy}
             className="min-h-11"
           >
             Cancel
@@ -335,10 +588,10 @@ export function CertificateFormDialog({
           <Button
             type="submit"
             form={formId}
-            disabled={isPending}
+            disabled={isBusy}
             className="min-h-11"
           >
-            {isPending ? "Saving…" : isEditing ? "Save changes" : "Add certificate"}
+            {submitLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

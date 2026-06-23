@@ -39,6 +39,7 @@ import { cn } from "@/lib/utils";
 
 type PropertyCertificatesTabProps = {
   propertyId: string;
+  propertyName: string;
   propertyType: PropertyType;
   certificates: PropertyCertificate[];
   documents: PropertyDocument[];
@@ -48,6 +49,7 @@ type PropertyCertificatesTabProps = {
 
 export function PropertyCertificatesTab({
   propertyId,
+  propertyName,
   propertyType,
   certificates,
   documents,
@@ -262,6 +264,7 @@ export function PropertyCertificatesTab({
         open={formOpen}
         onOpenChange={setFormOpen}
         propertyId={propertyId}
+        propertyName={propertyName}
         propertyType={propertyType}
         documents={documents}
         certificate={editingCertificate}

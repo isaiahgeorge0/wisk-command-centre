@@ -182,6 +182,7 @@ export function PropertyDetailClient({
       ) : activeTab === "certificates" ? (
         <PropertyCertificatesTab
           propertyId={property.id}
+          propertyName={property.name}
           propertyType={property.property_type}
           certificates={certificates}
           documents={documents}
