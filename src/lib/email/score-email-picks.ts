@@ -1,5 +1,7 @@
 import type { EmailThread } from "@/lib/email/types";
 
+export const MIN_PICK_SCORE_THRESHOLD = 2;
+
 const URGENT_SUBJECT_INDICATORS = [
   "urgent",
   "important",
@@ -11,14 +13,32 @@ const URGENT_SUBJECT_INDICATORS = [
   "payment",
 ];
 
-const AUTOMATED_SENDER_PATTERNS = [
+const EMAIL_EXCLUSION_CONTAINS = [
   "noreply",
   "no-reply",
   "donotreply",
   "do-not-reply",
-  "notifications",
-  "mailer-daemon",
+  "do_not_reply",
+];
+
+const EMAIL_EXCLUSION_PREFIXES = ["mailer-", "bounce-", "auto-"];
+
+const EMAIL_EXCLUSION_DOMAIN_CONTAINS = [
+  "@notifications.",
+  "@updates.",
+  "@news.",
+  "@newsletter.",
+  "@marketing.",
+  "@promo.",
+  "@automated.",
+];
+
+const NAME_EXCLUSION_CONTAINS = [
   "automated",
+  "system",
+  "notification",
+  "newsletter",
+  "mailer",
 ];
 
 function isUnreadOlderThanHours(dateIso: string, hours: number): boolean {
@@ -31,9 +51,33 @@ function subjectIndicatesUrgency(subject: string): boolean {
   return URGENT_SUBJECT_INDICATORS.some((indicator) => lower.includes(indicator));
 }
 
-function isAutomatedSender(email: EmailThread): boolean {
-  const haystack = `${email.from.name} ${email.from.email}`.toLowerCase();
-  return AUTOMATED_SENDER_PATTERNS.some((pattern) => haystack.includes(pattern));
+export function isExcludedFromPicks(email: EmailThread): boolean {
+  if (email.category === "newsletters") {
+    return true;
+  }
+
+  const fromEmail = email.from.email.toLowerCase();
+  const fromName = email.from.name.toLowerCase();
+
+  if (EMAIL_EXCLUSION_CONTAINS.some((pattern) => fromEmail.includes(pattern))) {
+    return true;
+  }
+
+  if (EMAIL_EXCLUSION_PREFIXES.some((prefix) => fromEmail.startsWith(prefix))) {
+    return true;
+  }
+
+  if (
+    EMAIL_EXCLUSION_DOMAIN_CONTAINS.some((pattern) => fromEmail.includes(pattern))
+  ) {
+    return true;
+  }
+
+  if (NAME_EXCLUSION_CONTAINS.some((pattern) => fromName.includes(pattern))) {
+    return true;
+  }
+
+  return false;
 }
 
 export type ScoredEmail = {
@@ -67,14 +111,6 @@ export function scoreEmailForPicks(
   if (/^re:\s/i.test(email.subject.trim())) {
     score += 1;
     reasons.push({ points: 1, label: "Direct reply thread" });
-  }
-
-  if (isAutomatedSender(email)) {
-    score -= 2;
-  }
-
-  if (email.category === "newsletters") {
-    score -= 3;
   }
 
   const priorityReason =

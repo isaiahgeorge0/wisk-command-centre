@@ -5,7 +5,11 @@ import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { hasPackageAccess } from "@/lib/billing/access";
 import { fetchUnreadEmailsForPicks } from "@/lib/email/fetch-unread-for-picks";
 import { generateEmailDraft } from "@/lib/email/generate-draft";
-import { scoreEmailForPicks } from "@/lib/email/score-email-picks";
+import {
+  isExcludedFromPicks,
+  MIN_PICK_SCORE_THRESHOLD,
+  scoreEmailForPicks,
+} from "@/lib/email/score-email-picks";
 import type {
   EmailWindow,
   WinstonPick,
@@ -18,6 +22,8 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
+
+const MAX_PICKS = 3;
 
 type CachedPicksRow = {
   window: EmailWindow;
@@ -129,14 +135,27 @@ async function generatePicks(
   );
 
   const scored = emails
+    .filter((email) => !isExcludedFromPicks(email))
     .map((email) =>
       scoreEmailForPicks(
         email,
         knownLeadEmails.has(email.from.email.trim().toLowerCase())
       )
     )
+    .filter((item) => item.score >= MIN_PICK_SCORE_THRESHOLD)
     .sort((a, b) => b.score - a.score)
-    .slice(0, 5);
+    .slice(0, MAX_PICKS);
+
+  if (scored.length === 0) {
+    const generatedAt = await storePicks(userId, date, window, []);
+    return {
+      window,
+      date,
+      picks: [],
+      generatedAt,
+      isFromCache: false,
+    };
+  }
 
   const picks: WinstonPick[] = [];
 
