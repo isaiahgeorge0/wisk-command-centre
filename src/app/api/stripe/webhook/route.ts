@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import * as Sentry from "@sentry/nextjs";
 import Stripe from "stripe";
 
@@ -65,6 +66,13 @@ function resolvePackageFromSubscription(
   const priceId = subscription.items.data[0]?.price?.id;
   if (!priceId) return null;
   return priceMap[priceId] ?? null;
+}
+
+function revalidateSubscriptionPaths() {
+  revalidatePath("/");
+  revalidatePath("/", "layout");
+  revalidatePath("/properties");
+  revalidatePath("/upgrade/success");
 }
 
 async function resolveUserId(
@@ -147,10 +155,18 @@ async function upsertSubscription(
       .from("user_subscriptions")
       .update(row)
       .eq("id", existing.id);
-    if (error) console.error("stripe webhook update failed:", error.message);
+    if (error) {
+      console.error("stripe webhook update failed:", error.message);
+    } else {
+      revalidateSubscriptionPaths();
+    }
   } else {
     const { error } = await admin.from("user_subscriptions").insert(row);
-    if (error) console.error("stripe webhook insert failed:", error.message);
+    if (error) {
+      console.error("stripe webhook insert failed:", error.message);
+    } else {
+      revalidateSubscriptionPaths();
+    }
   }
 }
 

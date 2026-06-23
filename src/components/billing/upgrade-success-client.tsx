@@ -7,22 +7,19 @@ import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { MOTION_EASE } from "@/lib/motion/config";
 import { useMotionSafe } from "@/lib/motion/use-motion-safe";
-import type { BillingPlan } from "@/lib/billing/types";
+import type { WiskPackage } from "@/lib/billing/types";
 import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type UpgradeSuccessClientProps = {
-  plan: BillingPlan;
+  pkg: WiskPackage | null;
   planLabel: string;
 };
 
-// ─── Per-plan unlock descriptions ─────────────────────────────────────────────
+// ─── Per-package unlock descriptions ──────────────────────────────────────────
 
-const PLAN_UNLOCKS: Record<BillingPlan, string[]> = {
-  free: [
-    "WISK Command Centre — projects, tasks, goals, leads, and more",
-  ],
+const PACKAGE_UNLOCKS: Partial<Record<WiskPackage, string[]>> = {
   ai: [
     "AI Digest — your weekly business summary, every Sunday",
     "WISK Chat — ask Winston anything about your business",
@@ -39,18 +36,50 @@ const PLAN_UNLOCKS: Record<BillingPlan, string[]> = {
     "Access to all current and future packages",
     "Highest usage limits across every feature",
   ],
+  properties: [
+    "Portfolio dashboard",
+    "Tenant management",
+    "Maintenance tracking",
+    "Rent tracking",
+    "Certificate alerts",
+    "Document storage",
+    "Winston property insights",
+  ],
 };
+
+const PENDING_UNLOCKS = [
+  "WISK Command Centre — projects, tasks, goals, leads, and more",
+];
+
+function getUnlocks(pkg: WiskPackage | null): string[] {
+  if (!pkg) return PENDING_UNLOCKS;
+  return PACKAGE_UNLOCKS[pkg] ?? PENDING_UNLOCKS;
+}
+
+function getPrimaryCta(pkg: WiskPackage | null): { href: string; label: string } {
+  if (pkg === "ai" || pkg === "ai_pro") {
+    return { href: "/ai-digest", label: "Go to Winston" };
+  }
+  if (pkg === "properties") {
+    return { href: "/properties", label: "Go to Properties" };
+  }
+  if (pkg) {
+    return { href: "/", label: "Go to overview" };
+  }
+  return { href: "/", label: "Go to overview" };
+}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function UpgradeSuccessClient({
-  plan,
+  pkg,
   planLabel,
 }: UpgradeSuccessClientProps) {
   const { getInitial, transition, reduced } = useMotionSafe();
 
-  const isActivePlan = plan !== "free";
-  const unlocks = PLAN_UNLOCKS[plan] ?? PLAN_UNLOCKS.ai;
+  const isActivePlan = pkg !== null;
+  const unlocks = getUnlocks(pkg);
+  const primaryCta = getPrimaryCta(pkg);
 
   const checkVariants = {
     hidden: { scale: 0.6, opacity: 0 },
@@ -144,13 +173,13 @@ export function UpgradeSuccessClient({
         {/* CTAs */}
         <div className="flex flex-col items-center gap-3 pt-2">
           <Link
-            href="/ai-digest"
+            href={primaryCta.href}
             className={cn(
               buttonVariants({ size: "lg" }),
               "bg-wisk-teal text-white hover:bg-wisk-teal/90"
             )}
           >
-            Go to Winston
+            {primaryCta.label}
           </Link>
 
           <Link

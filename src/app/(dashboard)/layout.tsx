@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { unstable_noStore as noStore } from "next/cache";
 import * as Sentry from "@sentry/nextjs";
 
 import { getGoals } from "@/app/(dashboard)/goals/actions";
@@ -19,6 +20,8 @@ import { getUserProfile } from "@/lib/auth/get-user-profile";
 import { hasPackageAccess } from "@/lib/billing/access";
 import { getOrCreateUserPreferences } from "@/lib/preferences/get-user-preferences";
 import { createAdminClient } from "@/lib/supabase/admin";
+
+export const dynamic = "force-dynamic";
 
 export default async function DashboardLayout({
   children,
@@ -48,6 +51,9 @@ export default async function DashboardLayout({
   }
 
   await generateNotifications();
+  noStore();
+
+  const supabase = createAdminClient();
   const [
     profile,
     preferences,
@@ -67,7 +73,7 @@ export default async function DashboardLayout({
     getActiveAnnouncements(user.id),
     getPublishedChangelog(10),
     getUnreadChangelogCount(),
-    hasPackageAccess(user.id, "properties", createAdminClient()),
+    hasPackageAccess(user.id, "properties", supabase),
   ]);
 
   const displayName = resolveDisplayName({
