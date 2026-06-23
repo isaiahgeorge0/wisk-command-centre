@@ -15,7 +15,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { MOTION_DURATION, MOTION_EASE } from "@/lib/motion/config";
 import {
@@ -47,8 +48,34 @@ export function NavDropdown({ group }: NavDropdownProps) {
   const pathname = usePathname();
   const reduced = useReducedMotion();
   const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState<{ top: number; left: number } | null>(
+    null
+  );
+  const triggerRef = useRef<HTMLDivElement>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const active = isDropdownGroupActive(pathname, group.items);
+
+  const updatePosition = useCallback(() => {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    setPosition({ top: rect.bottom + 8, left: rect.left });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setPosition(null);
+      return;
+    }
+
+    updatePosition();
+    window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("resize", updatePosition);
+
+    return () => {
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [open, updatePosition]);
 
   const clearCloseTimer = () => {
     if (closeTimerRef.current) {
@@ -69,6 +96,7 @@ export function NavDropdown({ group }: NavDropdownProps) {
 
   return (
     <div
+      ref={triggerRef}
       className="relative shrink-0"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -104,50 +132,58 @@ export function NavDropdown({ group }: NavDropdownProps) {
         ) : null}
       </button>
 
-      <AnimatePresence>
-        {open ? (
-          <motion.div
-            initial={reduced ? false : { opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduced ? undefined : { opacity: 0, y: -4 }}
-            transition={{ duration: 0.15 }}
-            className="absolute left-0 top-full z-50 mt-2 min-w-[260px] overflow-hidden rounded-lg border border-border/60 bg-surface/95 p-1 shadow-lg backdrop-blur-md"
-          >
-            {group.items.map((item) => {
-              const Icon = DROPDOWN_ICONS[item.icon];
-              const itemActive = isNavActive(pathname, item.href);
-
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "flex items-start gap-3 rounded-md px-3 py-2.5 transition-colors duration-200",
-                    itemActive
-                      ? "bg-muted/60 text-foreground"
-                      : "text-foreground hover:bg-muted/40"
-                  )}
+      {typeof document !== "undefined"
+        ? createPortal(
+            <AnimatePresence>
+              {open && position ? (
+                <motion.div
+                  initial={reduced ? false : { opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={reduced ? undefined : { opacity: 0, y: -4 }}
+                  transition={{ duration: 0.15 }}
+                  style={{ top: position.top, left: position.left }}
+                  className="fixed z-[100] min-w-[260px] overflow-hidden rounded-lg border border-border/60 bg-surface/95 p-1 shadow-lg backdrop-blur-md"
+                  onMouseEnter={handleMouseEnter}
+                  onMouseLeave={handleMouseLeave}
                 >
-                  <Icon
-                    className={cn(
-                      "mt-0.5 size-4 shrink-0",
-                      itemActive ? "text-wisk-teal" : "text-muted-foreground"
-                    )}
-                  />
-                  <span className="min-w-0">
-                    <span className="block text-sm font-medium leading-tight">
-                      {item.label}
-                    </span>
-                    <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
-                      {item.description}
-                    </span>
-                  </span>
-                </Link>
-              );
-            })}
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+                  {group.items.map((item) => {
+                    const Icon = DROPDOWN_ICONS[item.icon];
+                    const itemActive = isNavActive(pathname, item.href);
+
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={cn(
+                          "flex items-start gap-3 rounded-md px-3 py-2.5 transition-colors duration-200",
+                          itemActive
+                            ? "bg-muted/60 text-foreground"
+                            : "text-foreground hover:bg-muted/40"
+                        )}
+                      >
+                        <Icon
+                          className={cn(
+                            "mt-0.5 size-4 shrink-0",
+                            itemActive ? "text-wisk-teal" : "text-muted-foreground"
+                          )}
+                        />
+                        <span className="min-w-0">
+                          <span className="block text-sm font-medium leading-tight">
+                            {item.label}
+                          </span>
+                          <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
+                            {item.description}
+                          </span>
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </motion.div>
+              ) : null}
+            </AnimatePresence>,
+            document.body
+          )
+        : null}
     </div>
   );
 }

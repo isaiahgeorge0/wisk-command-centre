@@ -50,7 +50,7 @@ export function TopNav({
           WISK
         </Link>
 
-        <nav className="hidden min-w-0 flex-1 items-center gap-4 overflow-x-auto md:flex lg:gap-6">
+        <nav className="hidden min-w-0 flex-1 items-center gap-4 overflow-visible md:flex lg:gap-6">
           {DESKTOP_STANDALONE_NAV.filter(
             (item) =>
               !("requiresProperties" in item && item.requiresProperties) ||
