@@ -10,10 +10,8 @@ import {
 import { MessageThread } from "@/components/properties/communication/message-thread";
 import { PresenceLabel } from "@/components/properties/communication/presence-label";
 import { getTenantFullName } from "@/lib/properties/tenant-form";
-import {
-  useLandlordMessagesRealtime,
-  useTypingPresence,
-} from "@/lib/properties/use-tenant-messages-realtime";
+import { useLandlordMessageEvent } from "@/lib/properties/use-landlord-message-event";
+import { useTypingPresence } from "@/lib/properties/use-tenant-messages-realtime";
 import type { Tenant, TenantMessage } from "@/lib/properties/types";
 import { cn } from "@/lib/utils";
 
@@ -85,11 +83,7 @@ export function PropertyMessagesTab({
     }
   }, [propertyId]);
 
-  useLandlordMessagesRealtime({
-    landlordUserId,
-    propertyId,
-    onInsert: handleRealtimeInsert,
-  });
+  useLandlordMessageEvent(handleRealtimeInsert);
 
   const handleSend = async (text: string) => {
     if (!selectedTenant) return;

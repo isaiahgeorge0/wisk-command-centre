@@ -35,19 +35,14 @@ function isActive(pathname: string, href: string): boolean {
 type PropertiesSidebarProps = {
   className?: string;
   unreadMessageCount?: number;
-  landlordUserId: string;
 };
 
 export function PropertiesSidebar({
   className,
   unreadMessageCount = 0,
-  landlordUserId,
 }: PropertiesSidebarProps) {
   const pathname = usePathname();
-  const localUnreadCount = useUnreadMessageCount(
-    landlordUserId,
-    unreadMessageCount
-  );
+  const localUnreadCount = useUnreadMessageCount(unreadMessageCount);
 
   return (
     <aside

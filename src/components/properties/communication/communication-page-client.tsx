@@ -17,10 +17,8 @@ import {
   formatMessageTimestamp,
   truncateMessagePreview,
 } from "@/lib/properties/format";
-import {
-  useLandlordMessagesRealtime,
-  useTypingPresence,
-} from "@/lib/properties/use-tenant-messages-realtime";
+import { useLandlordMessageEvent } from "@/lib/properties/use-landlord-message-event";
+import { useTypingPresence } from "@/lib/properties/use-tenant-messages-realtime";
 import type { ConversationSummary, TenantMessage } from "@/lib/properties/types";
 import { cn } from "@/lib/utils";
 
@@ -126,10 +124,7 @@ export function CommunicationPageClient({
     }
   }, []);
 
-  useLandlordMessagesRealtime({
-    landlordUserId,
-    onInsert: handleRealtimeInsert,
-  });
+  useLandlordMessageEvent(handleRealtimeInsert);
 
   const selectConversation = (conversation: ConversationSummary) => {
     setSelectedTenantId(conversation.tenant_id);

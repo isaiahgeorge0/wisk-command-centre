@@ -7,11 +7,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getConversations } from "@/app/(dashboard)/properties/actions";
 import { MessageToast } from "@/components/properties/communication/message-toast";
 import { truncateMessagePreview } from "@/lib/properties/format";
-import { useLandlordMessagesRealtime } from "@/lib/properties/use-tenant-messages-realtime";
+import { useLandlordMessageEvent } from "@/lib/properties/use-landlord-message-event";
 import type { TenantMessage } from "@/lib/properties/types";
 
 type Props = {
-  landlordUserId: string;
   children: React.ReactNode;
 };
 
@@ -21,10 +20,7 @@ type ToastState = {
   preview: string;
 } | null;
 
-export function PropertiesMessageToastProvider({
-  landlordUserId,
-  children,
-}: Props) {
+export function PropertiesMessageToastProvider({ children }: Props) {
   const pathname = usePathname();
   const pathnameRef = useRef(pathname);
   const [toast, setToast] = useState<ToastState>(null);
@@ -56,27 +52,23 @@ export function PropertiesMessageToastProvider({
     };
   }, []);
 
-  const handleInsert = useCallback((message: TenantMessage) => {
-    if (message.sender_type !== "tenant") return;
-    if (message.sender_id === message.landlord_user_id) return;
-    if (pathnameRef.current === "/properties/communication") return;
+  useLandlordMessageEvent(
+    useCallback((message: TenantMessage) => {
+      if (pathnameRef.current === "/properties/communication") return;
+      if (message.sender_type !== "tenant") return;
+      if (message.sender_id === message.landlord_user_id) return;
 
-    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
 
-    setToast({
-      tenantId: message.tenant_id,
-      tenantName: tenantNamesRef.current[message.tenant_id] ?? "Tenant",
-      preview: truncateMessagePreview(message.message),
-    });
+      setToast({
+        tenantId: message.tenant_id,
+        tenantName: tenantNamesRef.current[message.tenant_id] ?? "Tenant",
+        preview: truncateMessagePreview(message.message),
+      });
 
-    toastTimerRef.current = setTimeout(() => setToast(null), 5000);
-  }, []);
-
-  useLandlordMessagesRealtime({
-    landlordUserId,
-    channelSuffix: "toast",
-    onInsert: handleInsert,
-  });
+      toastTimerRef.current = setTimeout(() => setToast(null), 5000);
+    }, [])
+  );
 
   return (
     <>
