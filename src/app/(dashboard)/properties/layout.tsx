@@ -24,6 +24,7 @@ export default async function PropertiesLayout({
       <PropertiesSidebar
         className="hidden md:flex"
         unreadMessageCount={unreadMessageCount}
+        landlordUserId={userId}
       />
       <PropertiesMessageToastProvider landlordUserId={userId}>
         <div className="min-h-0 min-w-0 flex-1 overflow-y-auto px-4 md:px-6 lg:px-8">

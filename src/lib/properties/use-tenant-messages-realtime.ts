@@ -42,10 +42,8 @@ export function useLandlordMessagesRealtime({
   useEffect(() => {
     const supabase = createClient();
     const channelName = propertyId
-      ? `landlord-messages-${landlordUserId}-${propertyId}`
-      : channelSuffix
-        ? `landlord-messages-${landlordUserId}-${channelSuffix}`
-        : `landlord-messages-${landlordUserId}`;
+      ? `landlord-messages-${landlordUserId}-${propertyId}${channelSuffix ? `-${channelSuffix}` : ""}`
+      : `landlord-messages-${landlordUserId}${channelSuffix ? `-${channelSuffix}` : ""}`;
     const channel = supabase
       .channel(channelName)
       .on(

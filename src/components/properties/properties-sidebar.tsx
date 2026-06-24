@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
   Building2,
   FileText,
@@ -15,6 +14,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { useUnreadMessageCount } from "@/lib/properties/use-unread-message-count";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS: { label: string; href: string; icon: LucideIcon }[] = [
@@ -35,24 +35,19 @@ function isActive(pathname: string, href: string): boolean {
 type PropertiesSidebarProps = {
   className?: string;
   unreadMessageCount?: number;
+  landlordUserId: string;
 };
 
 export function PropertiesSidebar({
   className,
   unreadMessageCount = 0,
+  landlordUserId,
 }: PropertiesSidebarProps) {
   const pathname = usePathname();
-  const [localUnreadCount, setLocalUnreadCount] = useState(unreadMessageCount);
-
-  useEffect(() => {
-    setLocalUnreadCount(unreadMessageCount);
-  }, [unreadMessageCount]);
-
-  useEffect(() => {
-    const handler = () => setLocalUnreadCount(0);
-    window.addEventListener("wisk:messages-read", handler);
-    return () => window.removeEventListener("wisk:messages-read", handler);
-  }, []);
+  const localUnreadCount = useUnreadMessageCount(
+    landlordUserId,
+    unreadMessageCount
+  );
 
   return (
     <aside
