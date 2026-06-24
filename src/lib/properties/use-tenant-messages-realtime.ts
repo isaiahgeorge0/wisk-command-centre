@@ -44,7 +44,6 @@ export function useLandlordMessagesRealtime({
     const channelName = propertyId
       ? `landlord-messages-${landlordUserId}-${propertyId}${channelSuffix ? `-${channelSuffix}` : ""}`
       : `landlord-messages-${landlordUserId}${channelSuffix ? `-${channelSuffix}` : ""}`;
-    console.log("[Realtime] Subscribing landlord channel:", channelName);
     const channel = supabase
       .channel(channelName)
       .on(
@@ -55,7 +54,6 @@ export function useLandlordMessagesRealtime({
           table: "tenant_messages",
         },
         (payload) => {
-          console.log("[Realtime] INSERT received:", payload.new);
           const message = payload.new as TenantMessage;
           if (message.landlord_user_id !== landlordUserId) return;
           if (propertyId && message.property_id !== propertyId) return;
@@ -76,9 +74,7 @@ export function useLandlordMessagesRealtime({
           onUpdateRef.current?.(message);
         }
       )
-      .subscribe((status) => {
-        console.log("[Realtime] Landlord channel status:", status);
-      });
+      .subscribe();
 
     return () => {
       void supabase.removeChannel(channel);
@@ -102,7 +98,6 @@ export function useTenantMessagesRealtime({
     const channelName = channelSuffix
       ? `tenant-messages-${tenantId}-${channelSuffix}`
       : `tenant-messages-${tenantId}`;
-    console.log("[Realtime] Subscribing tenant channel:", channelName);
     const channel = supabase
       .channel(channelName)
       .on(
@@ -113,7 +108,6 @@ export function useTenantMessagesRealtime({
           table: "tenant_messages",
         },
         (payload) => {
-          console.log("[Realtime] Tenant INSERT received:", payload.new);
           const message = payload.new as TenantMessage;
           if (message.tenant_id !== tenantId) return;
           onInsertRef.current(message);
@@ -132,9 +126,7 @@ export function useTenantMessagesRealtime({
           onUpdateRef.current?.(message);
         }
       )
-      .subscribe((status) => {
-        console.log("[Realtime] Tenant channel status:", status);
-      });
+      .subscribe();
 
     return () => {
       void supabase.removeChannel(channel);

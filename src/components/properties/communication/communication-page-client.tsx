@@ -12,7 +12,6 @@ import {
 import { MessageThread } from "@/components/properties/communication/message-thread";
 import { PresenceLabel } from "@/components/properties/communication/presence-label";
 import { PageHeader } from "@/components/layout/page-header";
-import { PageTransition } from "@/components/layout/page-transition";
 import { PROPERTIES_ACCENT } from "@/lib/properties/constants";
 import {
   formatMessageTimestamp,
@@ -207,7 +206,7 @@ export function CommunicationPageClient({
   };
 
   return (
-    <PageTransition>
+    <div>
       <PageHeader
         title="Communication"
         subtitle="Messages with your tenants."
@@ -358,6 +357,6 @@ export function CommunicationPageClient({
           )}
         </section>
       </div>
-    </PageTransition>
+    </div>
   );
 }
