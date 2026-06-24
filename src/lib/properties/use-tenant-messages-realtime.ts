@@ -44,6 +44,7 @@ export function useLandlordMessagesRealtime({
     const channelName = propertyId
       ? `landlord-messages-${landlordUserId}-${propertyId}${channelSuffix ? `-${channelSuffix}` : ""}`
       : `landlord-messages-${landlordUserId}${channelSuffix ? `-${channelSuffix}` : ""}`;
+    console.log("[Realtime] Landlord subscribing:", channelName);
     const channel = supabase
       .channel(channelName)
       .on(
@@ -54,6 +55,7 @@ export function useLandlordMessagesRealtime({
           table: "tenant_messages",
         },
         (payload) => {
+          console.log("[Realtime] Landlord INSERT fired:", payload.new);
           const message = payload.new as TenantMessage;
           if (message.landlord_user_id !== landlordUserId) return;
           if (propertyId && message.property_id !== propertyId) return;
@@ -74,7 +76,9 @@ export function useLandlordMessagesRealtime({
           onUpdateRef.current?.(message);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("[Realtime] Landlord status:", channelName, status);
+      });
 
     return () => {
       void supabase.removeChannel(channel);
