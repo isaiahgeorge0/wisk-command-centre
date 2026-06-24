@@ -95,6 +95,11 @@ export function PropertyValuationSection({
     return manual;
   }, [valuation, comparables.length]);
 
+  const selectedProperty = useMemo(
+    () => properties.find((property) => property.id === selectedPropertyId),
+    [properties, selectedPropertyId]
+  );
+
   const lowEvidence =
     valuation?.search_level === "town" ||
     valuation?.confidence === "low";
@@ -159,7 +164,9 @@ export function PropertyValuationSection({
             onValueChange={(v) => v && setSelectedPropertyId(v)}
           >
             <SelectTrigger className="min-h-11 w-full sm:w-[240px]">
-              <SelectValue placeholder="Select property" />
+              <SelectValue placeholder="Select property">
+                {selectedProperty?.name ?? "Select property"}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {properties.map((property) => (

@@ -4,7 +4,10 @@ import { getGoals } from "@/app/(dashboard)/goals/actions";
 import { getLeads } from "@/app/(dashboard)/leads/actions";
 import { getProjects } from "@/app/(dashboard)/projects/actions";
 import { getTasks } from "@/app/(dashboard)/tasks/actions";
-import { getProperties } from "@/app/(dashboard)/properties/actions";
+import {
+  getAllRentPayments,
+  getProperties,
+} from "@/app/(dashboard)/properties/actions";
 import { OverviewPageClient } from "@/components/overview/overview-page-client";
 import { resolveDisplayName } from "@/lib/auth/resolve-display-name";
 import { getUserProfile } from "@/lib/auth/get-user-profile";
@@ -49,8 +52,9 @@ export default async function OverviewPage() {
   );
 
   const properties = hasProperties ? await getProperties() : [];
+  const payments = hasProperties ? await getAllRentPayments() : [];
   const portfolioStats = hasProperties
-    ? buildPortfolioStats(properties)
+    ? buildPortfolioStats(properties, payments)
     : null;
 
   const suggestions = canAccessWinston

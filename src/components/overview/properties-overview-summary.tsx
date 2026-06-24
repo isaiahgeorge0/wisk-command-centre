@@ -23,7 +23,7 @@ export function PropertiesOverviewSummary({
     },
     {
       label: "Rent due this month",
-      value: formatPropertyCurrency(stats.totalMonthlyRent),
+      value: formatPropertyCurrency(stats.rentDueThisMonth),
       icon: PoundSterling,
     },
     {

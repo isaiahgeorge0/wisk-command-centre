@@ -575,7 +575,7 @@ export async function getRentDueFlags(): Promise<RentDueFlag[]> {
 
   for (const row of tenants ?? []) {
     const rentDueDay = row.rent_due_day as number;
-    if (todayDay < rentDueDay) continue;
+    if (todayDay < rentDueDay - 1) continue;
 
     const payment = paymentByTenant.get(row.id as string);
     if (payment?.status === "paid") continue;

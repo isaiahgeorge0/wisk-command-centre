@@ -13,7 +13,8 @@ import type {
 import { getTenantFullName } from "@/lib/properties/tenant-form";
 
 export function buildPortfolioStats(
-  properties: PropertyWithStats[]
+  properties: PropertyWithStats[],
+  payments: Pick<RentPayment, "due_date" | "status" | "amount">[] = []
 ): PortfolioStats {
   const occupied = properties.filter((p) => p.status === "occupied");
   const vacant = properties.filter((p) => p.status === "vacant");
@@ -26,6 +27,7 @@ export function buildPortfolioStats(
       (sum, property) => sum + (property.monthly_rent ?? 0),
       0
     ),
+    rentDueThisMonth: sumOutstandingRentThisMonth(payments),
     openMaintenanceCount: properties.reduce(
       (sum, property) => sum + property.open_maintenance_count,
       0
@@ -45,12 +47,35 @@ export function sortPropertiesByStatus(
   });
 }
 
+function parseLocalDate(dateStr: string): Date {
+  const [year, month, day] = dateStr.split("T")[0].split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
 function isCurrentMonth(dateStr: string, now = new Date()) {
-  const date = new Date(dateStr);
+  const date = parseLocalDate(dateStr);
   return (
     date.getMonth() === now.getMonth() &&
     date.getFullYear() === now.getFullYear()
   );
+}
+
+const OUTSTANDING_RENT_STATUSES: RentPaymentStatus[] = [
+  "pending",
+  "late",
+  "partial",
+  "missed",
+];
+
+export function sumOutstandingRentThisMonth(
+  payments: Pick<RentPayment, "due_date" | "status" | "amount">[],
+  now = new Date()
+): number {
+  return payments.reduce((sum, payment) => {
+    if (!isCurrentMonth(payment.due_date, now)) return sum;
+    if (!OUTSTANDING_RENT_STATUSES.includes(payment.status)) return sum;
+    return sum + payment.amount;
+  }, 0);
 }
 
 export type PropertyFinanceStats = {
@@ -81,12 +106,7 @@ export function buildPropertyFinanceStats(
 
     if (isCurrentMonth(payment.due_date, now)) {
       expectedThisMonth += payment.amount;
-      if (
-        payment.status === "pending" ||
-        payment.status === "late" ||
-        payment.status === "partial" ||
-        payment.status === "missed"
-      ) {
+      if (OUTSTANDING_RENT_STATUSES.includes(payment.status)) {
         outstanding += payment.amount;
       }
     }

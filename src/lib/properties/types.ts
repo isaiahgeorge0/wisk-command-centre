@@ -54,6 +54,7 @@ export type PortfolioStats = {
   occupiedCount: number;
   vacantCount: number;
   totalMonthlyRent: number;
+  rentDueThisMonth: number;
   openMaintenanceCount: number;
 };
 

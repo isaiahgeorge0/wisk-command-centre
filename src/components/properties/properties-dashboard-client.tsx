@@ -46,12 +46,14 @@ type PropertiesDashboardClientProps = {
   properties: PropertyWithStats[];
   latestInsight: PropertyInsight | null;
   rentDueFlags: RentDueFlag[];
+  rentDueThisMonth: number;
 };
 
 export function PropertiesDashboardClient({
   properties,
   latestInsight,
   rentDueFlags,
+  rentDueThisMonth,
 }: PropertiesDashboardClientProps) {
   const [formOpen, setFormOpen] = useState(false);
   const [insightDismissed, setInsightDismissed] = useState(false);
@@ -61,11 +63,6 @@ export function PropertiesDashboardClient({
   const prefersReducedMotion = useReducedMotion();
   const stats = buildPortfolioStats(properties);
   const sortedProperties = sortPropertiesByStatus(properties);
-
-  const rentDueTotal = useMemo(
-    () => rentDueFlags.reduce((sum, flag) => sum + flag.amount, 0),
-    [rentDueFlags]
-  );
 
   const showInsightCard = useMemo(() => {
     if (insightDismissed || !latestInsight) return false;
@@ -166,7 +163,7 @@ export function PropertiesDashboardClient({
             />
             <StatTile
               label="Rent due this month"
-              value={formatPropertyCurrency(rentDueTotal)}
+              value={formatPropertyCurrency(rentDueThisMonth)}
             />
           </div>
 
@@ -208,14 +205,16 @@ export function PropertiesDashboardClient({
                           variant="outline"
                           className={cn(
                             "font-medium",
-                            flag.days_overdue >= 4
+                            flag.days_overdue > 0 && flag.days_overdue >= 4
                               ? "border-orange-500/30 bg-orange-500/10 text-orange-700 dark:text-orange-300"
                               : "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
                           )}
                         >
-                          {flag.days_overdue === 0
-                            ? "Due today"
-                            : `${flag.days_overdue} day${flag.days_overdue === 1 ? "" : "s"} overdue`}
+                          {flag.days_overdue === -1
+                            ? "Due tomorrow"
+                            : flag.days_overdue === 0
+                              ? "Due today"
+                              : `${flag.days_overdue} day${flag.days_overdue === 1 ? "" : "s"} overdue`}
                         </Badge>
                       </div>
                     </div>

@@ -22,15 +22,24 @@ function monthLabel(key: string): string {
   );
 }
 
+function parseLocalDate(dateStr: string): Date {
+  const [year, month, day] = dateStr.split("T")[0].split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
 function isDateInRange(
   dateStr: string | null | undefined,
   start: Date,
   end: Date
 ): boolean {
   if (!dateStr) return false;
-  const date = new Date(dateStr);
+  const date = parseLocalDate(dateStr);
   date.setHours(0, 0, 0, 0);
-  return date >= start && date <= end;
+  const rangeStart = new Date(start);
+  rangeStart.setHours(0, 0, 0, 0);
+  const rangeEnd = new Date(end);
+  rangeEnd.setHours(23, 59, 59, 999);
+  return date >= rangeStart && date <= rangeEnd;
 }
 
 function getPeriodRange(period: "monthly" | "annual", now = new Date()) {
