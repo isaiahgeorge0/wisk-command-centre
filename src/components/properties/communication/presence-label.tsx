@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
 import { getPresenceLabel } from "@/lib/properties/format";
 import { cn } from "@/lib/utils";
 
@@ -7,7 +11,16 @@ type PresenceLabelProps = {
 };
 
 export function PresenceLabel({ lastSeenAt, className }: PresenceLabelProps) {
-  const label = getPresenceLabel(lastSeenAt);
+  const [label, setLabel] = useState("");
+
+  useEffect(() => {
+    setLabel(getPresenceLabel(lastSeenAt));
+    const interval = setInterval(() => {
+      setLabel(getPresenceLabel(lastSeenAt));
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [lastSeenAt]);
+
   if (!label) return null;
 
   const isOnline = label === "Online";
@@ -21,6 +34,7 @@ export function PresenceLabel({ lastSeenAt, className }: PresenceLabelProps) {
           : "text-muted-foreground",
         className
       )}
+      suppressHydrationWarning
     >
       {label}
     </p>

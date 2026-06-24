@@ -264,7 +264,10 @@ export function CommunicationPageClient({
                           <p className="truncate font-medium text-foreground">
                             {conversation.tenant_name}
                           </p>
-                          <span className="shrink-0 text-xs text-muted-foreground">
+                          <span
+                            className="shrink-0 text-xs text-muted-foreground"
+                            suppressHydrationWarning
+                          >
                             {formatMessageTimestamp(
                               conversation.latest_message_at
                             )}

@@ -129,7 +129,10 @@ export function MessageThread({
                 >
                   {message.message}
                 </div>
-                <span className="mt-1 px-1 text-xs text-muted-foreground">
+                <span
+                  className="mt-1 px-1 text-xs text-muted-foreground"
+                  suppressHydrationWarning
+                >
                   {formatMessageTimestamp(message.created_at)}
                 </span>
               </div>
