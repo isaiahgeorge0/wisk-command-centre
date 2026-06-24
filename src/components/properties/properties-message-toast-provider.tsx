@@ -4,6 +4,7 @@ import { AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { getConversations } from "@/app/(dashboard)/properties/actions";
 import { MessageToast } from "@/components/properties/communication/message-toast";
 import { truncateMessagePreview } from "@/lib/properties/format";
 import { useLandlordMessagesRealtime } from "@/lib/properties/use-tenant-messages-realtime";
@@ -27,7 +28,21 @@ export function PropertiesMessageToastProvider({
   const pathname = usePathname();
   const pathnameRef = useRef(pathname);
   const [toast, setToast] = useState<ToastState>(null);
+  const [tenantNames, setTenantNames] = useState<Record<string, string>>({});
+  const tenantNamesRef = useRef(tenantNames);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    tenantNamesRef.current = tenantNames;
+  }, [tenantNames]);
+
+  useEffect(() => {
+    void getConversations().then((convs) => {
+      const map: Record<string, string> = {};
+      for (const c of convs) map[c.tenant_id] = c.tenant_name;
+      setTenantNames(map);
+    });
+  }, []);
 
   useEffect(() => {
     pathnameRef.current = pathname;
@@ -50,7 +65,7 @@ export function PropertiesMessageToastProvider({
 
     setToast({
       tenantId: message.tenant_id,
-      tenantName: "Tenant",
+      tenantName: tenantNamesRef.current[message.tenant_id] ?? "Tenant",
       preview: truncateMessagePreview(message.message),
     });
 

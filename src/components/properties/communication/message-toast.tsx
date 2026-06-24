@@ -18,11 +18,11 @@ export function MessageToast({
 }: MessageToastProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      initial={{ opacity: 0, y: -20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+      exit={{ opacity: 0, y: -10, scale: 0.95 }}
       transition={{ duration: 0.2 }}
-      className="fixed bottom-6 right-6 z-50 flex w-80 items-start gap-3 rounded-xl border border-border/60 bg-card p-4 shadow-xl"
+      className="fixed top-6 left-1/2 z-50 flex w-80 -translate-x-1/2 items-start gap-3 rounded-xl border border-border/60 bg-card p-4 shadow-xl"
     >
       <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-amber-500/10">
         <MessageSquare className="size-4 text-amber-500" />

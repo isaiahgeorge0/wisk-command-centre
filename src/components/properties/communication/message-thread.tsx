@@ -65,7 +65,7 @@ export function MessageThread({
     clearTypingTimeout();
     typingTimeoutRef.current = setTimeout(() => {
       onTypingChange?.(false);
-    }, 2000);
+    }, 4000);
   };
 
   const handleDraftChange = (value: string) => {

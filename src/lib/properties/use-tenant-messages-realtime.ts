@@ -142,33 +142,48 @@ export function useTypingPresence({
   onTypingChangeRef.current = onTypingChange;
 
   useEffect(() => {
+    if (!channelName || channelName === "typing-none") return;
+
     const supabase = createClient();
     const channel = supabase.channel(channelName, {
-      config: { presence: { key: currentUserId } },
+      config: {
+        presence: { key: currentUserId },
+      },
     });
 
     channel
       .on("presence", { event: "sync" }, () => {
         const state = channel.presenceState<{ typing: boolean }>();
-        const typingIds = Object.entries(state)
-          .filter(
-            ([id, presences]) =>
-              id !== currentUserId && presences[0]?.typing
-          )
-          .map(([id]) => id);
+        const typingIds = Object.keys(state).filter(
+          (id) => id !== currentUserId && state[id]?.[0]?.typing === true
+        );
         onTypingChangeRef.current(typingIds);
       })
-      .subscribe();
-
-    channelRef.current = channel;
+      .on("presence", { event: "join" }, ({ key, newPresences }) => {
+        if (key === currentUserId) return;
+        if (newPresences[0]?.typing) {
+          onTypingChangeRef.current([key]);
+        }
+      })
+      .on("presence", { event: "leave" }, ({ key }) => {
+        if (key === currentUserId) return;
+        onTypingChangeRef.current([]);
+      })
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          channelRef.current = channel;
+        }
+      });
 
     return () => {
       void supabase.removeChannel(channel);
+      channelRef.current = null;
     };
   }, [channelName, currentUserId]);
 
   const setTyping = useCallback((isTyping: boolean) => {
-    void channelRef.current?.track({ typing: isTyping });
+    if (!channelRef.current) return;
+    void channelRef.current.track({ typing: isTyping });
   }, []);
 
   return { setTyping };

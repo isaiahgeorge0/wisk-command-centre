@@ -98,13 +98,21 @@ export function CommunicationPageClient({
         void getConversations().then(setConversations);
         return prev;
       }
-      return upsertConversation(
+      let updated = upsertConversation(
         prev,
         message,
         "Tenant",
         "Property",
         incrementUnread
       );
+      if (isActive && message.sender_type === "tenant") {
+        updated = updated.map((c) =>
+          c.tenant_id === message.tenant_id
+            ? { ...c, unread_count: 0 }
+            : c
+        );
+      }
+      return updated;
     });
 
     if (isActive) {
@@ -115,13 +123,6 @@ export function CommunicationPageClient({
       if (message.sender_type === "tenant") {
         void markMessagesAsRead(message.tenant_id);
         window.dispatchEvent(new CustomEvent("wisk:messages-read"));
-        setConversations((prev) =>
-          prev.map((c) =>
-            c.tenant_id === message.tenant_id
-              ? { ...c, unread_count: 0 }
-              : c
-          )
-        );
       }
     }
   }, []);
@@ -292,7 +293,7 @@ export function CommunicationPageClient({
 
         <section
           className={cn(
-            "flex min-h-0 flex-1 flex-col",
+            "flex min-h-0 flex-1 flex-col overflow-hidden",
             mobileView === "list" ? "hidden md:flex" : "flex"
           )}
         >
