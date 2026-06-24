@@ -19,7 +19,10 @@ const PUBLIC_PATHS = [
   "/api/properties/generate-insights",
   "/api/winston/chat",
   "/api/stripe/webhook",
+  "/portal/login",
+  "/portal/setup",
   "/api/portal/setup",
+  "/api/portal/winston-triage",
   "/monitoring",
 ];
 
