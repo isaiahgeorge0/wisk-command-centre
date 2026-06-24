@@ -1,13 +1,15 @@
-import { MessageSquare } from "lucide-react";
+import { getConversations } from "@/app/(dashboard)/properties/actions";
+import { CommunicationPageClient } from "@/components/properties/communication/communication-page-client";
+import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 
-import { PropertiesPlaceholder } from "@/components/properties/properties-placeholder";
+export default async function PropertiesCommunicationPage() {
+  const { userId } = await getScopedSupabase();
+  const conversations = await getConversations();
 
-export default function PropertiesCommunicationPage() {
   return (
-    <PropertiesPlaceholder
-      title="Communication"
-      description="Tenant messaging and correspondence."
-      icon={MessageSquare}
+    <CommunicationPageClient
+      initialConversations={conversations}
+      landlordUserId={userId}
     />
   );
 }

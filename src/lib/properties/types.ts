@@ -484,3 +484,13 @@ export type PortfolioFinancialOverview = {
     netIncome: number;
   }>;
 };
+
+export type ConversationSummary = {
+  tenant_id: string;
+  tenant_name: string;
+  property_id: string;
+  property_name: string;
+  latest_message: string;
+  latest_message_at: string;
+  unread_count: number;
+};

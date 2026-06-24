@@ -65,6 +65,32 @@ export function formatPropertyDate(date: string | null | undefined): string {
   }).format(new Date(date));
 }
 
+export function formatMessageTimestamp(iso: string): string {
+  const date = new Date(iso);
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+
+  if (isToday) {
+    return date.toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  return date.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+export function truncateMessagePreview(text: string, max = 80): string {
+  const trimmed = text.trim();
+  if (trimmed.length <= max) return trimmed;
+  return `${trimmed.slice(0, max - 1)}…`;
+}
+
 export function formatRentFrequency(
   amount: number,
   frequency: "weekly" | "monthly"

@@ -1,21 +1,44 @@
-import { MessageSquare } from "lucide-react";
+import { requireTenantContext } from "@/lib/portal/get-tenant-context";
+import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  getTenantMessages,
+} from "@/app/portal/actions";
+import { PortalMessagesClient } from "@/components/portal/portal-messages-client";
 
-import { PortalPage } from "@/components/portal/portal-page";
+export default async function PortalMessagesPage() {
+  const { tenant, property } = await requireTenantContext();
+  const messages = await getTenantMessages();
 
-export default function PortalMessagesPage() {
+  const admin = createAdminClient();
+  const { data: landlordUser } = await admin
+    .from("users")
+    .select("name")
+    .eq("id", tenant.user_id)
+    .maybeSingle();
+  const { data: prefs } = await admin
+    .from("user_preferences")
+    .select("display_name")
+    .eq("user_id", tenant.user_id)
+    .maybeSingle();
+
+  const landlordName =
+    prefs?.display_name?.trim() ||
+    landlordUser?.name?.trim() ||
+    "Your landlord";
+
+  if (!tenant.portal_user_id) {
+    return null;
+  }
+
   return (
-    <PortalPage>
-      <div className="rounded-2xl border border-dashed border-[var(--portal-amber)]/30 bg-[var(--portal-card)] px-6 py-16 text-center shadow-[var(--portal-shadow)]">
-        <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-[var(--portal-amber-light)]">
-          <MessageSquare className="size-7 text-[var(--portal-amber)]" />
-        </div>
-        <h1 className="mt-5 text-xl font-bold text-[var(--portal-text)]">
-          Messages
-        </h1>
-        <p className="mt-2 text-sm text-[var(--portal-muted)]">
-          Messaging with your landlord is coming soon.
-        </p>
-      </div>
-    </PortalPage>
+    <PortalMessagesClient
+      initialMessages={messages}
+      tenantId={tenant.id}
+      senderId={tenant.portal_user_id}
+      landlordName={landlordName}
+      propertyName={property.name}
+      propertyId={property.id}
+      landlordUserId={tenant.user_id}
+    />
   );
 }

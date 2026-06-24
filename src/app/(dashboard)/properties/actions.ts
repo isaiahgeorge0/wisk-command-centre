@@ -57,6 +57,8 @@ import type {
   RentDueFlag,
   Tenant,
   TenantFormInput,
+  TenantMessage,
+  ConversationSummary,
   TenantWithProperty,
 } from "@/lib/properties/types";
 import {
@@ -2248,4 +2250,176 @@ export async function triggerPropertyInsightsGeneration(): Promise<ActionResult>
       error: err instanceof Error ? err.message : "Generation failed",
     };
   }
+}
+
+// ─── Tenant messaging ───────────────────────────────────────────────────────
+
+const tenantMessageSchema = z.object({
+  message: z.string().trim().min(1, "Message is required").max(2000),
+});
+
+type TenantMessageRow = TenantMessage & {
+  tenants:
+    | { first_name: string; last_name: string }
+    | { first_name: string; last_name: string }[]
+    | null;
+  properties: { name: string } | { name: string }[] | null;
+};
+
+function unwrapJoin<T>(value: T | T[] | null): T | null {
+  if (value == null) return null;
+  return Array.isArray(value) ? value[0] ?? null : value;
+}
+
+function buildConversationSummaries(
+  rows: TenantMessageRow[]
+): ConversationSummary[] {
+  const summaries = new Map<string, ConversationSummary>();
+
+  for (const row of rows) {
+    const tenant = unwrapJoin(row.tenants);
+    const property = unwrapJoin(row.properties);
+    const existing = summaries.get(row.tenant_id);
+
+    if (!existing) {
+      summaries.set(row.tenant_id, {
+        tenant_id: row.tenant_id,
+        tenant_name: tenant
+          ? `${tenant.first_name} ${tenant.last_name}`.trim()
+          : "Unknown tenant",
+        property_id: row.property_id,
+        property_name: property?.name ?? "Unknown property",
+        latest_message: row.message,
+        latest_message_at: row.created_at,
+        unread_count:
+          row.sender_type === "tenant" && !row.read ? 1 : 0,
+      });
+      continue;
+    }
+
+    if (row.sender_type === "tenant" && !row.read) {
+      existing.unread_count += 1;
+    }
+  }
+
+  return Array.from(summaries.values()).sort(
+    (a, b) =>
+      new Date(b.latest_message_at).getTime() -
+      new Date(a.latest_message_at).getTime()
+  );
+}
+
+export async function getConversations(
+  propertyId?: string
+): Promise<ConversationSummary[]> {
+  const { supabase, userId } = await getScopedSupabase();
+
+  let query = supabase
+    .from("tenant_messages")
+    .select(
+      "*, tenants(first_name, last_name), properties(name)"
+    )
+    .eq("landlord_user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (propertyId) {
+    query = query.eq("property_id", propertyId);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("getConversations:", error);
+    return [];
+  }
+
+  return buildConversationSummaries((data ?? []) as TenantMessageRow[]);
+}
+
+export async function getMessages(tenantId: string): Promise<TenantMessage[]> {
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { data, error } = await supabase
+    .from("tenant_messages")
+    .select("*")
+    .eq("landlord_user_id", userId)
+    .eq("tenant_id", tenantId)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("getMessages:", error);
+    return [];
+  }
+
+  return (data ?? []) as TenantMessage[];
+}
+
+export async function sendLandlordMessage(
+  tenantId: string,
+  propertyId: string,
+  message: string
+): Promise<ActionResult<TenantMessage>> {
+  const parsed = tenantMessageSchema.safeParse({ message });
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid message",
+    };
+  }
+
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { data: tenant, error: tenantError } = await supabase
+    .from("tenants")
+    .select("id, property_id")
+    .eq("id", tenantId)
+    .eq("user_id", userId)
+    .eq("property_id", propertyId)
+    .maybeSingle();
+
+  if (tenantError || !tenant) {
+    return { success: false, error: "Tenant not found" };
+  }
+
+  const { data, error } = await supabase
+    .from("tenant_messages")
+    .insert({
+      property_id: propertyId,
+      tenant_id: tenantId,
+      landlord_user_id: userId,
+      sender_type: "landlord",
+      sender_id: userId,
+      message: parsed.data.message,
+      read: false,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error("sendLandlordMessage:", error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true, data: data as TenantMessage };
+}
+
+export async function markMessagesAsRead(
+  tenantId: string
+): Promise<ActionResult> {
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { error } = await supabase
+    .from("tenant_messages")
+    .update({ read: true })
+    .eq("landlord_user_id", userId)
+    .eq("tenant_id", tenantId)
+    .eq("sender_type", "tenant")
+    .eq("read", false);
+
+  if (error) {
+    console.error("markMessagesAsRead:", error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true };
 }

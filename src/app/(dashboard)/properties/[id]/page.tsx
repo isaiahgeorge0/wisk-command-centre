@@ -16,6 +16,7 @@ import {
   PropertyDetailClient,
   type PropertyDetailTab,
 } from "@/components/properties/property-detail-client";
+import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 
 type PropertyDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -27,6 +28,7 @@ const VALID_TABS = new Set<PropertyDetailTab>([
   "tenants",
   "maintenance",
   "finances",
+  "messages",
   "documents",
   "certificates",
 ]);
@@ -37,6 +39,7 @@ export default async function PropertyDetailPage({
 }: PropertyDetailPageProps) {
   const { id } = await params;
   const { tab } = await searchParams;
+  const { userId } = await getScopedSupabase();
 
   const [property, tenants, maintenanceTickets, rentPayments, certificates, documents, certificateAlerts, mortgages, insurance, monthlyFinancialSummary, annualFinancialSummary] =
     await Promise.all([
@@ -75,6 +78,7 @@ export default async function PropertyDetailPage({
       insurance={insurance}
       monthlyFinancialSummary={monthlyFinancialSummary}
       annualFinancialSummary={annualFinancialSummary}
+      landlordUserId={userId}
       initialTab={initialTab}
     />
   );

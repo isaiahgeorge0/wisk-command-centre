@@ -20,6 +20,7 @@ import { PropertyDocumentsTab } from "@/components/properties/property-documents
 import { PropertyFinancesTab } from "@/components/properties/property-finances-tab";
 import { PropertyFormDialog } from "@/components/properties/property-form-dialog";
 import { PropertyMaintenanceTab } from "@/components/properties/property-maintenance-tab";
+import { PropertyMessagesTab } from "@/components/properties/property-messages-tab";
 import { PropertyStatusBadge } from "@/components/properties/property-status-badge";
 import { PropertyTenantsTab } from "@/components/properties/property-tenants-tab";
 import { PropertyTypeBadge } from "@/components/properties/property-type-badge";
@@ -55,6 +56,7 @@ export type PropertyDetailTab =
   | "tenants"
   | "maintenance"
   | "finances"
+  | "messages"
   | "documents"
   | "certificates";
 
@@ -63,6 +65,7 @@ const TABS: { id: PropertyDetailTab; label: string }[] = [
   { id: "tenants", label: "Tenants" },
   { id: "maintenance", label: "Maintenance" },
   { id: "finances", label: "Finances" },
+  { id: "messages", label: "Messages" },
   { id: "documents", label: "Documents" },
   { id: "certificates", label: "Certificates" },
 ];
@@ -79,6 +82,7 @@ type PropertyDetailClientProps = {
   insurance: PropertyInsurance[];
   monthlyFinancialSummary: FinancialSummary | null;
   annualFinancialSummary: FinancialSummary | null;
+  landlordUserId: string;
   initialTab?: PropertyDetailTab;
 };
 
@@ -94,6 +98,7 @@ export function PropertyDetailClient({
   insurance,
   monthlyFinancialSummary,
   annualFinancialSummary,
+  landlordUserId,
   initialTab = "overview",
 }: PropertyDetailClientProps) {
   const router = useRouter();
@@ -193,6 +198,12 @@ export function PropertyDetailClient({
           insurance={insurance}
           monthlyFinancialSummary={monthlyFinancialSummary}
           annualFinancialSummary={annualFinancialSummary}
+        />
+      ) : activeTab === "messages" ? (
+        <PropertyMessagesTab
+          propertyId={property.id}
+          tenants={tenants}
+          landlordUserId={landlordUserId}
         />
       ) : activeTab === "certificates" ? (
         <PropertyCertificatesTab

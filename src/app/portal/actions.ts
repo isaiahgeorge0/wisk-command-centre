@@ -20,6 +20,7 @@ import type {
   MaintenancePriority,
   MaintenanceTicket,
   PropertyDocument,
+  TenantMessage,
 } from "@/lib/properties/types";
 import { requireTenantContext } from "@/lib/portal/get-tenant-context";
 import type { PortalTheme } from "@/lib/portal/types";
@@ -230,3 +231,84 @@ export type PortalMaintenanceInput = {
 };
 
 export { formatPropertyDate };
+
+const tenantMessageSchema = z.object({
+  message: z.string().trim().min(1, "Message is required").max(2000),
+});
+
+export async function getTenantMessages(): Promise<TenantMessage[]> {
+  const { tenant } = await requireTenantContext();
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("tenant_messages")
+    .select("*")
+    .eq("tenant_id", tenant.id)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("getTenantMessages:", error);
+    return [];
+  }
+
+  return (data ?? []) as TenantMessage[];
+}
+
+export async function sendTenantMessage(
+  message: string
+): Promise<ActionResult<TenantMessage>> {
+  const parsed = tenantMessageSchema.safeParse({ message });
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid message",
+    };
+  }
+
+  const { tenant } = await requireTenantContext();
+  const supabase = await createClient();
+
+  if (!tenant.portal_user_id) {
+    return { success: false, error: "Portal account not linked" };
+  }
+
+  const { data, error } = await supabase
+    .from("tenant_messages")
+    .insert({
+      property_id: tenant.property_id,
+      tenant_id: tenant.id,
+      landlord_user_id: tenant.user_id,
+      sender_type: "tenant",
+      sender_id: tenant.portal_user_id,
+      message: parsed.data.message,
+      read: false,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error("sendTenantMessage:", error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true, data: data as TenantMessage };
+}
+
+export async function markTenantMessagesAsRead(): Promise<ActionResult> {
+  const { tenant } = await requireTenantContext();
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("tenant_messages")
+    .update({ read: true })
+    .eq("tenant_id", tenant.id)
+    .eq("sender_type", "landlord")
+    .eq("read", false);
+
+  if (error) {
+    console.error("markTenantMessagesAsRead:", error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true };
+}
