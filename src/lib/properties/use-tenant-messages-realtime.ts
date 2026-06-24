@@ -52,10 +52,10 @@ export function useLandlordMessagesRealtime({
           event: "INSERT",
           schema: "public",
           table: "tenant_messages",
-          filter: `landlord_user_id=eq.${landlordUserId}`,
         },
         (payload) => {
           const message = payload.new as TenantMessage;
+          if (message.landlord_user_id !== landlordUserId) return;
           if (propertyId && message.property_id !== propertyId) return;
           onInsertRef.current(message);
         }
@@ -66,10 +66,10 @@ export function useLandlordMessagesRealtime({
           event: "UPDATE",
           schema: "public",
           table: "tenant_messages",
-          filter: `landlord_user_id=eq.${landlordUserId}`,
         },
         (payload) => {
           const message = payload.new as TenantMessage;
+          if (message.landlord_user_id !== landlordUserId) return;
           if (propertyId && message.property_id !== propertyId) return;
           onUpdateRef.current?.(message);
         }
@@ -106,10 +106,11 @@ export function useTenantMessagesRealtime({
           event: "INSERT",
           schema: "public",
           table: "tenant_messages",
-          filter: `tenant_id=eq.${tenantId}`,
         },
         (payload) => {
-          onInsertRef.current(payload.new as TenantMessage);
+          const message = payload.new as TenantMessage;
+          if (message.tenant_id !== tenantId) return;
+          onInsertRef.current(message);
         }
       )
       .on(
@@ -118,10 +119,11 @@ export function useTenantMessagesRealtime({
           event: "UPDATE",
           schema: "public",
           table: "tenant_messages",
-          filter: `tenant_id=eq.${tenantId}`,
         },
         (payload) => {
-          onUpdateRef.current?.(payload.new as TenantMessage);
+          const message = payload.new as TenantMessage;
+          if (message.tenant_id !== tenantId) return;
+          onUpdateRef.current?.(message);
         }
       )
       .subscribe();
