@@ -39,6 +39,10 @@ For a full feature inventory, see `docs/product/roadmap.md`.
 | `ai_conversation_messages` | Winston Chat messages (migration 029) |
 | `ai_context_cache` | Cached user context for chat (migration 029) |
 | `ai_usage_log` | Claude API token usage (migration 030) |
+| `properties` | Landlord property portfolio (migration 046) |
+| `tenants` | Tenancy records; portal and rent due fields (046, 050–051, 054) |
+| `rent_payments` | Rent payment tracking (migration 046) |
+| `property_valuations` | Winston market valuations (migration 053) |
 
 ---
 
@@ -331,3 +335,126 @@ public.users
 | `034_usernames.sql` | `username` on `users`; `username_set` on `user_preferences` |
 | `035_collaboration_foundation.sql` | `user_connections`, `item_shares` tables |
 | `036_notification_suggestion_types.sql` | `suggestion_*` notification types |
+| `046_properties_foundation.sql` | `properties`, `tenants`, `maintenance_tickets`, `rent_payments`, `property_certificates`, `property_documents` |
+| `047_certificate_alerts.sql` | `certificate_alert_log`, `property_insights`; `alerts_enabled` on `properties` |
+| `050_tenant_portal.sql` | Tenant portal fields on `tenants`; `tenant_messages`; `shared_with_tenant` on documents |
+| `051_tenant_portal_theme.sql` | `portal_theme` on `tenants` |
+| `052_property_finances_extended.sql` | `property_mortgages`, `property_insurance`, alert log tables; post-expiry certificate alert types |
+| `053_property_valuation.sql` | `property_valuations`, `property_comparables` |
+| `054_rent_due_tracking.sql` | `rent_due_day`, `rent_reminder_days`, `rent_reminder_enabled` on `tenants`; `rent_reminder_log` |
+
+---
+
+## Properties package tables (migrations 046–054)
+
+Gated by `user_subscriptions.package = 'properties'` (or `max`). All tables below use RLS scoped to `auth.uid() = user_id` unless noted.
+
+### `properties` (migration 046)
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | uuid | Primary key |
+| `user_id` | uuid | References `public.users(id)` |
+| `name` | text | Display name |
+| `address_line1`, `address_line2`, `city`, `postcode` | text | UK address |
+| `property_type` | text | `flat` \| `house` \| `hmo` \| `commercial` \| `other` |
+| `bedrooms`, `bathrooms` | integer | Nullable |
+| `status` | text | `occupied` \| `vacant` \| `maintenance` \| `listed` |
+| `purchase_price`, `current_value`, `monthly_rent` | numeric | Nullable |
+| `notes` | text | Nullable |
+| `alerts_enabled` | boolean | Default `true` (migration 047) |
+| `created_at`, `updated_at` | timestamptz | Auto-updated via trigger |
+
+### `tenants` (migrations 046, 050, 051, 054)
+
+Core tenancy fields in migration 046. Additional columns:
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `portal_enabled` | boolean | Default `false` (050) |
+| `portal_user_id` | uuid | References `auth.users(id)`; nullable (050) |
+| `portal_invited_at` | timestamptz | Nullable (050) |
+| `portal_invite_token` | text | Nullable; unique when set (050) |
+| `portal_theme` | text | `light` \| `dark` (051) |
+| `rent_due_day` | integer | Nullable; 1–28 (054) |
+| `rent_reminder_days` | integer | 0–7; default 0 (054) |
+| `rent_reminder_enabled` | boolean | Default `true` (054) |
+
+### `rent_payments` (migration 046)
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `status` | text | `pending` \| `paid` \| `late` \| `partial` \| `missed` |
+| `due_date` | date | Payment due date |
+| `paid_date` | date | Nullable |
+| `amount` | numeric | Rent amount |
+
+Cron auto-creates `pending` records when `rent_due_day` is set and the due date has passed.
+
+### `rent_reminder_log` (migration 054)
+
+One landlord reminder email per tenant per month.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `tenant_id` | uuid | References `tenants(id)` |
+| `property_id` | uuid | References `properties(id)` |
+| `month` | date | First day of month (e.g. `2026-06-01`) |
+| `sent_at` | timestamptz | Default `now()` |
+
+**Constraint:** `unique(tenant_id, month)`
+
+### `certificate_alert_log` (migration 047)
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `certificate_id` | uuid | References `property_certificates(id)` |
+| `alert_type` | text | `90_days` \| `30_days` \| `7_days` \| `expired` \| `7_days_overdue` \| `30_days_overdue` (052 extends) |
+
+### `property_mortgages` / `property_insurance` (migration 052)
+
+Mortgage and insurance records per property with `alerts_enabled` toggle. Alert logs: `mortgage_alert_log`, `insurance_alert_log` — same pattern as certificate alerts.
+
+### `property_valuations` (migration 053)
+
+Winston-generated rental and sale estimates.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `rental_min`, `rental_max` | numeric | Nullable monthly figures |
+| `sale_min`, `sale_max` | numeric | Nullable total values |
+| `confidence` | text | `high` \| `medium` \| `low` |
+| `search_level` | text | `postcode` \| `town` |
+| `reasoning` | text | Winston explanation |
+| `web_sources` | jsonb | Nullable |
+| `generated_at` | timestamptz | |
+| `next_available_at` | timestamptz | 3-month cooldown |
+
+### `property_insights` (migration 047)
+
+Winston portfolio insight content (JSON), similar pattern to `ai_reports`.
+
+### `tenant_messages` (migration 050)
+
+Landlord–tenant messaging. RLS allows landlord (`landlord_user_id`) and linked tenant (`portal_user_id`) access.
+
+---
+
+## Relationships (Properties)
+
+```
+public.users
+    └── properties (1:many)
+            ├── tenants (1:many)
+            │       ├── rent_payments (1:many)
+            │       ├── rent_reminder_log (1:many per month)
+            │       └── tenant_messages (1:many)
+            ├── maintenance_tickets (1:many)
+            ├── property_certificates (1:many)
+            ├── property_documents (1:many)
+            ├── property_mortgages (1:many)
+            ├── property_insurance (1:many)
+            ├── property_valuations (1:many)
+            └── property_comparables (1:many)
+```
+

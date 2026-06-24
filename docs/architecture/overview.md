@@ -85,7 +85,9 @@ src/
 │   │   ├── projects/
 │   │   ├── tasks/
 │   │   ├── admin/
+│   │   ├── properties/       # Properties package (gated)
 │   │   └── ...
+│   ├── portal/               # Tenant portal (separate auth)
 │   ├── sign-in/
 │   ├── welcome/
 │   └── layout.tsx
@@ -193,7 +195,9 @@ Admin / platform (service role):
 
 Migrations are numbered sequentially in `supabase/migrations/`:
 
-- **001–022** — Current range (initial schema through multi-platform content, admin, personalisation, changelog, etc.)
+- **001–054** — Initial schema through properties
+  package (foundation, portal, finances, valuations,
+  rent due tracking)
 - Applied via `supabase db push --linked` or CI against the linked project
 - **Never edit applied migrations** — add a new numbered file for schema changes
 
@@ -311,6 +315,9 @@ Database migrations are applied separately via Supabase CLI against the linked p
 | `INTEGRATIONS_ENCRYPTION_KEY` | Yes | 32-byte base64 key for token encryption |
 | `ANTHROPIC_API_KEY` | Yes (Winston) | Claude API key for digest and chat |
 | `AI_DIGEST_SECRET` | Yes (Winston) | Bearer token for scheduled digest API routes |
+| `PROPERTY_ALERTS_SECRET` | Yes (Properties) | Bearer token for `/api/properties/check-certificate-alerts` cron |
+| `RESEND_API_KEY` | Yes (email) | Resend API key for transactional emails |
+| `RESEND_FROM_EMAIL` | Yes (email) | From address for Resend emails |
 | `NEXT_PUBLIC_SENTRY_DSN` | Recommended | Sentry DSN for error tracking |
 | `SENTRY_AUTH_TOKEN` | Build only | Source map upload during CI/build |
 | `SENTRY_ORG` | Build only | Sentry organisation slug |
@@ -551,5 +558,36 @@ using (
 This pattern applies to every shareable table.
 Build Phase B (RLS + UI) after Stripe checkout
 is live.
+
+### Properties Package (delivered June 2026)
+
+Vertical package for small landlords. Gated via
+`hasPackageAccess(userId, 'properties')`.
+
+**Routes:**
+- Landlord: `/properties/*` (dashboard layout with sidebar)
+- Tenant portal: `/portal/*` (separate auth flow)
+
+**Key APIs:**
+- `POST /api/properties/check-certificate-alerts` —
+  daily cron (certificates, mortgages, insurance,
+  rent payments and reminders)
+- `POST /api/properties/generate-valuation` —
+  Claude web_search valuation per property
+- `POST /api/properties/generate-insights` —
+  Winston portfolio insights
+- `POST /api/portal/winston-triage` —
+  tenant maintenance triage
+
+**Data model:** migrations `046`–`054`. See
+`docs/architecture/database-schema.md` for table
+reference and `docs/features/properties.md` for
+feature spec.
+
+**Email:** certificate, mortgage, insurance, and
+rent reminder alerts via Resend (`lib/properties/emails.ts`).
+
+**Still planned:** communication hub UI, Goals
+linking, document file storage on Supabase Pro.
 
 ---

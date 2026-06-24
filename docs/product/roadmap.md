@@ -55,9 +55,12 @@ Status definitions:
 - Status: Live
 - Fixed top navigation bar
 - Purple to teal WISK wordmark
-- Desktop: full nav links
+- Desktop: full nav links (Properties link when
+  user has `properties` package subscription)
 - Mobile: bottom navigation bar
   (Projects, Tasks, Goals, Ideas, Content, Leads)
+- Mobile switches to Properties sub-nav when
+  inside `/properties/*` routes
 - Settings gear icon
 - Notifications bell with unread badge
 - What's new sparkle button with unread badge
@@ -289,6 +292,71 @@ Status definitions:
   and status management
 - Note: Social media API integration
   not yet built (Phase 3.3)
+
+### Properties Package
+- Status: Live (in progress — core delivered,
+  some sections still expanding)
+- Gated by `properties` package in
+  `user_subscriptions` (`hasPackageAccess`)
+- Teaser page for users without subscription
+- Dedicated sidebar layout at `/properties/*`
+  (amber accent)
+- **Dashboard** (`/properties/dashboard`):
+  portfolio stats, Winston insight card,
+  rent due flags with mark-as-paid,
+  property list overview
+- **Properties** (`/properties/list`):
+  property cards with status, CRUD,
+  per-property detail page with tabs
+  (overview, tenants, maintenance,
+  finances, certificates, documents)
+- **Tenants** (`/properties/tenants`):
+  global tenant list; per-property tenant
+  management; rent reminder settings
+  (due day 1–28, email reminder toggle)
+- **Maintenance** (`/properties/maintenance`):
+  global ticket list; workflow
+  New → In progress → Resolved;
+  priority and category; tenant-reported
+  tickets from portal
+- **Finances** (`/properties/finances`):
+  rent payment tracking; portfolio and
+  per-property financial summaries;
+  Recharts income/cost breakdown;
+  mortgage and insurance records
+- **Documents** (`/properties/documents`):
+  document list per property; share with
+  tenant toggle
+- **Communication** (`/properties/communication`):
+  placeholder — tenant messaging UI
+  planned (messages table exists)
+- **Winston** (`/properties/winston`):
+  property portfolio insights;
+  rental/sale valuations via Claude
+  web search; manual comparables;
+  financial overview charts
+- **Certificate alerts:**
+  expiry reminders at 90/30/7 days,
+  on expiry, and post-expiry overdue;
+  daily cron (`/api/properties/check-certificate-alerts`);
+  per-property alerts toggle
+- **Mortgage & insurance alerts:**
+  renewal reminders via same daily cron;
+  mortgage fixed-rate end and end-date
+  tracking; insurance renewal dates
+- **Rent due tracking:**
+  rent due day per tenant; auto-created
+  pending rent payments; dashboard
+  flags; landlord reminder emails
+  (once per tenant per month);
+  migration `054_rent_due_tracking.sql`
+- **Tenant portal** (`/portal/*`):
+  invite flow; setup and login;
+  light/dark theme; maintenance
+  requests; shared documents;
+  landlord–tenant messaging;
+  Winston triage API for common issues
+- Package upgrade page at `/upgrade/properties`
 
 ### AI Digest / Winston
 - Status: Live
@@ -890,12 +958,108 @@ Build order:
    and creator positioning; OAuth pattern exists
 2. **Commerce Package** — revenue correlation with
    content is a strong differentiator
-3. **Properties Package** — more domain-specific;
-   larger build
+3. **Properties Package** — **in progress** (see
+   delivered list below); largest vertical build
 
-Refer to the vertical package specs below for full
-feature details — these remain unchanged, now sequenced
-after the AI foundation.
+#### Properties Package
+
+Target: small landlords managing 1-10 properties
+
+**Status: Live (in progress)** — core landlord
+workflows delivered June 2026. Communication hub
+UI and some AI integrations remain planned.
+
+**Delivered (live in this repository):**
+
+- Property portfolio CRUD with status, type,
+  bedrooms, rent, and value fields
+  (migration `046_properties_foundation.sql`)
+- Tenant records per property with portal invite
+- Maintenance ticket workflow with priorities
+  and categories
+- Rent payment records and status tracking
+- Property certificates with expiry dates
+- Property documents with tenant sharing
+- Certificate alert emails and alert log
+  (migration `047_certificate_alerts.sql`)
+- Tenant portal: auth, setup, maintenance,
+  documents, messaging
+  (migrations `050_tenant_portal.sql`,
+  `051_tenant_portal_theme.sql`)
+- Portal light/dark theme per tenant
+- Mortgage and insurance tracking with renewal
+  alert emails (migration `052_property_finances_extended.sql`)
+- Post-expiry certificate overdue alerts
+- Winston property valuations with Claude
+  web search and manual comparables
+  (migration `053_property_valuation.sql`)
+- Financial summary charts (Recharts) per
+  property and portfolio
+- Rent due day tracking, auto-created pending
+  payments, dashboard flags, landlord reminder
+  emails (migration `054_rent_due_tracking.sql`)
+- Properties dashboard with Winston insight
+  card and rent due section
+- Daily property alerts cron (certificates,
+  mortgages, insurance, rent reminders)
+- Package gating and upgrade teaser page
+
+**AI integration (delivered):**
+- Winston portfolio insights on properties
+  dashboard and `/properties/winston`
+- Rental and sale price estimates via market
+  search (3-month regeneration cooldown)
+- Winston triage API in tenant portal for
+  common maintenance issues
+
+**Still planned / in progress:**
+- Communication hub UI at
+  `/properties/communication` (data model exists)
+- Rental income linked to core WISK Goals
+- Contractor contacts list for maintenance
+  assignment
+- Automatic maintenance task creation in
+  core Tasks from portal escalation
+- Yield calculations and tenant reliability
+  scores in Winston digest
+- Full document storage migration to
+  Supabase Storage (requires Pro upgrade)
+
+**Tenant portal (delivered):**
+- Separate routes at `/portal/*` — no full
+  WISK account required for tenants
+- Invite → setup → login flow
+- Maintenance request submission
+- Shared document access
+- Landlord–tenant messaging
+- Winston triage before landlord escalation
+
+**Landlord features (delivered):**
+- Property management dashboard and list
+- Tenant records with rent reminder settings
+- Maintenance ticket workflow
+- Rent tracking with due dates and overdue
+  dashboard flags
+- Certificate, mortgage, and insurance
+  tracking with email alerts
+- Document storage metadata per property
+- Winston insights and valuations
+
+**Pricing:**
+- £9-12/mo as part of vertical packages
+- Included in WISK Max bundle
+
+**Technical notes:**
+- Tenant portal uses Supabase Auth for tenant
+  accounts linked via `tenants.portal_user_id`
+- Property alert cron secured with
+  `PROPERTY_ALERTS_SECRET` bearer token
+- Reminder and alert emails via Resend
+- Valuation API uses Claude web_search tool;
+  parses multi-block responses; stores null
+  (not £0) when estimate unavailable
+- Documents: metadata in `property_documents`;
+  file storage pattern TBD for Pro upgrade
 
 #### Social Media Package
 
@@ -951,7 +1115,12 @@ Features:
 - Connected to content calendar
 - Tax/accounting export-ready data
 
-#### Properties Package
+#### Properties Package (legacy spec — see delivered list above)
+
+The detailed original spec below is preserved for
+reference. Delivered items are marked in the
+**Properties Package** section above; remaining
+items are still planned.
 
 Target: small landlords managing 1-10 properties
 
@@ -963,60 +1132,45 @@ tasks, and Winston for intelligent property management.
 - Tenant portal includes Winston triage — tenants describe
   their issue, Winston troubleshoots common problems first
   (e.g. boiler pressure, tripped fuse, blocked drain guidance)
+  — **Delivered** (`/api/portal/winston-triage`)
 - If Winston cannot resolve the issue or it's flagged as
   severe/urgent, it escalates automatically to the landlord
-  with a structured report: issue description, troubleshooting
-  steps attempted, urgency level
+  with a structured report — **Partial** (triage delivered;
+  auto task creation planned)
 - Winston surfaces maintenance patterns in the weekly digest
-  ("Flat 2 has had 3 maintenance requests this month")
-- Rent payment tracking with overdue alerts
+  — **Planned**
+- Rent payment tracking with overdue alerts — **Delivered**
 
 **Tenant portal:**
 - Lightweight separate portal created by the landlord when
-  setting up a tenancy
-- Tenant accesses via a unique link (no full WISK account needed)
-- Portal shows: their property details, active maintenance
-  requests, documents
-- Maintenance request flow:
-  1. Tenant describes issue
-  2. Winston attempts to troubleshoot
-  3. If unresolved/severe → escalates to landlord with full context
-  4. Landlord creates a maintenance task in WISK automatically
-  5. Tenant receives status updates
+  setting up a tenancy — **Delivered**
+- Tenant accesses via invite link (portal auth account) — **Delivered**
+- Portal shows: property details, maintenance requests,
+  documents, messages — **Delivered**
+- Maintenance request flow with Winston triage — **Delivered**
+  (auto task creation planned)
 
 **Landlord features:**
-- Property management dashboard (address, type, bedrooms, rent amount)
-- Tenant records per property (name, contact, tenancy start/end,
-  rent amount, payment history)
-- Maintenance ticket workflow:
-  New → In progress → Resolved
-  Assign to contractor (contacts list)
-  Link to WISK tasks for follow-up
-- Rent tracking:
-  Expected vs received per month
-  Overdue rent notifications
-  Payment history per tenant
-- Document storage per property:
-  Lease agreements, gas safety certificates, EPC, inspection reports
-- Rental income connected to Goals (track income against targets)
-- Winston insights:
-  Yield calculations per property
-  Maintenance cost tracking
-  Tenant payment reliability scores
-  Portfolio health in weekly digest
+- Property management dashboard — **Delivered**
+- Tenant records per property — **Delivered**
+- Maintenance ticket workflow — **Delivered**
+- Rent tracking with due dates and reminders — **Delivered**
+- Document storage per property — **Delivered** (metadata;
+  Storage upgrade planned)
+- Rental income connected to Goals — **Planned**
+- Winston insights: yield, maintenance costs,
+  tenant reliability — **Partial** (valuations and
+  portfolio insights delivered)
 
 **Pricing:**
 - £9-12/mo as part of vertical packages
 - Included in WISK Max bundle
 
 **Technical notes:**
-- Tenant portal is a separate lightweight Next.js route
-  (`/portal/[tenantToken]`) accessible without a WISK account
-- Winston triage in tenant portal uses the Claude API with
-  property-specific context
-- Documents stored in Supabase Storage (requires Supabase Pro upgrade)
-- Tenant portal tokens are UUID-based, stored encrypted,
-  expire on tenancy end
+- Tenant portal routes at `/portal/*` — **Delivered**
+- Winston triage uses Claude API — **Delivered**
+- Documents stored in Supabase Storage — **Planned**
+- Tenant portal tokens and auth via Supabase — **Delivered**
 
 #### Integration Architecture (shared across all packages)
 
@@ -1179,8 +1333,14 @@ WISK uses a deliberate "coming soon" approach:
 - Formal mobile QA pass still outstanding
 - Social media API integrations not
   yet implemented (Phase 3.3)
-- Apply migration `026_calendar_events.sql`
-  on production Supabase if not yet run
+- Properties Communication hub UI not
+  yet built (`/properties/communication`
+  is placeholder; `tenant_messages` exists)
+- Rental income → Goals linking not yet built
+- Property document file storage pending
+  Supabase Pro upgrade
+- Apply migrations `046`–`054` on production
+  Supabase if not yet run
 
 ---
 
@@ -1213,3 +1373,20 @@ WISK uses a deliberate "coming soon" approach:
 - feedback
 - changelog_entries
 - blog_posts
+- properties (migration 046)
+- tenants (includes portal fields — 050;
+  rent due fields — 054)
+- maintenance_tickets (migration 046)
+- rent_payments (migration 046)
+- property_certificates (migration 046)
+- property_documents (migration 046)
+- certificate_alert_log (migration 047)
+- property_insights (migration 047)
+- tenant_messages (migration 050)
+- property_mortgages (migration 052)
+- property_insurance (migration 052)
+- mortgage_alert_log (migration 052)
+- insurance_alert_log (migration 052)
+- property_valuations (migration 053)
+- property_comparables (migration 053)
+- rent_reminder_log (migration 054)

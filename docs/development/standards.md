@@ -16,7 +16,7 @@ Fetch data and enforce authorisation on the server. Add `"use client"` only when
 
 ### Follow existing patterns before inventing new ones
 
-Before introducing a new folder structure, data-fetching approach, or UI pattern, find how the nearest feature (projects, tasks, leads, content) already does it — then extend that pattern.
+Before introducing a new folder structure, data-fetching approach, or UI pattern, find how the nearest feature (projects, tasks, leads, content, properties) already does it — then extend that pattern.
 
 ---
 
@@ -57,6 +57,16 @@ src/
 | `components/projects/project-card.tsx` | Single item display + expand |
 | `components/projects/project-form-dialog.tsx` | Create modal |
 | `lib/projects/types.ts` | `Project`, `ProjectFormInput`, `ActionResult` |
+
+**Example — Properties** (vertical package)
+
+| File | Responsibility |
+|------|----------------|
+| `app/(dashboard)/properties/actions.ts` | All property-domain CRUD and queries |
+| `app/(dashboard)/properties/layout.tsx` | Package gate + sidebar shell |
+| `components/properties/properties-dashboard-client.tsx` | Dashboard UI |
+| `lib/properties/types.ts` | `Property`, `Tenant`, `RentDueFlag`, etc. |
+| `app/api/properties/check-certificate-alerts/route.ts` | Daily alert cron |
 
 ### Naming conventions
 

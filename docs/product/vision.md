@@ -176,6 +176,8 @@ tools built for their level of ambition.
 - 2,000 active users
 - WISK AI and AI Pro live
 - First vertical package (Social) in beta
+- Properties package live with tenant portal
+  and landlord workflows (delivered June 2026)
 - Monthly recurring revenue sufficient to fund
   full-time development
 
