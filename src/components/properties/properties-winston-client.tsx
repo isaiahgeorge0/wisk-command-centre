@@ -14,15 +14,29 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { triggerPropertyInsightsGeneration } from "@/app/(dashboard)/properties/actions";
+import { PropertyValuationSection } from "@/components/properties/property-valuation-section";
 import { PageTransition } from "@/components/layout/page-transition";
 import { Button } from "@/components/ui/button";
-import type { PropertyInsight, PropertyInsightContent } from "@/lib/properties/types";
+import type {
+  PropertyComparable,
+  PropertyInsight,
+  PropertyInsightContent,
+  PropertyValuation,
+  PropertyWithStats,
+} from "@/lib/properties/types";
 import { cn } from "@/lib/utils";
 
 type PropertiesWinstonClientProps = {
   insight: PropertyInsight | null;
   propertyCount: number;
   isAdmin: boolean;
+  properties: PropertyWithStats[];
+  valuationsByProperty: Record<string, PropertyValuation | null>;
+  comparablesByProperty: Record<string, PropertyComparable[]>;
+  eligibilityByProperty: Record<
+    string,
+    { canGenerate: boolean; nextAvailableAt: string | null }
+  >;
 };
 
 function formatGeneratedDate(iso: string): string {
@@ -102,6 +116,10 @@ export function PropertiesWinstonClient({
   insight,
   propertyCount,
   isAdmin,
+  properties,
+  valuationsByProperty,
+  comparablesByProperty,
+  eligibilityByProperty,
 }: PropertiesWinstonClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -248,6 +266,13 @@ export function PropertiesWinstonClient({
           </div>
         </>
       )}
+
+      <PropertyValuationSection
+        properties={properties}
+        valuationsByProperty={valuationsByProperty}
+        comparablesByProperty={comparablesByProperty}
+        eligibilityByProperty={eligibilityByProperty}
+      />
     </PageTransition>
   );
 }

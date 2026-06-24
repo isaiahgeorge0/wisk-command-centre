@@ -43,6 +43,7 @@ import type {
   PropertyDocument,
   PropertyInsurance,
   PropertyMortgage,
+  FinancialSummary,
   PropertyWithStats,
   RentPaymentWithDetails,
   Tenant,
@@ -76,6 +77,8 @@ type PropertyDetailClientProps = {
   certificateAlerts: CertificateAlertLog[];
   mortgages: PropertyMortgage[];
   insurance: PropertyInsurance[];
+  monthlyFinancialSummary: FinancialSummary | null;
+  annualFinancialSummary: FinancialSummary | null;
   initialTab?: PropertyDetailTab;
 };
 
@@ -89,6 +92,8 @@ export function PropertyDetailClient({
   certificateAlerts,
   mortgages,
   insurance,
+  monthlyFinancialSummary,
+  annualFinancialSummary,
   initialTab = "overview",
 }: PropertyDetailClientProps) {
   const router = useRouter();
@@ -186,6 +191,8 @@ export function PropertyDetailClient({
           tenants={tenants}
           mortgages={mortgages}
           insurance={insurance}
+          monthlyFinancialSummary={monthlyFinancialSummary}
+          annualFinancialSummary={annualFinancialSummary}
         />
       ) : activeTab === "certificates" ? (
         <PropertyCertificatesTab

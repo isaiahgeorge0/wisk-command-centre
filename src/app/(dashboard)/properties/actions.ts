@@ -15,6 +15,11 @@ import { formatPropertyAddress } from "@/lib/properties/format";
 import { getTenantFullName } from "@/lib/properties/tenant-form";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
+  buildFinancialSummary,
+  buildPortfolioFinancialOverview,
+  fetchPropertyFinanceData,
+} from "@/lib/properties/financial-summary";
+import {
   buildPropertyPortfolioContext,
   generatePropertyInsights,
   startOfMonthUtc,
@@ -33,13 +38,18 @@ import type {
   Property,
   PropertyCertificate,
   PropertyCertificateFormInput,
+  PropertyComparable,
+  PropertyComparableFormInput,
   PropertyDocument,
   PropertyFormInput,
+  FinancialSummary,
+  PortfolioFinancialOverview,
   PropertyInsurance,
   PropertyInsuranceFormInput,
   PropertyInsight,
   PropertyMortgage,
   PropertyMortgageFormInput,
+  PropertyValuation,
   PropertyWithStats,
   RentPayment,
   RentPaymentFormInput,
@@ -1712,6 +1722,211 @@ export async function revokeTenantPortalAccess(
 
   revalidatePropertyPaths(tenant.property_id as string);
   return { success: true };
+}
+
+// ─── Comparables & valuations ───────────────────────────────────────────────
+
+const comparableFormSchema = z.object({
+  property_id: z.string().uuid(),
+  address: z.string().trim().min(1, "Address is required"),
+  comparable_type: z.enum(["rental", "sale"]),
+  price: z.coerce.number().min(0, "Price is required"),
+  date: z.string().optional(),
+  source: z.string().optional(),
+  bedrooms: z.coerce.number().int().min(0).optional(),
+  property_type: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+function toComparableDbPayload(input: PropertyComparableFormInput) {
+  return {
+    property_id: input.property_id,
+    address: input.address.trim(),
+    comparable_type: input.comparable_type,
+    price: input.price,
+    date: emptyToNull(input.date),
+    source: emptyToNull(input.source),
+    bedrooms: parseOptionalNumber(input.bedrooms),
+    property_type: emptyToNull(input.property_type),
+    notes: emptyToNull(input.notes),
+  };
+}
+
+export async function getComparablesByProperty(
+  propertyId: string
+): Promise<PropertyComparable[]> {
+  const { supabase, userId } = await getScopedSupabase();
+  const { data, error } = await supabase
+    .from("property_comparables")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("property_id", propertyId)
+    .order("created_at", { ascending: false });
+  if (error) {
+    console.error("getComparablesByProperty:", error);
+    return [];
+  }
+  return (data ?? []) as PropertyComparable[];
+}
+
+export async function createComparable(
+  input: PropertyComparableFormInput
+): Promise<ActionResult<PropertyComparable>> {
+  const parsed = comparableFormSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+  const { supabase, userId } = await getScopedSupabase();
+  const payload = toComparableDbPayload(parsed.data as PropertyComparableFormInput);
+  const { data, error } = await supabase
+    .from("property_comparables")
+    .insert({ user_id: userId, ...payload })
+    .select()
+    .single();
+  if (error) {
+    console.error("createComparable:", error);
+    return { success: false, error: error.message };
+  }
+  revalidatePropertyPaths(payload.property_id);
+  revalidatePath("/properties/winston");
+  return { success: true, data: data as PropertyComparable };
+}
+
+export async function updateComparable(
+  id: string,
+  input: PropertyComparableFormInput
+): Promise<ActionResult<PropertyComparable>> {
+  const parsed = comparableFormSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+  const { supabase, userId } = await getScopedSupabase();
+  const payload = toComparableDbPayload(parsed.data as PropertyComparableFormInput);
+  const { data, error } = await supabase
+    .from("property_comparables")
+    .update(payload)
+    .eq("id", id)
+    .eq("user_id", userId)
+    .select()
+    .single();
+  if (error) {
+    console.error("updateComparable:", error);
+    return { success: false, error: error.message };
+  }
+  revalidatePropertyPaths(payload.property_id);
+  revalidatePath("/properties/winston");
+  return { success: true, data: data as PropertyComparable };
+}
+
+export async function deleteComparable(id: string): Promise<ActionResult> {
+  const { supabase, userId } = await getScopedSupabase();
+  const { data: existing } = await supabase
+    .from("property_comparables")
+    .select("property_id")
+    .eq("id", id)
+    .eq("user_id", userId)
+    .maybeSingle();
+  const { error } = await supabase
+    .from("property_comparables")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", userId);
+  if (error) {
+    console.error("deleteComparable:", error);
+    return { success: false, error: error.message };
+  }
+  revalidatePropertyPaths(existing?.property_id);
+  revalidatePath("/properties/winston");
+  return { success: true };
+}
+
+export async function getLatestValuation(
+  propertyId: string
+): Promise<PropertyValuation | null> {
+  const { supabase, userId } = await getScopedSupabase();
+  const { data, error } = await supabase
+    .from("property_valuations")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("property_id", propertyId)
+    .order("generated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) {
+    console.error("getLatestValuation:", error);
+    return null;
+  }
+  return (data as PropertyValuation | null) ?? null;
+}
+
+export async function canGenerateValuation(
+  propertyId: string
+): Promise<{ canGenerate: boolean; nextAvailableAt: string | null }> {
+  const latest = await getLatestValuation(propertyId);
+  if (!latest) {
+    return { canGenerate: true, nextAvailableAt: null };
+  }
+  const nextAvailable = new Date(latest.next_available_at).getTime();
+  return {
+    canGenerate: Date.now() >= nextAvailable,
+    nextAvailableAt: latest.next_available_at,
+  };
+}
+
+export async function getFinancialSummary(
+  propertyId: string,
+  period: "monthly" | "annual"
+): Promise<FinancialSummary | null> {
+  const { supabase, userId } = await getScopedSupabase();
+  const data = await fetchPropertyFinanceData(propertyId, userId, supabase);
+  if (!data.property) return null;
+  return buildFinancialSummary(
+    data.property,
+    data.payments,
+    data.mortgages,
+    data.insurance,
+    data.tickets,
+    period
+  );
+}
+
+export async function getPortfolioFinancialOverview(): Promise<PortfolioFinancialOverview> {
+  const { supabase, userId } = await getScopedSupabase();
+  const { data: properties, error } = await supabase
+    .from("properties")
+    .select("*")
+    .eq("user_id", userId);
+  if (error || !properties?.length) {
+    return {
+      totalNetIncomeMonthly: 0,
+      totalNetIncomeAnnual: 0,
+      bestPerforming: null,
+      negativeNetIncomeProperties: [],
+    };
+  }
+
+  const summaries = await Promise.all(
+    (properties as Property[]).map(async (property) => {
+      const data = await fetchPropertyFinanceData(property.id, userId, supabase);
+      const annual = buildFinancialSummary(
+        property,
+        data.payments,
+        data.mortgages,
+        data.insurance,
+        data.tickets,
+        "annual"
+      );
+      return { property, annual };
+    })
+  );
+
+  return buildPortfolioFinancialOverview(summaries);
 }
 
 // ─── Property insights ──────────────────────────────────────────────────────

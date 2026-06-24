@@ -4,6 +4,7 @@ import {
   getCertificateAlertsByProperty,
   getCertificatesByProperty,
   getDocumentsByProperty,
+  getFinancialSummary,
   getInsuranceByProperty,
   getMaintenanceByProperty,
   getMortgagesByProperty,
@@ -37,7 +38,7 @@ export default async function PropertyDetailPage({
   const { id } = await params;
   const { tab } = await searchParams;
 
-  const [property, tenants, maintenanceTickets, rentPayments, certificates, documents, certificateAlerts, mortgages, insurance] =
+  const [property, tenants, maintenanceTickets, rentPayments, certificates, documents, certificateAlerts, mortgages, insurance, monthlyFinancialSummary, annualFinancialSummary] =
     await Promise.all([
       getProperty(id),
       getTenantsByProperty(id),
@@ -48,6 +49,8 @@ export default async function PropertyDetailPage({
       getCertificateAlertsByProperty(id),
       getMortgagesByProperty(id),
       getInsuranceByProperty(id),
+      getFinancialSummary(id, "monthly"),
+      getFinancialSummary(id, "annual"),
     ]);
 
   if (!property) {
@@ -70,6 +73,8 @@ export default async function PropertyDetailPage({
       certificateAlerts={certificateAlerts}
       mortgages={mortgages}
       insurance={insurance}
+      monthlyFinancialSummary={monthlyFinancialSummary}
+      annualFinancialSummary={annualFinancialSummary}
       initialTab={initialTab}
     />
   );

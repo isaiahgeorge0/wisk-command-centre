@@ -27,6 +27,7 @@ import {
   daysUntilExpiryClass,
   formatPropertyCurrency,
   formatPropertyDate,
+  formatYieldPercent,
 } from "@/lib/properties/format";
 import {
   buildPortfolioFinanceStats,
@@ -35,6 +36,7 @@ import {
   groupPaymentsByProperty,
 } from "@/lib/properties/selectors";
 import type {
+  PortfolioFinancialOverview,
   PropertyInsurance,
   PropertyMortgage,
   PropertyWithStats,
@@ -50,6 +52,7 @@ type FinancesPageClientProps = {
   tenants: Tenant[];
   mortgages: PropertyMortgage[];
   insurance: PropertyInsurance[];
+  portfolioOverview: PortfolioFinancialOverview;
 };
 
 type UpcomingRenewal = {
@@ -68,6 +71,7 @@ export function FinancesPageClient({
   tenants,
   mortgages,
   insurance,
+  portfolioOverview,
 }: FinancesPageClientProps) {
   const [statusFilter, setStatusFilter] = useState<RentPaymentStatus | "all">(
     "all"
@@ -178,6 +182,55 @@ export function FinancesPageClient({
           value={`${stats.occupancyRate}%`}
         />
       </div>
+
+      <section className="mb-8 space-y-4 rounded-xl border border-amber-500/15 bg-card/40 p-5">
+        <h2 className="text-sm font-semibold text-foreground">
+          Portfolio financial summary
+        </h2>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <StatTile
+            label="Total net income (monthly)"
+            value={formatPropertyCurrency(portfolioOverview.totalNetIncomeMonthly)}
+          />
+          <StatTile
+            label="Total net income (annual)"
+            value={formatPropertyCurrency(portfolioOverview.totalNetIncomeAnnual)}
+          />
+        </div>
+        {portfolioOverview.bestPerforming ? (
+          <p className="text-sm text-muted-foreground">
+            Best performing:{" "}
+            <span className="font-medium text-foreground">
+              {portfolioOverview.bestPerforming.propertyName}
+            </span>{" "}
+            ({formatYieldPercent(portfolioOverview.bestPerforming.netYield)} net
+            yield)
+          </p>
+        ) : null}
+        {portfolioOverview.negativeNetIncomeProperties.length > 0 ? (
+          <div className="rounded-lg border border-orange-500/30 bg-orange-500/10 p-4">
+            <p className="text-sm font-medium text-orange-800 dark:text-orange-200">
+              Properties with negative net income
+            </p>
+            <ul className="mt-2 space-y-1">
+              {portfolioOverview.negativeNetIncomeProperties.map((item) => (
+                <li key={item.propertyId} className="text-sm">
+                  <Link
+                    href={`/properties/${item.propertyId}?tab=finances`}
+                    className="font-medium text-foreground hover:underline"
+                  >
+                    {item.propertyName}
+                  </Link>
+                  <span className="text-muted-foreground">
+                    {" "}
+                    · {formatPropertyCurrency(item.netIncome)} / year
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+      </section>
 
       <section className="mb-8 space-y-4 rounded-xl border border-amber-500/15 bg-card/40 p-5">
         <h2 className="text-sm font-semibold text-foreground">Portfolio summary</h2>

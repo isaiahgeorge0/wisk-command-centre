@@ -375,3 +375,94 @@ export type PropertyInsight = {
   period_start: string | null;
   period_end: string | null;
 };
+
+export type ValuationConfidence = "high" | "medium" | "low";
+export type SearchLevel = "postcode" | "town";
+export type ComparableType = "rental" | "sale";
+
+export type PropertyComparable = {
+  id: string;
+  user_id: string;
+  property_id: string;
+  address: string;
+  comparable_type: ComparableType;
+  price: number;
+  date: string | null;
+  source: string | null;
+  bedrooms: number | null;
+  property_type: string | null;
+  notes: string | null;
+  created_at: string;
+};
+
+export type PropertyComparableFormInput = {
+  property_id: string;
+  address: string;
+  comparable_type: ComparableType;
+  price: number;
+  date?: string;
+  source?: string;
+  bedrooms?: number;
+  property_type?: string;
+  notes?: string;
+};
+
+export type ValuationWebSource = {
+  title: string;
+  url: string;
+  snippet: string;
+};
+
+export type PropertyValuation = {
+  id: string;
+  user_id: string;
+  property_id: string;
+  rental_min: number | null;
+  rental_max: number | null;
+  sale_min: number | null;
+  sale_max: number | null;
+  confidence: ValuationConfidence;
+  search_level: SearchLevel;
+  reasoning: string;
+  web_sources: ValuationWebSource[] | null;
+  manual_comparables: PropertyComparable[] | null;
+  generated_at: string;
+  next_available_at: string;
+};
+
+export type FinancialSummary = {
+  property_id: string;
+  period: "monthly" | "annual";
+  rental_income: number;
+  expected_income: number;
+  vacancy_loss: number;
+  mortgage_cost: number;
+  insurance_cost: number;
+  maintenance_cost: number;
+  total_costs: number;
+  net_income: number;
+  gross_yield: number | null;
+  net_yield: number | null;
+  roi: number | null;
+  monthly_breakdown: Array<{
+    month: string;
+    income: number;
+    costs: number;
+    net: number;
+  }>;
+};
+
+export type PortfolioFinancialOverview = {
+  totalNetIncomeMonthly: number;
+  totalNetIncomeAnnual: number;
+  bestPerforming: {
+    propertyId: string;
+    propertyName: string;
+    netYield: number;
+  } | null;
+  negativeNetIncomeProperties: Array<{
+    propertyId: string;
+    propertyName: string;
+    netIncome: number;
+  }>;
+};

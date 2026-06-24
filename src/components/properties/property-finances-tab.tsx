@@ -12,6 +12,7 @@ import {
   toggleMortgageAlerts,
   updateRentPayment,
 } from "@/app/(dashboard)/properties/actions";
+import { PropertyFinancialSummary } from "@/components/properties/property-financial-summary";
 import { PropertyInsuranceFormDialog } from "@/components/properties/property-insurance-form-dialog";
 import { PropertyMortgageFormDialog } from "@/components/properties/property-mortgage-form-dialog";
 import { RentPaymentFormDialog } from "@/components/properties/rent-payment-form-dialog";
@@ -42,6 +43,7 @@ import {
 } from "@/lib/properties/format";
 import { buildPropertyFinanceStats } from "@/lib/properties/selectors";
 import type {
+  FinancialSummary,
   PropertyInsurance,
   PropertyMortgage,
   RentPaymentWithDetails,
@@ -55,6 +57,8 @@ type PropertyFinancesTabProps = {
   tenants: Tenant[];
   mortgages: PropertyMortgage[];
   insurance: PropertyInsurance[];
+  monthlyFinancialSummary: FinancialSummary | null;
+  annualFinancialSummary: FinancialSummary | null;
 };
 
 export function PropertyFinancesTab({
@@ -63,6 +67,8 @@ export function PropertyFinancesTab({
   tenants,
   mortgages,
   insurance,
+  monthlyFinancialSummary,
+  annualFinancialSummary,
 }: PropertyFinancesTabProps) {
   const router = useRouter();
   const [paymentFormOpen, setPaymentFormOpen] = useState(false);
@@ -134,6 +140,13 @@ export function PropertyFinancesTab({
 
   return (
     <div className="space-y-8">
+      {monthlyFinancialSummary && annualFinancialSummary ? (
+        <PropertyFinancialSummary
+          monthlySummary={monthlyFinancialSummary}
+          annualSummary={annualFinancialSummary}
+        />
+      ) : null}
+
       <section className="space-y-6">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatTile label="Expected this month" value={formatPropertyCurrency(stats.expectedThisMonth)} />
