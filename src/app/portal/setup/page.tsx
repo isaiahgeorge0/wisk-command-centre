@@ -66,19 +66,20 @@ export default async function PortalSetupPage({ searchParams }: SetupPageProps) 
 
 function ExpiredInvite() {
   return (
-    <div className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-6 py-12 text-center">
-      <p className="text-sm font-bold tracking-[0.2em] text-amber-500 uppercase">
-        WISK Tenant Portal
+    <div className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-6 py-12 text-center">
+      <p className="text-sm font-bold tracking-[0.18em] text-[var(--portal-amber)]">
+        WISK
       </p>
-      <h1 className="mt-4 text-2xl font-semibold text-foreground">
+      <p className="mt-1 text-sm text-[var(--portal-muted)]">Tenant Portal</p>
+      <h1 className="mt-6 text-2xl font-bold text-[var(--portal-text)]">
         This link has expired
       </h1>
-      <p className="mt-3 text-sm text-muted-foreground">
+      <p className="mt-3 text-sm text-[var(--portal-muted)]">
         Please contact your landlord to request a new invitation.
       </p>
       <Link
         href="/portal/login"
-        className="mt-6 text-sm font-medium text-amber-600 hover:underline dark:text-amber-400"
+        className="mt-6 text-sm font-medium text-[var(--portal-amber)] hover:underline"
       >
         Go to sign in
       </Link>

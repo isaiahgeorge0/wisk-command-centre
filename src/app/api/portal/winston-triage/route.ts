@@ -8,8 +8,16 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 const TRIAGE_SYSTEM_PROMPT = `You are Winston, a helpful property assistant. A tenant has reported a maintenance issue. Provide 2-3 simple troubleshooting steps they can try before a contractor is called. Be clear, friendly, and practical. Keep each step under 2 sentences. If the issue sounds like an emergency (gas leak, flooding, no heat in winter, electrical sparks), immediately tell them to contact emergency services and their landlord.
 
-Respond in JSON only with this shape:
+Return ONLY a raw JSON object with no markdown, no code fences, no explanation. The response must start with { and end with }.
+
+Use this shape:
 {"steps":["step 1","step 2"],"isEmergency":false}`;
+
+const FALLBACK_STEPS = [
+  "Check if there is a simple cause you can fix safely, such as a tripped switch or closed valve.",
+  "Try turning the affected appliance or system off and on again if it is safe to do so.",
+  "If the problem continues, report it to your landlord so they can arrange a repair.",
+];
 
 const bodySchema = z.object({
   issue: z.string().trim().min(1).max(2000),
@@ -21,6 +29,34 @@ type AnthropicResponse = {
   content: AnthropicTextBlock[];
   usage?: { input_tokens: number; output_tokens: number };
 };
+
+function parseTriageResponse(text: string): {
+  steps: string[];
+  isEmergency: boolean;
+} {
+  const cleaned = text
+    .replace(/```json\n?/gi, "")
+    .replace(/```\n?/g, "")
+    .trim();
+
+  try {
+    const json = JSON.parse(cleaned) as {
+      steps?: string[];
+      isEmergency?: boolean;
+    };
+    const steps = (json.steps ?? []).filter(
+      (step) => typeof step === "string" && step.trim()
+    );
+
+    if (steps.length > 0) {
+      return { steps, isEmergency: json.isEmergency === true };
+    }
+  } catch {
+    // Fall through to generic steps.
+  }
+
+  return { steps: FALLBACK_STEPS, isEmergency: false };
+}
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -109,23 +145,7 @@ export async function POST(request: Request) {
       );
     }
 
-    let steps: string[] = [];
-    let isEmergency = false;
-
-    try {
-      const json = JSON.parse(textBlock.text) as {
-        steps?: string[];
-        isEmergency?: boolean;
-      };
-      steps = (json.steps ?? []).filter((s) => s.trim());
-      isEmergency = json.isEmergency === true;
-    } catch {
-      steps = textBlock.text
-        .split(/\n+/)
-        .map((line) => line.replace(/^\d+[\).\s]+/, "").trim())
-        .filter(Boolean)
-        .slice(0, 3);
-    }
+    const { steps, isEmergency } = parseTriageResponse(textBlock.text);
 
     await logUsage(
       tenant.user_id as string,

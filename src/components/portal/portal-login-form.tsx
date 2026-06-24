@@ -3,10 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { PortalThemeToggle } from "@/components/portal/portal-theme-toggle";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 
 export function PortalLoginForm() {
   const router = useRouter();
@@ -38,23 +39,29 @@ export function PortalLoginForm() {
   };
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-6 py-12">
-      <p className="text-center text-sm font-bold tracking-[0.2em] text-amber-500 uppercase">
-        WISK Tenant Portal
-      </p>
-      <h1 className="mt-4 text-center text-2xl font-semibold text-foreground">
-        Sign in
-      </h1>
-      <p className="mt-2 text-center text-sm text-muted-foreground">
-        Access your tenancy details and maintenance requests.
-      </p>
+    <div className="relative mx-auto flex min-h-dvh w-full max-w-sm flex-col justify-center px-6 py-12">
+      <div className="absolute right-4 top-[max(1rem,env(safe-area-inset-top))]">
+        <PortalThemeToggle />
+      </div>
+
+      <div className="text-center">
+        <p className="text-sm font-bold tracking-[0.18em] text-[var(--portal-amber)]">
+          WISK
+        </p>
+        <p className="mt-1 text-sm text-[var(--portal-muted)]">Tenant Portal</p>
+        <h1 className="mt-6 text-2xl font-bold tracking-tight text-[var(--portal-text)]">
+          Sign in
+        </h1>
+      </div>
 
       <form
         onSubmit={handleSubmit}
-        className="mt-8 space-y-4 rounded-xl border border-border/60 bg-card/50 p-6"
+        className="mt-8 space-y-5 rounded-2xl border border-[var(--portal-border)] bg-[var(--portal-card)] p-6 shadow-[var(--portal-shadow)]"
       >
         <div className="space-y-2">
-          <Label htmlFor="portal-email">Email</Label>
+          <Label htmlFor="portal-email" className="text-[var(--portal-text)]">
+            Email
+          </Label>
           <Input
             id="portal-email"
             type="email"
@@ -62,11 +69,16 @@ export function PortalLoginForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="min-h-11"
+            className={cn(
+              "min-h-12 rounded-xl border-[var(--portal-border)] bg-[var(--portal-bg)]",
+              error && "border-[var(--portal-error)]"
+            )}
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="portal-password">Password</Label>
+          <Label htmlFor="portal-password" className="text-[var(--portal-text)]">
+            Password
+          </Label>
           <Input
             id="portal-password"
             type="password"
@@ -74,23 +86,28 @@ export function PortalLoginForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="min-h-11"
+            className={cn(
+              "min-h-12 rounded-xl border-[var(--portal-border)] bg-[var(--portal-bg)]",
+              error && "border-[var(--portal-error)]"
+            )}
           />
         </div>
 
-        {error ? <p className="text-sm text-destructive">{error}</p> : null}
+        {error ? (
+          <p className="text-sm text-[var(--portal-error)]">{error}</p>
+        ) : null}
 
-        <Button
+        <button
           type="submit"
-          className="min-h-11 w-full bg-amber-500 text-white hover:bg-amber-500/90"
           disabled={loading}
+          className="min-h-14 w-full rounded-xl bg-[var(--portal-amber)] text-sm font-semibold text-white disabled:opacity-50"
         >
           {loading ? "Signing in…" : "Sign in"}
-        </Button>
+        </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-muted-foreground">
-        Contact your landlord if you have trouble signing in.
+      <p className="mt-8 text-center text-xs text-[var(--portal-muted)]">
+        Powered by WISK
       </p>
     </div>
   );

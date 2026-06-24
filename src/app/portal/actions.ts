@@ -22,6 +22,7 @@ import type {
   PropertyDocument,
 } from "@/lib/properties/types";
 import { requireTenantContext } from "@/lib/portal/get-tenant-context";
+import type { PortalTheme } from "@/lib/portal/types";
 import { createClient } from "@/lib/supabase/server";
 
 const submitMaintenanceSchema = z.object({
@@ -67,6 +68,7 @@ export async function submitPortalMaintenanceRequest(
       priority: parsed.data.priority,
       category: parsed.data.category,
       reported_date: today,
+      reported_by_tenant: true,
     })
     .select()
     .single();
@@ -190,6 +192,32 @@ export async function getPortalDocumentUrl(
 export async function signOutPortal(): Promise<void> {
   const supabase = await createClient();
   await supabase.auth.signOut();
+}
+
+const portalThemeSchema = z.enum(["light", "dark"]);
+
+export async function updatePortalTheme(
+  theme: PortalTheme
+): Promise<ActionResult> {
+  const parsed = portalThemeSchema.safeParse(theme);
+  if (!parsed.success) {
+    return { success: false, error: "Invalid theme" };
+  }
+
+  const { tenant } = await requireTenantContext();
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("tenants")
+    .update({ portal_theme: parsed.data })
+    .eq("id", tenant.id);
+
+  if (error) {
+    console.error("updatePortalTheme:", error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true };
 }
 
 export type PortalMaintenanceInput = {

@@ -1,25 +1,7 @@
 import { PortalShell } from "@/components/portal/portal-shell";
+import { PortalThemeProvider } from "@/components/portal/portal-theme-provider";
 import { getTenantContext } from "@/lib/portal/get-tenant-context";
-import { createAdminClient } from "@/lib/supabase/admin";
-
-async function getLandlordDisplayName(landlordUserId: string): Promise<string | null> {
-  const admin = createAdminClient();
-  const [{ data: prefs }, { data: user }] = await Promise.all([
-    admin
-      .from("user_preferences")
-      .select("display_name")
-      .eq("user_id", landlordUserId)
-      .maybeSingle(),
-    admin.from("users").select("name, email").eq("id", landlordUserId).maybeSingle(),
-  ]);
-
-  return (
-    prefs?.display_name?.trim() ||
-    user?.name?.trim() ||
-    user?.email?.split("@")[0] ||
-    null
-  );
-}
+import type { PortalTheme } from "@/lib/portal/types";
 
 export default async function PortalLayout({
   children,
@@ -29,18 +11,20 @@ export default async function PortalLayout({
   const context = await getTenantContext();
 
   if (!context) {
-    return <div className="min-h-dvh bg-background">{children}</div>;
+    return (
+      <PortalThemeProvider persistTheme={false} initialTheme="light">
+        {children}
+      </PortalThemeProvider>
+    );
   }
 
-  const landlordName = await getLandlordDisplayName(context.tenant.user_id);
+  const portalTheme = (context.tenant.portal_theme ?? "light") as PortalTheme;
 
   return (
-    <PortalShell
-      tenant={context.tenant}
-      property={context.property}
-      landlordName={landlordName}
-    >
-      {children}
-    </PortalShell>
+    <PortalThemeProvider initialTheme={portalTheme}>
+      <PortalShell tenant={context.tenant} property={context.property}>
+        {children}
+      </PortalShell>
+    </PortalThemeProvider>
   );
 }

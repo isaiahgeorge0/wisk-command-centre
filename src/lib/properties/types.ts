@@ -81,6 +81,7 @@ export type Tenant = {
   portal_user_id: string | null;
   portal_invited_at: string | null;
   portal_invite_token: string | null;
+  portal_theme: "light" | "dark";
   created_at: string;
   updated_at: string;
 };
@@ -131,6 +132,7 @@ export type MaintenanceTicket = {
   reported_date: string;
   resolved_date: string | null;
   notes: string | null;
+  reported_by_tenant: boolean;
   created_at: string;
   updated_at: string;
 };

@@ -3,10 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { PortalThemeToggle } from "@/components/portal/portal-theme-toggle";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 
 type PortalSetupFormProps = {
   token: string;
@@ -83,33 +84,48 @@ export function PortalSetupForm({
   };
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-6 py-12">
-      <p className="text-center text-sm font-bold tracking-[0.2em] text-amber-500 uppercase">
-        WISK Tenant Portal
-      </p>
-      <h1 className="mt-4 text-center text-2xl font-semibold text-foreground">
-        Set up your account
-      </h1>
-      <p className="mt-2 text-center text-sm text-muted-foreground">
-        Hi {tenantName} — create a password for your tenancy at {propertyAddress}.
-      </p>
+    <div className="relative mx-auto flex min-h-dvh w-full max-w-sm flex-col justify-center px-6 py-12">
+      <div className="absolute right-4 top-[max(1rem,env(safe-area-inset-top))]">
+        <PortalThemeToggle />
+      </div>
+
+      <div className="text-center">
+        <p className="text-sm font-bold tracking-[0.18em] text-[var(--portal-amber)]">
+          WISK
+        </p>
+        <p className="mt-1 text-sm text-[var(--portal-muted)]">Tenant Portal</p>
+        <h1 className="mt-6 text-2xl font-bold tracking-tight text-[var(--portal-text)]">
+          Welcome
+        </h1>
+        <p className="mt-3 text-sm leading-relaxed text-[var(--portal-muted)]">
+          Hi {tenantName} — set up your account for{" "}
+          <span className="font-medium text-[var(--portal-text)]">
+            {propertyAddress}
+          </span>
+          .
+        </p>
+      </div>
 
       <form
         onSubmit={handleSubmit}
-        className="mt-8 space-y-4 rounded-xl border border-border/60 bg-card/50 p-6"
+        className="mt-8 space-y-5 rounded-2xl border border-[var(--portal-border)] bg-[var(--portal-card)] p-6 shadow-[var(--portal-shadow)]"
       >
         <div className="space-y-2">
-          <Label htmlFor="setup-email">Email</Label>
+          <Label htmlFor="setup-email" className="text-[var(--portal-text)]">
+            Email
+          </Label>
           <Input
             id="setup-email"
             type="email"
             value={email}
             readOnly
-            className="min-h-11 bg-muted/40"
+            className="min-h-12 rounded-xl border-[var(--portal-border)] bg-[var(--portal-bg)]/60"
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="setup-password">Password</Label>
+          <Label htmlFor="setup-password" className="text-[var(--portal-text)]">
+            Password
+          </Label>
           <Input
             id="setup-password"
             type="password"
@@ -117,11 +133,19 @@ export function PortalSetupForm({
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="min-h-11"
+            className={cn(
+              "min-h-12 rounded-xl border-[var(--portal-border)] bg-[var(--portal-bg)]",
+              error && "border-[var(--portal-error)]"
+            )}
           />
+          <p className="text-xs text-[var(--portal-muted)]">
+            At least 8 characters
+          </p>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="setup-confirm">Confirm password</Label>
+          <Label htmlFor="setup-confirm" className="text-[var(--portal-text)]">
+            Confirm password
+          </Label>
           <Input
             id="setup-confirm"
             type="password"
@@ -129,20 +153,29 @@ export function PortalSetupForm({
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
-            className="min-h-11"
+            className={cn(
+              "min-h-12 rounded-xl border-[var(--portal-border)] bg-[var(--portal-bg)]",
+              error && "border-[var(--portal-error)]"
+            )}
           />
         </div>
 
-        {error ? <p className="text-sm text-destructive">{error}</p> : null}
+        {error ? (
+          <p className="text-sm text-[var(--portal-error)]">{error}</p>
+        ) : null}
 
-        <Button
+        <button
           type="submit"
-          className="min-h-11 w-full bg-amber-500 text-white hover:bg-amber-500/90"
           disabled={loading}
+          className="min-h-14 w-full rounded-xl bg-[var(--portal-amber)] text-sm font-semibold text-white disabled:opacity-50"
         >
           {loading ? "Setting up…" : "Create account"}
-        </Button>
+        </button>
       </form>
+
+      <p className="mt-8 text-center text-xs text-[var(--portal-muted)]">
+        Powered by WISK
+      </p>
     </div>
   );
 }

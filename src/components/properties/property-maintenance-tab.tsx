@@ -9,6 +9,7 @@ import {
   updateMaintenanceTicket,
 } from "@/app/(dashboard)/properties/actions";
 import { MaintenancePriorityBadge } from "@/components/properties/maintenance-priority-badge";
+import { MaintenanceTenantReportedBadge } from "@/components/properties/maintenance-tenant-reported-badge";
 import { MaintenanceTicketFormDialog } from "@/components/properties/maintenance-ticket-form-dialog";
 import {
   AlertDialog,
@@ -154,6 +155,9 @@ export function PropertyMaintenanceTab({
                         <div className="flex flex-wrap items-center gap-2">
                           <h3 className="font-medium text-foreground">{ticket.title}</h3>
                           <MaintenancePriorityBadge priority={ticket.priority} />
+                          {ticket.reported_by_tenant ? (
+                            <MaintenanceTenantReportedBadge />
+                          ) : null}
                           {ticket.category ? (
                             <Badge variant="outline">{getMaintenanceCategoryDisplayName(ticket.category)}</Badge>
                           ) : null}

@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { PageTransition } from "@/components/layout/page-transition";
 import { MaintenancePriorityBadge } from "@/components/properties/maintenance-priority-badge";
+import { MaintenanceTenantReportedBadge } from "@/components/properties/maintenance-tenant-reported-badge";
 import { MaintenanceTicketFormDialog } from "@/components/properties/maintenance-ticket-form-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -209,6 +210,9 @@ export function MaintenancePageClient({
                             {ticket.title}
                           </p>
                           <MaintenancePriorityBadge priority={ticket.priority} />
+                          {ticket.reported_by_tenant ? (
+                            <MaintenanceTenantReportedBadge />
+                          ) : null}
                           {ticket.category ? (
                             <Badge variant="outline">
                               {getMaintenanceCategoryDisplayName(ticket.category)}

@@ -1,0 +1,35 @@
+.portal-root {
+  min-height: 100dvh;
+  color: var(--portal-text);
+  background-color: var(--portal-bg);
+}
+
+.portal-root.portal-light {
+  --portal-bg: #fafafa;
+  --portal-card: #ffffff;
+  --portal-border: #e5e7eb;
+  --portal-text: #111827;
+  --portal-muted: #6b7280;
+  --portal-amber: #f59e0b;
+  --portal-amber-light: #fef3c7;
+  --portal-amber-gradient-from: #fffbeb;
+  --portal-success: #10b981;
+  --portal-error: #ef4444;
+  --portal-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+  --portal-nav-bg: rgb(255 255 255 / 0.85);
+}
+
+.portal-root.portal-dark {
+  --portal-bg: #0a0a0f;
+  --portal-card: #111118;
+  --portal-border: rgb(255 255 255 / 0.08);
+  --portal-text: #f9fafb;
+  --portal-muted: #9ca3af;
+  --portal-amber: #f59e0b;
+  --portal-amber-light: rgb(245 158 11 / 0.15);
+  --portal-amber-gradient-from: rgb(245 158 11 / 0.12);
+  --portal-success: #10b981;
+  --portal-error: #ef4444;
+  --portal-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.35);
+  --portal-nav-bg: rgb(17 17 24 / 0.85);
+}

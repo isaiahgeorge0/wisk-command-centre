@@ -1,22 +1,20 @@
 "use client";
 
+import { motion, useReducedMotion } from "framer-motion";
 import {
   FileText,
   Home,
-  LogOut,
   MessageSquare,
   Wrench,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
-import { signOutPortal } from "@/app/portal/actions";
+import { PortalThemeToggle } from "@/components/portal/portal-theme-toggle";
 import { formatPropertyAddress } from "@/lib/properties/format";
 import { getTenantFullName } from "@/lib/properties/tenant-form";
 import type { Property, Tenant } from "@/lib/properties/types";
 import { cn } from "@/lib/utils";
-
-const PORTAL_ACCENT = "#f59e0b";
 
 const NAV_ITEMS = [
   { href: "/portal", label: "Home", icon: Home, exact: true },
@@ -28,18 +26,12 @@ const NAV_ITEMS = [
 type PortalShellProps = {
   tenant: Tenant;
   property: Property;
-  landlordName: string | null;
   children: React.ReactNode;
 };
 
-export function PortalShell({
-  tenant,
-  property,
-  landlordName,
-  children,
-}: PortalShellProps) {
+export function PortalShell({ tenant, property, children }: PortalShellProps) {
   const pathname = usePathname();
-  const router = useRouter();
+  const reduced = useReducedMotion() ?? false;
 
   const isBareRoute =
     pathname === "/portal/login" ||
@@ -50,50 +42,31 @@ export function PortalShell({
     return <>{children}</>;
   }
 
-  const handleSignOut = async () => {
-    await signOutPortal();
-    router.push("/portal/login");
-    router.refresh();
-  };
-
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col bg-background">
-      <header className="sticky top-0 z-20 border-b border-border/60 bg-background/95 px-4 py-3 backdrop-blur">
+    <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col">
+      <header className="sticky top-0 z-20 border-b border-[var(--portal-border)] bg-[var(--portal-bg)] px-5 pb-4 pt-[max(1rem,env(safe-area-inset-top))]">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p
-              className="text-sm font-bold tracking-[0.2em] uppercase"
-              style={{ color: PORTAL_ACCENT }}
-            >
+            <p className="text-sm font-bold tracking-[0.18em] text-[var(--portal-amber)]">
               WISK
             </p>
-            <p className="truncate text-sm font-medium text-foreground">
+            <p className="mt-2 truncate text-base font-medium text-[var(--portal-text)]">
               {getTenantFullName(tenant)}
             </p>
-            <p className="truncate text-xs text-muted-foreground">
+            <p className="mt-0.5 truncate text-sm text-[var(--portal-muted)]">
               {formatPropertyAddress(property)}
             </p>
-            {landlordName ? (
-              <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                Landlord: {landlordName}
-              </p>
-            ) : null}
           </div>
-          <button
-            type="button"
-            onClick={() => void handleSignOut()}
-            className="inline-flex min-h-10 min-w-10 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            aria-label="Sign out"
-          >
-            <LogOut className="size-4" />
-          </button>
+          <PortalThemeToggle />
         </div>
       </header>
 
-      <main className="min-h-0 flex-1 px-4 py-4 pb-24">{children}</main>
+      <main className="min-h-0 flex-1 px-5 py-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
+        {children}
+      </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto max-w-lg border-t border-border/60 bg-background/95 backdrop-blur">
-        <div className="grid grid-cols-4 gap-1 px-2 py-2">
+      <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto max-w-lg border-t border-[var(--portal-border)] bg-[var(--portal-nav-bg)] backdrop-blur-md">
+        <div className="grid grid-cols-4 gap-1 px-2 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           {NAV_ITEMS.map((item) => {
             const { href, label, icon: Icon } = item;
             const exact = "exact" in item && item.exact === true;
@@ -102,19 +75,26 @@ export function PortalShell({
               : pathname.startsWith(href);
 
             return (
-              <Link
+              <motion.div
                 key={href}
-                href={href}
-                className={cn(
-                  "flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg px-1 text-[11px] font-medium transition-colors",
-                  active
-                    ? "text-amber-600 dark:text-amber-400"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
+                whileTap={reduced ? undefined : { scale: 0.95 }}
               >
-                <Icon className="size-5" aria-hidden />
-                {label}
-              </Link>
+                <Link
+                  href={href}
+                  className={cn(
+                    "flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[11px] font-medium transition-colors",
+                    active
+                      ? "text-[var(--portal-amber)]"
+                      : "text-[var(--portal-muted)] hover:text-[var(--portal-text)]"
+                  )}
+                >
+                  <Icon
+                    className={cn("size-5", active && "fill-current")}
+                    aria-hidden
+                  />
+                  {label}
+                </Link>
+              </motion.div>
             );
           })}
         </div>
