@@ -1,8 +1,6 @@
 import { requireTenantContext } from "@/lib/portal/get-tenant-context";
 import { createAdminClient } from "@/lib/supabase/admin";
-import {
-  getTenantMessages,
-} from "@/app/portal/actions";
+import { getTenantMessages } from "@/app/portal/actions";
 import { PortalMessagesClient } from "@/components/portal/portal-messages-client";
 
 export default async function PortalMessagesPage() {
@@ -17,7 +15,7 @@ export default async function PortalMessagesPage() {
     .maybeSingle();
   const { data: prefs } = await admin
     .from("user_preferences")
-    .select("display_name")
+    .select("display_name, last_seen_at")
     .eq("user_id", tenant.user_id)
     .maybeSingle();
 
@@ -36,6 +34,7 @@ export default async function PortalMessagesPage() {
       tenantId={tenant.id}
       senderId={tenant.portal_user_id}
       landlordName={landlordName}
+      landlordLastSeenAt={prefs?.last_seen_at ?? null}
       propertyName={property.name}
       propertyId={property.id}
       landlordUserId={tenant.user_id}

@@ -2260,8 +2260,8 @@ const tenantMessageSchema = z.object({
 
 type TenantMessageRow = TenantMessage & {
   tenants:
-    | { first_name: string; last_name: string }
-    | { first_name: string; last_name: string }[]
+    | { first_name: string; last_name: string; last_seen_at: string | null }
+    | { first_name: string; last_name: string; last_seen_at: string | null }[]
     | null;
   properties: { name: string } | { name: string }[] | null;
 };
@@ -2293,6 +2293,7 @@ function buildConversationSummaries(
         latest_message_at: row.created_at,
         unread_count:
           row.sender_type === "tenant" && !row.read ? 1 : 0,
+        other_party_last_seen_at: tenant?.last_seen_at ?? null,
       });
       continue;
     }
@@ -2317,7 +2318,7 @@ export async function getConversations(
   let query = supabase
     .from("tenant_messages")
     .select(
-      "*, tenants(first_name, last_name), properties(name)"
+      "*, tenants(first_name, last_name, last_seen_at), properties(name)"
     )
     .eq("landlord_user_id", userId)
     .order("created_at", { ascending: false });
@@ -2422,4 +2423,22 @@ export async function markMessagesAsRead(
   }
 
   return { success: true };
+}
+
+export async function getTotalUnreadMessageCount(): Promise<number> {
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { count, error } = await supabase
+    .from("tenant_messages")
+    .select("*", { count: "exact", head: true })
+    .eq("landlord_user_id", userId)
+    .eq("sender_type", "tenant")
+    .eq("read", false);
+
+  if (error) {
+    console.error("getTotalUnreadMessageCount:", error);
+    return 0;
+  }
+
+  return count ?? 0;
 }

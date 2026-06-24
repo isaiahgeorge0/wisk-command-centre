@@ -12,6 +12,7 @@ import { BottomNav } from "@/components/layout/bottom-nav";
 import { NavModeProvider } from "@/components/layout/nav-mode-context";
 import { QuickAddFab } from "@/components/layout/quick-add-fab";
 import { TopNav } from "@/components/layout/top-nav";
+import { LandlordPresenceTracker } from "@/components/presence/landlord-presence-tracker";
 import { PreferencesProvider } from "@/components/preferences/preferences-context";
 import { QuickAddProvider, useQuickAdd } from "@/components/quick-add/quick-add-context";
 import { ProjectTourCelebration } from "@/components/spotlight-tour/project-tour-celebration";
@@ -120,6 +121,7 @@ export function AppShell({
               projectTourCompleted={projectTourCompleted}
             >
             <div className="min-h-screen overflow-x-hidden">
+              <LandlordPresenceTracker />
               <TopNav
                 userEmail={userEmail}
                 userName={userName}

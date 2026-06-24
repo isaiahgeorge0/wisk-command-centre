@@ -1,3 +1,4 @@
+import { getTotalUnreadMessageCount } from "@/app/(dashboard)/properties/actions";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { hasPackageAccess } from "@/lib/billing/access";
 import { PropertiesSidebar } from "@/components/properties/properties-sidebar";
@@ -15,9 +16,14 @@ export default async function PropertiesLayout({
     return <PropertiesTeaserPage />;
   }
 
+  const unreadMessageCount = await getTotalUnreadMessageCount();
+
   return (
     <div className="-mx-4 flex min-h-[calc(100dvh-4rem)] md:-mx-6 lg:-mx-8">
-      <PropertiesSidebar className="hidden md:flex" />
+      <PropertiesSidebar
+        className="hidden md:flex"
+        unreadMessageCount={unreadMessageCount}
+      />
       <div className="min-h-0 min-w-0 flex-1 overflow-y-auto px-4 md:px-6 lg:px-8">
         {children}
       </div>

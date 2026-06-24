@@ -15,6 +15,9 @@ type MessageThreadProps = {
   onSend: (message: string) => Promise<void>;
   header?: React.ReactNode;
   className?: string;
+  typingUserName?: string;
+  onTypingChange?: (isTyping: boolean) => void;
+  isOtherPartyTyping?: boolean;
 };
 
 export function MessageThread({
@@ -23,15 +26,58 @@ export function MessageThread({
   onSend,
   header,
   className,
+  typingUserName,
+  onTypingChange,
+  isOtherPartyTyping = false,
 }: MessageThreadProps) {
   const [draft, setDraft] = useState("");
   const [isPending, startTransition] = useTransition();
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const prevLengthRef = useRef(0);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    const behavior =
+      prevLengthRef.current === 0 ? ("instant" as ScrollBehavior) : "smooth";
+    prevLengthRef.current = messages.length;
+    if (messages.length > 0) {
+      bottomRef.current?.scrollIntoView({ behavior });
+    }
+  }, [messages.length]);
+
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const clearTypingTimeout = () => {
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
+  };
+
+  const scheduleTypingStop = () => {
+    clearTypingTimeout();
+    typingTimeoutRef.current = setTimeout(() => {
+      onTypingChange?.(false);
+    }, 2000);
+  };
+
+  const handleDraftChange = (value: string) => {
+    setDraft(value);
+    if (value.trim()) {
+      onTypingChange?.(true);
+      scheduleTypingStop();
+    } else {
+      clearTypingTimeout();
+      onTypingChange?.(false);
+    }
+  };
 
   const handleSend = useCallback(() => {
     const text = draft.trim();
@@ -40,9 +86,11 @@ export function MessageThread({
     startTransition(async () => {
       await onSend(text);
       setDraft("");
+      clearTypingTimeout();
+      onTypingChange?.(false);
       textareaRef.current?.focus();
     });
-  }, [draft, isPending, onSend]);
+  }, [draft, isPending, onSend, onTypingChange]);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && !event.shiftKey) {
@@ -87,6 +135,22 @@ export function MessageThread({
               </div>
             );
           })}
+          {isOtherPartyTyping ? (
+            <div className="flex items-start">
+              <div
+                className="rounded-2xl bg-muted px-4 py-2.5"
+                aria-label={
+                  typingUserName ? `${typingUserName} is typing` : "Typing"
+                }
+              >
+                <div className="flex h-4 items-center gap-1">
+                  <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground/60 [animation-delay:0ms]" />
+                  <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground/60 [animation-delay:150ms]" />
+                  <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground/60 [animation-delay:300ms]" />
+                </div>
+              </div>
+            </div>
+          ) : null}
           <div ref={bottomRef} />
         </div>
       </div>
@@ -96,7 +160,7 @@ export function MessageThread({
           <Textarea
             ref={textareaRef}
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            onChange={(e) => handleDraftChange(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Write a message…"
             rows={2}

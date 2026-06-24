@@ -1,6 +1,7 @@
 import { PortalShell } from "@/components/portal/portal-shell";
 import { PortalThemeProvider } from "@/components/portal/portal-theme-provider";
 import { getTenantContext } from "@/lib/portal/get-tenant-context";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { PortalTheme } from "@/lib/portal/types";
 
 export default async function PortalLayout({
@@ -20,9 +21,30 @@ export default async function PortalLayout({
 
   const portalTheme = (context.tenant.portal_theme ?? "light") as PortalTheme;
 
+  const admin = createAdminClient();
+  const { data: landlordUser } = await admin
+    .from("users")
+    .select("name")
+    .eq("id", context.tenant.user_id)
+    .maybeSingle();
+  const { data: prefs } = await admin
+    .from("user_preferences")
+    .select("display_name")
+    .eq("user_id", context.tenant.user_id)
+    .maybeSingle();
+
+  const landlordName =
+    prefs?.display_name?.trim() ||
+    landlordUser?.name?.trim() ||
+    "Your landlord";
+
   return (
     <PortalThemeProvider initialTheme={portalTheme}>
-      <PortalShell tenant={context.tenant} property={context.property}>
+      <PortalShell
+        tenant={context.tenant}
+        property={context.property}
+        landlordName={landlordName}
+      >
         {children}
       </PortalShell>
     </PortalThemeProvider>

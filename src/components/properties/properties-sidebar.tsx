@@ -31,7 +31,15 @@ function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function PropertiesSidebar({ className }: { className?: string }) {
+type PropertiesSidebarProps = {
+  className?: string;
+  unreadMessageCount?: number;
+};
+
+export function PropertiesSidebar({
+  className,
+  unreadMessageCount = 0,
+}: PropertiesSidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -59,6 +67,9 @@ export function PropertiesSidebar({ className }: { className?: string }) {
           {NAV_ITEMS.map((item) => {
             const active = isActive(pathname, item.href);
             const Icon = item.icon;
+            const showUnreadBadge =
+              item.href === "/properties/communication" &&
+              unreadMessageCount > 0;
 
             return (
               <li key={item.href}>
@@ -71,7 +82,19 @@ export function PropertiesSidebar({ className }: { className?: string }) {
                       : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                   )}
                 >
-                  <Icon className="size-4 shrink-0" aria-hidden />
+                  <span className="relative shrink-0">
+                    <Icon className="size-4" aria-hidden />
+                    {showUnreadBadge ? (
+                      <span
+                        className={cn(
+                          "absolute -top-1.5 -right-1.5 flex min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-semibold leading-none text-white",
+                          unreadMessageCount > 9 ? "min-w-[18px]" : "size-4"
+                        )}
+                      >
+                        {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
+                      </span>
+                    ) : null}
+                  </span>
                   {item.label}
                 </Link>
               </li>

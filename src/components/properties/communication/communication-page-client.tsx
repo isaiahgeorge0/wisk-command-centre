@@ -1,5 +1,6 @@
 "use client";
 
+import { AnimatePresence } from "framer-motion";
 import { ArrowLeft, MessageSquare } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 
@@ -10,6 +11,8 @@ import {
   sendLandlordMessage,
 } from "@/app/(dashboard)/properties/actions";
 import { MessageThread } from "@/components/properties/communication/message-thread";
+import { MessageToast } from "@/components/properties/communication/message-toast";
+import { PresenceLabel } from "@/components/properties/communication/presence-label";
 import { PageHeader } from "@/components/layout/page-header";
 import { PageTransition } from "@/components/layout/page-transition";
 import { PROPERTIES_ACCENT } from "@/lib/properties/constants";
@@ -17,7 +20,10 @@ import {
   formatMessageTimestamp,
   truncateMessagePreview,
 } from "@/lib/properties/format";
-import { useLandlordMessagesRealtime } from "@/lib/properties/use-tenant-messages-realtime";
+import {
+  useLandlordMessagesRealtime,
+  useTypingPresence,
+} from "@/lib/properties/use-tenant-messages-realtime";
 import type { ConversationSummary, TenantMessage } from "@/lib/properties/types";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +49,7 @@ function upsertConversation(
     latest_message_at: message.created_at,
     unread_count:
       (existing?.unread_count ?? 0) + (incrementUnread ? 1 : 0),
+    other_party_last_seen_at: existing?.other_party_last_seen_at ?? null,
   };
 
   const rest = conversations.filter((c) => c.tenant_id !== message.tenant_id);
@@ -62,8 +69,16 @@ export function CommunicationPageClient({
   const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
   const [messages, setMessages] = useState<TenantMessage[]>([]);
   const [mobileView, setMobileView] = useState<"list" | "thread">("list");
+  const [isOtherPartyTyping, setIsOtherPartyTyping] = useState(false);
+  const [toastMessage, setToastMessage] = useState<{
+    tenantId: string;
+    tenantName: string;
+    preview: string;
+  } | null>(null);
   const [isLoadingMessages, startLoadMessages] = useTransition();
   const selectedTenantRef = useRef<string | null>(null);
+  const conversationsRef = useRef(conversations);
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectedConversation = conversations.find(
     (c) => c.tenant_id === selectedTenantId
@@ -73,43 +88,93 @@ export function CommunicationPageClient({
     selectedTenantRef.current = selectedTenantId;
   }, [selectedTenantId]);
 
-  const handleRealtimeInsert = useCallback((message: TenantMessage) => {
-    const isActive = selectedTenantRef.current === message.tenant_id;
-    const incrementUnread =
-      message.sender_type === "tenant" && !message.read && !isActive;
+  useEffect(() => {
+    conversationsRef.current = conversations;
+  }, [conversations]);
 
-    setConversations((prev) => {
-      const exists = prev.some((c) => c.tenant_id === message.tenant_id);
-      if (!exists && message.sender_type === "tenant") {
-        void getConversations().then(setConversations);
-        return prev;
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
       }
-      return upsertConversation(
-        prev,
-        message,
-        "Tenant",
-        "Property",
-        incrementUnread
-      );
-    });
+    };
+  }, []);
 
-    if (isActive) {
-      setMessages((prev) => {
-        if (prev.some((m) => m.id === message.id)) return prev;
-        return [...prev, message];
-      });
-      if (message.sender_type === "tenant") {
-        void markMessagesAsRead(message.tenant_id);
-        setConversations((prev) =>
-          prev.map((c) =>
-            c.tenant_id === message.tenant_id
-              ? { ...c, unread_count: 0 }
-              : c
-          )
+  const showToast = useCallback(
+    (tenantId: string, tenantName: string, preview: string) => {
+      setToastMessage({ tenantId, tenantName, preview });
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+      toastTimeoutRef.current = setTimeout(() => {
+        setToastMessage(null);
+      }, 5000);
+    },
+    []
+  );
+
+  const { setTyping } = useTypingPresence({
+    channelName: selectedTenantId
+      ? `typing-${selectedTenantId}`
+      : "typing-none",
+    currentUserId: landlordUserId,
+    onTypingChange: (ids) => setIsOtherPartyTyping(ids.length > 0),
+  });
+
+  const handleRealtimeInsert = useCallback(
+    (message: TenantMessage) => {
+      const isActive = selectedTenantRef.current === message.tenant_id;
+      const incrementUnread =
+        message.sender_type === "tenant" && !message.read && !isActive;
+
+      if (
+        message.sender_type === "tenant" &&
+        selectedTenantRef.current !== message.tenant_id
+      ) {
+        const conversation = conversationsRef.current.find(
+          (c) => c.tenant_id === message.tenant_id
+        );
+        showToast(
+          message.tenant_id,
+          conversation?.tenant_name ?? "Tenant",
+          truncateMessagePreview(message.message)
         );
       }
-    }
-  }, []);
+
+      setConversations((prev) => {
+        const exists = prev.some((c) => c.tenant_id === message.tenant_id);
+        if (!exists && message.sender_type === "tenant") {
+          void getConversations().then(setConversations);
+          return prev;
+        }
+        return upsertConversation(
+          prev,
+          message,
+          "Tenant",
+          "Property",
+          incrementUnread
+        );
+      });
+
+      if (isActive) {
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === message.id)) return prev;
+          return [...prev, message];
+        });
+        if (message.sender_type === "tenant") {
+          void markMessagesAsRead(message.tenant_id);
+          setConversations((prev) =>
+            prev.map((c) =>
+              c.tenant_id === message.tenant_id
+                ? { ...c, unread_count: 0 }
+                : c
+            )
+          );
+        }
+      }
+    },
+    [showToast]
+  );
 
   useLandlordMessagesRealtime({
     landlordUserId,
@@ -119,6 +184,7 @@ export function CommunicationPageClient({
   const selectConversation = (conversation: ConversationSummary) => {
     setSelectedTenantId(conversation.tenant_id);
     setMobileView("thread");
+    setIsOtherPartyTyping(false);
     setConversations((prev) =>
       prev.map((c) =>
         c.tenant_id === conversation.tenant_id
@@ -297,12 +363,18 @@ export function CommunicationPageClient({
                   <p className="truncate text-xs text-muted-foreground">
                     {selectedConversation.property_name}
                   </p>
+                  <PresenceLabel
+                    lastSeenAt={selectedConversation.other_party_last_seen_at}
+                  />
                 </div>
               </div>
               <MessageThread
                 messages={messages}
                 currentSenderId={landlordUserId}
                 onSend={handleSend}
+                isOtherPartyTyping={isOtherPartyTyping}
+                onTypingChange={setTyping}
+                typingUserName={selectedConversation.tenant_name}
                 header={
                   <div className="hidden md:block">
                     <p className="font-medium text-foreground">
@@ -311,6 +383,11 @@ export function CommunicationPageClient({
                     <p className="text-sm text-muted-foreground">
                       {selectedConversation.property_name}
                     </p>
+                    <PresenceLabel
+                      lastSeenAt={
+                        selectedConversation.other_party_last_seen_at
+                      }
+                    />
                   </div>
                 }
                 className={cn(isLoadingMessages && "opacity-60")}
@@ -326,6 +403,23 @@ export function CommunicationPageClient({
           )}
         </section>
       </div>
+
+      <AnimatePresence>
+        {toastMessage ? (
+          <MessageToast
+            senderName={toastMessage.tenantName}
+            preview={toastMessage.preview}
+            onDismiss={() => setToastMessage(null)}
+            onClick={() => {
+              const conv = conversations.find(
+                (c) => c.tenant_id === toastMessage.tenantId
+              );
+              if (conv) selectConversation(conv);
+              setToastMessage(null);
+            }}
+          />
+        ) : null}
+      </AnimatePresence>
     </PageTransition>
   );
 }

@@ -312,3 +312,15 @@ export async function markTenantMessagesAsRead(): Promise<ActionResult> {
 
   return { success: true };
 }
+
+export async function updateTenantLastSeen(): Promise<void> {
+  const { tenant } = await requireTenantContext();
+  const admin = await import("@/lib/supabase/admin").then((m) =>
+    m.createAdminClient()
+  );
+
+  await admin
+    .from("tenants")
+    .update({ last_seen_at: new Date().toISOString() })
+    .eq("id", tenant.id);
+}

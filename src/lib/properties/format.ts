@@ -91,6 +91,19 @@ export function truncateMessagePreview(text: string, max = 80): string {
   return `${trimmed.slice(0, max - 1)}…`;
 }
 
+export function getPresenceLabel(lastSeenAt: string | null): string {
+  if (!lastSeenAt) return "";
+  const diff = Date.now() - new Date(lastSeenAt).getTime();
+  if (diff < 2 * 60 * 1000) return "Online";
+  if (diff < 60 * 60 * 1000) {
+    return `Active ${Math.floor(diff / 60000)}m ago`;
+  }
+  if (diff < 24 * 60 * 60 * 1000) {
+    return `Active ${Math.floor(diff / 3600000)}h ago`;
+  }
+  return `Active ${Math.floor(diff / 86400000)}d ago`;
+}
+
 export function formatRentFrequency(
   amount: number,
   frequency: "weekly" | "monthly"

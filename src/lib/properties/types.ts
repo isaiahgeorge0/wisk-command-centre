@@ -86,6 +86,7 @@ export type Tenant = {
   rent_due_day: number | null;
   rent_reminder_days: number;
   rent_reminder_enabled: boolean;
+  last_seen_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -493,4 +494,5 @@ export type ConversationSummary = {
   latest_message: string;
   latest_message_at: string;
   unread_count: number;
+  other_party_last_seen_at: string | null;
 };

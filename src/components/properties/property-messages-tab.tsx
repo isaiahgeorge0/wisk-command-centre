@@ -8,8 +8,12 @@ import {
   sendLandlordMessage,
 } from "@/app/(dashboard)/properties/actions";
 import { MessageThread } from "@/components/properties/communication/message-thread";
+import { PresenceLabel } from "@/components/properties/communication/presence-label";
 import { getTenantFullName } from "@/lib/properties/tenant-form";
-import { useLandlordMessagesRealtime } from "@/lib/properties/use-tenant-messages-realtime";
+import {
+  useLandlordMessagesRealtime,
+  useTypingPresence,
+} from "@/lib/properties/use-tenant-messages-realtime";
 import type { Tenant, TenantMessage } from "@/lib/properties/types";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +32,7 @@ export function PropertyMessagesTab({
     tenants.length === 1 ? tenants[0]?.id ?? null : null
   );
   const [messages, setMessages] = useState<TenantMessage[]>([]);
+  const [isOtherPartyTyping, setIsOtherPartyTyping] = useState(false);
   const [isLoading, startLoad] = useTransition();
   const selectedTenantRef = useRef<string | null>(null);
 
@@ -36,6 +41,14 @@ export function PropertyMessagesTab({
   useEffect(() => {
     selectedTenantRef.current = selectedTenantId;
   }, [selectedTenantId]);
+
+  const { setTyping } = useTypingPresence({
+    channelName: selectedTenantId
+      ? `typing-${selectedTenantId}`
+      : "typing-none",
+    currentUserId: landlordUserId,
+    onTypingChange: (ids) => setIsOtherPartyTyping(ids.length > 0),
+  });
 
   const loadThread = useCallback((tenantId: string) => {
     startLoad(async () => {
@@ -49,6 +62,7 @@ export function PropertyMessagesTab({
 
   useEffect(() => {
     if (selectedTenantId) {
+      setIsOtherPartyTyping(false);
       loadThread(selectedTenantId);
     } else {
       setMessages([]);
@@ -146,12 +160,16 @@ export function PropertyMessagesTab({
           messages={messages}
           currentSenderId={landlordUserId}
           onSend={handleSend}
+          isOtherPartyTyping={isOtherPartyTyping}
+          onTypingChange={setTyping}
+          typingUserName={getTenantFullName(selectedTenant)}
           header={
             <div>
               <p className="font-medium text-foreground">
                 {getTenantFullName(selectedTenant)}
               </p>
               <p className="text-sm text-muted-foreground">Tenant messages</p>
+              <PresenceLabel lastSeenAt={selectedTenant.last_seen_at} />
             </div>
           }
           className={cn(isLoading && "opacity-60")}

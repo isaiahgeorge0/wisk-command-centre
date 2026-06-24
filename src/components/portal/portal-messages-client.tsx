@@ -7,8 +7,12 @@ import {
   sendTenantMessage,
 } from "@/app/portal/actions";
 import { MessageThread } from "@/components/properties/communication/message-thread";
+import { PresenceLabel } from "@/components/properties/communication/presence-label";
 import { PortalPage } from "@/components/portal/portal-page";
-import { useTenantMessagesRealtime } from "@/lib/properties/use-tenant-messages-realtime";
+import {
+  useTenantMessagesRealtime,
+  useTypingPresence,
+} from "@/lib/properties/use-tenant-messages-realtime";
 import type { TenantMessage } from "@/lib/properties/types";
 
 type PortalMessagesClientProps = {
@@ -16,6 +20,7 @@ type PortalMessagesClientProps = {
   tenantId: string;
   senderId: string;
   landlordName: string;
+  landlordLastSeenAt: string | null;
   propertyName: string;
   propertyId: string;
   landlordUserId: string;
@@ -26,12 +31,20 @@ export function PortalMessagesClient({
   tenantId,
   senderId,
   landlordName,
+  landlordLastSeenAt,
   propertyName,
   propertyId,
   landlordUserId,
 }: PortalMessagesClientProps) {
   const [messages, setMessages] = useState<TenantMessage[]>(initialMessages);
+  const [isOtherPartyTyping, setIsOtherPartyTyping] = useState(false);
   const markedRef = useRef(false);
+
+  const { setTyping } = useTypingPresence({
+    channelName: `typing-${tenantId}`,
+    currentUserId: senderId,
+    onTypingChange: (ids) => setIsOtherPartyTyping(ids.length > 0),
+  });
 
   const markRead = useCallback(async () => {
     await markTenantMessagesAsRead();
@@ -101,6 +114,9 @@ export function PortalMessagesClient({
           messages={messages}
           currentSenderId={senderId}
           onSend={handleSend}
+          isOtherPartyTyping={isOtherPartyTyping}
+          onTypingChange={setTyping}
+          typingUserName={landlordName}
           header={
             <div>
               <p className="font-semibold text-[var(--portal-text)]">
@@ -109,6 +125,7 @@ export function PortalMessagesClient({
               <p className="text-sm text-[var(--portal-muted)]">
                 {propertyName}
               </p>
+              <PresenceLabel lastSeenAt={landlordLastSeenAt} />
             </div>
           }
         />

@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   FileText,
   Home,
@@ -8,12 +8,16 @@ import {
   Wrench,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 
+import { MessageToast } from "@/components/properties/communication/message-toast";
 import { PortalThemeToggle } from "@/components/portal/portal-theme-toggle";
-import { formatPropertyAddress } from "@/lib/properties/format";
+import { TenantPresenceTracker } from "@/components/presence/tenant-presence-tracker";
+import { formatPropertyAddress, truncateMessagePreview } from "@/lib/properties/format";
 import { getTenantFullName } from "@/lib/properties/tenant-form";
-import type { Property, Tenant } from "@/lib/properties/types";
+import { useTenantMessagesRealtime } from "@/lib/properties/use-tenant-messages-realtime";
+import type { Property, Tenant, TenantMessage } from "@/lib/properties/types";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -26,12 +30,64 @@ const NAV_ITEMS = [
 type PortalShellProps = {
   tenant: Tenant;
   property: Property;
+  landlordName: string;
   children: React.ReactNode;
 };
 
-export function PortalShell({ tenant, property, children }: PortalShellProps) {
+export function PortalShell({
+  tenant,
+  property,
+  landlordName,
+  children,
+}: PortalShellProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const reduced = useReducedMotion() ?? false;
+  const [toastMessage, setToastMessage] = useState<{
+    preview: string;
+  } | null>(null);
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pathnameRef = useRef(pathname);
+
+  useEffect(() => {
+    pathnameRef.current = pathname;
+  }, [pathname]);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const showToast = useCallback((preview: string) => {
+    setToastMessage({ preview });
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+    toastTimeoutRef.current = setTimeout(() => {
+      setToastMessage(null);
+    }, 5000);
+  }, []);
+
+  const handleRealtimeInsert = useCallback(
+    (message: TenantMessage) => {
+      if (
+        message.sender_type === "landlord" &&
+        pathnameRef.current !== "/portal/messages"
+      ) {
+        showToast(truncateMessagePreview(message.message));
+      }
+    },
+    [showToast]
+  );
+
+  useTenantMessagesRealtime({
+    tenantId: tenant.id,
+    channelSuffix: "notify",
+    onInsert: handleRealtimeInsert,
+  });
 
   const isBareRoute =
     pathname === "/portal/login" ||
@@ -44,6 +100,7 @@ export function PortalShell({ tenant, property, children }: PortalShellProps) {
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col">
+      <TenantPresenceTracker />
       <header className="sticky top-0 z-20 border-b border-[var(--portal-border)] bg-[var(--portal-bg)] px-5 pb-4 pt-[max(1rem,env(safe-area-inset-top))]">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -99,6 +156,20 @@ export function PortalShell({ tenant, property, children }: PortalShellProps) {
           })}
         </div>
       </nav>
+
+      <AnimatePresence>
+        {toastMessage ? (
+          <MessageToast
+            senderName={landlordName}
+            preview={toastMessage.preview}
+            onDismiss={() => setToastMessage(null)}
+            onClick={() => {
+              router.push("/portal/messages");
+              setToastMessage(null);
+            }}
+          />
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }
