@@ -5,21 +5,30 @@ import {
   ChevronRight,
   LayoutDashboard,
   Plus,
+  PoundSterling,
   Sparkles,
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useMemo, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { useCallback, useMemo, useState, useTransition } from "react";
 
+import {
+  createRentPayment,
+  updateRentPayment,
+} from "@/app/(dashboard)/properties/actions";
 import { PageHeader } from "@/components/layout/page-header";
 import { PageTransition } from "@/components/layout/page-transition";
 import { PropertyFormDialog } from "@/components/properties/property-form-dialog";
 import { PropertyStatusBadge } from "@/components/properties/property-status-badge";
+import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { PROPERTIES_ACCENT } from "@/lib/properties/constants";
 import {
   formatPropertyAddress,
   formatPropertyCurrency,
+  formatPropertyDate,
 } from "@/lib/properties/format";
 import {
   buildPortfolioStats,
@@ -29,22 +38,34 @@ import type {
   PropertyInsight,
   PropertyInsightContent,
   PropertyWithStats,
+  RentDueFlag,
 } from "@/lib/properties/types";
 import { cn } from "@/lib/utils";
 
 type PropertiesDashboardClientProps = {
   properties: PropertyWithStats[];
   latestInsight: PropertyInsight | null;
+  rentDueFlags: RentDueFlag[];
 };
 
 export function PropertiesDashboardClient({
   properties,
   latestInsight,
+  rentDueFlags,
 }: PropertiesDashboardClientProps) {
   const [formOpen, setFormOpen] = useState(false);
   const [insightDismissed, setInsightDismissed] = useState(false);
+  const [payingId, setPayingId] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+  const prefersReducedMotion = useReducedMotion();
   const stats = buildPortfolioStats(properties);
   const sortedProperties = sortPropertiesByStatus(properties);
+
+  const rentDueTotal = useMemo(
+    () => rentDueFlags.reduce((sum, flag) => sum + flag.amount, 0),
+    [rentDueFlags]
+  );
 
   const showInsightCard = useMemo(() => {
     if (insightDismissed || !latestInsight) return false;
@@ -60,6 +81,35 @@ export function PropertiesDashboardClient({
   const handleAdd = useCallback(() => {
     setFormOpen(true);
   }, []);
+
+  const handleMarkPaid = (flag: RentDueFlag) => {
+    setPayingId(flag.tenant_id);
+    startTransition(async () => {
+      const today = new Date().toISOString().slice(0, 10);
+      if (flag.payment_id) {
+        await updateRentPayment(flag.payment_id, {
+          status: "paid",
+          paid_date: today,
+        });
+      } else {
+        const created = await createRentPayment({
+          property_id: flag.property_id,
+          tenant_id: flag.tenant_id,
+          amount: flag.amount,
+          due_date: flag.due_date,
+          status: "pending",
+        });
+        if (created.success && created.data) {
+          await updateRentPayment(created.data.id, {
+            status: "paid",
+            paid_date: today,
+          });
+        }
+      }
+      setPayingId(null);
+      router.refresh();
+    });
+  };
 
   return (
     <PageTransition>
@@ -115,10 +165,76 @@ export function PropertiesDashboardClient({
               value={formatPropertyCurrency(stats.totalMonthlyRent)}
             />
             <StatTile
-              label="Open maintenance"
-              value={String(stats.openMaintenanceCount)}
+              label="Rent due this month"
+              value={formatPropertyCurrency(rentDueTotal)}
             />
           </div>
+
+          {rentDueFlags.length > 0 ? (
+            <section className="mb-8" aria-label="Rent due">
+              <div className="mb-4 flex items-center gap-2">
+                <PoundSterling className="size-5 text-amber-500" />
+                <h2 className="text-lg font-semibold text-foreground">
+                  Rent due
+                </h2>
+              </div>
+              <div className="space-y-2">
+                {rentDueFlags.map((flag, index) => (
+                  <motion.div
+                    key={flag.tenant_id}
+                    initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.25,
+                      delay: prefersReducedMotion ? 0 : index * 0.05,
+                    }}
+                    className="flex flex-col gap-3 rounded-xl border border-amber-500/20 bg-card/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="min-w-0 space-y-1">
+                      <p className="font-medium text-foreground">
+                        {flag.tenant_name}
+                      </p>
+                      <p className="truncate text-sm text-muted-foreground">
+                        {flag.property_address}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-2 pt-1">
+                        <span className="text-base font-semibold tabular-nums text-foreground">
+                          {formatPropertyCurrency(flag.amount)}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          Due {formatPropertyDate(flag.due_date)}
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "font-medium",
+                            flag.days_overdue >= 4
+                              ? "border-orange-500/30 bg-orange-500/10 text-orange-700 dark:text-orange-300"
+                              : "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                          )}
+                        >
+                          {flag.days_overdue === 0
+                            ? "Due today"
+                            : `${flag.days_overdue} day${flag.days_overdue === 1 ? "" : "s"} overdue`}
+                        </Badge>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="min-h-11 shrink-0"
+                      disabled={isPending && payingId === flag.tenant_id}
+                      onClick={() => handleMarkPaid(flag)}
+                    >
+                      {isPending && payingId === flag.tenant_id
+                        ? "Saving…"
+                        : "Mark as paid"}
+                    </Button>
+                  </motion.div>
+                ))}
+              </div>
+            </section>
+          ) : null}
 
           {showInsightCard && insightContent ? (
             <div className="mb-8 rounded-xl border border-border/60 border-l-4 border-l-amber-500 bg-card/80 p-5">

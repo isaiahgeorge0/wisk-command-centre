@@ -13,7 +13,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 
-import { deleteComparable } from "@/app/(dashboard)/properties/actions";
+import { deleteComparable, deleteValuationForProperty } from "@/app/(dashboard)/properties/actions";
 import { PropertyComparableFormDialog } from "@/components/properties/property-comparable-form-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ import type {
   PropertyValuation,
   PropertyWithStats,
 } from "@/lib/properties/types";
+import { cn } from "@/lib/utils";
 
 type PropertyValuationSectionProps = {
   properties: PropertyWithStats[];
@@ -53,12 +54,14 @@ function confidenceBadgeClass(confidence: PropertyValuation["confidence"]): stri
 }
 
 function formatPriceRange(min: number | null, max: number | null, suffix = ""): string {
-  if (min == null && max == null) return "—";
+  if (min == null && max == null) return "Estimate unavailable";
   if (min != null && max != null) {
     return `${formatPropertyCurrency(min)} — ${formatPropertyCurrency(max)}${suffix}`;
   }
   return `${formatPropertyCurrency(min ?? max)}${suffix}`;
 }
+
+const isDev = process.env.NODE_ENV === "development";
 
 export function PropertyValuationSection({
   properties,
@@ -78,6 +81,7 @@ export function PropertyValuationSection({
   const [error, setError] = useState<string | null>(null);
   const [isGenerating, startGenerate] = useTransition();
   const [isDeleting, startDelete] = useTransition();
+  const [isResetting, startReset] = useTransition();
 
   const valuation = valuationsByProperty[selectedPropertyId] ?? null;
   const comparables = comparablesByProperty[selectedPropertyId] ?? [];
@@ -94,6 +98,11 @@ export function PropertyValuationSection({
   const lowEvidence =
     valuation?.search_level === "town" ||
     valuation?.confidence === "low";
+
+  const rentalUnavailable =
+    valuation != null &&
+    valuation.rental_min == null &&
+    valuation.rental_max == null;
 
   const handleGenerate = () => {
     setError(null);
@@ -120,6 +129,13 @@ export function PropertyValuationSection({
   const handleDeleteComparable = (id: string) => {
     startDelete(async () => {
       await deleteComparable(id);
+      router.refresh();
+    });
+  };
+
+  const handleDevReset = () => {
+    startReset(async () => {
+      await deleteValuationForProperty(selectedPropertyId);
       router.refresh();
     });
   };
@@ -221,17 +237,30 @@ export function PropertyValuationSection({
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Rental estimate
                 </p>
-                <p className="mt-2 text-2xl font-semibold tabular-nums text-foreground">
+                <p
+                  className={cn(
+                    "mt-2 text-2xl font-semibold tabular-nums",
+                    rentalUnavailable
+                      ? "text-muted-foreground"
+                      : "text-foreground"
+                  )}
+                >
                   {formatPriceRange(
                     valuation.rental_min,
                     valuation.rental_max,
-                    " /month"
+                    rentalUnavailable ? "" : " /month"
                   )}
                 </p>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Based on {comparableCount} comparable propert
-                  {comparableCount === 1 ? "y" : "ies"}
-                </p>
+                {rentalUnavailable ? (
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {valuation.reasoning}
+                  </p>
+                ) : (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Based on {comparableCount} comparable propert
+                    {comparableCount === 1 ? "y" : "ies"}
+                  </p>
+                )}
               </div>
               <div className="rounded-xl border border-border/60 bg-card/40 p-4">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -298,19 +327,31 @@ export function PropertyValuationSection({
                 {formatPropertyDate(eligibility.nextAvailableAt)}
               </p>
             ) : (
-              <Button
-                onClick={handleGenerate}
-                disabled={isGenerating}
-                variant="outline"
-                className="min-h-11 gap-2"
-              >
-                {isGenerating ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Sparkles className="size-4" />
-                )}
-                Regenerate estimate
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  onClick={handleGenerate}
+                  disabled={isGenerating}
+                  variant="outline"
+                  className="min-h-11 gap-2"
+                >
+                  {isGenerating ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="size-4" />
+                  )}
+                  Regenerate estimate
+                </Button>
+                {isDev ? (
+                  <Button
+                    onClick={handleDevReset}
+                    disabled={isResetting}
+                    variant="ghost"
+                    className="min-h-11 text-muted-foreground"
+                  >
+                    {isResetting ? "Resetting…" : "Reset (dev only)"}
+                  </Button>
+                ) : null}
+              </div>
             )}
           </div>
         )}

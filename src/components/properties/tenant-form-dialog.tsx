@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
+import { Bell } from "lucide-react";
 
 import { createTenant, updateTenant } from "@/app/(dashboard)/properties/actions";
 import { Button } from "@/components/ui/button";
@@ -161,6 +162,73 @@ export function TenantFormDialog({
             <Checkbox checked={values.deposit_protected} onCheckedChange={(c) => updateField("deposit_protected", c === true)} disabled={isPending} />
             Deposit protected
           </label>
+
+          <div className="space-y-4 border-t border-border/60 pt-4">
+            <div className="flex items-center gap-2">
+              <Bell className="size-4 text-amber-500" />
+              <h3 className="text-sm font-semibold text-foreground">Rent reminders</h3>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor={`${formId}-rent-due-day`}>
+                Day of month rent is due (e.g. 1 for 1st of month)
+              </Label>
+              <Input
+                id={`${formId}-rent-due-day`}
+                type="number"
+                min={1}
+                max={28}
+                value={values.rent_due_day ?? ""}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  updateField(
+                    "rent_due_day",
+                    raw === "" ? null : Number(raw)
+                  );
+                }}
+                disabled={isPending}
+                placeholder="Not set"
+              />
+            </div>
+            {values.rent_due_day != null ? (
+              <div className="space-y-3 rounded-lg border border-border/60 bg-muted/20 p-4">
+                <label className="flex min-h-11 items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={values.rent_reminder_enabled ?? true}
+                    onCheckedChange={(c) =>
+                      updateField("rent_reminder_enabled", c === true)
+                    }
+                    disabled={isPending}
+                  />
+                  Send rent reminder email
+                </label>
+                {values.rent_reminder_enabled !== false ? (
+                  <div className="space-y-2">
+                    <Label>Remind me</Label>
+                    <Select
+                      value={String(values.rent_reminder_days ?? 0)}
+                      onValueChange={(v) =>
+                        v && updateField("rent_reminder_days", Number(v))
+                      }
+                      disabled={isPending}
+                    >
+                      <SelectTrigger className="min-h-11 w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0">On the due date</SelectItem>
+                        {Array.from({ length: 7 }, (_, i) => i + 1).map((day) => (
+                          <SelectItem key={day} value={String(day)}>
+                            {day} day{day === 1 ? "" : "s"} after
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor={`${formId}-notes`}>Notes</Label>
             <Textarea id={`${formId}-notes`} value={values.notes ?? ""} onChange={(e) => updateField("notes", e.target.value)} disabled={isPending} rows={3} />

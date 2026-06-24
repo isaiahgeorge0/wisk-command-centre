@@ -9,6 +9,7 @@ import {
   sendCertificateAlertEmail,
   sendInsuranceAlertEmail,
   sendMortgageAlertEmail,
+  sendRentReminderEmail,
 } from "@/lib/properties/emails";
 import { daysUntilDate, formatPropertyAddress } from "@/lib/properties/format";
 import type {
@@ -363,6 +364,149 @@ export async function POST(request: Request) {
 
           if (sent) alertsSent++;
         }
+      }
+    }
+  }
+
+  // ─── Rent due payments & reminders ──────────────────────────────────────
+
+  const today = new Date();
+  const todayYear = today.getFullYear();
+  const todayMonth = today.getMonth();
+  const todayDay = today.getDate();
+  const monthStr = String(todayMonth + 1).padStart(2, "0");
+  const lastDayOfMonth = new Date(todayYear, todayMonth + 1, 0).getDate();
+  const monthStart = `${todayYear}-${monthStr}-01`;
+  const monthEnd = `${todayYear}-${monthStr}-${String(lastDayOfMonth).padStart(2, "0")}`;
+
+  const { data: rentTenants, error: rentTenantsError } = await supabase
+    .from("tenants")
+    .select(
+      "id, user_id, property_id, first_name, last_name, rent_amount, rent_due_day, rent_reminder_days, rent_reminder_enabled, properties(address_line1, address_line2, city, postcode, alerts_enabled)"
+    )
+    .eq("status", "active")
+    .not("rent_due_day", "is", null);
+
+  if (rentTenantsError) {
+    console.error(
+      "check-certificate-alerts: rent tenants fetch failed:",
+      rentTenantsError
+    );
+  } else {
+    const userEmailCache = new Map<string, { email: string; displayName: string }>();
+
+    for (const tenant of rentTenants ?? []) {
+      const rentDueDay = tenant.rent_due_day as number;
+      if (todayDay < rentDueDay) continue;
+
+      const propertyRaw = tenant.properties as
+        | {
+            address_line1: string;
+            address_line2: string | null;
+            city: string;
+            postcode: string;
+            alerts_enabled: boolean;
+          }
+        | {
+            address_line1: string;
+            address_line2: string | null;
+            city: string;
+            postcode: string;
+            alerts_enabled: boolean;
+          }[]
+        | null;
+      const property = Array.isArray(propertyRaw) ? propertyRaw[0] : propertyRaw;
+
+      if (!property?.alerts_enabled) continue;
+
+      const dueDate = `${todayYear}-${monthStr}-${String(rentDueDay).padStart(2, "0")}`;
+
+      const { data: existingPayment } = await supabase
+        .from("rent_payments")
+        .select("id, status")
+        .eq("tenant_id", tenant.id)
+        .gte("due_date", monthStart)
+        .lte("due_date", monthEnd)
+        .maybeSingle();
+
+      if (!existingPayment) {
+        await supabase.from("rent_payments").insert({
+          user_id: tenant.user_id,
+          property_id: tenant.property_id,
+          tenant_id: tenant.id,
+          amount: tenant.rent_amount,
+          due_date: dueDate,
+          status: "pending",
+        });
+      }
+
+      if (!tenant.rent_reminder_enabled) continue;
+
+      const reminderSendDay = rentDueDay + (tenant.rent_reminder_days as number);
+      if (todayDay !== reminderSendDay) continue;
+
+      const { data: payment } = await supabase
+        .from("rent_payments")
+        .select("id, status")
+        .eq("tenant_id", tenant.id)
+        .gte("due_date", monthStart)
+        .lte("due_date", monthEnd)
+        .maybeSingle();
+
+      if (payment?.status === "paid") continue;
+
+      const { data: existingReminder } = await supabase
+        .from("rent_reminder_log")
+        .select("id")
+        .eq("tenant_id", tenant.id)
+        .eq("month", monthStart)
+        .maybeSingle();
+
+      if (existingReminder) continue;
+
+      let userInfo = userEmailCache.get(tenant.user_id as string);
+      if (!userInfo) {
+        const { data: userRow } = await supabase
+          .from("users")
+          .select("name, email")
+          .eq("id", tenant.user_id)
+          .single();
+
+        if (!userRow?.email) continue;
+
+        userInfo = {
+          email: userRow.email,
+          displayName:
+            userRow.name?.trim() || userRow.email.split("@")[0] || "there",
+        };
+        userEmailCache.set(tenant.user_id as string, userInfo);
+      }
+
+      const tenantName = `${tenant.first_name} ${tenant.last_name}`.trim();
+      const propertyAddress = property ? formatPropertyAddress(property) : "Unknown";
+      const daysOverdue = Math.max(0, todayDay - rentDueDay);
+
+      const sent = await sendRentReminderEmail({
+        to: userInfo.email,
+        displayName: userInfo.displayName,
+        tenantName,
+        propertyAddress,
+        rentAmount: tenant.rent_amount as number,
+        dueDate,
+        daysOverdue,
+        propertyUrl: portalAppUrl(
+          `/properties/${tenant.property_id}?tab=finances`
+        ),
+      });
+
+      if (sent) {
+        await supabase.from("rent_reminder_log").insert({
+          user_id: tenant.user_id,
+          tenant_id: tenant.id,
+          property_id: tenant.property_id,
+          month: monthStart,
+        });
+        alertsSent++;
       }
     }
   }

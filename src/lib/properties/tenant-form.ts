@@ -16,6 +16,9 @@ export const EMPTY_TENANT_FORM = (
   deposit_protected: false,
   status: "active",
   notes: "",
+  rent_due_day: null,
+  rent_reminder_days: 0,
+  rent_reminder_enabled: true,
 });
 
 export function tenantToFormInput(tenant: Tenant): TenantFormInput {
@@ -33,6 +36,9 @@ export function tenantToFormInput(tenant: Tenant): TenantFormInput {
     deposit_protected: tenant.deposit_protected,
     status: tenant.status,
     notes: tenant.notes ?? "",
+    rent_due_day: tenant.rent_due_day,
+    rent_reminder_days: tenant.rent_reminder_days,
+    rent_reminder_enabled: tenant.rent_reminder_enabled,
   };
 }
 

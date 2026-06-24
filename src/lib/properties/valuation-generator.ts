@@ -28,8 +28,8 @@ type AnthropicResponse = {
 };
 
 export type ValuationResult = {
-  rental_min: number;
-  rental_max: number;
+  rental_min: number | null;
+  rental_max: number | null;
   sale_min: number | null;
   sale_max: number | null;
   confidence: ValuationConfidence;
@@ -42,14 +42,14 @@ export type ValuationResult = {
 };
 
 const FALLBACK_RESULT: Omit<ValuationResult, "inputTokens" | "outputTokens"> = {
-  rental_min: 0,
-  rental_max: 0,
+  rental_min: null,
+  rental_max: null,
   sale_min: null,
   sale_max: null,
   confidence: "low",
   search_level: "town",
   reasoning:
-    "Winston could not complete a full market analysis. Please try again later or add manual comparables to improve the next estimate.",
+    "Unable to generate estimate — Winston could not parse a complete market analysis from the response. Please try again later or add manual comparables to improve the next estimate.",
   low_evidence_warning: true,
   web_sources: [],
 };
@@ -119,6 +119,21 @@ function formatComparables(comparables: PropertyComparable[]): string {
     .join("\n");
 }
 
+function normalizeRentalValue(value: unknown): number | null {
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
+    return null;
+  }
+  return value;
+}
+
+function extractTextFromContent(content: AnthropicContentBlock[]): string {
+  return content
+    .filter((block): block is AnthropicTextBlock => block.type === "text")
+    .map((block) => block.text)
+    .join("\n")
+    .trim();
+}
+
 function parseValuationJson(text: string): Omit<
   ValuationResult,
   "web_sources" | "inputTokens" | "outputTokens"
@@ -128,41 +143,48 @@ function parseValuationJson(text: string): Omit<
     .replace(/```\n?/g, "")
     .trim();
 
-  try {
-    const json = JSON.parse(cleaned) as {
-      rental_min?: number;
-      rental_max?: number;
-      sale_min?: number | null;
-      sale_max?: number | null;
-      confidence?: ValuationConfidence;
-      search_level?: SearchLevel;
-      reasoning?: string;
-      low_evidence_warning?: boolean;
-    };
-
-    if (
-      typeof json.rental_min !== "number" ||
-      typeof json.rental_max !== "number" ||
-      !json.confidence ||
-      !json.search_level ||
-      !json.reasoning
-    ) {
-      return null;
-    }
-
-    return {
-      rental_min: json.rental_min,
-      rental_max: json.rental_max,
-      sale_min: json.sale_min ?? null,
-      sale_max: json.sale_max ?? null,
-      confidence: json.confidence,
-      search_level: json.search_level,
-      reasoning: json.reasoning,
-      low_evidence_warning: json.low_evidence_warning === true,
-    };
-  } catch {
-    return null;
+  const candidates = [cleaned];
+  const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+  if (jsonMatch && jsonMatch[0] !== cleaned) {
+    candidates.push(jsonMatch[0]);
   }
+
+  for (const candidate of candidates) {
+    try {
+      const json = JSON.parse(candidate) as {
+        rental_min?: number;
+        rental_max?: number;
+        sale_min?: number | null;
+        sale_max?: number | null;
+        confidence?: ValuationConfidence;
+        search_level?: SearchLevel;
+        reasoning?: string;
+        low_evidence_warning?: boolean;
+      };
+
+      const rentalMin = normalizeRentalValue(json.rental_min);
+      const rentalMax = normalizeRentalValue(json.rental_max);
+
+      if (!rentalMin || !rentalMax || !json.confidence || !json.search_level) {
+        continue;
+      }
+
+      return {
+        rental_min: rentalMin,
+        rental_max: rentalMax,
+        sale_min: json.sale_min ?? null,
+        sale_max: json.sale_max ?? null,
+        confidence: json.confidence,
+        search_level: json.search_level,
+        reasoning: json.reasoning?.trim() || "Market analysis completed.",
+        low_evidence_warning: json.low_evidence_warning === true,
+      };
+    } catch {
+      // try next candidate
+    }
+  }
+
+  return null;
 }
 
 function extractWebSources(content: AnthropicContentBlock[]): ValuationWebSource[] {
@@ -237,15 +259,21 @@ ${formatComparables(comparables)}`;
     }
 
     const data = (await response.json()) as AnthropicResponse;
-    const textBlock = data.content.find(
+    const combinedText = extractTextFromContent(data.content);
+    const textBlocks = data.content.filter(
       (block): block is AnthropicTextBlock => block.type === "text"
     );
+    const lastTextBlock = textBlocks.at(-1)?.text ?? "";
 
-    if (!textBlock?.text) {
+    if (!combinedText && !lastTextBlock) {
       return { ...FALLBACK_RESULT, inputTokens: 0, outputTokens: 0 };
     }
 
-    const parsed = parseValuationJson(textBlock.text);
+    const parsed =
+      parseValuationJson(combinedText) ??
+      (lastTextBlock !== combinedText
+        ? parseValuationJson(lastTextBlock)
+        : null);
     const webSources = extractWebSources(data.content);
 
     if (!parsed) {

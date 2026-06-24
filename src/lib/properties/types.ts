@@ -82,6 +82,9 @@ export type Tenant = {
   portal_invited_at: string | null;
   portal_invite_token: string | null;
   portal_theme: "light" | "dark";
+  rent_due_day: number | null;
+  rent_reminder_days: number;
+  rent_reminder_enabled: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -100,6 +103,20 @@ export type TenantFormInput = {
   deposit_protected: boolean;
   status: TenantStatus;
   notes?: string;
+  rent_due_day?: number | null;
+  rent_reminder_days?: number;
+  rent_reminder_enabled?: boolean;
+};
+
+export type RentDueFlag = {
+  tenant_id: string;
+  tenant_name: string;
+  property_id: string;
+  property_address: string;
+  amount: number;
+  due_date: string;
+  days_overdue: number;
+  payment_id: string | null;
 };
 
 export type TenantWithProperty = Tenant & { property_name: string };

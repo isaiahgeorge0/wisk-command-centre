@@ -54,6 +54,7 @@ import type {
   RentPayment,
   RentPaymentFormInput,
   RentPaymentWithDetails,
+  RentDueFlag,
   Tenant,
   TenantFormInput,
   TenantWithProperty,
@@ -310,9 +311,19 @@ const tenantFormSchema = z.object({
   deposit_protected: z.boolean(),
   status: z.enum(["active", "notice", "ended"]),
   notes: z.string().optional(),
+  rent_due_day: z
+    .union([z.coerce.number().int().min(1).max(28), z.null()])
+    .optional(),
+  rent_reminder_days: z.coerce.number().int().min(0).max(7).optional(),
+  rent_reminder_enabled: z.boolean().optional(),
 });
 
 function toTenantDbPayload(input: TenantFormInput) {
+  const rentDueDay =
+    input.rent_due_day === undefined || input.rent_due_day === null
+      ? null
+      : input.rent_due_day;
+
   return {
     property_id: input.property_id,
     first_name: input.first_name.trim(),
@@ -327,6 +338,9 @@ function toTenantDbPayload(input: TenantFormInput) {
     deposit_protected: input.deposit_protected,
     status: input.status,
     notes: emptyToNull(input.notes),
+    rent_due_day: rentDueDay,
+    rent_reminder_days: input.rent_reminder_days ?? 0,
+    rent_reminder_enabled: input.rent_reminder_enabled ?? true,
   };
 }
 
@@ -439,6 +453,178 @@ export async function deleteTenant(id: string): Promise<ActionResult> {
   }
   revalidatePropertyPaths(existing?.property_id);
   return { success: true };
+}
+
+export async function updateTenantRentSettings(
+  tenantId: string,
+  settings: {
+    rent_due_day: number | null;
+    rent_reminder_days: number;
+    rent_reminder_enabled: boolean;
+  }
+): Promise<ActionResult> {
+  if (
+    settings.rent_due_day !== null &&
+    (settings.rent_due_day < 1 || settings.rent_due_day > 28)
+  ) {
+    return { success: false, error: "Rent due day must be between 1 and 28" };
+  }
+  if (settings.rent_reminder_days < 0 || settings.rent_reminder_days > 7) {
+    return {
+      success: false,
+      error: "Reminder days must be between 0 and 7",
+    };
+  }
+
+  const { supabase, userId } = await getScopedSupabase();
+  const { data: existing } = await supabase
+    .from("tenants")
+    .select("property_id")
+    .eq("id", tenantId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (!existing) {
+    return { success: false, error: "Tenant not found" };
+  }
+
+  const { error } = await supabase
+    .from("tenants")
+    .update({
+      rent_due_day: settings.rent_due_day,
+      rent_reminder_days: settings.rent_reminder_days,
+      rent_reminder_enabled: settings.rent_reminder_enabled,
+    })
+    .eq("id", tenantId)
+    .eq("user_id", userId);
+
+  if (error) {
+    console.error("updateTenantRentSettings:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidatePropertyPaths(existing.property_id);
+  revalidatePath("/properties/tenants");
+  return { success: true };
+}
+
+function getCurrentMonthBounds(): {
+  monthStart: string;
+  monthEnd: string;
+  todayDay: number;
+  todayYear: number;
+  todayMonth: number;
+} {
+  const today = new Date();
+  const todayYear = today.getFullYear();
+  const todayMonth = today.getMonth();
+  const todayDay = today.getDate();
+  const month = String(todayMonth + 1).padStart(2, "0");
+  const lastDay = new Date(todayYear, todayMonth + 1, 0).getDate();
+  return {
+    monthStart: `${todayYear}-${month}-01`,
+    monthEnd: `${todayYear}-${month}-${String(lastDay).padStart(2, "0")}`,
+    todayDay,
+    todayYear,
+    todayMonth,
+  };
+}
+
+export async function getRentDueFlags(): Promise<RentDueFlag[]> {
+  const { supabase, userId } = await getScopedSupabase();
+  const { monthStart, monthEnd, todayDay, todayYear, todayMonth } =
+    getCurrentMonthBounds();
+
+  const { data: tenants, error } = await supabase
+    .from("tenants")
+    .select(
+      "id, first_name, last_name, property_id, rent_amount, rent_due_day, properties(address_line1, address_line2, city, postcode)"
+    )
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .not("rent_due_day", "is", null);
+
+  if (error) {
+    console.error("getRentDueFlags:", error);
+    return [];
+  }
+
+  const tenantIds = (tenants ?? []).map((t) => t.id as string);
+  if (tenantIds.length === 0) return [];
+
+  const { data: payments } = await supabase
+    .from("rent_payments")
+    .select("id, tenant_id, status, due_date")
+    .eq("user_id", userId)
+    .in("tenant_id", tenantIds)
+    .gte("due_date", monthStart)
+    .lte("due_date", monthEnd);
+
+  const paymentByTenant = new Map<
+    string,
+    { id: string; status: string }
+  >();
+  for (const payment of payments ?? []) {
+    paymentByTenant.set(payment.tenant_id as string, {
+      id: payment.id as string,
+      status: payment.status as string,
+    });
+  }
+
+  const flags: RentDueFlag[] = [];
+
+  for (const row of tenants ?? []) {
+    const rentDueDay = row.rent_due_day as number;
+    if (todayDay < rentDueDay) continue;
+
+    const payment = paymentByTenant.get(row.id as string);
+    if (payment?.status === "paid") continue;
+    if (
+      payment &&
+      payment.status !== "pending" &&
+      payment.status !== "late" &&
+      payment.status !== "partial" &&
+      payment.status !== "missed"
+    ) {
+      continue;
+    }
+
+    const dueDate = `${todayYear}-${String(todayMonth + 1).padStart(2, "0")}-${String(rentDueDay).padStart(2, "0")}`;
+    const dueDateObj = new Date(todayYear, todayMonth, rentDueDay);
+    const todayObj = new Date(todayYear, todayMonth, todayDay);
+    const daysOverdue = Math.floor(
+      (todayObj.getTime() - dueDateObj.getTime()) / 86_400_000
+    );
+
+    const propertyRaw = row.properties as
+      | {
+          address_line1: string;
+          address_line2: string | null;
+          city: string;
+          postcode: string;
+        }
+      | {
+          address_line1: string;
+          address_line2: string | null;
+          city: string;
+          postcode: string;
+        }[]
+      | null;
+    const property = Array.isArray(propertyRaw) ? propertyRaw[0] : propertyRaw;
+
+    flags.push({
+      tenant_id: row.id as string,
+      tenant_name: `${row.first_name} ${row.last_name}`.trim(),
+      property_id: row.property_id as string,
+      property_address: property ? formatPropertyAddress(property) : "Unknown",
+      amount: row.rent_amount as number,
+      due_date: dueDate,
+      days_overdue: daysOverdue,
+      payment_id: payment?.id ?? null,
+    });
+  }
+
+  return flags.sort((a, b) => b.days_overdue - a.days_overdue);
 }
 
 // ─── Maintenance actions ────────────────────────────────────────────────────
@@ -1877,6 +2063,30 @@ export async function canGenerateValuation(
     canGenerate: Date.now() >= nextAvailable,
     nextAvailableAt: latest.next_available_at,
   };
+}
+
+export async function deleteValuationForProperty(
+  propertyId: string
+): Promise<ActionResult> {
+  if (process.env.NODE_ENV !== "development") {
+    return { success: false, error: "Not available in production" };
+  }
+
+  const { supabase, userId } = await getScopedSupabase();
+  const { error } = await supabase
+    .from("property_valuations")
+    .delete()
+    .eq("property_id", propertyId)
+    .eq("user_id", userId);
+
+  if (error) {
+    console.error("deleteValuationForProperty:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/properties/winston");
+  revalidatePropertyPaths(propertyId);
+  return { success: true };
 }
 
 export async function getFinancialSummary(

@@ -173,6 +173,22 @@ export function PropertyTenantsTab({
                       : " → ongoing"}
                   </p>
                   <p>{formatRentFrequency(tenant.rent_amount, tenant.rent_frequency)}</p>
+                  {tenant.rent_due_day != null ? (
+                    <p>
+                      Rent due: {tenant.rent_due_day}
+                      {tenant.rent_due_day === 1
+                        ? "st"
+                        : tenant.rent_due_day === 2
+                          ? "nd"
+                          : tenant.rent_due_day === 3
+                            ? "rd"
+                            : "th"}{" "}
+                      of month
+                      {tenant.rent_reminder_enabled
+                        ? ` · reminders ${tenant.rent_reminder_days === 0 ? "on due date" : `${tenant.rent_reminder_days} day${tenant.rent_reminder_days === 1 ? "" : "s"} after`}`
+                        : " · reminders off"}
+                    </p>
+                  ) : null}
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">

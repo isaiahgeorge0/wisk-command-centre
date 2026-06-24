@@ -492,3 +492,99 @@ export async function sendMaintenanceRequestEmail({
 }
 
 export { portalAppUrl };
+
+function formatRentDueDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+export async function sendRentReminderEmail({
+  to,
+  displayName,
+  tenantName,
+  propertyAddress,
+  rentAmount,
+  dueDate,
+  daysOverdue,
+  propertyUrl,
+}: {
+  to: string;
+  displayName: string;
+  tenantName: string;
+  propertyAddress: string;
+  rentAmount: number;
+  dueDate: string;
+  daysOverdue: number;
+  propertyUrl: string;
+}): Promise<boolean> {
+  const client = getResend();
+  if (!client) return false;
+
+  const greeting = displayName.trim() || "there";
+  const formattedDue = formatRentDueDate(dueDate);
+  const formattedAmount = new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(rentAmount);
+
+  const isOverdue = daysOverdue > 0;
+  const accentColor = isOverdue ? "#f97316" : "#f59e0b";
+  const accentBg = isOverdue ? "rgba(249,115,22,0.08)" : "rgba(245,158,11,0.08)";
+  const accentBorder = isOverdue
+    ? "rgba(249,115,22,0.25)"
+    : "rgba(245,158,11,0.25)";
+
+  const subject = isOverdue
+    ? `Rent ${daysOverdue} day${daysOverdue === 1 ? "" : "s"} overdue — ${tenantName} at ${propertyAddress}`
+    : `Rent due today — ${tenantName} at ${propertyAddress}`;
+
+  const headline = isOverdue
+    ? `Rent is ${daysOverdue} day${daysOverdue === 1 ? "" : "s"} overdue`
+    : "Rent is due today";
+
+  const bodyText = isOverdue
+    ? `Rent from <strong style="color:#f4f4f5;">${tenantName}</strong> at <strong style="color:#f4f4f5;">${propertyAddress}</strong> was due on ${formattedDue} and has not been marked as paid.`
+    : `Rent from <strong style="color:#f4f4f5;">${tenantName}</strong> at <strong style="color:#f4f4f5;">${propertyAddress}</strong> is due today (${formattedDue}).`;
+
+  const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head>
+<body style="margin:0;padding:0;background-color:#0a0a0f;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <div style="max-width:520px;margin:0 auto;padding:48px 24px;">
+    <div style="font-size:20px;font-weight:700;color:#f59e0b;letter-spacing:-0.5px;margin-bottom:40px;">WISK Properties</div>
+    <div style="background:#111118;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:36px 32px;">
+      <h1 style="color:#f4f4f5;font-size:22px;font-weight:700;margin:0 0 8px;letter-spacing:-0.3px;">${headline}</h1>
+      <p style="color:#71717a;font-size:14px;margin:0 0 24px;">Hi ${greeting} — a quick rent reminder for your portfolio.</p>
+      <div style="background:${accentBg};border:1px solid ${accentBorder};border-left:4px solid ${accentColor};border-radius:8px;padding:16px 20px;margin:20px 0;">
+        <p style="color:${accentColor};font-size:12px;font-weight:600;margin:0 0 4px;text-transform:uppercase;letter-spacing:0.08em;">Amount due</p>
+        <p style="color:#f4f4f5;font-size:24px;font-weight:700;margin:0 0 8px;">${formattedAmount}</p>
+        <p style="color:#a1a1aa;font-size:14px;margin:0;">Due date: ${formattedDue}</p>
+      </div>
+      <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin:0 0 20px;">${bodyText}</p>
+      <a href="${propertyUrl}" style="display:inline-block;background:${accentColor};color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;margin:24px 0;">Mark as paid</a>
+      <p style="color:#71717a;font-size:13px;line-height:1.5;border-top:1px solid rgba(255,255,255,0.07);padding-top:20px;margin:8px 0 0;">You can adjust rent reminder settings for each tenant in your property settings.</p>
+    </div>
+    <div style="margin-top:32px;color:#52525b;font-size:12px;text-align:center;">WISK &middot; Built by Isaiah George Creative</div>
+  </div>
+</body>
+</html>`;
+
+  const { error } = await client.resend.emails.send({
+    from: client.from,
+    to,
+    subject,
+    html,
+  });
+
+  if (error) {
+    console.error("sendRentReminderEmail:", error);
+    return false;
+  }
+
+  return true;
+}

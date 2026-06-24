@@ -93,6 +93,9 @@ export async function POST(request: Request) {
     const nextAvailableAt = new Date(generatedAt);
     nextAvailableAt.setMonth(nextAvailableAt.getMonth() + 3);
 
+    const rentalUnavailable =
+      result.rental_min == null && result.rental_max == null;
+
     const { data: valuation, error: insertError } = await supabase
       .from("property_valuations")
       .insert({
@@ -102,9 +105,11 @@ export async function POST(request: Request) {
         rental_max: result.rental_max,
         sale_min: result.sale_min,
         sale_max: result.sale_max,
-        confidence: result.confidence,
+        confidence: rentalUnavailable ? "low" : result.confidence,
         search_level: result.search_level,
-        reasoning: result.reasoning,
+        reasoning: rentalUnavailable
+          ? "Unable to generate estimate — the market analysis could not be parsed from the AI response. Please try again or add manual comparables."
+          : result.reasoning,
         web_sources: result.web_sources.length > 0 ? result.web_sources : null,
         manual_comparables:
           comparables && comparables.length > 0 ? comparables : null,
