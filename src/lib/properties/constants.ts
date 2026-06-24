@@ -102,3 +102,12 @@ export const CERTIFICATE_TYPES = [
   "pat_testing",
   "other",
 ] as const;
+
+export const MORTGAGE_TYPES = ["repayment", "interest_only"] as const;
+export const INSURANCE_TYPES = [
+  "buildings",
+  "contents",
+  "landlord_liability",
+  "combined",
+  "other",
+] as const;

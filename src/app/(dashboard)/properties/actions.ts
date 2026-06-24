@@ -35,7 +35,11 @@ import type {
   PropertyCertificateFormInput,
   PropertyDocument,
   PropertyFormInput,
+  PropertyInsurance,
+  PropertyInsuranceFormInput,
   PropertyInsight,
+  PropertyMortgage,
+  PropertyMortgageFormInput,
   PropertyWithStats,
   RentPayment,
   RentPaymentFormInput,
@@ -740,6 +744,366 @@ export async function deleteRentPayment(id: string): Promise<ActionResult> {
     return { success: false, error: error.message };
   }
   revalidatePropertyPaths(existing?.property_id);
+  return { success: true };
+}
+
+// ─── Mortgage actions ───────────────────────────────────────────────────────
+
+const mortgageFormSchema = z.object({
+  property_id: z.string().uuid(),
+  lender: z.string().trim().min(1, "Lender is required"),
+  account_reference: z.string().optional(),
+  monthly_payment: z.coerce.number().min(0, "Monthly payment is required"),
+  interest_rate: z.coerce.number().min(0).optional(),
+  mortgage_type: z.enum(["repayment", "interest_only"]),
+  fixed_rate_end_date: z.string().optional(),
+  mortgage_end_date: z.string().optional(),
+  outstanding_balance: z.coerce.number().min(0).optional(),
+  notes: z.string().optional(),
+  alerts_enabled: z.boolean(),
+});
+
+function toMortgageDbPayload(input: PropertyMortgageFormInput) {
+  return {
+    property_id: input.property_id,
+    lender: input.lender.trim(),
+    account_reference: emptyToNull(input.account_reference),
+    monthly_payment: input.monthly_payment,
+    interest_rate: parseOptionalNumber(input.interest_rate),
+    mortgage_type: input.mortgage_type,
+    fixed_rate_end_date: emptyToNull(input.fixed_rate_end_date),
+    mortgage_end_date: emptyToNull(input.mortgage_end_date),
+    outstanding_balance: parseOptionalNumber(input.outstanding_balance),
+    notes: emptyToNull(input.notes),
+    alerts_enabled: input.alerts_enabled,
+  };
+}
+
+export async function getMortgagesByProperty(
+  propertyId: string
+): Promise<PropertyMortgage[]> {
+  const { supabase, userId } = await getScopedSupabase();
+  const { data, error } = await supabase
+    .from("property_mortgages")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("property_id", propertyId)
+    .order("created_at", { ascending: false });
+  if (error) {
+    console.error("getMortgagesByProperty:", error);
+    return [];
+  }
+  return (data ?? []) as PropertyMortgage[];
+}
+
+export async function getAllMortgages(): Promise<PropertyMortgage[]> {
+  const { supabase, userId } = await getScopedSupabase();
+  const { data, error } = await supabase
+    .from("property_mortgages")
+    .select("*")
+    .eq("user_id", userId)
+    .order("fixed_rate_end_date", { ascending: true });
+  if (error) {
+    console.error("getAllMortgages:", error);
+    return [];
+  }
+  return (data ?? []) as PropertyMortgage[];
+}
+
+export async function createMortgage(
+  input: PropertyMortgageFormInput
+): Promise<ActionResult<PropertyMortgage>> {
+  const parsed = mortgageFormSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+  const { supabase, userId } = await getScopedSupabase();
+  const payload = toMortgageDbPayload(parsed.data as PropertyMortgageFormInput);
+  const { data, error } = await supabase
+    .from("property_mortgages")
+    .insert({ user_id: userId, ...payload })
+    .select()
+    .single();
+  if (error) {
+    console.error("createMortgage:", error);
+    return { success: false, error: error.message };
+  }
+  revalidatePropertyPaths(payload.property_id);
+  return { success: true, data: data as PropertyMortgage };
+}
+
+export async function updateMortgage(
+  id: string,
+  input: PropertyMortgageFormInput
+): Promise<ActionResult<PropertyMortgage>> {
+  const parsed = mortgageFormSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+  const { supabase, userId } = await getScopedSupabase();
+  const payload = toMortgageDbPayload(parsed.data as PropertyMortgageFormInput);
+  const { data, error } = await supabase
+    .from("property_mortgages")
+    .update(payload)
+    .eq("id", id)
+    .eq("user_id", userId)
+    .select()
+    .single();
+  if (error) {
+    console.error("updateMortgage:", error);
+    return { success: false, error: error.message };
+  }
+  revalidatePropertyPaths(payload.property_id);
+  return { success: true, data: data as PropertyMortgage };
+}
+
+export async function deleteMortgage(id: string): Promise<ActionResult> {
+  const { supabase, userId } = await getScopedSupabase();
+  const { data: existing } = await supabase
+    .from("property_mortgages")
+    .select("property_id")
+    .eq("id", id)
+    .eq("user_id", userId)
+    .maybeSingle();
+  const { error } = await supabase
+    .from("property_mortgages")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", userId);
+  if (error) {
+    console.error("deleteMortgage:", error);
+    return { success: false, error: error.message };
+  }
+  revalidatePropertyPaths(existing?.property_id);
+  return { success: true };
+}
+
+export async function acknowledgeMortgageAlert(
+  alertId: string
+): Promise<ActionResult> {
+  const { supabase, userId } = await getScopedSupabase();
+  const { data, error } = await supabase
+    .from("mortgage_alert_log")
+    .update({
+      acknowledged: true,
+      acknowledged_at: new Date().toISOString(),
+    })
+    .eq("id", alertId)
+    .eq("user_id", userId)
+    .select("property_id")
+    .single();
+  if (error) {
+    console.error("acknowledgeMortgageAlert:", error);
+    return { success: false, error: error.message };
+  }
+  revalidatePropertyPaths(data?.property_id as string);
+  return { success: true };
+}
+
+export async function toggleMortgageAlerts(
+  mortgageId: string,
+  enabled: boolean
+): Promise<ActionResult> {
+  const { supabase, userId } = await getScopedSupabase();
+  const { data, error } = await supabase
+    .from("property_mortgages")
+    .update({ alerts_enabled: enabled })
+    .eq("id", mortgageId)
+    .eq("user_id", userId)
+    .select("property_id")
+    .single();
+  if (error) {
+    console.error("toggleMortgageAlerts:", error);
+    return { success: false, error: error.message };
+  }
+  revalidatePropertyPaths(data?.property_id as string);
+  return { success: true };
+}
+
+// ─── Insurance actions ──────────────────────────────────────────────────────
+
+const insuranceFormSchema = z.object({
+  property_id: z.string().uuid(),
+  insurer: z.string().trim().min(1, "Insurer is required"),
+  policy_number: z.string().optional(),
+  insurance_type: z.enum([
+    "buildings",
+    "contents",
+    "landlord_liability",
+    "combined",
+    "other",
+  ]),
+  annual_premium: z.coerce.number().min(0).optional(),
+  renewal_date: z.string().optional(),
+  start_date: z.string().optional(),
+  notes: z.string().optional(),
+  alerts_enabled: z.boolean(),
+});
+
+function toInsuranceDbPayload(input: PropertyInsuranceFormInput) {
+  return {
+    property_id: input.property_id,
+    insurer: input.insurer.trim(),
+    policy_number: emptyToNull(input.policy_number),
+    insurance_type: input.insurance_type,
+    annual_premium: parseOptionalNumber(input.annual_premium),
+    renewal_date: emptyToNull(input.renewal_date),
+    start_date: emptyToNull(input.start_date),
+    notes: emptyToNull(input.notes),
+    alerts_enabled: input.alerts_enabled,
+  };
+}
+
+export async function getInsuranceByProperty(
+  propertyId: string
+): Promise<PropertyInsurance[]> {
+  const { supabase, userId } = await getScopedSupabase();
+  const { data, error } = await supabase
+    .from("property_insurance")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("property_id", propertyId)
+    .order("renewal_date", { ascending: true });
+  if (error) {
+    console.error("getInsuranceByProperty:", error);
+    return [];
+  }
+  return (data ?? []) as PropertyInsurance[];
+}
+
+export async function getAllInsurance(): Promise<PropertyInsurance[]> {
+  const { supabase, userId } = await getScopedSupabase();
+  const { data, error } = await supabase
+    .from("property_insurance")
+    .select("*")
+    .eq("user_id", userId)
+    .order("renewal_date", { ascending: true });
+  if (error) {
+    console.error("getAllInsurance:", error);
+    return [];
+  }
+  return (data ?? []) as PropertyInsurance[];
+}
+
+export async function createInsurance(
+  input: PropertyInsuranceFormInput
+): Promise<ActionResult<PropertyInsurance>> {
+  const parsed = insuranceFormSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+  const { supabase, userId } = await getScopedSupabase();
+  const payload = toInsuranceDbPayload(parsed.data as PropertyInsuranceFormInput);
+  const { data, error } = await supabase
+    .from("property_insurance")
+    .insert({ user_id: userId, ...payload })
+    .select()
+    .single();
+  if (error) {
+    console.error("createInsurance:", error);
+    return { success: false, error: error.message };
+  }
+  revalidatePropertyPaths(payload.property_id);
+  return { success: true, data: data as PropertyInsurance };
+}
+
+export async function updateInsurance(
+  id: string,
+  input: PropertyInsuranceFormInput
+): Promise<ActionResult<PropertyInsurance>> {
+  const parsed = insuranceFormSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+  const { supabase, userId } = await getScopedSupabase();
+  const payload = toInsuranceDbPayload(parsed.data as PropertyInsuranceFormInput);
+  const { data, error } = await supabase
+    .from("property_insurance")
+    .update(payload)
+    .eq("id", id)
+    .eq("user_id", userId)
+    .select()
+    .single();
+  if (error) {
+    console.error("updateInsurance:", error);
+    return { success: false, error: error.message };
+  }
+  revalidatePropertyPaths(payload.property_id);
+  return { success: true, data: data as PropertyInsurance };
+}
+
+export async function deleteInsurance(id: string): Promise<ActionResult> {
+  const { supabase, userId } = await getScopedSupabase();
+  const { data: existing } = await supabase
+    .from("property_insurance")
+    .select("property_id")
+    .eq("id", id)
+    .eq("user_id", userId)
+    .maybeSingle();
+  const { error } = await supabase
+    .from("property_insurance")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", userId);
+  if (error) {
+    console.error("deleteInsurance:", error);
+    return { success: false, error: error.message };
+  }
+  revalidatePropertyPaths(existing?.property_id);
+  return { success: true };
+}
+
+export async function acknowledgeInsuranceAlert(
+  alertId: string
+): Promise<ActionResult> {
+  const { supabase, userId } = await getScopedSupabase();
+  const { data, error } = await supabase
+    .from("insurance_alert_log")
+    .update({
+      acknowledged: true,
+      acknowledged_at: new Date().toISOString(),
+    })
+    .eq("id", alertId)
+    .eq("user_id", userId)
+    .select("property_id")
+    .single();
+  if (error) {
+    console.error("acknowledgeInsuranceAlert:", error);
+    return { success: false, error: error.message };
+  }
+  revalidatePropertyPaths(data?.property_id as string);
+  return { success: true };
+}
+
+export async function toggleInsuranceAlerts(
+  insuranceId: string,
+  enabled: boolean
+): Promise<ActionResult> {
+  const { supabase, userId } = await getScopedSupabase();
+  const { data, error } = await supabase
+    .from("property_insurance")
+    .update({ alerts_enabled: enabled })
+    .eq("id", insuranceId)
+    .eq("user_id", userId)
+    .select("property_id")
+    .single();
+  if (error) {
+    console.error("toggleInsuranceAlerts:", error);
+    return { success: false, error: error.message };
+  }
+  revalidatePropertyPaths(data?.property_id as string);
   return { success: true };
 }
 

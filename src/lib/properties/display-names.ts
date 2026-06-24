@@ -1,8 +1,10 @@
 import type {
   CertificateType,
+  InsuranceType,
   MaintenanceCategory,
   MaintenancePriority,
   MaintenanceStatus,
+  MortgageType,
   PropertyStatus,
   PropertyType,
   RentPaymentStatus,
@@ -89,7 +91,22 @@ export const CERTIFICATE_ALERT_TYPE_LABELS = {
   "30_days": "30 days",
   "7_days": "7 days",
   expired: "Expired",
+  "7_days_overdue": "7 days overdue",
+  "30_days_overdue": "30 days overdue",
 } as const;
+
+export const MORTGAGE_TYPE_LABELS: Record<MortgageType, string> = {
+  repayment: "Repayment",
+  interest_only: "Interest Only",
+};
+
+export const INSURANCE_TYPE_LABELS: Record<InsuranceType, string> = {
+  buildings: "Buildings",
+  contents: "Contents",
+  landlord_liability: "Landlord Liability",
+  combined: "Combined",
+  other: "Other",
+};
 
 export function getCertificateTypeDisplayName(type: string | null | undefined): string {
   if (type && type in CERTIFICATE_TYPE_LABELS) {
@@ -166,4 +183,22 @@ export function getPropertyDocumentTypeDisplayName(
     return PROPERTY_DOCUMENT_TYPE_LABELS[type as PropertyDocumentType];
   }
   return type?.replace(/_/g, " ") ?? "Other";
+}
+
+export function getMortgageTypeDisplayName(
+  type: string | null | undefined
+): string {
+  if (type && type in MORTGAGE_TYPE_LABELS) {
+    return MORTGAGE_TYPE_LABELS[type as MortgageType];
+  }
+  return type?.replace(/_/g, " ") ?? "Unknown";
+}
+
+export function getInsuranceTypeDisplayName(
+  type: string | null | undefined
+): string {
+  if (type && type in INSURANCE_TYPE_LABELS) {
+    return INSURANCE_TYPE_LABELS[type as InsuranceType];
+  }
+  return type?.replace(/_/g, " ") ?? "Unknown";
 }

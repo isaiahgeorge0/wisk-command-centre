@@ -82,6 +82,13 @@ export function daysUntilDate(date: string | null): number | null {
   return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
+export function daysUntilExpiryClass(days: number | null): string {
+  if (days == null) return "text-muted-foreground";
+  if (days < 0 || days <= 30) return "text-rose-600 dark:text-rose-400";
+  if (days <= 90) return "text-amber-600 dark:text-amber-400";
+  return "text-emerald-600 dark:text-emerald-400";
+}
+
 export function formatFileSize(bytes: number | null | undefined): string {
   if (bytes == null || bytes <= 0) return "—";
   if (bytes < 1024) return `${bytes} B`;

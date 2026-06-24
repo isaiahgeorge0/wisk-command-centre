@@ -1,6 +1,7 @@
 "use client";
 
 import { PoundSterling } from "lucide-react";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { PageHeader } from "@/components/layout/page-header";
@@ -17,8 +18,13 @@ import {
   PROPERTIES_ACCENT,
   RENT_PAYMENT_STATUSES,
 } from "@/lib/properties/constants";
-import { getRentPaymentStatusDisplayName } from "@/lib/properties/display-names";
 import {
+  getInsuranceTypeDisplayName,
+  getRentPaymentStatusDisplayName,
+} from "@/lib/properties/display-names";
+import {
+  daysUntilDate,
+  daysUntilExpiryClass,
   formatPropertyCurrency,
   formatPropertyDate,
 } from "@/lib/properties/format";
@@ -29,27 +35,49 @@ import {
   groupPaymentsByProperty,
 } from "@/lib/properties/selectors";
 import type {
+  PropertyInsurance,
+  PropertyMortgage,
   PropertyWithStats,
   RentPaymentStatus,
   RentPaymentWithDetails,
   Tenant,
 } from "@/lib/properties/types";
+import { cn } from "@/lib/utils";
 
 type FinancesPageClientProps = {
   properties: PropertyWithStats[];
   payments: RentPaymentWithDetails[];
   tenants: Tenant[];
+  mortgages: PropertyMortgage[];
+  insurance: PropertyInsurance[];
+};
+
+type UpcomingRenewal = {
+  id: string;
+  propertyId: string;
+  propertyName: string;
+  label: string;
+  date: string;
+  daysUntil: number;
+  kind: "mortgage" | "insurance";
 };
 
 export function FinancesPageClient({
   properties,
   payments,
   tenants,
+  mortgages,
+  insurance,
 }: FinancesPageClientProps) {
   const [statusFilter, setStatusFilter] = useState<RentPaymentStatus | "all">(
     "all"
   );
   const [monthFilter, setMonthFilter] = useState<string>("all");
+
+  const propertyNameById = useMemo(
+    () => new Map(properties.map((p) => [p.id, p.name])),
+    [properties]
+  );
 
   const monthOptions = useMemo(() => {
     const keys = new Set(
@@ -74,11 +102,58 @@ export function FinancesPageClient({
     [properties, payments, tenants]
   );
 
+  const totalMonthlyMortgage = useMemo(
+    () => mortgages.reduce((sum, m) => sum + m.monthly_payment, 0),
+    [mortgages]
+  );
+
+  const totalAnnualInsurance = useMemo(
+    () =>
+      insurance.reduce((sum, record) => sum + (record.annual_premium ?? 0), 0),
+    [insurance]
+  );
+
+  const upcomingRenewals = useMemo(() => {
+    const items: UpcomingRenewal[] = [];
+
+    for (const mortgage of mortgages) {
+      if (!mortgage.fixed_rate_end_date) continue;
+      const days = daysUntilDate(mortgage.fixed_rate_end_date);
+      if (days == null || days < 0 || days > 90) continue;
+      items.push({
+        id: mortgage.id,
+        propertyId: mortgage.property_id,
+        propertyName: propertyNameById.get(mortgage.property_id) ?? "Property",
+        label: `${mortgage.lender} fixed rate ends`,
+        date: mortgage.fixed_rate_end_date,
+        daysUntil: days,
+        kind: "mortgage",
+      });
+    }
+
+    for (const record of insurance) {
+      if (!record.renewal_date) continue;
+      const days = daysUntilDate(record.renewal_date);
+      if (days == null || days < 0 || days > 90) continue;
+      items.push({
+        id: record.id,
+        propertyId: record.property_id,
+        propertyName: propertyNameById.get(record.property_id) ?? "Property",
+        label: `${getInsuranceTypeDisplayName(record.insurance_type)} insurance renews`,
+        date: record.renewal_date,
+        daysUntil: days,
+        kind: "insurance",
+      });
+    }
+
+    return items.sort((a, b) => a.daysUntil - b.daysUntil);
+  }, [insurance, mortgages, propertyNameById]);
+
   return (
     <PageTransition>
       <PageHeader
         title="Finances"
-        subtitle="Rent payments, arrears, and financial tracking."
+        subtitle="Rent payments, mortgages, insurance, and financial tracking."
         icon={
           <PoundSterling className="size-6" style={{ color: PROPERTIES_ACCENT }} />
         }
@@ -103,6 +178,58 @@ export function FinancesPageClient({
           value={`${stats.occupancyRate}%`}
         />
       </div>
+
+      <section className="mb-8 space-y-4 rounded-xl border border-amber-500/15 bg-card/40 p-5">
+        <h2 className="text-sm font-semibold text-foreground">Portfolio summary</h2>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <StatTile
+            label="Total monthly mortgage payments"
+            value={formatPropertyCurrency(totalMonthlyMortgage)}
+          />
+          <StatTile
+            label="Total annual insurance premiums"
+            value={formatPropertyCurrency(totalAnnualInsurance)}
+          />
+        </div>
+        <div>
+          <h3 className="text-sm font-medium text-foreground">
+            Upcoming in the next 90 days
+          </h3>
+          {upcomingRenewals.length === 0 ? (
+            <p className="mt-2 text-sm text-muted-foreground">
+              No fixed rate ends or insurance renewals due soon.
+            </p>
+          ) : (
+            <ul className="mt-3 space-y-2">
+              {upcomingRenewals.map((item) => (
+                <li key={`${item.kind}-${item.id}`}>
+                  <Link
+                    href={`/properties/${item.propertyId}?tab=finances`}
+                    className="flex flex-col gap-1 rounded-lg border border-border/60 bg-card/60 px-4 py-3 transition-colors hover:bg-muted/30 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-foreground">
+                        {item.label}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.propertyName} · {formatPropertyDate(item.date)}
+                      </p>
+                    </div>
+                    <p
+                      className={cn(
+                        "text-sm font-medium",
+                        daysUntilExpiryClass(item.daysUntil)
+                      )}
+                    >
+                      {item.daysUntil} days
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
 
       <div className="mb-6 flex flex-col gap-3 sm:flex-row">
         <Select

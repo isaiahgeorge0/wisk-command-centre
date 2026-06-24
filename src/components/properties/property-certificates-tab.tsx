@@ -194,7 +194,9 @@ export function PropertyCertificatesTab({
                           key={alert.id}
                           variant="outline"
                           className={cn(
-                            alert.alert_type === "expired"
+                            alert.alert_type === "expired" ||
+                              alert.alert_type === "7_days_overdue" ||
+                              alert.alert_type === "30_days_overdue"
                               ? "border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400"
                               : "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400"
                           )}

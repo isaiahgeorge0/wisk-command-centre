@@ -222,7 +222,86 @@ export type PropertyCertificateFormInput = {
   notes?: string;
 };
 
-export type CertificateAlertType = "90_days" | "30_days" | "7_days" | "expired";
+export type CertificateAlertType =
+  | "90_days"
+  | "30_days"
+  | "7_days"
+  | "expired"
+  | "7_days_overdue"
+  | "30_days_overdue";
+
+export type MortgageType = "repayment" | "interest_only";
+
+export type PropertyMortgage = {
+  id: string;
+  user_id: string;
+  property_id: string;
+  lender: string;
+  account_reference: string | null;
+  monthly_payment: number;
+  interest_rate: number | null;
+  mortgage_type: MortgageType;
+  fixed_rate_end_date: string | null;
+  mortgage_end_date: string | null;
+  outstanding_balance: number | null;
+  notes: string | null;
+  alerts_enabled: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PropertyMortgageFormInput = {
+  property_id: string;
+  lender: string;
+  account_reference?: string;
+  monthly_payment: number;
+  interest_rate?: number;
+  mortgage_type: MortgageType;
+  fixed_rate_end_date?: string;
+  mortgage_end_date?: string;
+  outstanding_balance?: number;
+  notes?: string;
+  alerts_enabled: boolean;
+};
+
+export type MortgageAlertType = "180_days" | "90_days" | "30_days" | "7_days";
+
+export type InsuranceType =
+  | "buildings"
+  | "contents"
+  | "landlord_liability"
+  | "combined"
+  | "other";
+
+export type PropertyInsurance = {
+  id: string;
+  user_id: string;
+  property_id: string;
+  insurer: string;
+  policy_number: string | null;
+  insurance_type: InsuranceType;
+  annual_premium: number | null;
+  renewal_date: string | null;
+  start_date: string | null;
+  notes: string | null;
+  alerts_enabled: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PropertyInsuranceFormInput = {
+  property_id: string;
+  insurer: string;
+  policy_number?: string;
+  insurance_type: InsuranceType;
+  annual_premium?: number;
+  renewal_date?: string;
+  start_date?: string;
+  notes?: string;
+  alerts_enabled: boolean;
+};
+
+export type InsuranceAlertType = "90_days" | "30_days" | "7_days";
 
 export type CertificateAlertLog = {
   id: string;
