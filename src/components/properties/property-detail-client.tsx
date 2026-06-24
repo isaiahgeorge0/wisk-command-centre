@@ -178,18 +178,20 @@ export function PropertyDetailClient({
           </button>
         ))}
       </div>
-
-      {activeTab === "overview" ? (
+      <div className={activeTab === "overview" ? "block" : "hidden"}>
         <OverviewTab property={property} annualYield={annualYield} />
-      ) : activeTab === "tenants" ? (
+      </div>
+      <div className={activeTab === "tenants" ? "block" : "hidden"}>
         <PropertyTenantsTab propertyId={property.id} tenants={tenants} />
-      ) : activeTab === "maintenance" ? (
+      </div>
+      <div className={activeTab === "maintenance" ? "block" : "hidden"}>
         <PropertyMaintenanceTab
           propertyId={property.id}
           tickets={maintenanceTickets}
           tenants={tenants}
         />
-      ) : activeTab === "finances" ? (
+      </div>
+      <div className={activeTab === "finances" ? "block" : "hidden"}>
         <PropertyFinancesTab
           propertyId={property.id}
           payments={rentPayments}
@@ -199,13 +201,15 @@ export function PropertyDetailClient({
           monthlyFinancialSummary={monthlyFinancialSummary}
           annualFinancialSummary={annualFinancialSummary}
         />
-      ) : activeTab === "messages" ? (
+      </div>
+      <div className={activeTab === "messages" ? "block" : "hidden"}>
         <PropertyMessagesTab
           propertyId={property.id}
           tenants={tenants}
           landlordUserId={landlordUserId}
         />
-      ) : activeTab === "certificates" ? (
+      </div>
+      <div className={activeTab === "certificates" ? "block" : "hidden"}>
         <PropertyCertificatesTab
           propertyId={property.id}
           propertyName={property.name}
@@ -215,14 +219,15 @@ export function PropertyDetailClient({
           alerts={certificateAlerts}
           onNavigateToDocuments={() => setActiveTab("documents")}
         />
-      ) : (
+      </div>
+      <div className={activeTab === "documents" ? "block" : "hidden"}>
         <PropertyDocumentsTab
           propertyId={property.id}
           documents={documents}
           certificates={certificates}
           onNavigateToCertificates={() => setActiveTab("certificates")}
         />
-      )}
+      </div>
 
       <PropertyFormDialog
         open={formOpen}

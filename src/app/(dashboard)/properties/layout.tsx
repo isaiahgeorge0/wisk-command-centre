@@ -1,6 +1,7 @@
 import { getTotalUnreadMessageCount } from "@/app/(dashboard)/properties/actions";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { hasPackageAccess } from "@/lib/billing/access";
+import { PropertiesMessageToastProvider } from "@/components/properties/properties-message-toast-provider";
 import { PropertiesSidebar } from "@/components/properties/properties-sidebar";
 import { PropertiesTeaserPage } from "@/components/properties/properties-teaser-page";
 
@@ -24,9 +25,11 @@ export default async function PropertiesLayout({
         className="hidden md:flex"
         unreadMessageCount={unreadMessageCount}
       />
-      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto px-4 md:px-6 lg:px-8">
-        {children}
-      </div>
+      <PropertiesMessageToastProvider landlordUserId={userId}>
+        <div className="min-h-0 min-w-0 flex-1 overflow-y-auto px-4 md:px-6 lg:px-8">
+          {children}
+        </div>
+      </PropertiesMessageToastProvider>
     </div>
   );
 }

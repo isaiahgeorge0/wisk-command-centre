@@ -9,6 +9,7 @@ import type { TenantMessage } from "@/lib/properties/types";
 type LandlordRealtimeOptions = {
   landlordUserId: string;
   propertyId?: string;
+  channelSuffix?: string;
   onInsert: (message: TenantMessage) => void;
   onUpdate?: (message: TenantMessage) => void;
 };
@@ -29,6 +30,7 @@ type TypingPresenceOptions = {
 export function useLandlordMessagesRealtime({
   landlordUserId,
   propertyId,
+  channelSuffix,
   onInsert,
   onUpdate,
 }: LandlordRealtimeOptions) {
@@ -41,7 +43,9 @@ export function useLandlordMessagesRealtime({
     const supabase = createClient();
     const channelName = propertyId
       ? `landlord-messages-${landlordUserId}-${propertyId}`
-      : `landlord-messages-${landlordUserId}`;
+      : channelSuffix
+        ? `landlord-messages-${landlordUserId}-${channelSuffix}`
+        : `landlord-messages-${landlordUserId}`;
     const channel = supabase
       .channel(channelName)
       .on(
@@ -77,7 +81,7 @@ export function useLandlordMessagesRealtime({
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [landlordUserId, propertyId]);
+  }, [landlordUserId, propertyId, channelSuffix]);
 }
 
 export function useTenantMessagesRealtime({

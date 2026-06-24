@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Building2,
   FileText,
@@ -41,6 +42,17 @@ export function PropertiesSidebar({
   unreadMessageCount = 0,
 }: PropertiesSidebarProps) {
   const pathname = usePathname();
+  const [localUnreadCount, setLocalUnreadCount] = useState(unreadMessageCount);
+
+  useEffect(() => {
+    setLocalUnreadCount(unreadMessageCount);
+  }, [unreadMessageCount]);
+
+  useEffect(() => {
+    const handler = () => setLocalUnreadCount(0);
+    window.addEventListener("wisk:messages-read", handler);
+    return () => window.removeEventListener("wisk:messages-read", handler);
+  }, []);
 
   return (
     <aside
@@ -69,7 +81,7 @@ export function PropertiesSidebar({
             const Icon = item.icon;
             const showUnreadBadge =
               item.href === "/properties/communication" &&
-              unreadMessageCount > 0;
+              localUnreadCount > 0;
 
             return (
               <li key={item.href}>
@@ -88,10 +100,10 @@ export function PropertiesSidebar({
                       <span
                         className={cn(
                           "absolute -top-1.5 -right-1.5 flex min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-semibold leading-none text-white",
-                          unreadMessageCount > 9 ? "min-w-[18px]" : "size-4"
+                          localUnreadCount > 9 ? "min-w-[18px]" : "size-4"
                         )}
                       >
-                        {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
+                        {localUnreadCount > 99 ? "99+" : localUnreadCount}
                       </span>
                     ) : null}
                   </span>

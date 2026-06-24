@@ -1,6 +1,5 @@
 "use client";
 
-import { AnimatePresence } from "framer-motion";
 import { ArrowLeft, MessageSquare } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 
@@ -11,7 +10,6 @@ import {
   sendLandlordMessage,
 } from "@/app/(dashboard)/properties/actions";
 import { MessageThread } from "@/components/properties/communication/message-thread";
-import { MessageToast } from "@/components/properties/communication/message-toast";
 import { PresenceLabel } from "@/components/properties/communication/presence-label";
 import { PageHeader } from "@/components/layout/page-header";
 import { PageTransition } from "@/components/layout/page-transition";
@@ -70,15 +68,8 @@ export function CommunicationPageClient({
   const [messages, setMessages] = useState<TenantMessage[]>([]);
   const [mobileView, setMobileView] = useState<"list" | "thread">("list");
   const [isOtherPartyTyping, setIsOtherPartyTyping] = useState(false);
-  const [toastMessage, setToastMessage] = useState<{
-    tenantId: string;
-    tenantName: string;
-    preview: string;
-  } | null>(null);
   const [isLoadingMessages, startLoadMessages] = useTransition();
   const selectedTenantRef = useRef<string | null>(null);
-  const conversationsRef = useRef(conversations);
-  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectedConversation = conversations.find(
     (c) => c.tenant_id === selectedTenantId
@@ -88,31 +79,6 @@ export function CommunicationPageClient({
     selectedTenantRef.current = selectedTenantId;
   }, [selectedTenantId]);
 
-  useEffect(() => {
-    conversationsRef.current = conversations;
-  }, [conversations]);
-
-  useEffect(() => {
-    return () => {
-      if (toastTimeoutRef.current) {
-        clearTimeout(toastTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  const showToast = useCallback(
-    (tenantId: string, tenantName: string, preview: string) => {
-      setToastMessage({ tenantId, tenantName, preview });
-      if (toastTimeoutRef.current) {
-        clearTimeout(toastTimeoutRef.current);
-      }
-      toastTimeoutRef.current = setTimeout(() => {
-        setToastMessage(null);
-      }, 5000);
-    },
-    []
-  );
-
   const { setTyping } = useTypingPresence({
     channelName: selectedTenantId
       ? `typing-${selectedTenantId}`
@@ -121,60 +87,44 @@ export function CommunicationPageClient({
     onTypingChange: (ids) => setIsOtherPartyTyping(ids.length > 0),
   });
 
-  const handleRealtimeInsert = useCallback(
-    (message: TenantMessage) => {
-      const isActive = selectedTenantRef.current === message.tenant_id;
-      const incrementUnread =
-        message.sender_type === "tenant" && !message.read && !isActive;
+  const handleRealtimeInsert = useCallback((message: TenantMessage) => {
+    const isActive = selectedTenantRef.current === message.tenant_id;
+    const incrementUnread =
+      message.sender_type === "tenant" && !message.read && !isActive;
 
-      if (
-        message.sender_type === "tenant" &&
-        selectedTenantRef.current !== message.tenant_id
-      ) {
-        const conversation = conversationsRef.current.find(
-          (c) => c.tenant_id === message.tenant_id
-        );
-        showToast(
-          message.tenant_id,
-          conversation?.tenant_name ?? "Tenant",
-          truncateMessagePreview(message.message)
-        );
+    setConversations((prev) => {
+      const exists = prev.some((c) => c.tenant_id === message.tenant_id);
+      if (!exists && message.sender_type === "tenant") {
+        void getConversations().then(setConversations);
+        return prev;
       }
+      return upsertConversation(
+        prev,
+        message,
+        "Tenant",
+        "Property",
+        incrementUnread
+      );
+    });
 
-      setConversations((prev) => {
-        const exists = prev.some((c) => c.tenant_id === message.tenant_id);
-        if (!exists && message.sender_type === "tenant") {
-          void getConversations().then(setConversations);
-          return prev;
-        }
-        return upsertConversation(
-          prev,
-          message,
-          "Tenant",
-          "Property",
-          incrementUnread
-        );
+    if (isActive) {
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === message.id)) return prev;
+        return [...prev, message];
       });
-
-      if (isActive) {
-        setMessages((prev) => {
-          if (prev.some((m) => m.id === message.id)) return prev;
-          return [...prev, message];
-        });
-        if (message.sender_type === "tenant") {
-          void markMessagesAsRead(message.tenant_id);
-          setConversations((prev) =>
-            prev.map((c) =>
-              c.tenant_id === message.tenant_id
-                ? { ...c, unread_count: 0 }
-                : c
-            )
-          );
-        }
+      if (message.sender_type === "tenant") {
+        void markMessagesAsRead(message.tenant_id);
+        window.dispatchEvent(new CustomEvent("wisk:messages-read"));
+        setConversations((prev) =>
+          prev.map((c) =>
+            c.tenant_id === message.tenant_id
+              ? { ...c, unread_count: 0 }
+              : c
+          )
+        );
       }
-    },
-    [showToast]
-  );
+    }
+  }, []);
 
   useLandlordMessagesRealtime({
     landlordUserId,
@@ -199,6 +149,7 @@ export function CommunicationPageClient({
         markMessagesAsRead(conversation.tenant_id),
       ]);
       setMessages(loaded);
+      window.dispatchEvent(new CustomEvent("wisk:messages-read"));
     });
   };
 
@@ -403,23 +354,6 @@ export function CommunicationPageClient({
           )}
         </section>
       </div>
-
-      <AnimatePresence>
-        {toastMessage ? (
-          <MessageToast
-            senderName={toastMessage.tenantName}
-            preview={toastMessage.preview}
-            onDismiss={() => setToastMessage(null)}
-            onClick={() => {
-              const conv = conversations.find(
-                (c) => c.tenant_id === toastMessage.tenantId
-              );
-              if (conv) selectConversation(conv);
-              setToastMessage(null);
-            }}
-          />
-        ) : null}
-      </AnimatePresence>
     </PageTransition>
   );
 }

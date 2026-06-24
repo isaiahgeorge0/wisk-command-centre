@@ -57,6 +57,7 @@ export function PropertyMessagesTab({
         markMessagesAsRead(tenantId),
       ]);
       setMessages(loaded);
+      window.dispatchEvent(new CustomEvent("wisk:messages-read"));
     });
   }, []);
 
@@ -79,6 +80,7 @@ export function PropertyMessagesTab({
       });
       if (message.sender_type === "tenant") {
         void markMessagesAsRead(message.tenant_id);
+        window.dispatchEvent(new CustomEvent("wisk:messages-read"));
       }
     }
   }, [propertyId]);

@@ -2422,6 +2422,8 @@ export async function markMessagesAsRead(
     return { success: false, error: error.message };
   }
 
+  revalidatePath("/properties", "layout");
+
   return { success: true };
 }
 
