@@ -77,6 +77,10 @@ export type Tenant = {
   deposit_protected: boolean;
   status: TenantStatus;
   notes: string | null;
+  portal_enabled: boolean;
+  portal_user_id: string | null;
+  portal_invited_at: string | null;
+  portal_invite_token: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -252,6 +256,21 @@ export type PropertyDocument = {
   certificate_id: string | null;
   certificate_type: CertificateType | null;
   certificate_expiry: string | null;
+  shared_with_tenant: boolean;
+  created_at: string;
+};
+
+export type TenantMessageSenderType = "landlord" | "tenant";
+
+export type TenantMessage = {
+  id: string;
+  property_id: string;
+  tenant_id: string;
+  landlord_user_id: string;
+  sender_type: TenantMessageSenderType;
+  sender_id: string;
+  message: string;
+  read: boolean;
   created_at: string;
 };
 

@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isTenantPortalUser } from "@/lib/portal/is-tenant-user";
 
 const PUBLIC_PATHS = [
   "/sign-in",
@@ -18,8 +19,11 @@ const PUBLIC_PATHS = [
   "/api/properties/generate-insights",
   "/api/winston/chat",
   "/api/stripe/webhook",
+  "/api/portal/setup",
   "/monitoring",
 ];
+
+const PORTAL_PUBLIC_PATHS = ["/portal/login", "/portal/setup"];
 
 // Paths accessible to authenticated users before personalisation is complete.
 const SETUP_PATHS = ["/welcome", "/set-password"];
@@ -32,6 +36,16 @@ function isPublicPath(pathname: string): boolean {
 
 function isSetupPath(pathname: string): boolean {
   return SETUP_PATHS.some((path) => pathname === path);
+}
+
+function isPortalPath(pathname: string): boolean {
+  return pathname === "/portal" || pathname.startsWith("/portal/");
+}
+
+function isPortalPublicPath(pathname: string): boolean {
+  return PORTAL_PUBLIC_PATHS.some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`)
+  );
 }
 
 function withPathnameHeader(response: NextResponse, pathname: string) {
@@ -112,8 +126,36 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
+  const portalPath = isPortalPath(pathname);
+  const portalPublic = isPortalPublicPath(pathname);
 
   if (user) {
+    const isPortalTenant = await isTenantPortalUser(user.id);
+
+    if (isPortalTenant) {
+      if (pathname === "/portal/login") {
+        const url = request.nextUrl.clone();
+        url.pathname = "/portal";
+        return withPathnameHeader(NextResponse.redirect(url), pathname);
+      }
+
+      if (
+        !portalPath &&
+        !isPublicPath(pathname) &&
+        !pathname.startsWith("/api/portal/")
+      ) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/portal";
+        return withPathnameHeader(NextResponse.redirect(url), pathname);
+      }
+
+      return withPathnameHeader(supabaseResponse, pathname);
+    } else if (portalPath && !portalPublic) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/portal/login";
+      return withPathnameHeader(NextResponse.redirect(url), pathname);
+    }
+
     const personalisationCompleted = await isPersonalisationCompleted(user.id);
 
     if (pathname === "/sign-in") {
@@ -143,6 +185,12 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!user && !isPublicPath(pathname)) {
+    if (portalPath && !portalPublic) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/portal/login";
+      return withPathnameHeader(NextResponse.redirect(url), pathname);
+    }
+
     const url = request.nextUrl.clone();
     url.pathname = "/sign-in";
     if (pathname !== "/") {

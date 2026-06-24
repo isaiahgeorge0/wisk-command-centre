@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import {
   deletePropertyDocument,
   getDocumentUrl,
+  toggleDocumentTenantSharing,
   uploadPropertyDocument,
 } from "@/app/(dashboard)/properties/actions";
 import {
@@ -30,6 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -142,6 +144,13 @@ export function PropertyDocumentsTab({
     startTransition(async () => {
       await deletePropertyDocument(deleteTarget.id);
       setDeleteTarget(null);
+      router.refresh();
+    });
+  };
+
+  const handleShareToggle = (documentId: string, shared: boolean) => {
+    startTransition(async () => {
+      await toggleDocumentTenantSharing(documentId, shared);
       router.refresh();
     });
   };
@@ -301,6 +310,9 @@ export function PropertyDocumentsTab({
                     doc={doc}
                     onView={() => void handleView(doc)}
                     onDelete={() => setDeleteTarget(doc)}
+                    onShareToggle={(shared) =>
+                      handleShareToggle(doc.id, shared)
+                    }
                     onNavigateToCertificates={onNavigateToCertificates}
                     disabled={isPending}
                   />
@@ -346,12 +358,14 @@ function DocumentRow({
   doc,
   onView,
   onDelete,
+  onShareToggle,
   onNavigateToCertificates,
   disabled,
 }: {
   doc: PropertyDocument;
   onView: () => void;
   onDelete: () => void;
+  onShareToggle: (shared: boolean) => void;
   onNavigateToCertificates?: () => void;
   disabled: boolean;
 }) {
@@ -387,13 +401,34 @@ function DocumentRow({
                 </Badge>
               </button>
             ) : null}
+            {doc.shared_with_tenant ? (
+              <Badge
+                variant="outline"
+                className="border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300"
+              >
+                Shared with tenant
+              </Badge>
+            ) : null}
             <span>{formatFileSize(doc.file_size)}</span>
             <span>·</span>
             <span>{formatPropertyDate(doc.created_at)}</span>
           </div>
         </div>
       </div>
-      <div className="flex gap-2">
+      <div className="flex flex-col gap-3 sm:items-end">
+        <div className="flex items-center gap-2 rounded-lg border border-border/60 px-3 py-2">
+          <Switch
+            id={`share-${doc.id}`}
+            checked={doc.shared_with_tenant}
+            onCheckedChange={onShareToggle}
+            disabled={disabled}
+            aria-label="Share with tenant"
+          />
+          <Label htmlFor={`share-${doc.id}`} className="text-xs font-normal">
+            Share with tenant
+          </Label>
+        </div>
+        <div className="flex gap-2">
         <Button
           variant="outline"
           size="sm"
@@ -412,6 +447,7 @@ function DocumentRow({
         >
           <Trash2 className="size-4" />
         </Button>
+        </div>
       </div>
     </div>
   );

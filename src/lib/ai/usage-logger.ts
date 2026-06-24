@@ -5,7 +5,8 @@ export type UsageFeature =
   | "digest"
   | "email_draft"
   | "property_insights"
-  | "email_picks_draft";
+  | "email_picks_draft"
+  | "portal_triage";
 
 export async function logUsage(
   userId: string,

@@ -133,3 +133,140 @@ export async function sendCertificateAlertEmail({
 
   return true;
 }
+
+function portalAppUrl(path: string): string {
+  const base = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "https://app.wiskapp.com";
+  return `${base}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
+export async function sendTenantPortalInviteEmail({
+  to,
+  tenantName,
+  propertyAddress,
+  landlordName,
+  setupUrl,
+}: {
+  to: string;
+  tenantName: string;
+  propertyAddress: string;
+  landlordName: string;
+  setupUrl: string;
+}): Promise<boolean> {
+  const client = getResend();
+  if (!client) return false;
+
+  const greeting = tenantName.trim() || "there";
+  const landlord = landlordName.trim() || "your landlord";
+  const subject = "You've been invited to manage your tenancy online";
+
+  const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head>
+<body style="margin:0;padding:0;background-color:#0a0a0f;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <div style="max-width:520px;margin:0 auto;padding:48px 24px;">
+    <div style="font-size:20px;font-weight:700;color:#f59e0b;letter-spacing:-0.5px;margin-bottom:40px;">WISK</div>
+    <div style="background:#111118;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:36px 32px;">
+      <h1 style="color:#f4f4f5;font-size:22px;font-weight:700;margin:0 0 8px;letter-spacing:-0.3px;">Your tenancy portal is ready</h1>
+      <p style="color:#71717a;font-size:14px;margin:0 0 24px;">Hi ${greeting} — ${landlord} has invited you to manage your tenancy online.</p>
+      <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin:0 0 16px;">View your tenancy details, submit maintenance requests, and communicate with your landlord — all in one place.</p>
+      <p style="color:#a1a1aa;font-size:14px;line-height:1.6;margin:0 0 24px;">This is only for managing your tenancy at <strong style="color:#f4f4f5;">${propertyAddress}</strong>.</p>
+      <a href="${setupUrl}" style="display:inline-block;background:#f59e0b;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:600;margin:8px 0 24px;">Set up your account</a>
+      <p style="color:#71717a;font-size:13px;line-height:1.5;border-top:1px solid rgba(255,255,255,0.07);padding-top:20px;margin:8px 0 0;">This link expires in 7 days. If you need a new invite, contact your landlord.</p>
+    </div>
+    <div style="margin-top:32px;color:#52525b;font-size:12px;text-align:center;">Powered by WISK</div>
+  </div>
+</body>
+</html>`;
+
+  const { error } = await client.resend.emails.send({
+    from: client.from,
+    to,
+    subject,
+    html,
+  });
+
+  if (error) {
+    console.error("sendTenantPortalInviteEmail:", error);
+    return false;
+  }
+
+  return true;
+}
+
+export async function sendMaintenanceRequestEmail({
+  to,
+  landlordName,
+  tenantName,
+  propertyAddress,
+  issueTitle,
+  issueDescription,
+  priority,
+  winstonAttempted,
+  winstonSteps,
+  propertyUrl,
+}: {
+  to: string;
+  landlordName: string;
+  tenantName: string;
+  propertyAddress: string;
+  issueTitle: string;
+  issueDescription: string;
+  priority: string;
+  winstonAttempted: boolean;
+  winstonSteps: string[] | null;
+  propertyUrl: string;
+}): Promise<boolean> {
+  const client = getResend();
+  if (!client) return false;
+
+  const greeting = landlordName.trim() || "there";
+  const subject = `Maintenance request: ${issueTitle} — ${propertyAddress}`;
+
+  const winstonHtml =
+    winstonAttempted && winstonSteps && winstonSteps.length > 0
+      ? `<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:16px 20px;margin:20px 0;">
+      <p style="color:#f59e0b;font-size:12px;font-weight:600;margin:0 0 8px;text-transform:uppercase;letter-spacing:0.08em;">Winston troubleshooting attempted</p>
+      <ol style="color:#a1a1aa;font-size:14px;line-height:1.6;margin:0;padding-left:20px;">
+        ${winstonSteps.map((step) => `<li style="margin-bottom:8px;">${step}</li>`).join("")}
+      </ol>
+    </div>`
+      : "";
+
+  const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head>
+<body style="margin:0;padding:0;background-color:#0a0a0f;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <div style="max-width:520px;margin:0 auto;padding:48px 24px;">
+    <div style="font-size:20px;font-weight:700;color:#f59e0b;letter-spacing:-0.5px;margin-bottom:40px;">WISK Properties</div>
+    <div style="background:#111118;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:36px 32px;">
+      <h1 style="color:#f4f4f5;font-size:22px;font-weight:700;margin:0 0 8px;">New maintenance request</h1>
+      <p style="color:#71717a;font-size:14px;margin:0 0 24px;">Hi ${greeting} — ${tenantName} has reported an issue at ${propertyAddress}.</p>
+      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:16px 20px;margin:20px 0;">
+        <p style="color:#f4f4f5;font-size:16px;font-weight:600;margin:0 0 8px;">${issueTitle}</p>
+        <p style="color:#a1a1aa;font-size:14px;line-height:1.6;margin:0 0 12px;">${issueDescription.replace(/\n/g, "<br />")}</p>
+        <p style="color:#f59e0b;font-size:12px;font-weight:600;margin:0;text-transform:uppercase;">Priority: ${priority}</p>
+      </div>
+      ${winstonHtml}
+      <a href="${propertyUrl}" style="display:inline-block;background:#f59e0b;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;margin:24px 0;">View in WISK</a>
+    </div>
+    <div style="margin-top:32px;color:#52525b;font-size:12px;text-align:center;">WISK &middot; Built by Isaiah George Creative</div>
+  </div>
+</body>
+</html>`;
+
+  const { error } = await client.resend.emails.send({
+    from: client.from,
+    to,
+    subject,
+    html,
+  });
+
+  if (error) {
+    console.error("sendMaintenanceRequestEmail:", error);
+    return false;
+  }
+
+  return true;
+}
+
+export { portalAppUrl };

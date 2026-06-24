@@ -1,11 +1,19 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { randomUUID } from "crypto";
 import { z } from "zod";
 
 import { isAdminEmail } from "@/lib/auth/is-admin";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { logUsage } from "@/lib/ai/usage-logger";
+import {
+  portalAppUrl,
+  sendTenantPortalInviteEmail,
+} from "@/lib/properties/emails";
+import { formatPropertyAddress } from "@/lib/properties/format";
+import { getTenantFullName } from "@/lib/properties/tenant-form";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   buildPropertyPortfolioContext,
   generatePropertyInsights,
@@ -1170,6 +1178,175 @@ export async function deletePropertyDocument(
   }
 
   revalidatePropertyPaths(existing.property_id as string);
+  return { success: true };
+}
+
+export async function toggleDocumentTenantSharing(
+  documentId: string,
+  shared: boolean
+): Promise<ActionResult> {
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { data, error } = await supabase
+    .from("property_documents")
+    .update({ shared_with_tenant: shared })
+    .eq("id", documentId)
+    .eq("user_id", userId)
+    .select("property_id")
+    .maybeSingle();
+
+  if (error || !data) {
+    return {
+      success: false,
+      error: error?.message ?? "Document not found",
+    };
+  }
+
+  revalidatePropertyPaths(data.property_id as string);
+  return { success: true };
+}
+
+// ─── Tenant portal (landlord) ───────────────────────────────────────────────
+
+export async function inviteTenantToPortal(
+  tenantId: string
+): Promise<ActionResult<{ message?: string }>> {
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { data: tenant, error: tenantError } = await supabase
+    .from("tenants")
+    .select("*, properties(name, address_line1, address_line2, city, postcode)")
+    .eq("id", tenantId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (tenantError || !tenant) {
+    return { success: false, error: "Tenant not found" };
+  }
+
+  if (!tenant.email?.trim()) {
+    return { success: false, error: "Tenant must have an email address" };
+  }
+
+  if (tenant.portal_enabled) {
+    return {
+      success: true,
+      data: {
+        message: tenant.portal_user_id
+          ? "This tenant already has portal access."
+          : "An invite has already been sent. Awaiting setup.",
+      },
+    };
+  }
+
+  const token = randomUUID();
+  const invitedAt = new Date().toISOString();
+
+  const { error: updateError } = await supabase
+    .from("tenants")
+    .update({
+      portal_enabled: true,
+      portal_invite_token: token,
+      portal_invited_at: invitedAt,
+    })
+    .eq("id", tenantId)
+    .eq("user_id", userId);
+
+  if (updateError) {
+    return { success: false, error: updateError.message };
+  }
+
+  const property = tenant.properties as {
+    name: string;
+    address_line1: string;
+    address_line2: string | null;
+    city: string;
+    postcode: string;
+  } | null;
+
+  const [{ data: prefs }, { data: landlordUser }] = await Promise.all([
+    supabase
+      .from("user_preferences")
+      .select("display_name")
+      .eq("user_id", userId)
+      .maybeSingle(),
+    supabase.from("users").select("name, email").eq("id", userId).maybeSingle(),
+  ]);
+
+  const landlordName =
+    prefs?.display_name?.trim() ||
+    landlordUser?.name?.trim() ||
+    landlordUser?.email?.split("@")[0] ||
+    "Your landlord";
+
+  const propertyAddress = property
+    ? formatPropertyAddress(property)
+    : "your property";
+
+  const setupUrl = portalAppUrl(`/portal/setup?token=${token}`);
+
+  const sent = await sendTenantPortalInviteEmail({
+    to: tenant.email.trim(),
+    tenantName: getTenantFullName(tenant as Tenant),
+    propertyAddress,
+    landlordName,
+    setupUrl,
+  });
+
+  if (!sent) {
+    return {
+      success: false,
+      error: "Invite saved but email could not be sent. Try again later.",
+    };
+  }
+
+  revalidatePropertyPaths(tenant.property_id as string);
+  return { success: true };
+}
+
+export async function revokeTenantPortalAccess(
+  tenantId: string
+): Promise<ActionResult> {
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { data: tenant, error: tenantError } = await supabase
+    .from("tenants")
+    .select("property_id, portal_user_id")
+    .eq("id", tenantId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (tenantError || !tenant) {
+    return { success: false, error: "Tenant not found" };
+  }
+
+  if (tenant.portal_user_id) {
+    const admin = createAdminClient();
+    const { error: deleteError } = await admin.auth.admin.deleteUser(
+      tenant.portal_user_id as string
+    );
+    if (deleteError) {
+      console.error("revokeTenantPortalAccess deleteUser:", deleteError);
+      return { success: false, error: "Could not revoke portal access" };
+    }
+  }
+
+  const { error: updateError } = await supabase
+    .from("tenants")
+    .update({
+      portal_enabled: false,
+      portal_user_id: null,
+      portal_invite_token: null,
+      portal_invited_at: null,
+    })
+    .eq("id", tenantId)
+    .eq("user_id", userId);
+
+  if (updateError) {
+    return { success: false, error: updateError.message };
+  }
+
+  revalidatePropertyPaths(tenant.property_id as string);
   return { success: true };
 }
 

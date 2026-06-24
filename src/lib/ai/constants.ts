@@ -9,6 +9,7 @@ export const WINSTON_AUTO_GENERATED_FEATURES = [
   "digest",
   "property_insights",
   "email_picks_draft",
+  "portal_triage",
 ] as const;
 
 /** Short-term spam guard — max messages per window, not token-based. */

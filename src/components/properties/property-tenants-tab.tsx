@@ -1,10 +1,14 @@
 "use client";
 
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2, UserPlus, UserX } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { deleteTenant } from "@/app/(dashboard)/properties/actions";
+import {
+  deleteTenant,
+  inviteTenantToPortal,
+  revokeTenantPortalAccess,
+} from "@/app/(dashboard)/properties/actions";
 import { TenantFormDialog } from "@/components/properties/tenant-form-dialog";
 import { TenantStatusBadge } from "@/components/properties/tenant-status-badge";
 import {
@@ -25,11 +29,38 @@ import {
 } from "@/lib/properties/format";
 import { getTenantFullName } from "@/lib/properties/tenant-form";
 import type { Tenant } from "@/lib/properties/types";
+import { cn } from "@/lib/utils";
 
 type PropertyTenantsTabProps = {
   propertyId: string;
   tenants: Tenant[];
 };
+
+function getPortalStatus(tenant: Tenant): {
+  label: string;
+  className: string;
+} {
+  if (tenant.portal_user_id) {
+    return {
+      label: "Portal active",
+      className:
+        "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+    };
+  }
+
+  if (tenant.portal_enabled) {
+    return {
+      label: "Awaiting setup",
+      className:
+        "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+    };
+  }
+
+  return {
+    label: "Not invited",
+    className: "border-border bg-muted text-muted-foreground",
+  };
+}
 
 export function PropertyTenantsTab({
   propertyId,
@@ -39,6 +70,8 @@ export function PropertyTenantsTab({
   const [formOpen, setFormOpen] = useState(false);
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Tenant | null>(null);
+  const [revokeTarget, setRevokeTarget] = useState<Tenant | null>(null);
+  const [portalMessage, setPortalMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const handleDelete = () => {
@@ -46,6 +79,33 @@ export function PropertyTenantsTab({
     startTransition(async () => {
       await deleteTenant(deleteTarget.id);
       setDeleteTarget(null);
+      router.refresh();
+    });
+  };
+
+  const handleInvite = (tenant: Tenant) => {
+    setPortalMessage(null);
+    startTransition(async () => {
+      const result = await inviteTenantToPortal(tenant.id);
+      if (result.success) {
+        setPortalMessage(result.data?.message ?? "Invite sent.");
+      } else {
+        setPortalMessage(result.error);
+      }
+      router.refresh();
+    });
+  };
+
+  const handleRevoke = () => {
+    if (!revokeTarget) return;
+    startTransition(async () => {
+      const result = await revokeTenantPortalAccess(revokeTarget.id);
+      setRevokeTarget(null);
+      if (!result.success) {
+        setPortalMessage(result.error);
+      } else {
+        setPortalMessage("Portal access revoked.");
+      }
       router.refresh();
     });
   };
@@ -61,6 +121,11 @@ export function PropertyTenantsTab({
 
   return (
     <div className="space-y-4">
+      {portalMessage ? (
+        <p className="rounded-lg border border-border/60 bg-card/60 px-3 py-2 text-sm text-muted-foreground">
+          {portalMessage}
+        </p>
+      ) : null}
       <div className="flex justify-end">
         <Button
           onClick={() => { setEditingTenant(null); setFormOpen(true); }}
@@ -72,7 +137,12 @@ export function PropertyTenantsTab({
       </div>
 
       <div className="space-y-3">
-        {tenants.map((tenant) => (
+        {tenants.map((tenant) => {
+          const portalStatus = getPortalStatus(tenant);
+          const canInvite = !tenant.portal_enabled && Boolean(tenant.email?.trim());
+          const canRevoke = Boolean(tenant.portal_user_id);
+
+          return (
           <div
             key={tenant.id}
             className="rounded-xl border border-border/60 bg-card/40 p-4"
@@ -84,6 +154,9 @@ export function PropertyTenantsTab({
                     {getTenantFullName(tenant)}
                   </h3>
                   <TenantStatusBadge status={tenant.status} />
+                  <Badge variant="outline" className={cn("font-medium", portalStatus.className)}>
+                    {portalStatus.label}
+                  </Badge>
                   {tenant.deposit_protected ? (
                     <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600">
                       Deposit protected
@@ -102,7 +175,31 @@ export function PropertyTenantsTab({
                   <p>{formatRentFrequency(tenant.rent_amount, tenant.rent_frequency)}</p>
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
+                {canInvite ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="min-h-11 gap-1.5"
+                    disabled={isPending}
+                    onClick={() => handleInvite(tenant)}
+                  >
+                    <UserPlus className="size-4" />
+                    Invite to portal
+                  </Button>
+                ) : null}
+                {canRevoke ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="min-h-11 gap-1.5 text-destructive hover:text-destructive"
+                    disabled={isPending}
+                    onClick={() => setRevokeTarget(tenant)}
+                  >
+                    <UserX className="size-4" />
+                    Revoke access
+                  </Button>
+                ) : null}
                 <Button
                   variant="outline"
                   size="sm"
@@ -124,7 +221,8 @@ export function PropertyTenantsTab({
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       <TenantFormDialog
@@ -147,6 +245,25 @@ export function PropertyTenantsTab({
             <AlertDialogCancel disabled={isPending} className="min-h-11">Cancel</AlertDialogCancel>
             <AlertDialogAction variant="destructive" onClick={handleDelete} disabled={isPending} className="min-h-11">
               {isPending ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={Boolean(revokeTarget)} onOpenChange={(open) => !open && setRevokeTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Revoke portal access?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove portal access for{" "}
+              <strong>{revokeTarget ? getTenantFullName(revokeTarget) : ""}</strong>{" "}
+              and delete their login account.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPending} className="min-h-11">Cancel</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={handleRevoke} disabled={isPending} className="min-h-11">
+              {isPending ? "Revoking…" : "Revoke access"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
