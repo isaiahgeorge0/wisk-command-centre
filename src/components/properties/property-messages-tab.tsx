@@ -136,7 +136,7 @@ export function PropertyMessagesTab({
   }
 
   return (
-    <div className="flex min-h-[28rem] flex-col overflow-hidden rounded-xl border border-border/60 bg-card/40">
+    <div className="flex h-[calc(100dvh-20rem)] flex-col overflow-hidden rounded-xl border border-border/60 bg-card/40">
       {tenants.length > 1 ? (
         <div className="flex gap-1 overflow-x-auto border-b border-border/60 p-2">
           {tenants.map((tenant) => (

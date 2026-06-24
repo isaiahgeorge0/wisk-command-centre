@@ -313,6 +313,45 @@ export async function markTenantMessagesAsRead(): Promise<ActionResult> {
   return { success: true };
 }
 
+export async function getPortalUnreadCount(): Promise<number> {
+  const { tenant } = await requireTenantContext();
+  const supabase = await createClient();
+
+  const { count, error } = await supabase
+    .from("tenant_messages")
+    .select("*", { count: "exact", head: true })
+    .eq("tenant_id", tenant.id)
+    .eq("sender_type", "landlord")
+    .eq("read", false);
+
+  if (error) {
+    console.error("getPortalUnreadCount:", error);
+    return 0;
+  }
+
+  return count ?? 0;
+}
+
+export async function getLandlordLastSeen(): Promise<string | null> {
+  const { tenant } = await requireTenantContext();
+  const admin = await import("@/lib/supabase/admin").then((m) =>
+    m.createAdminClient()
+  );
+
+  const { data, error } = await admin
+    .from("user_preferences")
+    .select("last_seen_at")
+    .eq("user_id", tenant.user_id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("getLandlordLastSeen:", error);
+    return null;
+  }
+
+  return data?.last_seen_at ?? null;
+}
+
 export async function updateTenantLastSeen(): Promise<void> {
   const { tenant } = await requireTenantContext();
   const admin = await import("@/lib/supabase/admin").then((m) =>

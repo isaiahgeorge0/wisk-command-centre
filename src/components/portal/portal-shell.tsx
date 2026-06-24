@@ -16,6 +16,7 @@ import { PortalThemeToggle } from "@/components/portal/portal-theme-toggle";
 import { TenantPresenceTracker } from "@/components/presence/tenant-presence-tracker";
 import { formatPropertyAddress, truncateMessagePreview } from "@/lib/properties/format";
 import { getTenantFullName } from "@/lib/properties/tenant-form";
+import { usePortalUnreadCount } from "@/lib/portal/use-portal-unread-count";
 import { useTenantMessagesRealtime } from "@/lib/properties/use-tenant-messages-realtime";
 import type { Property, Tenant, TenantMessage } from "@/lib/properties/types";
 import { cn } from "@/lib/utils";
@@ -31,6 +32,7 @@ type PortalShellProps = {
   tenant: Tenant;
   property: Property;
   landlordName: string;
+  unreadMessageCount?: number;
   children: React.ReactNode;
 };
 
@@ -38,11 +40,13 @@ export function PortalShell({
   tenant,
   property,
   landlordName,
+  unreadMessageCount = 0,
   children,
 }: PortalShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const reduced = useReducedMotion() ?? false;
+  const localUnreadCount = usePortalUnreadCount(tenant.id, unreadMessageCount);
   const [toastMessage, setToastMessage] = useState<{
     preview: string;
   } | null>(null);
@@ -139,16 +143,24 @@ export function PortalShell({
                 <Link
                   href={href}
                   className={cn(
-                    "flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[11px] font-medium transition-colors",
+                    "relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[11px] font-medium transition-colors",
                     active
                       ? "text-[var(--portal-amber)]"
                       : "text-[var(--portal-muted)] hover:text-[var(--portal-text)]"
                   )}
                 >
-                  <Icon
-                    className={cn("size-5", active && "fill-current")}
-                    aria-hidden
-                  />
+                  <span className="relative">
+                    <Icon
+                      className={cn("size-5", active && "fill-current")}
+                      aria-hidden
+                    />
+                    {href === "/portal/messages" && localUnreadCount > 0 ? (
+                      <span
+                        className="absolute -top-1 -right-1 size-2.5 rounded-full bg-[var(--portal-amber)]"
+                        aria-label={`${localUnreadCount} unread messages`}
+                      />
+                    ) : null}
+                  </span>
                   {label}
                 </Link>
               </motion.div>

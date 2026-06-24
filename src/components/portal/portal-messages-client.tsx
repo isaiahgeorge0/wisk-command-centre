@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
+  getLandlordLastSeen,
   markTenantMessagesAsRead,
   sendTenantMessage,
 } from "@/app/portal/actions";
@@ -26,17 +27,24 @@ type PortalMessagesClientProps = {
   landlordUserId: string;
 };
 
+function dispatchPortalMessagesRead() {
+  window.dispatchEvent(new CustomEvent("wisk:portal-messages-read"));
+}
+
 export function PortalMessagesClient({
   initialMessages,
   tenantId,
   senderId,
   landlordName,
-  landlordLastSeenAt,
+  landlordLastSeenAt: initialLandlordLastSeenAt,
   propertyName,
   propertyId,
   landlordUserId,
 }: PortalMessagesClientProps) {
   const [messages, setMessages] = useState<TenantMessage[]>(initialMessages);
+  const [landlordLastSeenAt, setLandlordLastSeenAt] = useState(
+    initialLandlordLastSeenAt
+  );
   const [isOtherPartyTyping, setIsOtherPartyTyping] = useState(false);
   const markedRef = useRef(false);
 
@@ -46,6 +54,10 @@ export function PortalMessagesClient({
     onTypingChange: (ids) => setIsOtherPartyTyping(ids.length > 0),
   });
 
+  const refreshLandlordLastSeen = useCallback(() => {
+    void getLandlordLastSeen().then(setLandlordLastSeenAt);
+  }, []);
+
   const markRead = useCallback(async () => {
     await markTenantMessagesAsRead();
     setMessages((prev) =>
@@ -53,7 +65,12 @@ export function PortalMessagesClient({
         m.sender_type === "landlord" ? { ...m, read: true } : m
       )
     );
+    dispatchPortalMessagesRead();
   }, []);
+
+  useEffect(() => {
+    refreshLandlordLastSeen();
+  }, [refreshLandlordLastSeen]);
 
   useEffect(() => {
     if (!markedRef.current) {
@@ -70,9 +87,10 @@ export function PortalMessagesClient({
       });
       if (message.sender_type === "landlord") {
         void markRead();
+        refreshLandlordLastSeen();
       }
     },
-    [markRead]
+    [markRead, refreshLandlordLastSeen]
   );
 
   useTenantMessagesRealtime({

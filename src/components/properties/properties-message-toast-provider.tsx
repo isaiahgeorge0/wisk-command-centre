@@ -42,8 +42,9 @@ export function PropertiesMessageToastProvider({
   }, []);
 
   const handleInsert = useCallback((message: TenantMessage) => {
-    if (pathnameRef.current === "/properties/communication") return;
     if (message.sender_type !== "tenant") return;
+    if (message.sender_id === message.landlord_user_id) return;
+    if (pathnameRef.current === "/properties/communication") return;
 
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
 
