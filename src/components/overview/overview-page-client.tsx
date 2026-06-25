@@ -19,6 +19,7 @@ import { ThisWeekSection } from "@/components/overview/this-week-section";
 import { WinstonSuggestsSection } from "@/components/overview/winston-suggests-section";
 import type { OverviewSnapshot } from "@/lib/overview/selectors";
 import type {
+  ContractorAccessRequestWithDetails,
   MaintenanceTicket,
   PortfolioStats,
   PropertyCertificate,
@@ -35,6 +36,7 @@ type OverviewPageClientProps = {
   openMaintenanceTickets: MaintenanceTicket[];
   unreadMessageCount: number;
   expiringCertificates: PropertyCertificate[];
+  pendingAccessRequests: ContractorAccessRequestWithDetails[];
 };
 
 export function OverviewPageClient({
@@ -46,6 +48,7 @@ export function OverviewPageClient({
   openMaintenanceTickets,
   unreadMessageCount,
   expiringCertificates,
+  pendingAccessRequests,
 }: OverviewPageClientProps) {
   const [view, setView] = useState<OverviewView>("overview");
   const { setNavMode } = useNavMode();
@@ -79,6 +82,7 @@ export function OverviewPageClient({
             openMaintenanceTickets={openMaintenanceTickets}
             unreadMessageCount={unreadMessageCount}
             expiringCertificates={expiringCertificates}
+            pendingAccessRequests={pendingAccessRequests}
           />
         </>
       ) : (

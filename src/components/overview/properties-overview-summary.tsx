@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   AlertTriangle,
   Building2,
+  HardHat,
   MessageSquare,
   PoundSterling,
   Users,
@@ -10,13 +11,17 @@ import {
 
 import { MaintenancePriorityBadge } from "@/components/properties/maintenance-priority-badge";
 import { MaintenanceStatusBadge } from "@/components/properties/maintenance-status-badge";
+import { Badge } from "@/components/ui/badge";
 import { getCertificateTypeDisplayName } from "@/lib/properties/display-names";
+import { formatContractorDisplayName } from "@/lib/properties/contractor-display";
 import {
   daysUntilDate,
   daysUntilExpiryClass,
   formatPropertyCurrency,
+  formatPropertyDate,
 } from "@/lib/properties/format";
 import type {
+  ContractorAccessRequestWithDetails,
   MaintenanceTicket,
   PortfolioStats,
   PropertyCertificate,
@@ -30,6 +35,7 @@ type PropertiesOverviewSummaryProps = {
   openMaintenanceTickets: MaintenanceTicket[];
   unreadMessageCount: number;
   expiringCertificates: PropertyCertificate[];
+  pendingAccessRequests: ContractorAccessRequestWithDetails[];
 };
 
 function maintenancePropertyName(
@@ -44,11 +50,23 @@ function certificatePropertyName(
   return cert.properties?.name ?? "Unknown property";
 }
 
+function pendingRequestContractorName(
+  request: ContractorAccessRequestWithDetails
+): string {
+  const contractors = request.job_sheets?.contractors;
+  if (!contractors) return "Unknown contractor";
+  if (Array.isArray(contractors)) {
+    return formatContractorDisplayName(contractors[0]?.name);
+  }
+  return formatContractorDisplayName(contractors.name);
+}
+
 export function PropertiesOverviewSummary({
   stats,
   openMaintenanceTickets,
   unreadMessageCount,
   expiringCertificates,
+  pendingAccessRequests,
 }: PropertiesOverviewSummaryProps) {
   const items = [
     {
@@ -109,6 +127,57 @@ export function PropertiesOverviewSummary({
           })}
         </div>
       </section>
+
+      {pendingAccessRequests.length > 0 ? (
+        <section className="mb-6" aria-label="Contractor access requests">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <HardHat className="size-4 text-amber-500" />
+              <h3 className="text-sm font-semibold text-foreground">
+                Contractor access requests
+              </h3>
+            </div>
+            <Link
+              href="/properties/maintenance"
+              className="text-xs text-amber-600 hover:text-amber-500 dark:text-amber-400"
+            >
+              View all
+            </Link>
+          </div>
+          <div className="divide-y divide-border/60 overflow-hidden rounded-lg border border-border/60 bg-card/40">
+            {pendingAccessRequests.slice(0, 3).map((request) => (
+              <div
+                key={request.id}
+                className="flex flex-col gap-1.5 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-foreground">
+                    {pendingRequestContractorName(request)} requests access
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {request.job_sheets?.maintenance_tickets?.title ??
+                      "Maintenance job"}
+                    {" · "}
+                    {request.job_sheets?.properties?.name ?? "Property"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatPropertyDate(request.requested_date)}
+                    {request.requested_time
+                      ? ` · ${request.requested_time}`
+                      : ""}
+                  </p>
+                </div>
+                <Badge
+                  variant="outline"
+                  className="shrink-0 border-amber-500/30 bg-amber-500/10 text-xs text-amber-700 dark:text-amber-300"
+                >
+                  Pending
+                </Badge>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {openMaintenanceTickets.length > 0 ? (
         <section className="mb-6" aria-label="Open maintenance">

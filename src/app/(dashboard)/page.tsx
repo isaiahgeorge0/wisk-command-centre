@@ -8,6 +8,7 @@ import {
   getAllRentPayments,
   getExpiringCertificates,
   getMaintenanceTickets,
+  getPendingAccessRequests,
   getProperties,
   getRentDueFlags,
   getTotalUnreadMessageCount,
@@ -64,9 +65,12 @@ export default async function OverviewPage() {
   let expiringCertificates: Awaited<
     ReturnType<typeof getExpiringCertificates>
   > = [];
+  let pendingAccessRequests: Awaited<
+    ReturnType<typeof getPendingAccessRequests>
+  > = [];
 
   if (hasProperties) {
-    const [properties, payments, flags, tickets, unread, certificates] =
+    const [properties, payments, flags, tickets, unread, certificates, accessRequests] =
       await Promise.all([
         getProperties(),
         getAllRentPayments(),
@@ -74,6 +78,7 @@ export default async function OverviewPage() {
         getMaintenanceTickets(),
         getTotalUnreadMessageCount(),
         getExpiringCertificates(90),
+        getPendingAccessRequests(),
       ]);
 
     portfolioStats = buildPortfolioStats(properties, payments);
@@ -81,6 +86,7 @@ export default async function OverviewPage() {
     openMaintenanceTickets = tickets.filter((t) => t.status !== "resolved");
     unreadMessageCount = unread;
     expiringCertificates = certificates;
+    pendingAccessRequests = accessRequests;
   }
 
   const suggestions = canAccessWinston
@@ -114,6 +120,7 @@ export default async function OverviewPage() {
       openMaintenanceTickets={openMaintenanceTickets}
       unreadMessageCount={unreadMessageCount}
       expiringCertificates={expiringCertificates}
+      pendingAccessRequests={pendingAccessRequests}
     />
   );
 }

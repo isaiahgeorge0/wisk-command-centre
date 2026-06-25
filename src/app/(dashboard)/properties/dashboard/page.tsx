@@ -3,6 +3,7 @@ import {
   getExpiringCertificates,
   getLatestPropertyInsight,
   getMaintenanceTickets,
+  getPendingAccessRequests,
   getProperties,
   getRentDueFlags,
   getTotalUnreadMessageCount,
@@ -19,6 +20,7 @@ export default async function PropertiesDashboardPage() {
     maintenanceTickets,
     unreadMessageCount,
     expiringCertificates,
+    pendingAccessRequests,
   ] = await Promise.all([
     getProperties(),
     getLatestPropertyInsight(),
@@ -27,6 +29,7 @@ export default async function PropertiesDashboardPage() {
     getMaintenanceTickets(),
     getTotalUnreadMessageCount(),
     getExpiringCertificates(90),
+    getPendingAccessRequests(),
   ]);
 
   const stats = buildPortfolioStats(properties, payments);
@@ -42,6 +45,7 @@ export default async function PropertiesDashboardPage() {
       )}
       unreadMessageCount={unreadMessageCount}
       expiringCertificates={expiringCertificates}
+      pendingAccessRequests={pendingAccessRequests}
     />
   );
 }

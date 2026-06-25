@@ -2,14 +2,17 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 
 import {
   createJobSheet,
   getJobSheetsForTicket,
   sendJobSheetEmail,
 } from "@/app/(dashboard)/properties/actions";
-import { JobSheetStatusBadge } from "@/components/contractor/job-sheet-status-badge";
+import {
+  AccessRequestStatusBadge,
+  JobSheetStatusBadge,
+} from "@/components/contractor/job-sheet-status-badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Select,
@@ -18,9 +21,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formatPropertyDate } from "@/lib/properties/format";
 import { formatContractorDisplayName } from "@/lib/properties/contractor-display";
-import type { Contractor, JobSheetWithDetails } from "@/lib/properties/types";
+import { formatPropertyDate } from "@/lib/properties/format";
+import type {
+  Contractor,
+  ContractorAccessRequest,
+  JobSheetUpdate,
+  JobSheetWithDetails,
+} from "@/lib/properties/types";
 import { contractorUrl } from "@/lib/url";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +44,13 @@ function resolveContractor(
   if (!contractors) return null;
   if (Array.isArray(contractors)) return contractors[0] ?? null;
   return contractors;
+}
+
+function sortByCreatedAt<T extends { created_at: string }>(items: T[]): T[] {
+  return [...items].sort(
+    (a, b) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
 }
 
 export function MaintenanceJobSheetSection({
@@ -71,6 +86,19 @@ export function MaintenanceJobSheetSection({
     : null;
   const selectedContractor = contractors.find(
     (c) => c.id === selectedContractorId
+  );
+
+  const accessRequests = useMemo(
+    () =>
+      sortByCreatedAt<ContractorAccessRequest>(
+        activeSheet?.contractor_access_requests ?? []
+      ),
+    [activeSheet?.contractor_access_requests]
+  );
+
+  const updates = useMemo(
+    () => sortByCreatedAt<JobSheetUpdate>(activeSheet?.job_sheet_updates ?? []),
+    [activeSheet?.job_sheet_updates]
   );
 
   const handleCreateAndSend = () => {
@@ -179,29 +207,32 @@ export function MaintenanceJobSheetSection({
     );
   }
 
-  const updateCount = activeSheet.job_sheet_updates?.length ?? 0;
   const contractorLink = contractorUrl(activeSheet.token);
 
   return (
-    <div className="space-y-3 rounded-lg border border-border/50 bg-muted/20 p-4">
+    <div className="space-y-4 rounded-lg border border-border/50 bg-muted/20 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-medium text-foreground">
-          Job sheet ·{" "}
-          {formatContractorDisplayName(activeContractor?.name)}
+          Job sheet · {formatContractorDisplayName(activeContractor?.name)}
         </p>
         <JobSheetStatusBadge status={activeSheet.status} />
       </div>
+
       {activeSheet.planned_visit_date ? (
         <p className="text-sm text-muted-foreground">
           Planned visit: {formatPropertyDate(activeSheet.planned_visit_date)}
         </p>
       ) : null}
+
       <div className="flex flex-wrap gap-2">
         <Link
           href={contractorLink}
           target="_blank"
           rel="noopener noreferrer"
-          className={cn(buttonVariants({ variant: "outline", size: "sm" }), "min-h-11")}
+          className={cn(
+            buttonVariants({ variant: "outline", size: "sm" }),
+            "min-h-11"
+          )}
         >
           Contractor link
         </Link>
@@ -215,20 +246,71 @@ export function MaintenanceJobSheetSection({
           {isPending ? "Sending…" : "Resend email"}
         </Button>
       </div>
-      <p className="text-xs break-all text-muted-foreground">
-        <span className="font-medium text-foreground">Contractor link:</span>{" "}
-        <a
-          href={contractorLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-amber-600 hover:underline dark:text-amber-400"
-        >
-          {contractorLink}
-        </a>
-      </p>
-      <p className="text-xs text-muted-foreground">
-        {updateCount} update{updateCount === 1 ? "" : "s"} from contractor
-      </p>
+
+      {accessRequests.length > 0 ? (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Access requests
+          </p>
+          <ul className="divide-y divide-border/60 overflow-hidden rounded-lg border border-border/60 bg-card/40">
+            {accessRequests.map((request) => (
+              <li
+                key={request.id}
+                className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5"
+              >
+                <div className="min-w-0 text-sm">
+                  <p className="font-medium text-foreground">
+                    {formatPropertyDate(request.requested_date)}
+                    {request.requested_time
+                      ? ` · ${request.requested_time}`
+                      : ""}
+                  </p>
+                  {request.notes ? (
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {request.notes}
+                    </p>
+                  ) : null}
+                  {request.status === "declined" && request.tenant_note ? (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      <span className="font-medium text-foreground">
+                        Tenant note:
+                      </span>{" "}
+                      {request.tenant_note}
+                    </p>
+                  ) : null}
+                </div>
+                <AccessRequestStatusBadge status={request.status} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {updates.length > 0 ? (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Contractor updates
+          </p>
+          <ul className="space-y-2">
+            {updates.map((update) => (
+              <li
+                key={update.id}
+                className="rounded-lg border border-border/60 bg-card/40 px-3 py-2.5"
+              >
+                <p className="text-sm text-foreground">{update.content}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {formatPropertyDate(update.created_at.slice(0, 10))}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <p className="text-xs text-muted-foreground">
+          No contractor updates yet.
+        </p>
+      )}
+
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
     </div>
   );

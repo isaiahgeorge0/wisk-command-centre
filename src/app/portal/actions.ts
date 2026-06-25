@@ -417,16 +417,18 @@ export async function getContractorAccessRequests(): Promise<
 
 export async function respondToAccessRequest(
   requestId: string,
-  response: "approved" | "declined"
+  response: "approved" | "declined",
+  tenantNote?: string
 ): Promise<ActionResult> {
   const parsed = z
     .object({
       requestId: z.string().uuid(),
       response: z.enum(["approved", "declined"]),
+      tenantNote: z.string().trim().max(500).optional(),
     })
-    .safeParse({ requestId, response });
+    .safeParse({ requestId, response, tenantNote });
   if (!parsed.success) {
-    return { success: false, error: "Invalid request." };
+    return { success: false, error: "Invalid input." };
   }
 
   const { tenant } = await requireTenantContext();
@@ -437,6 +439,7 @@ export async function respondToAccessRequest(
     .update({
       status: parsed.data.response,
       tenant_response_at: new Date().toISOString(),
+      tenant_note: parsed.data.tenantNote ?? null,
     })
     .eq("id", parsed.data.requestId)
     .eq("tenant_id", tenant.id);

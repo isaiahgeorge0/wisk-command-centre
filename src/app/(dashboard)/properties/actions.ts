@@ -60,6 +60,7 @@ import type {
   TenantMessage,
   ConversationSummary,
   Contractor,
+  ContractorAccessRequestWithDetails,
   ContractorFormInput,
   JobSheet,
   JobSheetWithDetails,
@@ -2729,4 +2730,33 @@ export async function sendJobSheetEmail(
   }
 
   return { success: true };
+}
+
+export async function getPendingAccessRequests(): Promise<
+  ContractorAccessRequestWithDetails[]
+> {
+  const { supabase, userId } = await getScopedSupabase();
+  const { data, error } = await supabase
+    .from("contractor_access_requests")
+    .select(
+      `
+      *,
+      job_sheets!inner(
+        user_id,
+        token,
+        contractors(name),
+        maintenance_tickets(title),
+        properties(name)
+      )
+    `
+    )
+    .eq("job_sheets.user_id", userId)
+    .eq("status", "pending")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("getPendingAccessRequests:", error);
+    return [];
+  }
+  return (data ?? []) as ContractorAccessRequestWithDetails[];
 }

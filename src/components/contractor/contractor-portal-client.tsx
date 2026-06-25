@@ -1,6 +1,16 @@
 "use client";
 
-import { Loader2, Upload } from "lucide-react";
+import {
+  Calendar,
+  ClipboardList,
+  DoorOpen,
+  HardHat,
+  Loader2,
+  MapPin,
+  MessageSquare,
+  Upload,
+  User,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 
@@ -49,6 +59,43 @@ function resolveContractor(
   if (!contractors) return null;
   if (Array.isArray(contractors)) return contractors[0] ?? null;
   return contractors;
+}
+
+function SectionCard({
+  children,
+  className,
+  accent,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  accent?: boolean;
+}) {
+  return (
+    <section
+      className={cn(
+        "rounded-xl border border-[var(--portal-border)] bg-[var(--portal-card)] p-5 shadow-[var(--portal-shadow)]",
+        accent && "border-[var(--portal-amber)]/30 ring-1 ring-[var(--portal-amber)]/10",
+        className
+      )}
+    >
+      {children}
+    </section>
+  );
+}
+
+function SectionHeading({
+  icon: Icon,
+  title,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+}) {
+  return (
+    <h2 className="flex items-center gap-2 text-sm font-semibold text-[var(--portal-text)]">
+      <Icon className="size-4 text-[var(--portal-amber)]" />
+      {title}
+    </h2>
+  );
 }
 
 export function ContractorPortalClient({
@@ -121,7 +168,10 @@ export function ContractorPortalClient({
     setJobSheet((prev) => ({
       ...prev,
       job_sheet_updates: [optimistic, ...(prev.job_sheet_updates ?? [])],
-      status: prev.status === "viewed" || prev.status === "sent" ? "in_progress" : prev.status,
+      status:
+        prev.status === "viewed" || prev.status === "sent"
+          ? "in_progress"
+          : prev.status,
     }));
 
     startTransition(async () => {
@@ -179,21 +229,22 @@ export function ContractorPortalClient({
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 pb-12">
-      <section className="rounded-2xl border border-[var(--portal-border)] bg-[var(--portal-card)] p-5 shadow-[var(--portal-shadow)]">
+    <div className="mx-auto max-w-2xl space-y-5 px-4 py-8 pb-12">
+      <SectionCard>
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-[var(--portal-muted)]">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--portal-amber)]">
               {property?.name ?? "Property"}
             </p>
-            <p className="mt-1 text-sm text-[var(--portal-muted)]">
-              {property ? formatPropertyAddress(property) : "—"}
-            </p>
-            <h1 className="mt-3 text-xl font-bold text-[var(--portal-text)]">
+            <h1 className="mt-2 text-2xl font-bold tracking-tight text-[var(--portal-text)]">
               {ticket?.title ?? "Maintenance job"}
             </h1>
+            <p className="mt-2 flex items-start gap-1.5 text-sm text-[var(--portal-muted)]">
+              <MapPin className="mt-0.5 size-3.5 shrink-0" />
+              {property ? formatPropertyAddress(property) : "—"}
+            </p>
           </div>
-          <JobSheetStatusBadge status={jobSheet.status} />
+          <JobSheetStatusBadge status={jobSheet.status} className="text-sm" />
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
           {ticket?.priority ? (
@@ -206,21 +257,81 @@ export function ContractorPortalClient({
           ) : null}
         </div>
         {contractor ? (
-          <p className="mt-4 text-sm text-[var(--portal-muted)]">
-            Assigned to{" "}
-            <span className="font-medium text-[var(--portal-text)]">
-              {contractorName}
+          <p className="mt-4 flex items-center gap-1.5 text-sm text-[var(--portal-muted)]">
+            <HardHat className="size-3.5 text-[var(--portal-amber)]" />
+            <span>
+              Assigned to{" "}
+              <span className="font-medium text-[var(--portal-text)]">
+                {contractorName}
+              </span>
+              {contractor.trade ? ` · ${contractor.trade}` : ""}
             </span>
-            {contractor.trade ? ` · ${contractor.trade}` : ""}
           </p>
         ) : null}
-      </section>
+      </SectionCard>
+
+      <SectionCard accent>
+        <SectionHeading icon={MessageSquare} title="Updates for landlord" />
+        <p className="mt-1 text-xs text-[var(--portal-muted)]">
+          Share progress, notes, and next steps here.
+        </p>
+        {sortedUpdates.length > 0 ? (
+          <ul className="mt-4 space-y-2">
+            {sortedUpdates.map((update) => (
+              <li
+                key={update.id}
+                className="rounded-lg border border-[var(--portal-border)] bg-[var(--portal-bg)] px-4 py-3"
+              >
+                <p className="text-sm leading-relaxed text-[var(--portal-text)]">
+                  {update.content}
+                </p>
+                <p className="mt-2 text-xs text-[var(--portal-muted)]">
+                  {formatPropertyDate(update.created_at.slice(0, 10))}
+                </p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-3 text-sm text-[var(--portal-muted)]">
+            No updates yet — add the first one below.
+          </p>
+        )}
+        <div className="mt-4 space-y-2">
+          <Textarea
+            value={updateDraft}
+            onChange={(e) => setUpdateDraft(e.target.value)}
+            placeholder="Add an update for the landlord…"
+            rows={3}
+            className="resize-none border-[var(--portal-border)] bg-[var(--portal-bg)]"
+          />
+          <Button
+            type="button"
+            onClick={handleAddUpdate}
+            disabled={isPending || !updateDraft.trim()}
+            className="min-h-11 w-full bg-[var(--portal-amber)] text-white hover:bg-[var(--portal-amber)]/90"
+          >
+            {isPending ? (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Saving…
+              </>
+            ) : (
+              "Post update"
+            )}
+          </Button>
+        </div>
+      </SectionCard>
+
+      <SectionCard>
+        <SectionHeading icon={ClipboardList} title="Job details" />
+        <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-[var(--portal-muted)]">
+          {ticket?.description?.trim() || "No description provided."}
+        </p>
+      </SectionCard>
 
       {tenantContact ? (
-        <section className="rounded-2xl border border-[var(--portal-border)] bg-[var(--portal-card)] p-5 shadow-[var(--portal-shadow)]">
-          <h2 className="text-sm font-semibold text-[var(--portal-text)]">
-            Tenant contact for access arrangements
-          </h2>
+        <SectionCard>
+          <SectionHeading icon={User} title="Tenant contact" />
           <p className="mt-2 font-medium text-[var(--portal-text)]">
             {tenantName}
           </p>
@@ -248,45 +359,32 @@ export function ContractorPortalClient({
               </p>
             ) : null}
           </div>
-        </section>
+        </SectionCard>
       ) : null}
 
-      <section className="rounded-2xl border border-[var(--portal-border)] bg-[var(--portal-card)] p-5 shadow-[var(--portal-shadow)]">
-        <h2 className="text-sm font-semibold text-[var(--portal-text)]">
-          Job details
-        </h2>
-        <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-[var(--portal-muted)]">
-          {ticket?.description?.trim() || "No description provided."}
-        </p>
-      </section>
-
-      <section className="rounded-2xl border border-[var(--portal-border)] bg-[var(--portal-card)] p-5 shadow-[var(--portal-shadow)]">
-        <Label htmlFor="planned-visit" className="text-sm font-semibold text-[var(--portal-text)]">
-          Planned visit date
-        </Label>
+      <SectionCard>
+        <SectionHeading icon={Calendar} title="Planned visit" />
         <Input
           id="planned-visit"
           type="date"
           value={plannedDate}
           onChange={(e) => handlePlannedDateChange(e.target.value)}
           disabled={isPending}
-          className="mt-2 min-h-11 border-[var(--portal-border)] bg-[var(--portal-bg)]"
+          className="mt-3 min-h-11 border-[var(--portal-border)] bg-[var(--portal-bg)]"
         />
         {jobSheet.planned_visit_date ? (
           <p className="mt-2 text-xs text-[var(--portal-muted)]">
-            Current: {formatPropertyDate(jobSheet.planned_visit_date)}
+            Saved: {formatPropertyDate(jobSheet.planned_visit_date)}
           </p>
         ) : null}
-      </section>
+      </SectionCard>
 
-      <section className="rounded-2xl border border-[var(--portal-border)] bg-[var(--portal-card)] p-5 shadow-[var(--portal-shadow)]">
-        <h2 className="text-sm font-semibold text-[var(--portal-text)]">
-          Request access
-        </h2>
-        <div className="mt-4 space-y-3">
-          <div>
+      <SectionCard>
+        <SectionHeading icon={DoorOpen} title="Request access" />
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div className="sm:col-span-1">
             <Label htmlFor="access-date" className="text-xs text-[var(--portal-muted)]">
-              Date (required)
+              Date
             </Label>
             <Input
               id="access-date"
@@ -296,7 +394,7 @@ export function ContractorPortalClient({
               className="mt-1 min-h-11 border-[var(--portal-border)] bg-[var(--portal-bg)]"
             />
           </div>
-          <div>
+          <div className="sm:col-span-1">
             <Label htmlFor="access-time" className="text-xs text-[var(--portal-muted)]">
               Time (optional)
             </Label>
@@ -308,121 +406,76 @@ export function ContractorPortalClient({
               className="mt-1 min-h-11 border-[var(--portal-border)] bg-[var(--portal-bg)]"
             />
           </div>
-          <div>
+          <div className="sm:col-span-2">
             <Label htmlFor="access-notes" className="text-xs text-[var(--portal-muted)]">
               Notes (optional)
             </Label>
-            <Textarea
+            <Input
               id="access-notes"
               value={accessNotes}
               onChange={(e) => setAccessNotes(e.target.value)}
-              rows={3}
-              className="mt-1 resize-none border-[var(--portal-border)] bg-[var(--portal-bg)]"
+              placeholder="Any details for the tenant"
+              className="mt-1 min-h-11 border-[var(--portal-border)] bg-[var(--portal-bg)]"
             />
           </div>
-          <Button
-            type="button"
-            onClick={handleRequestAccess}
-            disabled={isPending}
-            className="min-h-11 w-full bg-[var(--portal-amber)] text-white hover:bg-[var(--portal-amber)]/90"
-          >
-            {isPending ? "Submitting…" : "Request access"}
-          </Button>
         </div>
+        <Button
+          type="button"
+          onClick={handleRequestAccess}
+          disabled={isPending}
+          className="mt-3 min-h-11 w-full bg-[var(--portal-amber)] text-white hover:bg-[var(--portal-amber)]/90"
+        >
+          {isPending ? "Submitting…" : "Request access"}
+        </Button>
 
         {sortedAccessRequests.length > 0 ? (
-          <ul className="mt-5 divide-y divide-[var(--portal-border)] rounded-xl border border-[var(--portal-border)]">
+          <ol className="relative mt-5 space-y-0 border-l border-[var(--portal-border)] pl-4">
             {sortedAccessRequests.map((request) => (
-              <li
-                key={request.id}
-                className="flex items-center justify-between gap-3 px-3 py-3"
-              >
-                <div className="min-w-0 text-sm">
-                  <p className="font-medium text-[var(--portal-text)]">
-                    {formatPropertyDate(request.requested_date)}
-                    {request.requested_time ? ` · ${request.requested_time}` : ""}
-                  </p>
-                  {request.notes ? (
-                    <p className="mt-1 text-xs text-[var(--portal-muted)]">
-                      {request.notes}
+              <li key={request.id} className="relative pb-4 last:pb-0">
+                <span className="absolute -left-[1.3rem] top-1.5 size-2.5 rounded-full bg-[var(--portal-amber)] ring-4 ring-[var(--portal-card)]" />
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0 text-sm">
+                    <p className="font-medium text-[var(--portal-text)]">
+                      {formatPropertyDate(request.requested_date)}
+                      {request.requested_time
+                        ? ` · ${request.requested_time}`
+                        : ""}
                     </p>
-                  ) : null}
+                    {request.notes ? (
+                      <p className="mt-1 text-xs text-[var(--portal-muted)]">
+                        {request.notes}
+                      </p>
+                    ) : null}
+                    {request.status === "declined" && request.tenant_note ? (
+                      <p className="mt-1 text-xs text-[var(--portal-muted)]">
+                        <span className="font-medium">Tenant note:</span>{" "}
+                        {request.tenant_note}
+                      </p>
+                    ) : null}
+                  </div>
+                  <AccessRequestStatusBadge status={request.status} />
                 </div>
-                <AccessRequestStatusBadge status={request.status} />
               </li>
             ))}
-          </ul>
+          </ol>
         ) : null}
-      </section>
+      </SectionCard>
 
-      <section className="rounded-2xl border border-[var(--portal-border)] bg-[var(--portal-card)] p-5 shadow-[var(--portal-shadow)]">
-        <h2 className="text-sm font-semibold text-[var(--portal-text)]">
-          Updates
-        </h2>
-        {sortedUpdates.length > 0 ? (
-          <ul className="mt-4 space-y-3">
-            {sortedUpdates.map((update) => (
-              <li
-                key={update.id}
-                className="rounded-xl border border-[var(--portal-border)] bg-[var(--portal-bg)] px-4 py-3"
-              >
-                <p className="text-sm text-[var(--portal-text)]">{update.content}</p>
-                <p className="mt-2 text-xs text-[var(--portal-muted)]">
-                  {formatPropertyDate(update.created_at.slice(0, 10))}
-                </p>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-3 text-sm text-[var(--portal-muted)]">
-            No updates yet.
-          </p>
-        )}
-        <div className="mt-4 space-y-2">
-          <Textarea
-            value={updateDraft}
-            onChange={(e) => setUpdateDraft(e.target.value)}
-            placeholder="Add an update for the landlord…"
-            rows={3}
-            className="resize-none border-[var(--portal-border)] bg-[var(--portal-bg)]"
-          />
-          <Button
-            type="button"
-            onClick={handleAddUpdate}
-            disabled={isPending || !updateDraft.trim()}
-            className="min-h-11 bg-[var(--portal-amber)] text-white hover:bg-[var(--portal-amber)]/90"
-          >
-            {isPending ? (
-              <>
-                <Loader2 className="mr-2 size-4 animate-spin" />
-                Saving…
-              </>
-            ) : (
-              "Add update"
-            )}
-          </Button>
-        </div>
-      </section>
-
-      <section className="rounded-2xl border border-dashed border-[var(--portal-border)] bg-[var(--portal-card)] p-5">
-        <h2 className="text-sm font-semibold text-[var(--portal-text)]">
-          Quotes &amp; Documents
-        </h2>
+      <SectionCard className="border-dashed">
+        <SectionHeading icon={Upload} title="Quotes & documents" />
         <p className="mt-2 text-sm text-[var(--portal-muted)]">
           File uploads will be available soon.
         </p>
         <div
           className={cn(
-            "mt-4 flex min-h-28 flex-col items-center justify-center rounded-xl",
+            "mt-4 flex min-h-24 flex-col items-center justify-center rounded-lg",
             "border border-dashed border-[var(--portal-border)] bg-[var(--portal-bg)]/50"
           )}
         >
-          <Upload className="size-8 text-[var(--portal-muted)]" />
-          <p className="mt-2 text-xs text-[var(--portal-muted)]">
-            Upload area (coming soon)
-          </p>
+          <Upload className="size-7 text-[var(--portal-muted)]" />
+          <p className="mt-2 text-xs text-[var(--portal-muted)]">Coming soon</p>
         </div>
-      </section>
+      </SectionCard>
 
       {error ? (
         <p className="text-sm text-[var(--portal-error)]">{error}</p>

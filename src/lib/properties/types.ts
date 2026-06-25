@@ -558,6 +558,7 @@ export type ContractorAccessRequest = {
   notes: string | null;
   status: ContractorAccessRequestStatus;
   tenant_response_at: string | null;
+  tenant_note: string | null;
   created_at: string;
 };
 
@@ -583,7 +584,10 @@ export type JobSheetWithDetails = JobSheet & {
 
 export type ContractorAccessRequestWithDetails = ContractorAccessRequest & {
   job_sheets: {
-    contractors: { name: string } | null;
+    user_id?: string;
+    token?: string;
+    contractors: { name: string } | { name: string }[] | null;
     maintenance_tickets: { title: string } | null;
+    properties?: { name: string } | null;
   } | null;
 };
