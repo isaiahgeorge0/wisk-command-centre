@@ -15,7 +15,9 @@ export function usePortalUnreadCount(tenantId: string, initialCount: number) {
 
   const handleInsert = useCallback((message: TenantMessage) => {
     if (message.sender_type !== "landlord") return;
-    void getPortalUnreadCount().then(setCount);
+    void getPortalUnreadCount()
+      .then(setCount)
+      .catch((err) => console.error("Action failed:", err));
   }, []);
 
   useTenantMessagesRealtime({
@@ -26,7 +28,9 @@ export function usePortalUnreadCount(tenantId: string, initialCount: number) {
 
   useEffect(() => {
     const handler = () => {
-      void getPortalUnreadCount().then(setCount);
+      void getPortalUnreadCount()
+      .then(setCount)
+      .catch((err) => console.error("Action failed:", err));
     };
     window.addEventListener("wisk:portal-messages-read", handler);
     return () => window.removeEventListener("wisk:portal-messages-read", handler);

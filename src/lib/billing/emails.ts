@@ -1,6 +1,7 @@
 import { Resend } from "resend";
 
 import type { WiskPackage } from "@/lib/billing/types";
+import { siteUrl } from "@/lib/url";
 
 // ─── Package display names ─────────────────────────────────────────────────────
 
@@ -46,14 +47,13 @@ const PACKAGE_FEATURES: Record<string, string[]> = {
 
 // ─── Package CTA destinations ─────────────────────────────────────────────────
 
-const PACKAGE_CTA_URLS: Record<string, string> = {
-  "WISK AI": "https://app.wiskapp.com/ai-digest",
-  "WISK AI Pro": "https://app.wiskapp.com/ai-digest",
-  "WISK Properties": "https://app.wiskapp.com/properties",
-};
-
 function getPackageCtaUrl(packageName: string): string {
-  return PACKAGE_CTA_URLS[packageName] ?? "https://app.wiskapp.com";
+  const urls: Record<string, string> = {
+    "WISK AI": siteUrl("/ai-digest"),
+    "WISK AI Pro": siteUrl("/ai-digest"),
+    "WISK Properties": siteUrl("/properties"),
+  };
+  return urls[packageName] ?? siteUrl();
 }
 
 // ─── Date formatting ──────────────────────────────────────────────────────────
@@ -100,7 +100,7 @@ function htmlFooter(): string {
       </div>
       <div style="margin-top:32px;color:#52525b;font-size:12px;text-align:center;">
         WISK &middot; Built by Isaiah George Creative &middot;
-        <a href="https://app.wiskapp.com/upgrade" style="color:#52525b;text-decoration:underline;">Manage subscription</a>
+        <a href="${siteUrl("/upgrade")}" style="color:#52525b;text-decoration:underline;">Manage subscription</a>
       </div>
     </div>
   </body>
@@ -184,7 +184,7 @@ function buildSubscriptionCancelledHtml({
         <p style="color:#fbbf24;font-size:12px;font-weight:600;margin:0 0 4px;text-transform:uppercase;letter-spacing:0.08em;">Access until</p>
         <p style="color:#f4f4f5;font-size:18px;font-weight:700;margin:0;">${dateStr}</p>
       </div>
-      ${ctaButton("https://app.wiskapp.com/upgrade", "Reactivate your plan")}
+      ${ctaButton(siteUrl("/upgrade"), "Reactivate your plan")}
       <p style="color:#71717a;font-size:13px;line-height:1.5;border-top:1px solid rgba(255,255,255,0.07);padding-top:20px;margin:8px 0 0;">Changed your mind? You can reactivate any time before your access expires.</p>
   ${htmlFooter()}`;
 }
@@ -235,8 +235,8 @@ function buildSubscriptionRenewedHtml({
         ${price ? `<p style="color:#a1a1aa;font-size:14px;margin:0 0 8px;">Amount: <span style="color:#f4f4f5;font-weight:600;">${price}</span></p>` : ""}
         <p style="color:#a1a1aa;font-size:14px;margin:0;">Next renewal: <span style="color:#f4f4f5;font-weight:600;">${nextDateStr}</span></p>
       </div>
-      ${ctaButton("https://app.wiskapp.com", "Go to WISK")}
-      <p style="color:#71717a;font-size:13px;line-height:1.5;border-top:1px solid rgba(255,255,255,0.07);padding-top:20px;margin:8px 0 0;">WISK &middot; <a href="https://app.wiskapp.com/upgrade" style="color:#71717a;text-decoration:underline;">Manage subscription</a></p>
+      ${ctaButton(siteUrl(), "Go to WISK")}
+      <p style="color:#71717a;font-size:13px;line-height:1.5;border-top:1px solid rgba(255,255,255,0.07);padding-top:20px;margin:8px 0 0;">WISK &middot; <a href="${siteUrl("/upgrade")}" style="color:#71717a;text-decoration:underline;">Manage subscription</a></p>
   ${htmlFooter()}`;
 }
 

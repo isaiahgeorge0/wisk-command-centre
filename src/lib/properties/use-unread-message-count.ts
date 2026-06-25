@@ -16,13 +16,17 @@ export function useUnreadMessageCount(initialCount: number) {
   useLandlordMessageEvent(
     useCallback((message: TenantMessage) => {
       if (message.sender_type !== "tenant") return;
-      void getTotalUnreadMessageCount().then(setCount);
+      void getTotalUnreadMessageCount()
+        .then(setCount)
+        .catch((err) => console.error("Action failed:", err));
     }, [])
   );
 
   useEffect(() => {
     const handler = () => {
-      void getTotalUnreadMessageCount().then(setCount);
+      void getTotalUnreadMessageCount()
+        .then(setCount)
+        .catch((err) => console.error("Action failed:", err));
     };
     window.addEventListener("wisk:messages-read", handler);
     return () => window.removeEventListener("wisk:messages-read", handler);

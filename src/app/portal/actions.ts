@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import {
-  portalAppUrl,
   sendMaintenanceRequestEmail,
 } from "@/lib/properties/emails";
 import {
@@ -25,6 +24,7 @@ import type {
 } from "@/lib/properties/types";
 import { requireTenantContext } from "@/lib/portal/get-tenant-context";
 import type { PortalTheme } from "@/lib/portal/types";
+import { portalUrl } from "@/lib/url";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -94,7 +94,7 @@ export async function submitPortalMaintenanceRequest(
     `Category: ${parsed.data.category}`,
     `Tenant: ${getTenantFullName(tenant)}`,
     ``,
-    `View ticket: ${portalAppUrl(`/properties/${property.id}?tab=maintenance`)}`,
+    `View ticket: ${portalUrl(`/properties/${property.id}?tab=maintenance`)}`,
   ].join("\n");
 
   const { error: taskError } = await admin.from("tasks").insert({
@@ -144,7 +144,7 @@ export async function submitPortalMaintenanceRequest(
       ),
       winstonAttempted: parsed.data.winstonAttempted ?? false,
       winstonSteps: parsed.data.winstonSteps ?? null,
-      propertyUrl: portalAppUrl(
+      propertyUrl: portalUrl(
         `/properties/${property.id}?tab=maintenance`
       ),
     });
@@ -419,16 +419,26 @@ export async function respondToAccessRequest(
   requestId: string,
   response: "approved" | "declined"
 ): Promise<ActionResult> {
+  const parsed = z
+    .object({
+      requestId: z.string().uuid(),
+      response: z.enum(["approved", "declined"]),
+    })
+    .safeParse({ requestId, response });
+  if (!parsed.success) {
+    return { success: false, error: "Invalid request." };
+  }
+
   const { tenant } = await requireTenantContext();
   const supabase = await createClient();
 
   const { error } = await supabase
     .from("contractor_access_requests")
     .update({
-      status: response,
+      status: parsed.data.response,
       tenant_response_at: new Date().toISOString(),
     })
-    .eq("id", requestId)
+    .eq("id", parsed.data.requestId)
     .eq("tenant_id", tenant.id);
 
   if (error) {
@@ -437,5 +447,7 @@ export async function respondToAccessRequest(
   }
 
   revalidatePath("/portal/maintenance");
+  revalidatePath("/properties/maintenance");
+  revalidatePath("/properties", "layout");
   return { success: true };
 }

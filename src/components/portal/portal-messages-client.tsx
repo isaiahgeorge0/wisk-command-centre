@@ -55,7 +55,9 @@ export function PortalMessagesClient({
   });
 
   const refreshLandlordLastSeen = useCallback(() => {
-    void getLandlordLastSeen().then(setLandlordLastSeenAt);
+    void getLandlordLastSeen()
+      .then(setLandlordLastSeenAt)
+      .catch((err) => console.error("Action failed:", err));
   }, []);
 
   const markRead = useCallback(async () => {

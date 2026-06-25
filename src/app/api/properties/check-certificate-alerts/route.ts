@@ -5,12 +5,12 @@ import {
   getInsuranceTypeDisplayName,
 } from "@/lib/properties/display-names";
 import {
-  portalAppUrl,
   sendCertificateAlertEmail,
   sendInsuranceAlertEmail,
   sendMortgageAlertEmail,
   sendRentReminderEmail,
 } from "@/lib/properties/emails";
+import { portalUrl } from "@/lib/url";
 import { daysUntilDate, formatPropertyAddress } from "@/lib/properties/format";
 import type {
   CertificateAlertType,
@@ -279,7 +279,7 @@ export async function POST(request: Request) {
             fixedRateEndDate: mortgage.fixed_rate_end_date as string,
             daysUntil: days,
             alertType: threshold.type,
-            propertyUrl: portalAppUrl(
+            propertyUrl: portalUrl(
               `/properties/${mortgage.property_id}?tab=finances`
             ),
           });
@@ -357,7 +357,7 @@ export async function POST(request: Request) {
             renewalDate: insurance.renewal_date as string,
             daysUntil: days,
             alertType: threshold.type,
-            propertyUrl: portalAppUrl(
+            propertyUrl: portalUrl(
               `/properties/${insurance.property_id}?tab=finances`
             ),
           });
@@ -494,7 +494,7 @@ export async function POST(request: Request) {
         rentAmount: tenant.rent_amount as number,
         dueDate,
         daysOverdue,
-        propertyUrl: portalAppUrl(
+        propertyUrl: portalUrl(
           `/properties/${tenant.property_id}?tab=finances`
         ),
       });

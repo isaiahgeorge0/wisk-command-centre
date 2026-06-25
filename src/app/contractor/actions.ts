@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { formatPropertyDate } from "@/lib/properties/format";
@@ -10,18 +11,21 @@ import type {
   JobSheetWithDetails,
 } from "@/lib/properties/types";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { portalUrl } from "@/lib/url";
 
-function siteUrl(path: string): string {
-  const base =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
-    "https://app.wiskapp.com";
-  return `${base}${path.startsWith("/") ? path : `/${path}`}`;
+const jobSheetTokenSchema = z.string().min(64).max(64);
+
+function revalidateLandlordJobSheetViews(propertyId: string) {
+  revalidatePath(`/properties/${propertyId}`);
+  revalidatePath("/properties/maintenance");
 }
 
 export async function getJobSheetByToken(
   token: string
 ): Promise<JobSheetWithDetails | null> {
+  const tokenParsed = jobSheetTokenSchema.safeParse(token);
+  if (!tokenParsed.success) return null;
+
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("job_sheets")
@@ -35,7 +39,7 @@ export async function getJobSheetByToken(
       contractor_access_requests(*)
     `
     )
-    .eq("token", token)
+    .eq("token", tokenParsed.data)
     .single();
 
   if (error || !data) return null;
@@ -44,7 +48,7 @@ export async function getJobSheetByToken(
     await admin
       .from("job_sheets")
       .update({ status: "viewed" })
-      .eq("token", token);
+      .eq("token", tokenParsed.data);
     data.status = "viewed";
   }
 
@@ -61,11 +65,14 @@ export async function getJobSheetByToken(
 export async function getTenantContactForJobSheet(
   token: string
 ): Promise<{ name: string; email: string | null; phone: string | null } | null> {
+  const tokenParsed = jobSheetTokenSchema.safeParse(token);
+  if (!tokenParsed.success) return null;
+
   const admin = createAdminClient();
   const { data: jobSheet } = await admin
     .from("job_sheets")
     .select("property_id")
-    .eq("token", token)
+    .eq("token", tokenParsed.data)
     .single();
 
   if (!jobSheet) return null;
@@ -90,10 +97,12 @@ export async function addJobSheetUpdate(
   token: string,
   content: string
 ): Promise<ActionResult<JobSheetUpdate>> {
-  const schema = z.object({
-    content: z.string().trim().min(1).max(2000),
-  });
-  const parsed = schema.safeParse({ content });
+  const parsed = z
+    .object({
+      token: jobSheetTokenSchema,
+      content: z.string().trim().min(1).max(2000),
+    })
+    .safeParse({ token, content });
   if (!parsed.success) {
     return { success: false, error: "Update cannot be empty." };
   }
@@ -101,8 +110,8 @@ export async function addJobSheetUpdate(
   const admin = createAdminClient();
   const { data: jobSheet } = await admin
     .from("job_sheets")
-    .select("id")
-    .eq("token", token)
+    .select("id, property_id")
+    .eq("token", parsed.data.token)
     .single();
 
   if (!jobSheet) return { success: false, error: "Job sheet not found." };
@@ -125,8 +134,10 @@ export async function addJobSheetUpdate(
   await admin
     .from("job_sheets")
     .update({ status: "in_progress" })
-    .eq("token", token)
+    .eq("token", parsed.data.token)
     .in("status", ["viewed", "sent"]);
+
+  revalidateLandlordJobSheetViews(jobSheet.property_id);
 
   return { success: true, data: data as JobSheetUpdate };
 }
@@ -135,20 +146,35 @@ export async function setPlannedVisitDate(
   token: string,
   date: string
 ): Promise<ActionResult> {
-  const schema = z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) });
-  const parsed = schema.safeParse({ date });
+  const parsed = z
+    .object({
+      token: jobSheetTokenSchema,
+      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    })
+    .safeParse({ token, date });
   if (!parsed.success) return { success: false, error: "Invalid date." };
 
   const admin = createAdminClient();
+  const { data: jobSheet } = await admin
+    .from("job_sheets")
+    .select("property_id")
+    .eq("token", parsed.data.token)
+    .single();
+
+  if (!jobSheet) return { success: false, error: "Job sheet not found." };
+
   const { error } = await admin
     .from("job_sheets")
     .update({ planned_visit_date: parsed.data.date })
-    .eq("token", token);
+    .eq("token", parsed.data.token);
 
   if (error) {
     console.error("setPlannedVisitDate:", error);
     return { success: false, error: "Could not save date." };
   }
+
+  revalidateLandlordJobSheetViews(jobSheet.property_id);
+
   return { success: true };
 }
 
@@ -158,12 +184,24 @@ export async function requestTenantAccess(
   requestedTime: string | null,
   notes: string | null
 ): Promise<ActionResult<ContractorAccessRequest>> {
+  const parsed = z
+    .object({
+      token: jobSheetTokenSchema,
+      requestedDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      requestedTime: z.string().optional().nullable(),
+      notes: z.string().max(2000).optional().nullable(),
+    })
+    .safeParse({ token, requestedDate, requestedTime, notes });
+  if (!parsed.success) {
+    return { success: false, error: "Invalid access request." };
+  }
+
   const admin = createAdminClient();
 
   const { data: jobSheet } = await admin
     .from("job_sheets")
     .select("id, property_id")
-    .eq("token", token)
+    .eq("token", parsed.data.token)
     .single();
 
   if (!jobSheet) return { success: false, error: "Job sheet not found." };
@@ -183,9 +221,9 @@ export async function requestTenantAccess(
       job_sheet_id: jobSheet.id,
       property_id: jobSheet.property_id,
       tenant_id: tenant.id,
-      requested_date: requestedDate,
-      requested_time: requestedTime,
-      notes,
+      requested_date: parsed.data.requestedDate,
+      requested_time: parsed.data.requestedTime ?? null,
+      notes: parsed.data.notes ?? null,
       status: "pending",
     })
     .select()
@@ -224,12 +262,15 @@ export async function requestTenantAccess(
               title: string;
             } | null
           )?.title ?? "Maintenance job",
-        requestedDate: formatPropertyDate(requestedDate),
-        requestedTime,
-        portalUrl: siteUrl("/portal/maintenance"),
+        requestedDate: formatPropertyDate(parsed.data.requestedDate),
+        requestedTime: parsed.data.requestedTime ?? null,
+        portalUrl: portalUrl("/portal/maintenance"),
       });
     }
   }
+
+  revalidatePath("/portal/maintenance");
+  revalidateLandlordJobSheetViews(jobSheet.property_id);
 
   return { success: true, data: data as ContractorAccessRequest };
 }

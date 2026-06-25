@@ -112,7 +112,9 @@ export function CommunicationPageClient({
     setConversations((prev) => {
       const exists = prev.some((c) => c.tenant_id === message.tenant_id);
       if (!exists && message.sender_type === "tenant") {
-        void getConversations().then(setConversations);
+        void getConversations()
+          .then(setConversations)
+          .catch((err) => console.error("Action failed:", err));
         return prev;
       }
       let updated = upsertConversation(

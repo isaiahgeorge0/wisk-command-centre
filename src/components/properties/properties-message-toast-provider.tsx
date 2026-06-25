@@ -33,11 +33,13 @@ export function PropertiesMessageToastProvider({ children }: Props) {
   }, [tenantNames]);
 
   useEffect(() => {
-    void getConversations().then((convs) => {
-      const map: Record<string, string> = {};
-      for (const c of convs) map[c.tenant_id] = c.tenant_name;
-      setTenantNames(map);
-    });
+    void getConversations()
+      .then((convs) => {
+        const map: Record<string, string> = {};
+        for (const c of convs) map[c.tenant_id] = c.tenant_name;
+        setTenantNames(map);
+      })
+      .catch((err) => console.error("Action failed:", err));
   }, []);
 
   useEffect(() => {

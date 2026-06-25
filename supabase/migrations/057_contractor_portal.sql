@@ -1,5 +1,5 @@
 -- Contractor portal: address book, job sheets, access requests
-
+create extension if not exists pgcrypto;
 create or replace function public.handle_updated_at()
 returns trigger
 language plpgsql

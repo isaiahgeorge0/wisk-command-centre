@@ -5,6 +5,7 @@ import type {
   InsuranceAlertType,
   MortgageAlertType,
 } from "@/lib/properties/types";
+import { portalUrl } from "@/lib/url";
 
 function getResend(): { resend: Resend; from: string } | null {
   const apiKey = process.env.RESEND_API_KEY;
@@ -81,7 +82,7 @@ function buildCertificateAlertHtml({
       : `The ${certificateType} certificate for <strong style="color:#f4f4f5;">${propertyName}</strong> expires on ${formattedExpiry} — that's ${daysUntilExpiry} day${daysUntilExpiry === 1 ? "" : "s"} away. A timely renewal will keep everything on track.`;
 
   const ctaLabel = isExpired ? "Renew certificate" : "View certificates";
-  const ctaUrl = portalAppUrl(`/properties/${propertyId}?tab=certificates`);
+  const ctaUrl = portalUrl(`/properties/${propertyId}?tab=certificates`);
 
   const html = `<!DOCTYPE html>
 <html>
@@ -155,10 +156,6 @@ export async function sendCertificateAlertEmail({
   return true;
 }
 
-function portalAppUrl(path: string): string {
-  const base = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "https://app.wiskapp.com";
-  return `${base}${path.startsWith("/") ? path : `/${path}`}`;
-}
 
 function buildMortgageAlertHtml({
   displayName,
@@ -490,8 +487,6 @@ export async function sendMaintenanceRequestEmail({
 
   return true;
 }
-
-export { portalAppUrl };
 
 function formatRentDueDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-GB", {

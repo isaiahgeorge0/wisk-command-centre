@@ -15,8 +15,6 @@ import type {
 
 const TERMINAL_LEAD_STATUSES = new Set(["won", "lost"]);
 const TERMINAL_PROJECT_STATUSES = new Set(["completed", "archived"]);
-const TERMINAL_GOAL_STATUSES = new Set(["completed", "archived"]);
-
 const PRIORITY_RANK: Record<SuggestionPriority, number> = {
   high: 0,
   medium: 1,

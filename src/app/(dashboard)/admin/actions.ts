@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 import type {
   AccessRequest,
@@ -32,6 +33,29 @@ import { getAuthContext } from "@/lib/auth/get-auth-context";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { siteUrl } from "@/lib/url";
+
+const uuidParamSchema = z.string().uuid();
+
+const approveRequestSchema = z.object({
+  id: uuidParamSchema,
+  email: z.string().email(),
+  name: z.string().trim().min(1),
+  welcomeMessage: z.string().optional(),
+});
+
+const createAnnouncementSchema = z.object({
+  title: z.string().trim().min(1),
+  message: z.string().trim().min(1),
+  expiresAt: z.string().optional().nullable(),
+});
+
+const createChangelogEntrySchema = z.object({
+  title: z.string().trim().min(1),
+  description: z.string().trim().min(1),
+  type: z.enum(["feature", "improvement", "fix"]),
+  publishedAt: z.string().optional(),
+});
 
 function startOfWeekUtc(): string {
   const now = new Date();
@@ -160,13 +184,18 @@ export async function updateAccessRequestNotes(
   id: string,
   notes: string
 ): Promise<ActionResult> {
+  const idParsed = uuidParamSchema.safeParse(id);
+  if (!idParsed.success) {
+    return { success: false, error: "Invalid request id." };
+  }
+
   await requireAdmin();
   const supabase = createAdminClient();
 
   const { error } = await supabase
     .from("access_requests")
     .update({ notes: notes.trim() || null })
-    .eq("id", id);
+    .eq("id", idParsed.data);
 
   if (error) {
     console.error("updateAccessRequestNotes:", error);
@@ -183,16 +212,26 @@ export async function approveRequest(
   name: string,
   welcomeMessage?: string
 ): Promise<ActionResult> {
+  const parsed = approveRequestSchema.safeParse({
+    id,
+    email,
+    name,
+    welcomeMessage,
+  });
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input.",
+    };
+  }
+
   await requireAdmin();
   const supabase = createAdminClient();
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "http://localhost:3000";
 
   const { error: updateError } = await supabase
     .from("access_requests")
     .update({ status: "approved" })
-    .eq("id", id);
+    .eq("id", parsed.data.id);
 
   if (updateError) {
     console.error("approveRequest update:", updateError);
@@ -200,19 +239,22 @@ export async function approveRequest(
   }
 
   try {
-    await sendApprovalNotification({ name, email });
+    await sendApprovalNotification({
+      name: parsed.data.name,
+      email: parsed.data.email,
+    });
   } catch (error) {
     console.error("approveRequest approval notification:", error);
   }
 
   const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
-    email.trim().toLowerCase(),
+    parsed.data.email.trim().toLowerCase(),
     {
       data: {
-        name: name.trim(),
-        welcome_message: welcomeMessage?.trim() || undefined,
+        name: parsed.data.name.trim(),
+        welcome_message: parsed.data.welcomeMessage?.trim() || undefined,
       },
-      redirectTo: `${siteUrl}/auth/callback`,
+      redirectTo: siteUrl("/auth/callback"),
     }
   );
 
@@ -232,13 +274,18 @@ export async function approveRequest(
 }
 
 export async function declineRequest(id: string): Promise<ActionResult> {
+  const idParsed = uuidParamSchema.safeParse(id);
+  if (!idParsed.success) {
+    return { success: false, error: "Invalid request id." };
+  }
+
   await requireAdmin();
   const supabase = createAdminClient();
 
   const { error } = await supabase
     .from("access_requests")
     .update({ status: "declined" })
-    .eq("id", id);
+    .eq("id", idParsed.data);
 
   if (error) {
     console.error("declineRequest:", error);
@@ -356,25 +403,30 @@ export async function createAnnouncement(
   message: string,
   expiresAt?: string | null
 ): Promise<ActionResult> {
+  const parsed = createAnnouncementSchema.safeParse({
+    title,
+    message,
+    expiresAt,
+  });
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input.",
+    };
+  }
+
   const admin = await requireAdmin();
   const supabase = createAdminClient();
 
-  const trimmedTitle = title.trim();
-  const trimmedMessage = message.trim();
-
-  if (!trimmedTitle || !trimmedMessage) {
-    return { success: false, error: "Title and message are required." };
-  }
-
-  const expiresValue = expiresAt?.trim();
+  const expiresValue = parsed.data.expiresAt?.trim();
   let parsedExpiresAt: string | null = null;
   if (expiresValue) {
     parsedExpiresAt = new Date(`${expiresValue}T23:59:59.999Z`).toISOString();
   }
 
   const { error } = await supabase.from("announcements").insert({
-    title: trimmedTitle,
-    message: trimmedMessage,
+    title: parsed.data.title,
+    message: parsed.data.message,
     expires_at: parsedExpiresAt,
     created_by: admin.id,
   });
@@ -389,10 +441,18 @@ export async function createAnnouncement(
 }
 
 export async function deleteAnnouncement(id: string): Promise<ActionResult> {
+  const idParsed = uuidParamSchema.safeParse(id);
+  if (!idParsed.success) {
+    return { success: false, error: "Invalid announcement id." };
+  }
+
   await requireAdmin();
   const supabase = createAdminClient();
 
-  const { error } = await supabase.from("announcements").delete().eq("id", id);
+  const { error } = await supabase
+    .from("announcements")
+    .delete()
+    .eq("id", idParsed.data);
 
   if (error) {
     console.error("deleteAnnouncement:", error);
@@ -711,6 +771,11 @@ export async function getUsersWithHealth(): Promise<AdminUserHealth[]> {
 }
 
 export async function toggleAIAccess(userId: string): Promise<ActionResult> {
+  const idParsed = uuidParamSchema.safeParse(userId);
+  if (!idParsed.success) {
+    return { success: false, error: "Invalid user id." };
+  }
+
   await requireAdmin();
   const supabase = createAdminClient();
 
@@ -718,7 +783,7 @@ export async function toggleAIAccess(userId: string): Promise<ActionResult> {
   const { data: prefs } = await supabase
     .from("user_preferences")
     .select("ai_access")
-    .eq("user_id", userId)
+    .eq("user_id", idParsed.data)
     .maybeSingle();
 
   const current = prefs?.ai_access ?? false;
@@ -727,7 +792,7 @@ export async function toggleAIAccess(userId: string): Promise<ActionResult> {
     // No preferences row yet — insert with the toggled value
     const { error } = await supabase
       .from("user_preferences")
-      .insert({ user_id: userId, ai_access: !current });
+      .insert({ user_id: idParsed.data, ai_access: !current });
 
     if (error) {
       console.error("toggleAIAccess insert:", error);
@@ -737,7 +802,7 @@ export async function toggleAIAccess(userId: string): Promise<ActionResult> {
     const { error } = await supabase
       .from("user_preferences")
       .update({ ai_access: !current, updated_at: new Date().toISOString() })
-      .eq("user_id", userId);
+      .eq("user_id", idParsed.data);
 
     if (error) {
       console.error("toggleAIAccess update:", error);
@@ -750,11 +815,13 @@ export async function toggleAIAccess(userId: string): Promise<ActionResult> {
 }
 
 export async function generateUserDigest(userId: string): Promise<ActionResult> {
+  const idParsed = uuidParamSchema.safeParse(userId);
+  if (!idParsed.success) {
+    return { success: false, error: "Invalid user id." };
+  }
+
   await requireAdmin();
 
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "http://localhost:3000";
   const secret = process.env.AI_DIGEST_SECRET;
 
   if (!secret) {
@@ -762,15 +829,13 @@ export async function generateUserDigest(userId: string): Promise<ActionResult> 
   }
 
   try {
-    const res = await fetch(
-      `${siteUrl}/api/ai-digest/generate-for-user`,
-      {
+    const res = await fetch(siteUrl("/api/ai-digest/generate-for-user"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${secret}`,
         },
-        body: JSON.stringify({ userId }),
+        body: JSON.stringify({ userId: idParsed.data }),
       }
     );
 
@@ -801,12 +866,14 @@ function logDeleteUserFailure(step: string, error: unknown): ActionResult {
 }
 
 export async function deleteUser(userId: string): Promise<ActionResult> {
-  await requireAdmin();
-
-  const trimmedUserId = userId.trim();
-  if (!trimmedUserId) {
+  const idParsed = uuidParamSchema.safeParse(userId);
+  if (!idParsed.success) {
     return { success: false, error: DELETE_USER_ERROR };
   }
+
+  await requireAdmin();
+
+  const trimmedUserId = idParsed.data;
 
   const supabase = createAdminClient();
 
@@ -966,23 +1033,29 @@ export async function createUserManually(
   name: string,
   email: string
 ): Promise<ActionResult> {
-  await requireAdmin();
-  const supabase = createAdminClient();
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "http://localhost:3000";
-
-  const trimmedName = name.trim();
-  const trimmedEmail = email.trim().toLowerCase();
-
-  if (!trimmedName || !trimmedEmail) {
-    return { success: false, error: "Name and email are required." };
+  const parsed = z
+    .object({
+      name: z.string().trim().min(1),
+      email: z.string().email(),
+    })
+    .safeParse({ name, email });
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input.",
+    };
   }
 
-  const { error } = await supabase.auth.admin.inviteUserByEmail(trimmedEmail, {
-    data: { name: trimmedName },
-    redirectTo: `${siteUrl}/auth/callback`,
-  });
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  const { error } = await supabase.auth.admin.inviteUserByEmail(
+    parsed.data.email.trim().toLowerCase(),
+    {
+      data: { name: parsed.data.name.trim() },
+      redirectTo: siteUrl("/auth/callback"),
+    }
+  );
 
   if (error) {
     console.error("createUserManually:", error);
@@ -994,6 +1067,11 @@ export async function createUserManually(
 }
 
 export async function resetUserOnboarding(userId: string): Promise<ActionResult> {
+  const idParsed = uuidParamSchema.safeParse(userId);
+  if (!idParsed.success) {
+    return { success: false, error: "Invalid user id." };
+  }
+
   await requireAdmin();
   const supabase = createAdminClient();
 
@@ -1003,7 +1081,7 @@ export async function resetUserOnboarding(userId: string): Promise<ActionResult>
       onboarding_completed: false,
       updated_at: new Date().toISOString(),
     })
-    .eq("user_id", userId);
+    .eq("user_id", idParsed.data);
 
   if (error) {
     console.error("resetUserOnboarding:", error);
@@ -1017,6 +1095,11 @@ export async function resetUserOnboarding(userId: string): Promise<ActionResult>
 export async function resetUserPersonalisation(
   userId: string
 ): Promise<ActionResult> {
+  const idParsed = uuidParamSchema.safeParse(userId);
+  if (!idParsed.success) {
+    return { success: false, error: "Invalid user id." };
+  }
+
   await requireAdmin();
   const supabase = createAdminClient();
 
@@ -1026,7 +1109,7 @@ export async function resetUserPersonalisation(
       personalisation_completed: false,
       updated_at: new Date().toISOString(),
     })
-    .eq("user_id", userId);
+    .eq("user_id", idParsed.data);
 
   if (error) {
     console.error("resetUserPersonalisation:", error);
@@ -1061,25 +1144,31 @@ export async function createChangelogEntry(input: {
   type: ChangelogType;
   publishedAt: string;
 }): Promise<ActionResult> {
+  const parsed = createChangelogEntrySchema.safeParse({
+    title: input.title,
+    description: input.description,
+    type: input.type,
+    publishedAt: input.publishedAt,
+  });
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input.",
+    };
+  }
+
   const admin = await requireAdmin();
   const supabase = createAdminClient();
 
-  const title = input.title.trim();
-  const description = input.description.trim();
-
-  if (!title || !description) {
-    return { success: false, error: "Title and description are required." };
-  }
-
-  const publishedAt = input.publishedAt.trim();
+  const publishedAt = parsed.data.publishedAt?.trim() ?? "";
   const parsedPublishedAt = publishedAt
     ? new Date(`${publishedAt}T12:00:00.000Z`).toISOString()
     : new Date().toISOString();
 
   const { error } = await supabase.from("changelog_entries").insert({
-    title,
-    description,
-    type: input.type,
+    title: parsed.data.title,
+    description: parsed.data.description,
+    type: parsed.data.type,
     published_at: parsedPublishedAt,
     created_by: admin.id,
   });
@@ -1095,13 +1184,18 @@ export async function createChangelogEntry(input: {
 }
 
 export async function deleteChangelogEntry(id: string): Promise<ActionResult> {
+  const idParsed = uuidParamSchema.safeParse(id);
+  if (!idParsed.success) {
+    return { success: false, error: "Invalid changelog entry id." };
+  }
+
   await requireAdmin();
   const supabase = createAdminClient();
 
   const { error } = await supabase
     .from("changelog_entries")
     .delete()
-    .eq("id", id);
+    .eq("id", idParsed.data);
 
   if (error) {
     console.error("deleteChangelogEntry:", error);

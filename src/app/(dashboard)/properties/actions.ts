@@ -8,11 +8,11 @@ import { isAdminEmail } from "@/lib/auth/is-admin";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { logUsage } from "@/lib/ai/usage-logger";
 import {
-  portalAppUrl,
   sendTenantPortalInviteEmail,
 } from "@/lib/properties/emails";
 import { formatPropertyAddress } from "@/lib/properties/format";
 import { getTenantFullName } from "@/lib/properties/tenant-form";
+import { portalUrl, contractorUrl } from "@/lib/url";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   buildFinancialSummary,
@@ -284,12 +284,17 @@ export async function updateProperty(
 }
 
 export async function deleteProperty(id: string): Promise<ActionResult> {
+  const idParsed = z.string().uuid().safeParse(id);
+  if (!idParsed.success) {
+    return { success: false, error: "Invalid property id." };
+  }
+
   const { supabase, userId } = await getScopedSupabase();
 
   const { error } = await supabase
     .from("properties")
     .delete()
-    .eq("id", id)
+    .eq("id", idParsed.data)
     .eq("user_id", userId);
 
   if (error) {
@@ -441,17 +446,22 @@ export async function updateTenant(
 }
 
 export async function deleteTenant(id: string): Promise<ActionResult> {
+  const idParsed = z.string().uuid().safeParse(id);
+  if (!idParsed.success) {
+    return { success: false, error: "Invalid tenant id." };
+  }
+
   const { supabase, userId } = await getScopedSupabase();
   const { data: existing } = await supabase
     .from("tenants")
     .select("property_id")
-    .eq("id", id)
+    .eq("id", idParsed.data)
     .eq("user_id", userId)
     .maybeSingle();
   const { error } = await supabase
     .from("tenants")
     .delete()
-    .eq("id", id)
+    .eq("id", idParsed.data)
     .eq("user_id", userId);
   if (error) {
     console.error("deleteTenant:", error);
@@ -808,17 +818,22 @@ export async function updateMaintenanceTicket(
 }
 
 export async function deleteMaintenanceTicket(id: string): Promise<ActionResult> {
+  const idParsed = z.string().uuid().safeParse(id);
+  if (!idParsed.success) {
+    return { success: false, error: "Invalid ticket id." };
+  }
+
   const { supabase, userId } = await getScopedSupabase();
   const { data: existing } = await supabase
     .from("maintenance_tickets")
     .select("property_id")
-    .eq("id", id)
+    .eq("id", idParsed.data)
     .eq("user_id", userId)
     .maybeSingle();
   const { error } = await supabase
     .from("maintenance_tickets")
     .delete()
-    .eq("id", id)
+    .eq("id", idParsed.data)
     .eq("user_id", userId);
   if (error) {
     console.error("deleteMaintenanceTicket:", error);
@@ -1893,7 +1908,7 @@ export async function inviteTenantToPortal(
     ? formatPropertyAddress(property)
     : "your property";
 
-  const setupUrl = portalAppUrl(`/portal/setup?token=${token}`);
+  const setupUrl = portalUrl(`/portal/setup?token=${token}`);
 
   const sent = await sendTenantPortalInviteEmail({
     to: tenant.email.trim(),
@@ -2579,11 +2594,16 @@ export async function updateContractor(
 }
 
 export async function deleteContractor(id: string): Promise<ActionResult> {
+  const idParsed = z.string().uuid().safeParse(id);
+  if (!idParsed.success) {
+    return { success: false, error: "Invalid contractor id." };
+  }
+
   const { supabase, userId } = await getScopedSupabase();
   const { error } = await supabase
     .from("contractors")
     .delete()
-    .eq("id", id)
+    .eq("id", idParsed.data)
     .eq("user_id", userId);
   if (error) {
     console.error("deleteContractor:", error);
@@ -2600,14 +2620,25 @@ export async function createJobSheet(
   propertyId: string,
   contractorId: string
 ): Promise<ActionResult<JobSheet>> {
+  const parsed = z
+    .object({
+      ticketId: z.string().uuid(),
+      propertyId: z.string().uuid(),
+      contractorId: z.string().uuid(),
+    })
+    .safeParse({ ticketId, propertyId, contractorId });
+  if (!parsed.success) {
+    return { success: false, error: "Invalid job sheet input." };
+  }
+
   const { supabase, userId } = await getScopedSupabase();
   const { data, error } = await supabase
     .from("job_sheets")
     .insert({
       user_id: userId,
-      property_id: propertyId,
-      ticket_id: ticketId,
-      contractor_id: contractorId,
+      property_id: parsed.data.propertyId,
+      ticket_id: parsed.data.ticketId,
+      contractor_id: parsed.data.contractorId,
       status: "sent",
     })
     .select()
@@ -2616,7 +2647,7 @@ export async function createJobSheet(
     console.error("createJobSheet:", error);
     return { success: false, error: "Could not create job sheet." };
   }
-  revalidatePath(`/properties/${propertyId}`);
+  revalidatePath(`/properties/${parsed.data.propertyId}`);
   revalidatePath("/properties/maintenance");
   return { success: true, data: data as JobSheet };
 }
@@ -2647,17 +2678,14 @@ export async function getJobSheetsForTicket(
   return (data ?? []) as JobSheetWithDetails[];
 }
 
-function contractorPortalUrl(token: string): string {
-  const base =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
-    "https://app.wiskapp.com";
-  return `${base}/contractor/${token}`;
-}
-
 export async function sendJobSheetEmail(
   jobSheetId: string
 ): Promise<ActionResult> {
+  const idParsed = z.string().uuid().safeParse(jobSheetId);
+  if (!idParsed.success) {
+    return { success: false, error: "Invalid job sheet id." };
+  }
+
   const { supabase, userId } = await getScopedSupabase();
   const { data: jobSheet, error } = await supabase
     .from("job_sheets")
@@ -2669,7 +2697,7 @@ export async function sendJobSheetEmail(
       properties(name, address_line1, address_line2, city, postcode)
     `
     )
-    .eq("id", jobSheetId)
+    .eq("id", idParsed.data)
     .eq("user_id", userId)
     .single();
 
@@ -2693,7 +2721,7 @@ export async function sendJobSheetEmail(
     contractorName: contractor.name,
     jobTitle: ticket?.title ?? "Maintenance job",
     propertyAddress: property ? formatPropertyAddress(property) : "Property",
-    jobSheetUrl: contractorPortalUrl(jobSheet.token),
+    jobSheetUrl: contractorUrl(jobSheet.token),
   });
 
   if (!sent) {

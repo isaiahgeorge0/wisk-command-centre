@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
+import { siteUrl } from "@/lib/url";
 import * as Sentry from "@sentry/nextjs";
 import Stripe from "stripe";
 
@@ -438,29 +439,28 @@ export async function POST(request: Request) {
 
                 if (userInfo && pkg) {
                   // Generate a Stripe customer portal URL for the payment update CTA.
-                  const siteUrl =
-                    process.env.NEXT_PUBLIC_SITE_URL ?? "https://app.wiskapp.com";
-                  let portalUrl = `${siteUrl}/upgrade`;
-
-                  try {
-                    const portalSession =
-                      await stripe.billingPortal.sessions.create({
-                        customer: customerId,
-                        return_url: `${siteUrl}/upgrade`,
-                      });
-                    portalUrl = portalSession.url;
-                  } catch (portalErr) {
-                    console.error(
-                      "stripe webhook: failed to create portal session for payment failed email:",
-                      portalErr
-                    );
-                  }
+                  const billingPortalUrl = await (async () => {
+                    try {
+                      const portalSession =
+                        await stripe.billingPortal.sessions.create({
+                          customer: customerId,
+                          return_url: siteUrl("/upgrade"),
+                        });
+                      return portalSession.url;
+                    } catch (portalErr) {
+                      console.error(
+                        "stripe webhook: failed to create portal session for payment failed email:",
+                        portalErr
+                      );
+                      return siteUrl("/upgrade");
+                    }
+                  })();
 
                   await sendPaymentFailedEmail({
                     to: userInfo.email,
                     displayName: userInfo.displayName,
                     packageName: getPackageDisplayName(pkg),
-                    portalUrl,
+                    portalUrl: billingPortalUrl,
                   });
                 }
               }

@@ -21,6 +21,7 @@ import {
 import { formatPropertyDate } from "@/lib/properties/format";
 import { formatContractorDisplayName } from "@/lib/properties/contractor-display";
 import type { Contractor, JobSheetWithDetails } from "@/lib/properties/types";
+import { contractorUrl } from "@/lib/url";
 import { cn } from "@/lib/utils";
 
 type MaintenanceJobSheetSectionProps = {
@@ -28,13 +29,6 @@ type MaintenanceJobSheetSectionProps = {
   propertyId: string;
   contractors: Contractor[];
 };
-
-function contractorPortalUrl(token: string): string {
-  if (typeof window !== "undefined") {
-    return `${window.location.origin}/contractor/${token}`;
-  }
-  return `/contractor/${token}`;
-}
 
 function resolveContractor(
   contractors: JobSheetWithDetails["contractors"]
@@ -58,12 +52,14 @@ export function MaintenanceJobSheetSection({
 
   useEffect(() => {
     let cancelled = false;
-    void getJobSheetsForTicket(ticketId).then((sheets) => {
-      if (!cancelled) {
-        setJobSheets(sheets);
-        setLoaded(true);
-      }
-    });
+    void getJobSheetsForTicket(ticketId)
+      .then((sheets) => {
+        if (!cancelled) {
+          setJobSheets(sheets);
+          setLoaded(true);
+        }
+      })
+      .catch((err) => console.error("Action failed:", err));
     return () => {
       cancelled = true;
     };
@@ -184,7 +180,7 @@ export function MaintenanceJobSheetSection({
   }
 
   const updateCount = activeSheet.job_sheet_updates?.length ?? 0;
-  const contractorLink = contractorPortalUrl(activeSheet.token);
+  const contractorLink = contractorUrl(activeSheet.token);
 
   return (
     <div className="space-y-3 rounded-lg border border-border/50 bg-muted/20 p-4">
