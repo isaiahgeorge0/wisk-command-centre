@@ -191,6 +191,11 @@ export type MaintenanceTicketWithJobSheet = MaintenanceTicket & {
   }>;
 };
 
+export type MaintenanceTicketWithPropertyAndJobSheet =
+  MaintenanceTicketWithJobSheet & {
+    property_name: string;
+  };
+
 export type RentPaymentStatus =
   | "pending"
   | "paid"

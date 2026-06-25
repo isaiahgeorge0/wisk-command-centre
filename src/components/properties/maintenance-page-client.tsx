@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Plus, Wrench } from "lucide-react";
+import { ChevronDown, HardHat, Plus, Wrench } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
@@ -23,6 +23,7 @@ import {
   MAINTENANCE_STATUSES,
   PROPERTIES_ACCENT,
 } from "@/lib/properties/constants";
+import { formatContractorDisplayName } from "@/lib/properties/contractor-display";
 import {
   getMaintenanceCategoryDisplayName,
   getMaintenancePriorityDisplayName,
@@ -33,13 +34,13 @@ import { buildMaintenancePortfolioStats } from "@/lib/properties/selectors";
 import type {
   MaintenancePriority,
   MaintenanceStatus,
-  MaintenanceTicketWithProperty,
+  MaintenanceTicketWithPropertyAndJobSheet,
   PropertyWithStats,
 } from "@/lib/properties/types";
 import { cn } from "@/lib/utils";
 
 type MaintenancePageClientProps = {
-  tickets: MaintenanceTicketWithProperty[];
+  tickets: MaintenanceTicketWithPropertyAndJobSheet[];
   properties: PropertyWithStats[];
 };
 
@@ -71,7 +72,7 @@ export function MaintenancePageClient({
   }, [tickets, statusFilter, priorityFilter]);
 
   const grouped = useMemo(() => {
-    const groups: Record<string, MaintenanceTicketWithProperty[]> = {
+    const groups: Record<string, MaintenanceTicketWithPropertyAndJobSheet[]> = {
       new: [],
       in_progress: [],
       resolved: [],
@@ -199,35 +200,96 @@ export function MaintenancePageClient({
                 </button>
                 {!isCollapsed ? (
                   <div className="divide-y divide-border/50 border-t border-border/50">
-                    {items.map((ticket) => (
-                      <Link
-                        key={ticket.id}
-                        href={`/properties/${ticket.property_id}?tab=maintenance`}
-                        className="block space-y-2 p-4 transition-colors hover:bg-muted/30"
-                      >
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="font-medium text-foreground">
-                            {ticket.title}
+                    {items.map((ticket) => {
+                      const jobSheet = ticket.job_sheets?.[0] ?? null;
+                      const latestUpdate =
+                        jobSheet?.job_sheet_updates?.sort(
+                          (a, b) =>
+                            new Date(b.created_at).getTime() -
+                            new Date(a.created_at).getTime()
+                        )[0] ?? null;
+
+                      return (
+                        <Link
+                          key={ticket.id}
+                          href={`/properties/${ticket.property_id}?tab=maintenance`}
+                          className="block space-y-2 p-4 transition-colors hover:bg-muted/30"
+                        >
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-medium text-foreground">
+                              {ticket.title}
+                            </p>
+                            <MaintenancePriorityBadge priority={ticket.priority} />
+                            {ticket.reported_by_tenant ? (
+                              <MaintenanceTenantReportedBadge />
+                            ) : null}
+                            {ticket.category ? (
+                              <Badge variant="outline">
+                                {getMaintenanceCategoryDisplayName(ticket.category)}
+                              </Badge>
+                            ) : null}
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {ticket.property_name} · Reported{" "}
+                            {formatPropertyDate(ticket.reported_date)}
+                            {ticket.assigned_to
+                              ? ` · ${ticket.assigned_to}`
+                              : ""}
                           </p>
-                          <MaintenancePriorityBadge priority={ticket.priority} />
-                          {ticket.reported_by_tenant ? (
-                            <MaintenanceTenantReportedBadge />
+
+                          {jobSheet ? (
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                              {jobSheet.contractors?.name ? (
+                                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  <HardHat className="size-3" />
+                                  {formatContractorDisplayName(
+                                    jobSheet.contractors.name
+                                  )}
+                                  {" · "}
+                                  <span
+                                    className={cn(
+                                      "font-medium",
+                                      jobSheet.status === "in_progress"
+                                        ? "text-amber-600 dark:text-amber-400"
+                                        : jobSheet.status === "completed"
+                                          ? "text-emerald-600 dark:text-emerald-400"
+                                          : "text-muted-foreground"
+                                    )}
+                                  >
+                                    {jobSheet.status === "sent"
+                                      ? "Sent"
+                                      : jobSheet.status === "viewed"
+                                        ? "Viewed"
+                                        : jobSheet.status === "in_progress"
+                                          ? "In progress"
+                                          : jobSheet.status === "completed"
+                                            ? "Completed"
+                                            : "Sent"}
+                                  </span>
+                                </span>
+                              ) : null}
+                              {jobSheet.planned_visit_date ? (
+                                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  <span className="font-medium text-foreground">
+                                    Visit:
+                                  </span>{" "}
+                                  {formatPropertyDate(jobSheet.planned_visit_date)}
+                                </span>
+                              ) : null}
+                            </div>
                           ) : null}
-                          {ticket.category ? (
-                            <Badge variant="outline">
-                              {getMaintenanceCategoryDisplayName(ticket.category)}
-                            </Badge>
+
+                          {latestUpdate ? (
+                            <p className="truncate rounded-md bg-muted/40 px-2 py-1 text-xs text-muted-foreground">
+                              <span className="font-medium text-foreground">
+                                Latest update:
+                              </span>{" "}
+                              {latestUpdate.content}
+                            </p>
                           ) : null}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {ticket.property_name} · Reported{" "}
-                          {formatPropertyDate(ticket.reported_date)}
-                          {ticket.assigned_to
-                            ? ` · ${ticket.assigned_to}`
-                            : ""}
-                        </p>
-                      </Link>
-                    ))}
+                        </Link>
+                      );
+                    })}
                   </div>
                 ) : null}
               </section>

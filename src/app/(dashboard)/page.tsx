@@ -75,7 +75,7 @@ export default async function OverviewPage() {
         getProperties(),
         getAllRentPayments(),
         getRentDueFlags(),
-        getMaintenanceTickets(),
+        getMaintenanceTickets(["new", "in_progress"]),
         getTotalUnreadMessageCount(),
         getExpiringCertificates(90),
         getPendingAccessRequests(),
@@ -83,7 +83,7 @@ export default async function OverviewPage() {
 
     portfolioStats = buildPortfolioStats(properties, payments);
     rentDueFlags = flags;
-    openMaintenanceTickets = tickets.filter((t) => t.status !== "resolved");
+    openMaintenanceTickets = tickets;
     unreadMessageCount = unread;
     expiringCertificates = certificates;
     pendingAccessRequests = accessRequests;

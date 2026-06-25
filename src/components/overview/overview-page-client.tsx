@@ -20,7 +20,7 @@ import { WinstonSuggestsSection } from "@/components/overview/winston-suggests-s
 import type { OverviewSnapshot } from "@/lib/overview/selectors";
 import type {
   ContractorAccessRequestWithDetails,
-  MaintenanceTicket,
+  MaintenanceTicketWithJobSheet,
   PortfolioStats,
   PropertyCertificate,
   RentDueFlag,
@@ -33,7 +33,7 @@ type OverviewPageClientProps = {
   hasProperties: boolean;
   portfolioStats: PortfolioStats | null;
   rentDueFlags: RentDueFlag[];
-  openMaintenanceTickets: MaintenanceTicket[];
+  openMaintenanceTickets: MaintenanceTicketWithJobSheet[];
   unreadMessageCount: number;
   expiringCertificates: PropertyCertificate[];
   pendingAccessRequests: ContractorAccessRequestWithDetails[];

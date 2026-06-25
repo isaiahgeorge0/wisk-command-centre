@@ -35,7 +35,7 @@ import type {
   MaintenanceTicket,
   MaintenanceTicketFormInput,
   MaintenanceTicketWithJobSheet,
-  MaintenanceTicketWithProperty,
+  MaintenanceTicketWithPropertyAndJobSheet,
   Property,
   PropertyCertificate,
   PropertyCertificateFormInput,
@@ -700,11 +700,26 @@ export async function getMaintenanceByProperty(
   return (data ?? []) as MaintenanceTicket[];
 }
 
-export async function getAllMaintenance(): Promise<MaintenanceTicketWithProperty[]> {
+export async function getAllMaintenance(): Promise<
+  MaintenanceTicketWithPropertyAndJobSheet[]
+> {
   const { supabase, userId } = await getScopedSupabase();
   const { data, error } = await supabase
     .from("maintenance_tickets")
-    .select("*, properties(name)")
+    .select(
+      `
+      *,
+      properties(name),
+      job_sheets(
+        id,
+        token,
+        status,
+        planned_visit_date,
+        contractors(name),
+        job_sheet_updates(content, created_at)
+      )
+    `
+    )
     .eq("user_id", userId)
     .order("reported_date", { ascending: false });
   if (error) {
@@ -712,12 +727,10 @@ export async function getAllMaintenance(): Promise<MaintenanceTicketWithProperty
     return [];
   }
   return (data ?? []).map((row) => {
-    const { properties, ...ticket } = row as MaintenanceTicket & {
-      properties: { name: string } | null;
-    };
+    const ticket = row as MaintenanceTicketWithJobSheet;
     return {
-      ...(ticket as MaintenanceTicket),
-      property_name: properties?.name ?? "Unknown property",
+      ...ticket,
+      property_name: ticket.properties?.name ?? "Unknown property",
     };
   });
 }
