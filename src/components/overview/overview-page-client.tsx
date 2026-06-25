@@ -23,6 +23,8 @@ import type {
   MaintenanceTicketWithJobSheet,
   PortfolioStats,
   PropertyCertificate,
+  PropertyInsuranceWithProperty,
+  PropertyMortgageWithProperty,
   RentDueFlag,
 } from "@/lib/properties/types";
 import type { SmartSuggestion } from "@/lib/suggestions/types";
@@ -37,6 +39,8 @@ type OverviewPageClientProps = {
   unreadMessageCount: number;
   expiringCertificates: PropertyCertificate[];
   pendingAccessRequests: ContractorAccessRequestWithDetails[];
+  mortgages: PropertyMortgageWithProperty[];
+  insurance: PropertyInsuranceWithProperty[];
 };
 
 export function OverviewPageClient({
@@ -49,6 +53,8 @@ export function OverviewPageClient({
   unreadMessageCount,
   expiringCertificates,
   pendingAccessRequests,
+  mortgages,
+  insurance,
 }: OverviewPageClientProps) {
   const [view, setView] = useState<OverviewView>("overview");
   const { setNavMode } = useNavMode();
@@ -83,6 +89,8 @@ export function OverviewPageClient({
             unreadMessageCount={unreadMessageCount}
             expiringCertificates={expiringCertificates}
             pendingAccessRequests={pendingAccessRequests}
+            mortgages={mortgages}
+            insurance={insurance}
           />
         </>
       ) : (

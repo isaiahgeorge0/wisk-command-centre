@@ -12,6 +12,8 @@ import {
   getProperties,
   getRentDueFlags,
   getTotalUnreadMessageCount,
+  getUpcomingInsuranceRenewals,
+  getUpcomingMortgagePayments,
 } from "@/app/(dashboard)/properties/actions";
 import { OverviewPageClient } from "@/components/overview/overview-page-client";
 import { resolveDisplayName } from "@/lib/auth/resolve-display-name";
@@ -68,9 +70,21 @@ export default async function OverviewPage() {
   let pendingAccessRequests: Awaited<
     ReturnType<typeof getPendingAccessRequests>
   > = [];
+  let mortgages: Awaited<ReturnType<typeof getUpcomingMortgagePayments>> = [];
+  let insurance: Awaited<ReturnType<typeof getUpcomingInsuranceRenewals>> = [];
 
   if (hasProperties) {
-    const [properties, payments, flags, tickets, unread, certificates, accessRequests] =
+    const [
+      properties,
+      payments,
+      flags,
+      tickets,
+      unread,
+      certificates,
+      accessRequests,
+      mortgageRows,
+      insuranceRows,
+    ] =
       await Promise.all([
         getProperties(),
         getAllRentPayments(),
@@ -79,6 +93,8 @@ export default async function OverviewPage() {
         getTotalUnreadMessageCount(),
         getExpiringCertificates(90),
         getPendingAccessRequests(),
+        getUpcomingMortgagePayments(),
+        getUpcomingInsuranceRenewals(),
       ]);
 
     portfolioStats = buildPortfolioStats(properties, payments);
@@ -87,6 +103,8 @@ export default async function OverviewPage() {
     unreadMessageCount = unread;
     expiringCertificates = certificates;
     pendingAccessRequests = accessRequests;
+    mortgages = mortgageRows;
+    insurance = insuranceRows;
   }
 
   const suggestions = canAccessWinston
@@ -121,6 +139,8 @@ export default async function OverviewPage() {
       unreadMessageCount={unreadMessageCount}
       expiringCertificates={expiringCertificates}
       pendingAccessRequests={pendingAccessRequests}
+      mortgages={mortgages}
+      insurance={insurance}
     />
   );
 }

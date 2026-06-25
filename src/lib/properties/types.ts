@@ -353,6 +353,18 @@ export type CertificateAlertLog = {
   acknowledged_at: string | null;
 };
 
+export type PropertyCertificateWithProperty = PropertyCertificate & {
+  properties?: { name: string } | null;
+};
+
+export type PropertyMortgageWithProperty = PropertyMortgage & {
+  properties?: { name: string } | null;
+};
+
+export type PropertyInsuranceWithProperty = PropertyInsurance & {
+  properties?: { name: string } | null;
+};
+
 export type PropertyCertificateWithAlerts = PropertyCertificate & {
   alerts: CertificateAlertLog[];
 };

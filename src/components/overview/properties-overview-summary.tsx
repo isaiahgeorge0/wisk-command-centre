@@ -1,22 +1,23 @@
-import Link from "next/link";
+"use client";
+
 import {
   AlertTriangle,
   Building2,
+  Calendar,
   HardHat,
   MessageSquare,
   PoundSterling,
   Users,
   Wrench,
 } from "lucide-react";
+import Link from "next/link";
 
 import { MaintenancePriorityBadge } from "@/components/properties/maintenance-priority-badge";
 import { MaintenanceStatusBadge } from "@/components/properties/maintenance-status-badge";
-import { Badge } from "@/components/ui/badge";
-import { getCertificateTypeDisplayName } from "@/lib/properties/display-names";
 import { formatContractorDisplayName } from "@/lib/properties/contractor-display";
+import { getCertificateTypeDisplayName } from "@/lib/properties/display-names";
 import {
   daysUntilDate,
-  daysUntilExpiryClass,
   formatPropertyCurrency,
   formatPropertyDate,
 } from "@/lib/properties/format";
@@ -24,35 +25,62 @@ import type {
   ContractorAccessRequestWithDetails,
   MaintenanceTicketWithJobSheet,
   PortfolioStats,
-  PropertyCertificate,
+  PropertyCertificateWithProperty,
+  PropertyInsuranceWithProperty,
+  PropertyMortgageWithProperty,
   RentDueFlag,
 } from "@/lib/properties/types";
 import { cn } from "@/lib/utils";
+
+type TimelineEvent = {
+  date: string;
+  label: string;
+  sublabel: string;
+  type:
+    | "rent"
+    | "contractor"
+    | "certificate"
+    | "mortgage"
+    | "insurance"
+    | "access";
+  href: string;
+  urgent?: boolean;
+};
 
 type PropertiesOverviewSummaryProps = {
   stats: PortfolioStats;
   rentDueFlags: RentDueFlag[];
   openMaintenanceTickets: MaintenanceTicketWithJobSheet[];
   unreadMessageCount: number;
-  expiringCertificates: PropertyCertificate[];
+  expiringCertificates: PropertyCertificateWithProperty[];
   pendingAccessRequests: ContractorAccessRequestWithDetails[];
+  mortgages: PropertyMortgageWithProperty[];
+  insurance: PropertyInsuranceWithProperty[];
 };
 
-function maintenancePropertyName(ticket: MaintenanceTicketWithJobSheet): string {
-  return ticket.properties?.name ?? "Unknown property";
-}
+const TYPE_COLOURS: Record<TimelineEvent["type"], string> = {
+  rent: "bg-amber-500",
+  contractor: "bg-blue-500",
+  certificate: "bg-rose-500",
+  mortgage: "bg-purple-500",
+  insurance: "bg-teal-500",
+  access: "bg-orange-500",
+};
 
-function certificatePropertyName(
-  cert: PropertyCertificate & { properties?: { name: string } | null }
-): string {
-  return cert.properties?.name ?? "Unknown property";
-}
+const TYPE_LABELS: Record<TimelineEvent["type"], string> = {
+  rent: "Rent",
+  contractor: "Contractor visit",
+  certificate: "Certificate",
+  mortgage: "Mortgage",
+  insurance: "Insurance",
+  access: "Access request",
+};
 
-function pendingRequestContractorName(
+function accessRequestContractorName(
   request: ContractorAccessRequestWithDetails
 ): string {
   const contractors = request.job_sheets?.contractors;
-  if (!contractors) return "Unknown contractor";
+  if (!contractors) return "Contractor";
   if (Array.isArray(contractors)) {
     return formatContractorDisplayName(contractors[0]?.name);
   }
@@ -61,48 +89,173 @@ function pendingRequestContractorName(
 
 export function PropertiesOverviewSummary({
   stats,
+  rentDueFlags,
   openMaintenanceTickets,
   unreadMessageCount,
   expiringCertificates,
   pendingAccessRequests,
+  mortgages,
+  insurance,
 }: PropertiesOverviewSummaryProps) {
-  const items = [
-    {
-      label: "Total properties",
-      value: String(stats.totalProperties),
-      icon: Building2,
-    },
-    {
-      label: "Occupied vs vacant",
-      value: `${stats.occupiedCount} / ${stats.vacantCount}`,
-      icon: Users,
-    },
-    {
-      label: "Rent due this month",
-      value: formatPropertyCurrency(stats.rentDueThisMonth),
-      icon: PoundSterling,
-    },
-    {
-      label: "Open maintenance",
-      value: String(stats.openMaintenanceCount),
-      icon: Wrench,
-    },
-  ];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const in30Days = new Date(today);
+  in30Days.setDate(today.getDate() + 30);
+
+  const timelineEvents: TimelineEvent[] = [];
+
+  rentDueFlags.forEach((flag) => {
+    timelineEvents.push({
+      date: flag.due_date,
+      label: `${flag.tenant_name} — ${formatPropertyCurrency(flag.amount)}`,
+      sublabel: flag.property_address,
+      type: "rent",
+      href: "/properties/dashboard",
+      urgent: flag.days_overdue >= 0,
+    });
+  });
+
+  openMaintenanceTickets.forEach((ticket) => {
+    const jobSheet = ticket.job_sheets?.[0];
+    if (jobSheet?.planned_visit_date) {
+      timelineEvents.push({
+        date: jobSheet.planned_visit_date,
+        label: ticket.title,
+        sublabel: jobSheet.contractors?.name
+          ? formatContractorDisplayName(jobSheet.contractors.name)
+          : "Contractor",
+        type: "contractor",
+        href: `/properties/${ticket.property_id}?tab=maintenance`,
+      });
+    }
+  });
+
+  expiringCertificates.forEach((cert) => {
+    timelineEvents.push({
+      date: cert.expiry_date ?? "",
+      label: getCertificateTypeDisplayName(cert.certificate_type),
+      sublabel: cert.properties?.name ?? "Property",
+      type: "certificate",
+      href: `/properties/${cert.property_id}?tab=certificates`,
+      urgent: (daysUntilDate(cert.expiry_date) ?? 999) <= 30,
+    });
+  });
+
+  mortgages.forEach((mortgage) => {
+    if (mortgage.fixed_rate_end_date) {
+      timelineEvents.push({
+        date: mortgage.fixed_rate_end_date,
+        label: `${mortgage.lender} — fixed rate ends`,
+        sublabel: mortgage.properties?.name ?? "Property",
+        type: "mortgage",
+        href: "/properties/finances",
+      });
+    }
+  });
+
+  insurance.forEach((ins) => {
+    if (ins.renewal_date) {
+      timelineEvents.push({
+        date: ins.renewal_date,
+        label: `${ins.insurer} renewal`,
+        sublabel: ins.properties?.name ?? "Property",
+        type: "insurance",
+        href: "/properties/finances",
+      });
+    }
+  });
+
+  const sortedEvents = timelineEvents
+    .filter((e) => {
+      if (!e.date) return false;
+      const d = new Date(e.date);
+      d.setHours(0, 0, 0, 0);
+      return d >= today && d <= in30Days;
+    })
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(0, 8);
+
+  const needsAttention: Array<{
+    label: string;
+    sublabel: string;
+    href: string;
+    severity: "high" | "medium";
+  }> = [];
+
+  rentDueFlags
+    .filter((f) => f.days_overdue > 0)
+    .forEach((f) => {
+      needsAttention.push({
+        label: `Rent overdue — ${f.tenant_name}`,
+        sublabel: `${f.days_overdue} day${f.days_overdue === 1 ? "" : "s"} overdue · ${formatPropertyCurrency(f.amount)}`,
+        href: "/properties/dashboard",
+        severity: "high",
+      });
+    });
+
+  openMaintenanceTickets
+    .filter((t) => t.priority === "emergency")
+    .forEach((t) => {
+      needsAttention.push({
+        label: t.title,
+        sublabel: t.properties?.name ?? "Property",
+        href: `/properties/${t.property_id}?tab=maintenance`,
+        severity: "high",
+      });
+    });
+
+  pendingAccessRequests.forEach((r) => {
+    needsAttention.push({
+      label: `Access request — ${accessRequestContractorName(r)}`,
+      sublabel: `${r.job_sheets?.maintenance_tickets?.title ?? "Maintenance"} · ${formatPropertyDate(r.requested_date)}`,
+      href: "/properties/maintenance",
+      severity: "medium",
+    });
+  });
+
+  expiringCertificates
+    .filter((c) => (daysUntilDate(c.expiry_date) ?? 999) <= 30)
+    .forEach((c) => {
+      const days = daysUntilDate(c.expiry_date);
+      needsAttention.push({
+        label: `${getCertificateTypeDisplayName(c.certificate_type)} expiring`,
+        sublabel: `${c.properties?.name ?? "Property"} · ${days ?? "—"} days`,
+        href: `/properties/${c.property_id}?tab=certificates`,
+        severity: "medium",
+      });
+    });
 
   return (
-    <>
-      <section className="mb-8" aria-label="Properties portfolio summary">
+    <div className="space-y-8">
+      <section aria-label="Portfolio summary">
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-foreground">
             Portfolio summary
           </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            A lightweight snapshot of your property portfolio.
-          </p>
         </div>
-
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {items.map((stat) => {
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            {
+              label: "Total properties",
+              value: String(stats.totalProperties),
+              icon: Building2,
+            },
+            {
+              label: "Occupied / Vacant",
+              value: `${stats.occupiedCount} / ${stats.vacantCount}`,
+              icon: Users,
+            },
+            {
+              label: "Rent due this month",
+              value: formatPropertyCurrency(stats.rentDueThisMonth),
+              icon: PoundSterling,
+            },
+            {
+              label: "Open maintenance",
+              value: String(stats.openMaintenanceCount),
+              icon: Wrench,
+            },
+          ].map((stat) => {
             const Icon = stat.icon;
             return (
               <div
@@ -126,74 +279,138 @@ export function PropertiesOverviewSummary({
         </div>
       </section>
 
-      {pendingAccessRequests.length > 0 ? (
-        <section className="mb-6" aria-label="Contractor access requests">
-          <div className="mb-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <HardHat className="size-4 text-amber-500" />
-              <h3 className="text-sm font-semibold text-foreground">
-                Contractor access requests
-              </h3>
-            </div>
-            <Link
-              href="/properties/maintenance"
-              className="text-xs text-amber-600 hover:text-amber-500 dark:text-amber-400"
-            >
-              View all
-            </Link>
+      {needsAttention.length > 0 ? (
+        <section aria-label="Needs attention">
+          <div className="mb-4 flex items-center gap-2">
+            <AlertTriangle className="size-5 text-rose-500" />
+            <h2 className="text-lg font-semibold text-foreground">
+              Needs attention
+            </h2>
           </div>
-          <div className="divide-y divide-border/60 overflow-hidden rounded-lg border border-border/60 bg-card/40">
-            {pendingAccessRequests.slice(0, 3).map((request) => (
-              <div
-                key={request.id}
-                className="flex flex-col gap-1.5 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between"
+          <div className="divide-y divide-border/60 overflow-hidden rounded-xl border border-rose-500/20 bg-card/40">
+            {needsAttention.slice(0, 5).map((item, i) => (
+              <Link
+                key={i}
+                href={item.href}
+                className="flex items-start gap-3 px-4 py-3 transition-colors hover:bg-muted/40"
               >
+                <span
+                  className={cn(
+                    "mt-1.5 size-2 shrink-0 rounded-full",
+                    item.severity === "high"
+                      ? "bg-rose-500"
+                      : "bg-amber-500"
+                  )}
+                />
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-foreground">
-                    {pendingRequestContractorName(request)} requests access
+                    {item.label}
                   </p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {request.job_sheets?.maintenance_tickets?.title ??
-                      "Maintenance job"}
-                    {" · "}
-                    {request.job_sheets?.properties?.name ?? "Property"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatPropertyDate(request.requested_date)}
-                    {request.requested_time
-                      ? ` · ${request.requested_time}`
-                      : ""}
+                    {item.sublabel}
                   </p>
                 </div>
-                <Badge
-                  variant="outline"
-                  className="shrink-0 border-amber-500/30 bg-amber-500/10 text-xs text-amber-700 dark:text-amber-300"
-                >
-                  Pending
-                </Badge>
-              </div>
+              </Link>
             ))}
           </div>
         </section>
       ) : null}
 
-      {openMaintenanceTickets.length > 0 ? (
-        <section className="mb-6" aria-label="Open maintenance">
-          <div className="mb-3 flex items-center justify-between">
+      {sortedEvents.length > 0 ? (
+        <section aria-label="Upcoming 30 days">
+          <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Wrench className="size-4 text-amber-500" />
-              <h3 className="text-sm font-semibold text-foreground">
+              <Calendar className="size-5 text-amber-500" />
+              <h2 className="text-lg font-semibold text-foreground">
+                Next 30 days
+              </h2>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {(Object.keys(TYPE_COLOURS) as TimelineEvent["type"][])
+                .filter((t) => sortedEvents.some((e) => e.type === t))
+                .map((type) => (
+                  <span
+                    key={type}
+                    className="flex items-center gap-1 text-xs text-muted-foreground"
+                  >
+                    <span
+                      className={cn("size-2 rounded-full", TYPE_COLOURS[type])}
+                    />
+                    {TYPE_LABELS[type]}
+                  </span>
+                ))}
+            </div>
+          </div>
+          <div className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/60 bg-card/40">
+            {sortedEvents.map((event, i) => {
+              const days = daysUntilDate(event.date);
+              return (
+                <Link
+                  key={i}
+                  href={event.href}
+                  className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/40"
+                >
+                  <span
+                    className={cn(
+                      "size-2.5 shrink-0 rounded-full",
+                      TYPE_COLOURS[event.type]
+                    )}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">
+                      {event.label}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {event.sublabel}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p
+                      className="text-xs font-medium"
+                      suppressHydrationWarning
+                    >
+                      {formatPropertyDate(event.date)}
+                    </p>
+                    <p
+                      className={cn(
+                        "text-xs",
+                        event.urgent
+                          ? "text-rose-500"
+                          : "text-muted-foreground"
+                      )}
+                      suppressHydrationWarning
+                    >
+                      {days === 0
+                        ? "Today"
+                        : days === 1
+                          ? "Tomorrow"
+                          : `In ${days} days`}
+                    </p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
+
+      {openMaintenanceTickets.length > 0 ? (
+        <section aria-label="Open maintenance">
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Wrench className="size-5 text-amber-500" />
+              <h2 className="text-lg font-semibold text-foreground">
                 Open maintenance
-              </h3>
+              </h2>
             </div>
             <Link
               href="/properties/maintenance"
-              className="text-xs text-amber-600 hover:text-amber-500 dark:text-amber-400"
+              className="text-sm text-amber-600 hover:text-amber-500 dark:text-amber-400"
             >
               View all
             </Link>
           </div>
-          <div className="divide-y divide-border/60 overflow-hidden rounded-lg border border-border/60 bg-card/40">
+          <div className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/60 bg-card/40">
             {openMaintenanceTickets.slice(0, 3).map((ticket) => {
               const jobSheet = ticket.job_sheets?.[0] ?? null;
               const latestUpdate =
@@ -207,7 +424,7 @@ export function PropertiesOverviewSummary({
                 <Link
                   key={ticket.id}
                   href={`/properties/${ticket.property_id}?tab=maintenance`}
-                  className="flex flex-col gap-2 px-3 py-2.5 transition-colors hover:bg-muted/40"
+                  className="flex flex-col gap-2 px-4 py-3 transition-colors hover:bg-muted/40"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
@@ -215,59 +432,30 @@ export function PropertiesOverviewSummary({
                         {ticket.title}
                       </p>
                       <p className="truncate text-xs text-muted-foreground">
-                        {maintenancePropertyName(ticket)}
+                        {ticket.properties?.name ?? "Property"}
                       </p>
                     </div>
-                    <div className="flex shrink-0 items-center gap-1.5">
+                    <div className="flex shrink-0 items-center gap-2">
                       <MaintenancePriorityBadge priority={ticket.priority} />
                       <MaintenanceStatusBadge status={ticket.status} />
                     </div>
                   </div>
-
-                  {jobSheet ? (
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                      {jobSheet.contractors?.name ? (
-                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <HardHat className="size-3" />
-                          {formatContractorDisplayName(jobSheet.contractors.name)}
-                          {" · "}
-                          <span
-                            className={cn(
-                              "font-medium",
-                              jobSheet.status === "in_progress"
-                                ? "text-amber-600 dark:text-amber-400"
-                                : jobSheet.status === "completed"
-                                  ? "text-emerald-600 dark:text-emerald-400"
-                                  : "text-muted-foreground"
-                            )}
-                          >
-                            {jobSheet.status === "sent"
-                              ? "Sent"
-                              : jobSheet.status === "viewed"
-                                ? "Viewed"
-                                : jobSheet.status === "in_progress"
-                                  ? "In progress"
-                                  : jobSheet.status === "completed"
-                                    ? "Completed"
-                                    : "Sent"}
-                          </span>
-                        </span>
-                      ) : null}
+                  {jobSheet?.contractors?.name ? (
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <HardHat className="size-3" />
+                      {formatContractorDisplayName(jobSheet.contractors.name)}
                       {jobSheet.planned_visit_date ? (
-                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <span className="font-medium text-foreground">
-                            Visit:
-                          </span>{" "}
+                        <span suppressHydrationWarning>
+                          {" · Visit: "}
                           {formatPropertyDate(jobSheet.planned_visit_date)}
                         </span>
                       ) : null}
                     </div>
                   ) : null}
-
                   {latestUpdate ? (
                     <p className="truncate rounded-md bg-muted/40 px-2 py-1 text-xs text-muted-foreground">
                       <span className="font-medium text-foreground">
-                        Latest update:
+                        Update:
                       </span>{" "}
                       {latestUpdate.content}
                     </p>
@@ -280,92 +468,39 @@ export function PropertiesOverviewSummary({
       ) : null}
 
       {unreadMessageCount > 0 ? (
-        <section className="mb-6" aria-label="Unread messages">
-          <div className="mb-3 flex items-center justify-between">
+        <section aria-label="Unread messages">
+          <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <MessageSquare className="size-4 text-amber-500" />
-              <h3 className="text-sm font-semibold text-foreground">
+              <MessageSquare className="size-5 text-amber-500" />
+              <h2 className="text-lg font-semibold text-foreground">
                 Unread messages
-              </h3>
+              </h2>
             </div>
             <Link
               href="/properties/communication"
-              className="text-xs text-amber-600 hover:text-amber-500 dark:text-amber-400"
+              className="text-sm text-amber-600 hover:text-amber-500 dark:text-amber-400"
             >
-              View all
+              Open hub
             </Link>
           </div>
-          <div className="rounded-lg border border-amber-500/20 bg-card/60 px-3 py-2.5">
+          <div className="rounded-xl border border-amber-500/20 bg-card/60 px-4 py-3">
             <p className="text-sm text-muted-foreground">
+              You have{" "}
               <span className="font-semibold text-foreground">
-                {unreadMessageCount}
+                {unreadMessageCount} unread{" "}
+                {unreadMessageCount === 1 ? "message" : "messages"}
               </span>{" "}
-              unread {unreadMessageCount === 1 ? "message" : "messages"} from
-              tenants.
+              from your tenants.
             </p>
             <Link
               href="/properties/communication"
-              className="mt-1 inline-flex text-xs font-medium text-amber-600 hover:text-amber-500 dark:text-amber-400"
+              className="mt-2 inline-flex text-sm font-medium text-amber-600 hover:text-amber-500 dark:text-amber-400"
             >
-              Open communication hub →
+              View messages →
             </Link>
           </div>
         </section>
       ) : null}
-
-      {expiringCertificates.length > 0 ? (
-        <section className="mb-6" aria-label="Certificate alerts">
-          <div className="mb-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="size-4 text-amber-500" />
-              <h3 className="text-sm font-semibold text-foreground">
-                Certificate alerts
-              </h3>
-            </div>
-            <Link
-              href="/properties/list"
-              className="text-xs text-amber-600 hover:text-amber-500 dark:text-amber-400"
-            >
-              View properties
-            </Link>
-          </div>
-          <div className="divide-y divide-border/60 overflow-hidden rounded-lg border border-border/60 bg-card/40">
-            {expiringCertificates.slice(0, 3).map((cert) => {
-              const days = daysUntilDate(cert.expiry_date);
-              return (
-                <Link
-                  key={cert.id}
-                  href={`/properties/${cert.property_id}?tab=certificates`}
-                  className="flex items-center justify-between gap-2 px-3 py-2.5 transition-colors hover:bg-muted/40"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-foreground">
-                      {getCertificateTypeDisplayName(cert.certificate_type)}
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {certificatePropertyName(cert)}
-                    </p>
-                  </div>
-                  <span
-                    className={cn(
-                      "shrink-0 text-xs font-medium",
-                      daysUntilExpiryClass(days)
-                    )}
-                  >
-                    {days === 0
-                      ? "Expires today"
-                      : days === 1
-                        ? "Expires tomorrow"
-                        : days != null
-                          ? `${days} days`
-                          : "—"}
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
-      ) : null}
-    </>
+    </div>
   );
 }

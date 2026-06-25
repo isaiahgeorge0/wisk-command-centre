@@ -47,9 +47,11 @@ import type {
   PortfolioFinancialOverview,
   PropertyInsurance,
   PropertyInsuranceFormInput,
+  PropertyInsuranceWithProperty,
   PropertyInsight,
   PropertyMortgage,
   PropertyMortgageFormInput,
+  PropertyMortgageWithProperty,
   PropertyValuation,
   PropertyWithStats,
   RentPayment,
@@ -2786,4 +2788,40 @@ export async function getPendingAccessRequests(): Promise<
     return [];
   }
   return (data ?? []) as ContractorAccessRequestWithDetails[];
+}
+
+export async function getUpcomingMortgagePayments(): Promise<
+  PropertyMortgageWithProperty[]
+> {
+  const { supabase, userId } = await getScopedSupabase();
+  const { data, error } = await supabase
+    .from("property_mortgages")
+    .select("*, properties(name)")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true });
+  if (error) {
+    console.error("getUpcomingMortgagePayments:", error);
+    return [];
+  }
+  return (data ?? []) as PropertyMortgageWithProperty[];
+}
+
+export async function getUpcomingInsuranceRenewals(): Promise<
+  PropertyInsuranceWithProperty[]
+> {
+  const { supabase, userId } = await getScopedSupabase();
+  const futureDate = new Date();
+  futureDate.setDate(futureDate.getDate() + 90);
+  const { data, error } = await supabase
+    .from("property_insurance")
+    .select("*, properties(name)")
+    .eq("user_id", userId)
+    .lte("renewal_date", futureDate.toISOString().slice(0, 10))
+    .gte("renewal_date", new Date().toISOString().slice(0, 10))
+    .order("renewal_date", { ascending: true });
+  if (error) {
+    console.error("getUpcomingInsuranceRenewals:", error);
+    return [];
+  }
+  return (data ?? []) as PropertyInsuranceWithProperty[];
 }
