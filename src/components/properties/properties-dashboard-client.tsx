@@ -46,7 +46,7 @@ import {
 } from "@/lib/properties/selectors";
 import type {
   ContractorAccessRequestWithDetails,
-  MaintenanceTicket,
+  MaintenanceTicketWithJobSheet,
   PropertyCertificate,
   PropertyInsight,
   PropertyInsightContent,
@@ -60,15 +60,13 @@ type PropertiesDashboardClientProps = {
   latestInsight: PropertyInsight | null;
   rentDueFlags: RentDueFlag[];
   rentDueThisMonth: number;
-  openMaintenanceTickets: MaintenanceTicket[];
+  openMaintenanceTickets: MaintenanceTicketWithJobSheet[];
   unreadMessageCount: number;
   expiringCertificates: PropertyCertificate[];
   pendingAccessRequests: ContractorAccessRequestWithDetails[];
 };
 
-function maintenancePropertyName(
-  ticket: MaintenanceTicket & { properties?: { name: string } | null }
-): string {
+function maintenancePropertyName(ticket: MaintenanceTicketWithJobSheet): string {
   return ticket.properties?.name ?? "Unknown property";
 }
 
@@ -347,26 +345,89 @@ export function PropertiesDashboardClient({
                 </Link>
               </div>
               <div className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/60 bg-card/40">
-                {openMaintenanceTickets.slice(0, 5).map((ticket) => (
-                  <Link
-                    key={ticket.id}
-                    href={`/properties/${ticket.property_id}?tab=maintenance`}
-                    className="flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-muted/40"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-foreground">
-                        {ticket.title}
-                      </p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {maintenancePropertyName(ticket)}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <MaintenancePriorityBadge priority={ticket.priority} />
-                      <MaintenanceStatusBadge status={ticket.status} />
-                    </div>
-                  </Link>
-                ))}
+                {openMaintenanceTickets.slice(0, 5).map((ticket) => {
+                  const jobSheet = ticket.job_sheets?.[0] ?? null;
+                  const latestUpdate =
+                    jobSheet?.job_sheet_updates?.sort(
+                      (a, b) =>
+                        new Date(b.created_at).getTime() -
+                        new Date(a.created_at).getTime()
+                    )[0] ?? null;
+
+                  return (
+                    <Link
+                      key={ticket.id}
+                      href={`/properties/${ticket.property_id}?tab=maintenance`}
+                      className="flex flex-col gap-2 px-4 py-3 transition-colors hover:bg-muted/40"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-foreground">
+                            {ticket.title}
+                          </p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {maintenancePropertyName(ticket)}
+                          </p>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-2">
+                          <MaintenancePriorityBadge priority={ticket.priority} />
+                          <MaintenanceStatusBadge status={ticket.status} />
+                        </div>
+                      </div>
+
+                      {jobSheet ? (
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                          {jobSheet.contractors?.name ? (
+                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <HardHat className="size-3" />
+                              {formatContractorDisplayName(
+                                jobSheet.contractors.name
+                              )}
+                              {" · "}
+                              <span
+                                className={cn(
+                                  "font-medium",
+                                  jobSheet.status === "in_progress"
+                                    ? "text-amber-600 dark:text-amber-400"
+                                    : jobSheet.status === "completed"
+                                      ? "text-emerald-600 dark:text-emerald-400"
+                                      : "text-muted-foreground"
+                                )}
+                              >
+                                {jobSheet.status === "sent"
+                                  ? "Sent"
+                                  : jobSheet.status === "viewed"
+                                    ? "Viewed"
+                                    : jobSheet.status === "in_progress"
+                                      ? "In progress"
+                                      : jobSheet.status === "completed"
+                                        ? "Completed"
+                                        : "Sent"}
+                              </span>
+                            </span>
+                          ) : null}
+                          {jobSheet.planned_visit_date ? (
+                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <span className="font-medium text-foreground">
+                                Visit:
+                              </span>{" "}
+                              {formatPropertyDate(jobSheet.planned_visit_date)}
+                            </span>
+                          ) : null}
+                        </div>
+                      ) : null}
+
+                      {latestUpdate ? (
+                        <p className="truncate rounded-md bg-muted/40 px-2 py-1 text-xs text-muted-foreground">
+                          <span className="font-medium text-foreground">
+                            Latest update:
+                          </span>{" "}
+                          {latestUpdate.content}
+                        </p>
+                      ) : null}
+                    </Link>
+                  );
+                })}
               </div>
             </section>
           ) : null}

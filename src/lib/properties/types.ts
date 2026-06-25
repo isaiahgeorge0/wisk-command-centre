@@ -176,6 +176,21 @@ export type MaintenanceTicketWithProperty = MaintenanceTicket & {
   property_name: string;
 };
 
+export type MaintenanceTicketWithJobSheet = MaintenanceTicket & {
+  properties: { name: string } | null;
+  job_sheets: Array<{
+    id: string;
+    token: string;
+    status: string;
+    planned_visit_date: string | null;
+    contractors: { name: string } | null;
+    job_sheet_updates: Array<{
+      content: string;
+      created_at: string;
+    }>;
+  }>;
+};
+
 export type RentPaymentStatus =
   | "pending"
   | "paid"

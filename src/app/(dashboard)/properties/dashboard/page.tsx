@@ -26,7 +26,7 @@ export default async function PropertiesDashboardPage() {
     getLatestPropertyInsight(),
     getRentDueFlags(),
     getAllRentPayments(),
-    getMaintenanceTickets(),
+    getMaintenanceTickets(["new", "in_progress"]),
     getTotalUnreadMessageCount(),
     getExpiringCertificates(90),
     getPendingAccessRequests(),
@@ -40,9 +40,7 @@ export default async function PropertiesDashboardPage() {
       latestInsight={latestInsight}
       rentDueFlags={rentDueFlags}
       rentDueThisMonth={stats.rentDueThisMonth}
-      openMaintenanceTickets={maintenanceTickets.filter(
-        (t) => t.status !== "resolved"
-      )}
+      openMaintenanceTickets={maintenanceTickets}
       unreadMessageCount={unreadMessageCount}
       expiringCertificates={expiringCertificates}
       pendingAccessRequests={pendingAccessRequests}

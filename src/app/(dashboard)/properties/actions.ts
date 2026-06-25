@@ -34,6 +34,7 @@ import type {
   CertificateAlertLog,
   MaintenanceTicket,
   MaintenanceTicketFormInput,
+  MaintenanceTicketWithJobSheet,
   MaintenanceTicketWithProperty,
   Property,
   PropertyCertificate,
@@ -723,11 +724,24 @@ export async function getAllMaintenance(): Promise<MaintenanceTicketWithProperty
 
 export async function getMaintenanceTickets(
   statusFilter?: string[]
-): Promise<MaintenanceTicket[]> {
+): Promise<MaintenanceTicketWithJobSheet[]> {
   const { supabase, userId } = await getScopedSupabase();
   let query = supabase
     .from("maintenance_tickets")
-    .select("*, properties(name)")
+    .select(
+      `
+      *,
+      properties(name),
+      job_sheets(
+        id,
+        token,
+        status,
+        planned_visit_date,
+        contractors(name),
+        job_sheet_updates(content, created_at)
+      )
+    `
+    )
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
@@ -740,7 +754,7 @@ export async function getMaintenanceTickets(
     console.error("getMaintenanceTickets:", error);
     return [];
   }
-  return (data ?? []) as MaintenanceTicket[];
+  return (data ?? []) as MaintenanceTicketWithJobSheet[];
 }
 
 export async function getExpiringCertificates(
