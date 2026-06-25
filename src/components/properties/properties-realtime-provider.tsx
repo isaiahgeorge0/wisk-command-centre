@@ -35,9 +35,7 @@ export function PropertiesRealtimeProvider({
           );
         }
       )
-      .subscribe((status) => {
-        console.log("[Realtime] Provider status:", status);
-      });
+      .subscribe();
 
     return () => {
       void supabase.removeChannel(channel);
