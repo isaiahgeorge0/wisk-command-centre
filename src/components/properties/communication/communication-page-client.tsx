@@ -234,7 +234,7 @@ export function CommunicationPageClient({
         className="mb-6"
       />
 
-      <div className="flex min-h-[calc(100dvh-12rem)] overflow-hidden rounded-xl border border-border/60 bg-card/40">
+      <div className="flex h-[calc(100dvh-11rem)] overflow-hidden rounded-xl border border-border/60 bg-card/40">
         <aside
           className={cn(
             "flex w-full flex-col border-border/60 md:w-1/3 md:border-r",
