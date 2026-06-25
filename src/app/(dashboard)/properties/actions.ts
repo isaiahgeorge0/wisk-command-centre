@@ -59,6 +59,10 @@ import type {
   TenantFormInput,
   TenantMessage,
   ConversationSummary,
+  Contractor,
+  ContractorFormInput,
+  JobSheet,
+  JobSheetWithDetails,
   TenantWithProperty,
 } from "@/lib/properties/types";
 import {
@@ -2487,4 +2491,214 @@ export async function getTotalUnreadMessageCount(): Promise<number> {
   }
 
   return count ?? 0;
+}
+
+// --- Contractors ---
+
+const contractorFormSchema = z.object({
+  name: z.string().trim().min(1, "Name is required"),
+  trade: z.string().trim().optional(),
+  email: z.string().email("Invalid email").optional().or(z.literal("")),
+  phone: z.string().trim().optional(),
+  notes: z.string().trim().optional(),
+});
+
+function toContractorDbPayload(input: ContractorFormInput) {
+  return {
+    name: input.name.trim(),
+    trade: emptyToNull(input.trade),
+    email: emptyToNull(input.email),
+    phone: emptyToNull(input.phone),
+    notes: emptyToNull(input.notes),
+  };
+}
+
+export async function getContractors(): Promise<Contractor[]> {
+  const { supabase, userId } = await getScopedSupabase();
+  const { data, error } = await supabase
+    .from("contractors")
+    .select("*")
+    .eq("user_id", userId)
+    .order("name", { ascending: true });
+  if (error) {
+    console.error("getContractors:", error);
+    return [];
+  }
+  return (data ?? []) as Contractor[];
+}
+
+export async function createContractor(
+  input: ContractorFormInput
+): Promise<ActionResult<Contractor>> {
+  const parsed = contractorFormSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+  const { supabase, userId } = await getScopedSupabase();
+  const { data, error } = await supabase
+    .from("contractors")
+    .insert({ user_id: userId, ...toContractorDbPayload(parsed.data) })
+    .select()
+    .single();
+  if (error) {
+    console.error("createContractor:", error);
+    return { success: false, error: "Could not save contractor." };
+  }
+  revalidatePath("/properties/contractors");
+  return { success: true, data: data as Contractor };
+}
+
+export async function updateContractor(
+  id: string,
+  input: ContractorFormInput
+): Promise<ActionResult<Contractor>> {
+  const parsed = contractorFormSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+  const { supabase, userId } = await getScopedSupabase();
+  const { data, error } = await supabase
+    .from("contractors")
+    .update(toContractorDbPayload(parsed.data))
+    .eq("id", id)
+    .eq("user_id", userId)
+    .select()
+    .single();
+  if (error) {
+    console.error("updateContractor:", error);
+    return { success: false, error: "Could not update contractor." };
+  }
+  revalidatePath("/properties/contractors");
+  return { success: true, data: data as Contractor };
+}
+
+export async function deleteContractor(id: string): Promise<ActionResult> {
+  const { supabase, userId } = await getScopedSupabase();
+  const { error } = await supabase
+    .from("contractors")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", userId);
+  if (error) {
+    console.error("deleteContractor:", error);
+    return { success: false, error: "Could not delete contractor." };
+  }
+  revalidatePath("/properties/contractors");
+  return { success: true };
+}
+
+// --- Job Sheets ---
+
+export async function createJobSheet(
+  ticketId: string,
+  propertyId: string,
+  contractorId: string
+): Promise<ActionResult<JobSheet>> {
+  const { supabase, userId } = await getScopedSupabase();
+  const { data, error } = await supabase
+    .from("job_sheets")
+    .insert({
+      user_id: userId,
+      property_id: propertyId,
+      ticket_id: ticketId,
+      contractor_id: contractorId,
+      status: "sent",
+    })
+    .select()
+    .single();
+  if (error) {
+    console.error("createJobSheet:", error);
+    return { success: false, error: "Could not create job sheet." };
+  }
+  revalidatePath(`/properties/${propertyId}`);
+  revalidatePath("/properties/maintenance");
+  return { success: true, data: data as JobSheet };
+}
+
+export async function getJobSheetsForTicket(
+  ticketId: string
+): Promise<JobSheetWithDetails[]> {
+  const { supabase, userId } = await getScopedSupabase();
+  const { data, error } = await supabase
+    .from("job_sheets")
+    .select(
+      `
+      *,
+      contractors(*),
+      maintenance_tickets(title, description, priority, category, status),
+      properties(name, address_line1, address_line2, city, postcode),
+      job_sheet_updates(*),
+      contractor_access_requests(*)
+    `
+    )
+    .eq("ticket_id", ticketId)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) {
+    console.error("getJobSheetsForTicket:", error);
+    return [];
+  }
+  return (data ?? []) as JobSheetWithDetails[];
+}
+
+function contractorPortalUrl(token: string): string {
+  const base =
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
+    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
+    "https://app.wiskapp.com";
+  return `${base}/contractor/${token}`;
+}
+
+export async function sendJobSheetEmail(
+  jobSheetId: string
+): Promise<ActionResult> {
+  const { supabase, userId } = await getScopedSupabase();
+  const { data: jobSheet, error } = await supabase
+    .from("job_sheets")
+    .select(
+      `
+      *,
+      contractors(*),
+      maintenance_tickets(title, description, priority, category),
+      properties(name, address_line1, address_line2, city, postcode)
+    `
+    )
+    .eq("id", jobSheetId)
+    .eq("user_id", userId)
+    .single();
+
+  if (error || !jobSheet) {
+    return { success: false, error: "Job sheet not found." };
+  }
+
+  const contractor = jobSheet.contractors as Contractor | null;
+  if (!contractor?.email) {
+    return { success: false, error: "Contractor has no email address." };
+  }
+
+  const property = jobSheet.properties as JobSheetWithDetails["properties"];
+  const ticket = jobSheet.maintenance_tickets as {
+    title: string;
+  } | null;
+
+  const { sendJobSheetEmail: sendEmail } = await import("@/lib/properties/emails");
+  const sent = await sendEmail({
+    to: contractor.email,
+    contractorName: contractor.name,
+    jobTitle: ticket?.title ?? "Maintenance job",
+    propertyAddress: property ? formatPropertyAddress(property) : "Property",
+    jobSheetUrl: contractorPortalUrl(jobSheet.token),
+  });
+
+  if (!sent) {
+    return { success: false, error: "Could not send email." };
+  }
+
+  return { success: true };
 }

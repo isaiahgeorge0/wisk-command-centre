@@ -496,3 +496,94 @@ export type ConversationSummary = {
   unread_count: number;
   other_party_last_seen_at: string | null;
 };
+
+export type Contractor = {
+  id: string;
+  user_id: string;
+  name: string;
+  trade: string | null;
+  email: string | null;
+  phone: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ContractorFormInput = {
+  name: string;
+  trade?: string;
+  email?: string;
+  phone?: string;
+  notes?: string;
+};
+
+export type JobSheetStatus =
+  | "sent"
+  | "viewed"
+  | "in_progress"
+  | "completed"
+  | "cancelled";
+
+export type JobSheet = {
+  id: string;
+  user_id: string;
+  property_id: string;
+  ticket_id: string;
+  contractor_id: string | null;
+  token: string;
+  status: JobSheetStatus;
+  contractor_notes: string | null;
+  planned_visit_date: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type JobSheetUpdate = {
+  id: string;
+  job_sheet_id: string;
+  author: string;
+  content: string;
+  created_at: string;
+};
+
+export type ContractorAccessRequestStatus = "pending" | "approved" | "declined";
+
+export type ContractorAccessRequest = {
+  id: string;
+  job_sheet_id: string;
+  property_id: string;
+  tenant_id: string;
+  requested_date: string;
+  requested_time: string | null;
+  notes: string | null;
+  status: ContractorAccessRequestStatus;
+  tenant_response_at: string | null;
+  created_at: string;
+};
+
+export type JobSheetWithDetails = JobSheet & {
+  contractors: Contractor | null;
+  maintenance_tickets: {
+    title: string;
+    description: string;
+    priority: string;
+    category: string;
+    status: string;
+  } | null;
+  properties: {
+    name: string;
+    address_line1: string;
+    address_line2: string | null;
+    city: string;
+    postcode: string;
+  } | null;
+  job_sheet_updates: JobSheetUpdate[];
+  contractor_access_requests: ContractorAccessRequest[];
+};
+
+export type ContractorAccessRequestWithDetails = ContractorAccessRequest & {
+  job_sheets: {
+    contractors: { name: string } | null;
+    maintenance_tickets: { title: string } | null;
+  } | null;
+};

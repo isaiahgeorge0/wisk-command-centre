@@ -3,6 +3,7 @@
 import {
   Building2,
   FileText,
+  HardHat,
   LayoutDashboard,
   MessageSquare,
   PoundSterling,
@@ -24,6 +25,7 @@ const NAV_ITEMS: { label: string; href: string; icon: LucideIcon }[] = [
   { label: "Maintenance", href: "/properties/maintenance", icon: Wrench },
   { label: "Finances", href: "/properties/finances", icon: PoundSterling },
   { label: "Documents", href: "/properties/documents", icon: FileText },
+  { label: "Contractors", href: "/properties/contractors", icon: HardHat },
   { label: "Communication", href: "/properties/communication", icon: MessageSquare },
   { label: "Winston", href: "/properties/winston", icon: Sparkles },
 ];

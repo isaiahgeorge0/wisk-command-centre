@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import {
   getCertificateAlertsByProperty,
   getCertificatesByProperty,
+  getContractors,
   getDocumentsByProperty,
   getFinancialSummary,
   getInsuranceByProperty,
@@ -41,7 +42,7 @@ export default async function PropertyDetailPage({
   const { tab } = await searchParams;
   const { userId } = await getScopedSupabase();
 
-  const [property, tenants, maintenanceTickets, rentPayments, certificates, documents, certificateAlerts, mortgages, insurance, monthlyFinancialSummary, annualFinancialSummary] =
+  const [property, tenants, maintenanceTickets, rentPayments, certificates, documents, certificateAlerts, mortgages, insurance, monthlyFinancialSummary, annualFinancialSummary, contractors] =
     await Promise.all([
       getProperty(id),
       getTenantsByProperty(id),
@@ -54,6 +55,7 @@ export default async function PropertyDetailPage({
       getInsuranceByProperty(id),
       getFinancialSummary(id, "monthly"),
       getFinancialSummary(id, "annual"),
+      getContractors(),
     ]);
 
   if (!property) {
@@ -79,6 +81,7 @@ export default async function PropertyDetailPage({
       monthlyFinancialSummary={monthlyFinancialSummary}
       annualFinancialSummary={annualFinancialSummary}
       landlordUserId={userId}
+      contractors={contractors}
       initialTab={initialTab}
     />
   );

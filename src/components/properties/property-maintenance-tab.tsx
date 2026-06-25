@@ -8,6 +8,7 @@ import {
   deleteMaintenanceTicket,
   updateMaintenanceTicket,
 } from "@/app/(dashboard)/properties/actions";
+import { MaintenanceJobSheetSection } from "@/components/properties/maintenance-job-sheet-section";
 import { MaintenancePriorityBadge } from "@/components/properties/maintenance-priority-badge";
 import { MaintenanceTenantReportedBadge } from "@/components/properties/maintenance-tenant-reported-badge";
 import { MaintenanceTicketFormDialog } from "@/components/properties/maintenance-ticket-form-dialog";
@@ -42,6 +43,7 @@ import {
   formatPropertyDate,
 } from "@/lib/properties/format";
 import type {
+  Contractor,
   MaintenanceTicket,
   MaintenanceTicketFormInput,
   Tenant,
@@ -52,12 +54,14 @@ type PropertyMaintenanceTabProps = {
   propertyId: string;
   tickets: MaintenanceTicket[];
   tenants: Tenant[];
+  contractors: Contractor[];
 };
 
 export function PropertyMaintenanceTab({
   propertyId,
   tickets,
   tenants,
+  contractors,
 }: PropertyMaintenanceTabProps) {
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
@@ -189,6 +193,11 @@ export function PropertyMaintenanceTab({
                         </Button>
                       </div>
                     </div>
+                    <MaintenanceJobSheetSection
+                      ticketId={ticket.id}
+                      propertyId={propertyId}
+                      contractors={contractors}
+                    />
                   </div>
                 ))}
               </div>

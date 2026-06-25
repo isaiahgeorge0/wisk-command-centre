@@ -588,3 +588,92 @@ export async function sendRentReminderEmail({
 
   return true;
 }
+
+export async function sendJobSheetEmail({
+  to,
+  contractorName,
+  jobTitle,
+  propertyAddress,
+  jobSheetUrl,
+}: {
+  to: string;
+  contractorName: string;
+  jobTitle: string;
+  propertyAddress: string;
+  jobSheetUrl: string;
+}): Promise<boolean> {
+  const client = getResend();
+  if (!client) return false;
+
+  const { error } = await client.resend.emails.send({
+    from: client.from,
+    to,
+    subject: `Job sheet: ${jobTitle} — ${propertyAddress}`,
+    html: `
+      <p>Hi ${contractorName},</p>
+      <p>You have been assigned a maintenance job at ${propertyAddress}.</p>
+      <p><strong>Job:</strong> ${jobTitle}</p>
+      <p>Please view your job sheet and provide updates using the link below:</p>
+      <p><a href="${jobSheetUrl}">View job sheet</a></p>
+      <p>You can use this link to:</p>
+      <ul>
+        <li>View full job details</li>
+        <li>Request access from the tenant</li>
+        <li>Add updates and notes</li>
+        <li>Upload quotes and invoices (coming soon)</li>
+      </ul>
+      <p>Thanks</p>
+    `,
+  });
+
+  if (error) {
+    console.error("sendJobSheetEmail:", error);
+    return false;
+  }
+
+  return true;
+}
+
+export async function sendContractorAccessRequestEmail({
+  to,
+  tenantName,
+  contractorName,
+  jobTitle,
+  requestedDate,
+  requestedTime,
+  portalUrl,
+}: {
+  to: string;
+  tenantName: string;
+  contractorName: string;
+  jobTitle: string;
+  requestedDate: string;
+  requestedTime: string | null;
+  portalUrl: string;
+}): Promise<boolean> {
+  const client = getResend();
+  if (!client) return false;
+
+  const timeStr = requestedTime ? ` at ${requestedTime}` : "";
+
+  const { error } = await client.resend.emails.send({
+    from: client.from,
+    to,
+    subject: `Access request from contractor — ${jobTitle}`,
+    html: `
+      <p>Hi ${tenantName},</p>
+      <p>${contractorName} has requested access to your property for maintenance work.</p>
+      <p><strong>Job:</strong> ${jobTitle}</p>
+      <p><strong>Requested date:</strong> ${requestedDate}${timeStr}</p>
+      <p>Please log in to your portal to approve or decline this request:</p>
+      <p><a href="${portalUrl}">View request in portal</a></p>
+    `,
+  });
+
+  if (error) {
+    console.error("sendContractorAccessRequestEmail:", error);
+    return false;
+  }
+
+  return true;
+}

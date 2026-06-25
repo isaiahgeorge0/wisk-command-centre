@@ -6,17 +6,22 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { MaintenanceTriage } from "@/components/portal/maintenance-triage";
+import { PortalAccessRequests } from "@/components/portal/portal-access-requests";
 import { PortalPage } from "@/components/portal/portal-page";
 import { formatPropertyDate } from "@/lib/properties/format";
 import {
   getMaintenancePriorityDisplayName,
   getMaintenanceStatusDisplayName,
 } from "@/lib/properties/display-names";
-import type { MaintenanceTicket } from "@/lib/properties/types";
+import type {
+  ContractorAccessRequestWithDetails,
+  MaintenanceTicket,
+} from "@/lib/properties/types";
 import { cn } from "@/lib/utils";
 
 type PortalMaintenanceProps = {
   tickets: MaintenanceTicket[];
+  accessRequests: ContractorAccessRequestWithDetails[];
 };
 
 function statusBadgeClass(status: MaintenanceTicket["status"]): string {
@@ -45,7 +50,10 @@ function statusDotClass(status: MaintenanceTicket["status"]): string {
   }
 }
 
-export function PortalMaintenance({ tickets }: PortalMaintenanceProps) {
+export function PortalMaintenance({
+  tickets,
+  accessRequests,
+}: PortalMaintenanceProps) {
   const searchParams = useSearchParams();
   const [triageOpen, setTriageOpen] = useState(false);
   const reduced = useReducedMotion() ?? false;
@@ -72,6 +80,8 @@ export function PortalMaintenance({ tickets }: PortalMaintenanceProps) {
             New
           </button>
         </div>
+
+        <PortalAccessRequests requests={accessRequests} />
 
         {tickets.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-[var(--portal-amber)]/30 bg-[var(--portal-card)] px-6 py-14 text-center shadow-[var(--portal-shadow)]">

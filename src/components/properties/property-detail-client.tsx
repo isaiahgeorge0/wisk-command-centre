@@ -39,6 +39,7 @@ import {
 } from "@/lib/properties/format";
 import type {
   CertificateAlertLog,
+  Contractor,
   MaintenanceTicket,
   PropertyCertificate,
   PropertyDocument,
@@ -83,6 +84,7 @@ type PropertyDetailClientProps = {
   monthlyFinancialSummary: FinancialSummary | null;
   annualFinancialSummary: FinancialSummary | null;
   landlordUserId: string;
+  contractors: Contractor[];
   initialTab?: PropertyDetailTab;
 };
 
@@ -99,6 +101,7 @@ export function PropertyDetailClient({
   monthlyFinancialSummary,
   annualFinancialSummary,
   landlordUserId,
+  contractors,
   initialTab = "overview",
 }: PropertyDetailClientProps) {
   const router = useRouter();
@@ -189,6 +192,7 @@ export function PropertyDetailClient({
           propertyId={property.id}
           tickets={maintenanceTickets}
           tenants={tenants}
+          contractors={contractors}
         />
       </div>
       <div className={activeTab === "finances" ? "block" : "hidden"}>

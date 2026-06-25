@@ -16,6 +16,7 @@ import {
 import { getTenantFullName } from "@/lib/properties/tenant-form";
 import type {
   ActionResult,
+  ContractorAccessRequestWithDetails,
   MaintenanceCategory,
   MaintenancePriority,
   MaintenanceTicket,
@@ -393,4 +394,48 @@ export async function updateTenantLastSeen(): Promise<void> {
     .from("tenants")
     .update({ last_seen_at: new Date().toISOString() })
     .eq("id", tenant.id);
+}
+
+export async function getContractorAccessRequests(): Promise<
+  ContractorAccessRequestWithDetails[]
+> {
+  const { tenant } = await requireTenantContext();
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("contractor_access_requests")
+    .select(`*, job_sheets(contractors(name), maintenance_tickets(title))`)
+    .eq("tenant_id", tenant.id)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("getContractorAccessRequests:", error);
+    return [];
+  }
+  return (data ?? []) as ContractorAccessRequestWithDetails[];
+}
+
+export async function respondToAccessRequest(
+  requestId: string,
+  response: "approved" | "declined"
+): Promise<ActionResult> {
+  const { tenant } = await requireTenantContext();
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("contractor_access_requests")
+    .update({
+      status: response,
+      tenant_response_at: new Date().toISOString(),
+    })
+    .eq("id", requestId)
+    .eq("tenant_id", tenant.id);
+
+  if (error) {
+    console.error("respondToAccessRequest:", error);
+    return { success: false, error: "Could not save response." };
+  }
+
+  revalidatePath("/portal/maintenance");
+  return { success: true };
 }
