@@ -41,7 +41,7 @@ create table public.job_sheets (
   property_id uuid references public.properties(id) on delete cascade not null,
   ticket_id uuid references public.maintenance_tickets(id) on delete cascade not null,
   contractor_id uuid references public.contractors(id) on delete set null,
-  token text not null unique default encode(gen_random_bytes(32), 'hex'),
+  token text not null unique default replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', ''),
   status text not null default 'sent',
   contractor_notes text,
   planned_visit_date date,
@@ -66,19 +66,6 @@ create policy "Users can delete own job sheets"
 create policy "Public can view job sheet by token"
   on public.job_sheets for select
   using (token is not null);
-
-create policy "Tenants can view job sheets for their access requests"
-  on public.job_sheets for select
-  using (
-    exists (
-      select 1
-      from public.contractor_access_requests car
-      join public.tenants t on t.id = car.tenant_id
-      where car.job_sheet_id = job_sheets.id
-        and t.portal_user_id = auth.uid()
-        and t.portal_enabled = true
-    )
-  );
 
 -- Job sheet updates (contractor activity log)
 create table public.job_sheet_updates (
@@ -167,6 +154,19 @@ create policy "Tenants can update own access requests"
       select id from public.tenants
       where portal_user_id = auth.uid()
         and portal_enabled = true
+    )
+  );
+
+create policy "Tenants can view job sheets for their access requests"
+  on public.job_sheets for select
+  using (
+    exists (
+      select 1
+      from public.contractor_access_requests car
+      join public.tenants t on t.id = car.tenant_id
+      where car.job_sheet_id = job_sheets.id
+        and t.portal_user_id = auth.uid()
+        and t.portal_enabled = true
     )
   );
 

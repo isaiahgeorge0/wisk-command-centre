@@ -2644,7 +2644,7 @@ export async function createJobSheet(
     .select()
     .single();
   if (error) {
-    console.error("createJobSheet:", error);
+    console.error("createJobSheet:", JSON.stringify(error));
     return { success: false, error: "Could not create job sheet." };
   }
   revalidatePath(`/properties/${parsed.data.propertyId}`);
