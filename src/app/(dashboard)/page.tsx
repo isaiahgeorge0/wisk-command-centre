@@ -6,7 +6,11 @@ import { getProjects } from "@/app/(dashboard)/projects/actions";
 import { getTasks } from "@/app/(dashboard)/tasks/actions";
 import {
   getAllRentPayments,
+  getExpiringCertificates,
+  getMaintenanceTickets,
   getProperties,
+  getRentDueFlags,
+  getTotalUnreadMessageCount,
 } from "@/app/(dashboard)/properties/actions";
 import { OverviewPageClient } from "@/components/overview/overview-page-client";
 import { resolveDisplayName } from "@/lib/auth/resolve-display-name";
@@ -51,11 +55,33 @@ export default async function OverviewPage() {
     createAdminClient()
   );
 
-  const properties = hasProperties ? await getProperties() : [];
-  const payments = hasProperties ? await getAllRentPayments() : [];
-  const portfolioStats = hasProperties
-    ? buildPortfolioStats(properties, payments)
-    : null;
+  let portfolioStats = null;
+  let rentDueFlags: Awaited<ReturnType<typeof getRentDueFlags>> = [];
+  let openMaintenanceTickets: Awaited<
+    ReturnType<typeof getMaintenanceTickets>
+  > = [];
+  let unreadMessageCount = 0;
+  let expiringCertificates: Awaited<
+    ReturnType<typeof getExpiringCertificates>
+  > = [];
+
+  if (hasProperties) {
+    const [properties, payments, flags, tickets, unread, certificates] =
+      await Promise.all([
+        getProperties(),
+        getAllRentPayments(),
+        getRentDueFlags(),
+        getMaintenanceTickets(),
+        getTotalUnreadMessageCount(),
+        getExpiringCertificates(90),
+      ]);
+
+    portfolioStats = buildPortfolioStats(properties, payments);
+    rentDueFlags = flags;
+    openMaintenanceTickets = tickets.filter((t) => t.status !== "resolved");
+    unreadMessageCount = unread;
+    expiringCertificates = certificates;
+  }
 
   const suggestions = canAccessWinston
     ? await buildSuggestions(userId, supabase)
@@ -84,6 +110,10 @@ export default async function OverviewPage() {
       suggestions={suggestions}
       hasProperties={hasProperties}
       portfolioStats={portfolioStats}
+      rentDueFlags={rentDueFlags}
+      openMaintenanceTickets={openMaintenanceTickets}
+      unreadMessageCount={unreadMessageCount}
+      expiringCertificates={expiringCertificates}
     />
   );
 }

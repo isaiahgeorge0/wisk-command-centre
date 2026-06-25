@@ -706,6 +706,50 @@ export async function getAllMaintenance(): Promise<MaintenanceTicketWithProperty
   });
 }
 
+export async function getMaintenanceTickets(
+  statusFilter?: string[]
+): Promise<MaintenanceTicket[]> {
+  const { supabase, userId } = await getScopedSupabase();
+  let query = supabase
+    .from("maintenance_tickets")
+    .select("*, properties(name)")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (statusFilter) {
+    query = query.in("status", statusFilter);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    console.error("getMaintenanceTickets:", error);
+    return [];
+  }
+  return (data ?? []) as MaintenanceTicket[];
+}
+
+export async function getExpiringCertificates(
+  daysAhead: number
+): Promise<PropertyCertificate[]> {
+  const { supabase, userId } = await getScopedSupabase();
+  const futureDate = new Date();
+  futureDate.setDate(futureDate.getDate() + daysAhead);
+
+  const { data, error } = await supabase
+    .from("property_certificates")
+    .select("*, properties(name)")
+    .eq("user_id", userId)
+    .lte("expiry_date", futureDate.toISOString().slice(0, 10))
+    .gte("expiry_date", new Date().toISOString().slice(0, 10))
+    .order("expiry_date", { ascending: true });
+
+  if (error) {
+    console.error("getExpiringCertificates:", error);
+    return [];
+  }
+  return (data ?? []) as PropertyCertificate[];
+}
+
 export async function createMaintenanceTicket(
   input: MaintenanceTicketFormInput
 ): Promise<ActionResult<MaintenanceTicket>> {

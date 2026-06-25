@@ -18,7 +18,12 @@ import { OverviewWeekStrip } from "@/components/overview/overview-week-strip";
 import { ThisWeekSection } from "@/components/overview/this-week-section";
 import { WinstonSuggestsSection } from "@/components/overview/winston-suggests-section";
 import type { OverviewSnapshot } from "@/lib/overview/selectors";
-import type { PortfolioStats } from "@/lib/properties/types";
+import type {
+  MaintenanceTicket,
+  PortfolioStats,
+  PropertyCertificate,
+  RentDueFlag,
+} from "@/lib/properties/types";
 import type { SmartSuggestion } from "@/lib/suggestions/types";
 
 type OverviewPageClientProps = {
@@ -26,6 +31,10 @@ type OverviewPageClientProps = {
   suggestions: SmartSuggestion[];
   hasProperties: boolean;
   portfolioStats: PortfolioStats | null;
+  rentDueFlags: RentDueFlag[];
+  openMaintenanceTickets: MaintenanceTicket[];
+  unreadMessageCount: number;
+  expiringCertificates: PropertyCertificate[];
 };
 
 export function OverviewPageClient({
@@ -33,6 +42,10 @@ export function OverviewPageClient({
   suggestions,
   hasProperties,
   portfolioStats,
+  rentDueFlags,
+  openMaintenanceTickets,
+  unreadMessageCount,
+  expiringCertificates,
 }: OverviewPageClientProps) {
   const [view, setView] = useState<OverviewView>("overview");
   const { setNavMode } = useNavMode();
@@ -60,7 +73,13 @@ export function OverviewPageClient({
       {hasProperties && view === "properties" ? (
         <>
           <OverviewHeader header={snapshot.header} />
-          <PropertiesOverviewSummary stats={portfolioStats!} />
+          <PropertiesOverviewSummary
+            stats={portfolioStats!}
+            rentDueFlags={rentDueFlags}
+            openMaintenanceTickets={openMaintenanceTickets}
+            unreadMessageCount={unreadMessageCount}
+            expiringCertificates={expiringCertificates}
+          />
         </>
       ) : (
         <>
