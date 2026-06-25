@@ -102,7 +102,7 @@ export function MessageThread({
   return (
     <div className={cn("flex min-h-0 flex-1 flex-col", className)}>
       {header ? (
-        <div className="sticky top-0 z-10 shrink-0 border-b border-border/60 bg-card/95 px-4 py-3 backdrop-blur-sm">
+        <div className="shrink-0 border-b border-border/60 bg-card/95 px-4 py-3 backdrop-blur-sm">
           {header}
         </div>
       ) : null}

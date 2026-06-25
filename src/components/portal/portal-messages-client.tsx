@@ -127,7 +127,7 @@ export function PortalMessagesClient({
 
   return (
     <PortalPage>
-      <div className="flex min-h-[calc(100dvh-8rem)] flex-col overflow-hidden rounded-2xl border border-[var(--portal-border)] bg-[var(--portal-card)] shadow-[var(--portal-shadow)]">
+      <div className="flex h-[calc(100dvh-12rem)] flex-col overflow-hidden rounded-2xl border border-[var(--portal-border)] bg-[var(--portal-card)] shadow-[var(--portal-shadow)]">
         <MessageThread
           messages={messages}
           currentSenderId={senderId}
