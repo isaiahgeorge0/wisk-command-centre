@@ -68,6 +68,17 @@ export function PropertyMessagesTab({
     }
   }, [selectedTenantId, loadThread]);
 
+  useEffect(() => {
+    if (!selectedTenantId) return;
+
+    const interval = setInterval(async () => {
+      const loaded = await getMessages(selectedTenantId);
+      setMessages(loaded);
+    }, 15000);
+
+    return () => clearInterval(interval);
+  }, [selectedTenantId]);
+
   const handleRealtimeInsert = useCallback((message: TenantMessage) => {
     if (message.property_id !== propertyId) return;
 

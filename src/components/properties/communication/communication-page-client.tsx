@@ -76,6 +76,26 @@ export function CommunicationPageClient({
     selectedTenantRef.current = selectedTenantId;
   }, [selectedTenantId]);
 
+  useEffect(() => {
+    if (!selectedTenantId) return;
+
+    const interval = setInterval(async () => {
+      const loaded = await getMessages(selectedTenantId);
+      setMessages(loaded);
+    }, 15000);
+
+    return () => clearInterval(interval);
+  }, [selectedTenantId]);
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const updated = await getConversations();
+      setConversations(updated);
+    }, 15000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const { setTyping } = useTypingPresence({
     channelName: selectedTenantId
       ? `typing-${selectedTenantId}`
