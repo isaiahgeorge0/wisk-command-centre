@@ -24,6 +24,7 @@ const PUBLIC_PATHS = [
   "/api/portal/setup",
   "/api/portal/winston-triage",
   "/monitoring",
+  "/contractor",
 ];
 
 const PORTAL_PUBLIC_PATHS = ["/portal/login", "/portal/setup"];
