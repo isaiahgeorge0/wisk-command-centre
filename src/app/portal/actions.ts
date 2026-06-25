@@ -24,6 +24,7 @@ import type {
 } from "@/lib/properties/types";
 import { requireTenantContext } from "@/lib/portal/get-tenant-context";
 import type { PortalTheme } from "@/lib/portal/types";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 const submitMaintenanceSchema = z.object({
@@ -79,9 +80,38 @@ export async function submitPortalMaintenanceRequest(
     return { success: false, error: error.message };
   }
 
-  const admin = await import("@/lib/supabase/admin").then((m) =>
-    m.createAdminClient()
-  );
+  const admin = createAdminClient();
+
+  const taskTitle = `Maintenance: ${parsed.data.title} — ${formatPropertyAddress(property)}`;
+  const winstonResolved = parsed.data.winstonAttempted === true;
+  const isEmergency = parsed.data.priority === "emergency";
+  const taskNotes = [
+    winstonResolved
+      ? "Winston attempted to resolve this issue with the tenant."
+      : "Tenant submitted this without Winston triage.",
+    `Priority: ${parsed.data.priority}`,
+    `Category: ${parsed.data.category}`,
+    `Tenant: ${getTenantFullName(tenant)}`,
+    ``,
+    `View ticket: ${portalAppUrl(`/properties/${property.id}?tab=maintenance`)}`,
+  ].join("\n");
+
+  const { error: taskError } = await admin.from("tasks").insert({
+    user_id: tenant.user_id,
+    title: taskTitle,
+    completed: false,
+    priority: isEmergency
+      ? "high"
+      : parsed.data.priority === "high"
+        ? "high"
+        : "medium",
+    raw_content: taskNotes,
+    due_date: null,
+  });
+
+  if (taskError) {
+    console.error("submitPortalMaintenanceRequest - create task:", taskError);
+  }
 
   const [{ data: landlordUser }, { data: prefs }] = await Promise.all([
     admin.from("users").select("email, name").eq("id", tenant.user_id).maybeSingle(),
@@ -121,6 +151,7 @@ export async function submitPortalMaintenanceRequest(
 
   revalidatePath("/portal");
   revalidatePath("/portal/maintenance");
+  revalidatePath("/tasks");
   return { success: true, data: data as MaintenanceTicket };
 }
 
