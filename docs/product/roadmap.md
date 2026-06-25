@@ -1,6 +1,6 @@
 # WISK — Feature Inventory
 
-Last updated: June 2026
+Last updated: June 25, 2026
 
 This document is a complete record of every 
 feature in WISK. It is the source of truth 
@@ -93,6 +93,11 @@ Status definitions:
   task progress
 - Recent leads section
 - Mobile weekly calendar strip
+- **Properties tab** (users with Properties package):
+  full command centre view — portfolio summary
+  stats, needs attention, next 30 days timeline,
+  open maintenance with job sheet detail,
+  unread messages
 
 ### Projects
 - Status: Live
@@ -295,16 +300,19 @@ Status definitions:
 
 ### Properties Package
 - Status: Live (in progress — core delivered,
-  some sections still expanding)
+  Properties Pro features planned)
 - Gated by `properties` package in
   `user_subscriptions` (`hasPackageAccess`)
 - Teaser page for users without subscription
 - Dedicated sidebar layout at `/properties/*`
   (amber accent)
 - **Dashboard** (`/properties/dashboard`):
-  portfolio stats, Winston insight card,
-  rent due flags with mark-as-paid,
-  property list overview
+  command centre — portfolio stats, Winston
+  insight card, rent due flags with mark-as-paid,
+  pending contractor access requests, open
+  maintenance with job sheet detail (contractor,
+  visit date, latest update), unread messages,
+  expiring certificates
 - **Properties** (`/properties/list`):
   property cards with status, CRUD,
   per-property detail page with tabs
@@ -315,10 +323,21 @@ Status definitions:
   management; rent reminder settings
   (due day 1–28, email reminder toggle)
 - **Maintenance** (`/properties/maintenance`):
-  global ticket list; workflow
-  New → In progress → Resolved;
+  global ticket list with job sheet detail;
+  workflow New → In progress → Resolved;
   priority and category; tenant-reported
-  tickets from portal
+  tickets from portal; auto-creates core
+  Tasks on tenant portal submission
+- **Contractors** (`/properties/contractors`):
+  contractor address book; CRUD
+- **Contractor portal** (`/contractor/[token]`):
+  public token-based access (no auth);
+  job sheet view, status updates, access
+  requests; tenant approve/decline with
+  availability notes (migration 059)
+- **Job sheets:** create from maintenance
+  ticket, assign contractor, send email
+  link; landlord activity on ticket detail
 - **Finances** (`/properties/finances`):
   rent payment tracking; portfolio and
   per-property financial summaries;
@@ -328,8 +347,8 @@ Status definitions:
   document list per property; share with
   tenant toggle
 - **Communication** (`/properties/communication`):
-  placeholder — tenant messaging UI
-  planned (messages table exists)
+  landlord–tenant messaging hub;
+  polling fallback (15s) on free tier
 - **Winston** (`/properties/winston`):
   property portfolio insights;
   rental/sale valuations via Claude
@@ -920,7 +939,8 @@ Prerequisites status:
 
 **Next build:** Stripe checkout flow
 (create-checkout API route, customer portal,
-upgrade page with real checkout buttons)
+upgrade page with real checkout buttons) —
+**IMMEDIATE priority**
 
 Stripe billing goes live as part of this phase.
 
@@ -966,8 +986,9 @@ Build order:
 Target: small landlords managing 1-10 properties
 
 **Status: Live (in progress)** — core landlord
-workflows delivered June 2026. Communication hub
-UI and some AI integrations remain planned.
+workflows delivered June 2026. Stripe checkout
+and Properties Pro tier are the immediate next
+priorities.
 
 **Delivered (live in this repository):**
 
@@ -977,15 +998,19 @@ UI and some AI integrations remain planned.
 - Tenant records per property with portal invite
 - Maintenance ticket workflow with priorities
   and categories
+- Maintenance → Tasks automation on tenant
+  portal submission
 - Rent payment records and status tracking
 - Property certificates with expiry dates
 - Property documents with tenant sharing
 - Certificate alert emails and alert log
   (migration `047_certificate_alerts.sql`)
 - Tenant portal: auth, setup, maintenance,
-  documents, messaging
+  documents, messaging, access request
+  approve/decline with availability notes
   (migrations `050_tenant_portal.sql`,
-  `051_tenant_portal_theme.sql`)
+  `051_tenant_portal_theme.sql`,
+  `059_access_request_tenant_note.sql`)
 - Portal light/dark theme per tenant
 - Mortgage and insurance tracking with renewal
   alert emails (migration `052_property_finances_extended.sql`)
@@ -998,8 +1023,24 @@ UI and some AI integrations remain planned.
 - Rent due day tracking, auto-created pending
   payments, dashboard flags, landlord reminder
   emails (migration `054_rent_due_tracking.sql`)
-- Properties dashboard with Winston insight
-  card and rent due section
+- Properties dashboard command centre: needs
+  attention, rent due, contractor access
+  requests, rich maintenance cards, messages,
+  certificates
+- Overview Properties tab redesign: stat cards,
+  needs attention, 30-day timeline, open
+  maintenance with job sheet detail
+- Communication hub UI at
+  `/properties/communication`
+- Contractor address book and contractor portal
+  (job sheets, access requests)
+  (migrations `057_contractor_portal.sql`,
+  `058_contractor_rls_fix.sql`)
+- Codebase audit and security fixes: RLS
+  hardening on contractor tables, Zod
+  validation on server actions, URL helpers
+  (`siteUrl`, `portalUrl`, `contractorUrl`),
+  error boundaries on portal routes
 - Daily property alerts cron (certificates,
   mortgages, insurance, rent reminders)
 - Package gating and upgrade teaser page
@@ -1012,18 +1053,30 @@ UI and some AI integrations remain planned.
 - Winston triage API in tenant portal for
   common maintenance issues
 
-**Still planned / in progress:**
-- Communication hub UI at
-  `/properties/communication` (data model exists)
+**In progress / immediate priority:**
+- **Stripe checkout flow** — create-checkout
+  API route, customer portal, upgrade page
+  with real checkout buttons (IMMEDIATE)
+- **Supabase Pro upgrade** — unlocks realtime
+  messaging, document file storage, higher
+  realtime capacity
+- **Properties Pro package** (£32/mo) —
+  premium tier on top of base Properties
+
+**Still planned:**
 - Rental income linked to core WISK Goals
-- Contractor contacts list for maintenance
-  assignment
-- Automatic maintenance task creation in
-  core Tasks from portal escalation
-- Yield calculations and tenant reliability
-  scores in Winston digest
 - Full document storage migration to
   Supabase Storage (requires Pro upgrade)
+- Realtime messaging fix (requires Supabase Pro)
+
+**Properties Pro features (planned):**
+- SA105 tax summary
+- Legal templates (Section 8 notices —
+  Section 21 abolished May 2026)
+- Winston Pro properties assistant
+- Yield analytics
+- Tenant reliability scoring
+- Financial reports
 
 **Tenant portal (delivered):**
 - Separate routes at `/portal/*` — no full
@@ -1046,7 +1099,9 @@ UI and some AI integrations remain planned.
 - Winston insights and valuations
 
 **Pricing:**
-- £9-12/mo as part of vertical packages
+- Base Properties: £9–12/mo as part of vertical packages
+- **Properties Pro:** £32/mo (planned — SA105, legal
+  templates, Winston Pro assistant, yield analytics)
 - Included in WISK Max bundle
 
 **Technical notes:**
@@ -1315,8 +1370,8 @@ WISK uses a deliberate "coming soon" approach:
   (chat + digest) but rate limit enforces
   chat tokens only — minor cosmetic discrepancy,
   acceptable for v1
-- Stripe checkout flow not yet built
-  (next prompt)
+- **Stripe checkout flow not yet built**
+  (IMMEDIATE priority — next build)
 - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` needs
   adding to Vercel
 - Google OAuth not yet built into app
@@ -1333,13 +1388,14 @@ WISK uses a deliberate "coming soon" approach:
 - Formal mobile QA pass still outstanding
 - Social media API integrations not
   yet implemented (Phase 3.3)
-- Properties Communication hub UI not
-  yet built (`/properties/communication`
-  is placeholder; `tenant_messages` exists)
 - Rental income → Goals linking not yet built
 - Property document file storage pending
   Supabase Pro upgrade
-- Apply migrations `046`–`054` on production
+- Realtime messaging on free tier uses
+  15s polling fallback (`realtime_rls`
+  process times out on `postgres_changes`)
+  — fix requires Supabase Pro upgrade
+- Apply migrations `046`–`059` on production
   Supabase if not yet run
 
 ---
@@ -1390,3 +1446,8 @@ WISK uses a deliberate "coming soon" approach:
 - property_valuations (migration 053)
 - property_comparables (migration 053)
 - rent_reminder_log (migration 054)
+- contractors (migration 057)
+- job_sheets (migration 057)
+- job_sheet_updates (migration 057)
+- contractor_access_requests (migration 057;
+  `tenant_note` added migration 059)

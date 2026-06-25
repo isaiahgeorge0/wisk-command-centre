@@ -43,6 +43,10 @@ For a full feature inventory, see `docs/product/roadmap.md`.
 | `tenants` | Tenancy records; portal and rent due fields (046, 050–051, 054) |
 | `rent_payments` | Rent payment tracking (migration 046) |
 | `property_valuations` | Winston market valuations (migration 053) |
+| `contractors` | Contractor address book (migration 057) |
+| `job_sheets` | Maintenance job sheets with portal token (migration 057) |
+| `job_sheet_updates` | Contractor activity log (migration 057) |
+| `contractor_access_requests` | Tenant access approval flow (057, 059) |
 
 ---
 
@@ -342,10 +346,13 @@ public.users
 | `052_property_finances_extended.sql` | `property_mortgages`, `property_insurance`, alert log tables; post-expiry certificate alert types |
 | `053_property_valuation.sql` | `property_valuations`, `property_comparables` |
 | `054_rent_due_tracking.sql` | `rent_due_day`, `rent_reminder_days`, `rent_reminder_enabled` on `tenants`; `rent_reminder_log` |
+| `057_contractor_portal.sql` | `contractors`, `job_sheets`, `job_sheet_updates`, `contractor_access_requests` |
+| `058_contractor_rls_fix.sql` | Drops overly permissive public RLS policies on contractor tables |
+| `059_access_request_tenant_note.sql` | `tenant_note` on `contractor_access_requests` |
 
 ---
 
-## Properties package tables (migrations 046–054)
+## Properties package tables (migrations 046–059)
 
 Gated by `user_subscriptions.package = 'properties'` (or `max`). All tables below use RLS scoped to `auth.uid() = user_id` unless noted.
 
@@ -450,6 +457,10 @@ public.users
             │       ├── rent_reminder_log (1:many per month)
             │       └── tenant_messages (1:many)
             ├── maintenance_tickets (1:many)
+            │       └── job_sheets (1:many per ticket)
+            │               ├── job_sheet_updates (1:many)
+            │               └── contractor_access_requests (1:many)
+            ├── contractors (1:many, via user_id)
             ├── property_certificates (1:many)
             ├── property_documents (1:many)
             ├── property_mortgages (1:many)

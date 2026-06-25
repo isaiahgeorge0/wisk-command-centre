@@ -124,3 +124,24 @@ We work best when:
 When in doubt: do the cheaper, simpler, more honest thing. Confirm before assuming. Diagnose before fixing. Ship before polishing forever.
 
 *This is a living document. Update it whenever a new lesson is worth keeping.*
+
+---
+
+## 8. Technical learnings (WISK command centre)
+
+Hard-won notes from building the Properties package and contractor portal. Worth checking before touching Supabase realtime, migrations, or financial date logic.
+
+**Supabase realtime (free tier)**
+- `realtime_rls` process times out on `postgres_changes` subscriptions — workaround is polling (15s in communication hub); fix is Supabase Pro upgrade
+- Multiple `createClient()` calls create multiple WebSocket connections and exhaust free tier realtime capacity — use a single shared provider + event dispatch
+- RLS policies with subqueries on realtime subscriptions cause infinite recursion — keep realtime-facing SELECT policies simple (single column equality check only)
+
+**Dates and finances**
+- UTC date parsing silently excludes same-month records — always parse dates as local time for financial calculations
+
+**Contractor portal**
+- Contractor portal server actions use the admin client exclusively — no public RLS policies needed on contractor tables (migration `058` removed permissive public policies)
+
+**Migrations**
+- `pgcrypto` extension required for `gen_random_bytes()` — always add `create extension if not exists pgcrypto` at the top of migrations that use it, or use `gen_random_uuid()` concatenation as an alternative
+- Migration ordering matters — policies referencing tables must come after those tables are created

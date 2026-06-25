@@ -579,7 +579,7 @@ Vertical package for small landlords. Gated via
 - `POST /api/portal/winston-triage` —
   tenant maintenance triage
 
-**Data model:** migrations `046`–`054`. See
+**Data model:** migrations `046`–`059`. See
 `docs/architecture/database-schema.md` for table
 reference and `docs/features/properties.md` for
 feature spec.
@@ -587,7 +587,9 @@ feature spec.
 **Email:** certificate, mortgage, insurance, and
 rent reminder alerts via Resend (`lib/properties/emails.ts`).
 
-**Still planned:** communication hub UI, Goals
-linking, document file storage on Supabase Pro.
+**In progress:** Stripe checkout, Supabase Pro upgrade,
+Properties Pro tier (£32/mo). **Still planned:** Goals
+linking, document file storage on Supabase Pro, realtime
+messaging fix.
 
 ---
