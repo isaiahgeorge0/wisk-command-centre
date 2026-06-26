@@ -19,6 +19,10 @@ export function getStripePriceMap(): Record<string, WiskPackage> {
     map[process.env.STRIPE_PRICE_PROPERTIES_MONTHLY] = "properties";
   }
 
+  if (process.env.STRIPE_PRICE_PROPERTIES_PRO_MONTHLY) {
+    map[process.env.STRIPE_PRICE_PROPERTIES_PRO_MONTHLY] = "properties_pro";
+  }
+
   return map;
 }
 

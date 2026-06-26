@@ -4,6 +4,7 @@ export type WiskPackage =
   | "social"
   | "commerce"
   | "properties"
+  | "properties_pro"
   | "max";
 
 export type SubscriptionStatus =
@@ -24,4 +25,10 @@ export type UserSubscriptionRow = {
   updated_at: string;
 };
 
-export type BillingPlan = "free" | "ai" | "ai_pro" | "max";
+export type BillingPlan =
+  | "free"
+  | "ai"
+  | "ai_pro"
+  | "properties"
+  | "properties_pro"
+  | "max";

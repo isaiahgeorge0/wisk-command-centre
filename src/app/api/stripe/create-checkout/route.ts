@@ -29,6 +29,7 @@ export async function POST(request: Request) {
     const aiPriceId = process.env.STRIPE_PRICE_AI_MONTHLY;
     const aiProPriceId = process.env.STRIPE_PRICE_AI_PRO_MONTHLY;
     const propertiesPriceId = process.env.STRIPE_PRICE_PROPERTIES_MONTHLY;
+    const propertiesProPriceId = process.env.STRIPE_PRICE_PROPERTIES_PRO_MONTHLY;
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
     if (!aiPriceId || !aiProPriceId || !siteUrl) {
@@ -63,10 +64,18 @@ export async function POST(request: Request) {
       );
     }
 
+    if (priceId === propertiesProPriceId && !propertiesProPriceId) {
+      return NextResponse.json(
+        { error: "Properties Pro billing not configured" },
+        { status: 500 }
+      );
+    }
+
     if (
       priceId !== aiPriceId &&
       priceId !== aiProPriceId &&
-      priceId !== propertiesPriceId
+      priceId !== propertiesPriceId &&
+      priceId !== propertiesProPriceId
     ) {
       return NextResponse.json({ error: "Invalid price ID" }, { status: 400 });
     }
@@ -74,7 +83,23 @@ export async function POST(request: Request) {
     // ── Duplicate-subscription guard ────────────────────────────────────────────
     const admin = createAdminClient();
 
-    if (priceId === propertiesPriceId) {
+    if (priceId === propertiesProPriceId) {
+      const { data: existingPropertiesPro } = await admin
+        .from("user_subscriptions")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("package", "properties_pro")
+        .in("status", ["active", "trialing"])
+        .limit(1)
+        .maybeSingle();
+
+      if (existingPropertiesPro) {
+        return NextResponse.json(
+          { error: "Already subscribed" },
+          { status: 409 }
+        );
+      }
+    } else if (priceId === propertiesPriceId) {
       const { data: existingProperties } = await admin
         .from("user_subscriptions")
         .select("id")

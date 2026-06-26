@@ -45,6 +45,15 @@ const PACKAGE_UNLOCKS: Partial<Record<WiskPackage, string[]>> = {
     "Document storage",
     "Winston property insights",
   ],
+  properties_pro: [
+    "Everything in WISK Properties",
+    "SA105 tax summary",
+    "Legal notice templates (Section 8)",
+    "Winston Pro property insights",
+    "Yield analytics",
+    "Tenant reliability scoring",
+    "Financial reports",
+  ],
 };
 
 const PENDING_UNLOCKS = [
@@ -60,7 +69,7 @@ function getPrimaryCta(pkg: WiskPackage | null): { href: string; label: string }
   if (pkg === "ai" || pkg === "ai_pro") {
     return { href: "/ai-digest", label: "Go to Winston" };
   }
-  if (pkg === "properties") {
+  if (pkg === "properties" || pkg === "properties_pro") {
     return { href: "/properties", label: "Go to Properties" };
   }
   if (pkg) {

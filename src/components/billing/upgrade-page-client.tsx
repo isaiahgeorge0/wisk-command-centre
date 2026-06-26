@@ -19,6 +19,7 @@ type UpgradePageClientProps = {
   planLabel: string;
   currentPeriodEnd: string | null;
   hasPropertiesSubscription: boolean;
+  hasPropertiesProSubscription: boolean;
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -48,6 +49,19 @@ const AI_PRO_FEATURES = [
   "Priority support",
 ];
 
+const PROPERTIES_PRO_FEATURES = [
+  "Everything in WISK Properties",
+  "SA105 tax summary",
+  "Legal notice templates (Section 8)",
+  "Winston Pro property insights",
+  "Yield analytics",
+  "Tenant reliability scoring",
+  "Financial reports",
+];
+
+const PROPERTIES_PRO_GRADIENT =
+  "linear-gradient(135deg, #92400e 0%, #d97706 50%, #ea580c 100%)";
+
 const PROPERTIES_FEATURES = [
   "Portfolio dashboard",
   "Tenant management",
@@ -57,6 +71,30 @@ const PROPERTIES_FEATURES = [
   "Document storage",
   "Winston property insights",
 ];
+
+function UpgradeToProLink({
+  href,
+  gradient,
+}: {
+  href: string;
+  gradient: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group relative block w-full overflow-hidden rounded-xl py-3.5 text-center text-sm font-semibold text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 min-h-[48px]"
+      style={{ background: gradient }}
+    >
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -translate-x-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)] transition-transform duration-700 ease-in-out group-hover:translate-x-full"
+      />
+      <span className="relative flex items-center justify-center">
+        Upgrade to Pro
+      </span>
+    </Link>
+  );
+}
 
 // ─── Shared CTA link (for unsubscribed state) ─────────────────────────────────
 
@@ -91,12 +129,14 @@ function ManageButton({
 }: {
   onClick: () => void;
   loading: boolean;
-  accentColor: "purple" | "teal";
+  accentColor: "purple" | "teal" | "amber";
 }) {
   const styles =
     accentColor === "purple"
       ? "border-purple-500/30 bg-purple-500/8 text-purple-400 hover:bg-purple-500/15"
-      : "border-teal-500/30 bg-teal-500/8 text-teal-400 hover:bg-teal-500/15";
+      : accentColor === "teal"
+        ? "border-teal-500/30 bg-teal-500/8 text-teal-400 hover:bg-teal-500/15"
+        : "border-amber-600/30 bg-amber-600/8 text-amber-500 hover:bg-amber-600/15";
 
   return (
     <button
@@ -121,6 +161,7 @@ export function UpgradePageClient({
   planLabel,
   currentPeriodEnd,
   hasPropertiesSubscription,
+  hasPropertiesProSubscription,
 }: UpgradePageClientProps) {
   const searchParams = useSearchParams();
   const [portalLoading, setPortalLoading] = useState(false);
@@ -134,7 +175,10 @@ export function UpgradePageClient({
   }, [searchParams]);
 
   const periodEndLabel = formatPeriodEnd(currentPeriodEnd);
-  const hasActivePlan = plan !== "free";
+  const hasActivePlan =
+    plan !== "free" ||
+    hasPropertiesSubscription ||
+    hasPropertiesProSubscription;
 
   async function openPortal() {
     if (portalLoading) return;
@@ -276,82 +320,82 @@ export function UpgradePageClient({
       {/* ── Section 2: Pricing cards ──────────────────────────────────────────── */}
       <section className="mb-8" aria-label="Pricing plans">
         <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
-          {/* ── WISK AI ─────────────────────────────────────────────────────── */}
-          <motion.div
-            initial={noMotion ? false : { opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, ease: MOTION_EASE.easeOut }}
-            whileHover={{ scale: 1.01 }}
-            className="group flex flex-col overflow-hidden rounded-2xl border border-purple-500/20 bg-card/90 shadow-[0_4px_24px_-4px_rgba(168,85,247,0.12)] transition-shadow hover:border-purple-500/40 hover:shadow-[0_8px_40px_-8px_rgba(168,85,247,0.3)]"
-          >
-            {/* Accent bar */}
-            <div
-              aria-hidden
-              className="h-1 w-full shrink-0"
-              style={{
-                background:
-                  "linear-gradient(to right, #5b21b6, #a855f7, #7c3aed)",
-              }}
-            />
+          {plan !== "ai_pro" && plan !== "max" ? (
+            <motion.div
+              initial={noMotion ? false : { opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, ease: MOTION_EASE.easeOut }}
+              whileHover={{ scale: 1.01 }}
+              className="group flex flex-col overflow-hidden rounded-2xl border border-purple-500/20 bg-card/90 shadow-[0_4px_24px_-4px_rgba(168,85,247,0.12)] transition-shadow hover:border-purple-500/40 hover:shadow-[0_8px_40px_-8px_rgba(168,85,247,0.3)]"
+            >
+              <div
+                aria-hidden
+                className="h-1 w-full shrink-0"
+                style={{
+                  background:
+                    "linear-gradient(to right, #5b21b6, #a855f7, #7c3aed)",
+                }}
+              />
 
-            {/* Header */}
-            <div className="px-6 pt-6 pb-4">
-              <div className="mb-1 flex items-center gap-2">
-                <div
-                  className="flex size-8 items-center justify-center rounded-lg"
-                  style={{
-                    background: "rgba(168,85,247,0.15)",
-                    border: "1px solid rgba(168,85,247,0.25)",
-                  }}
-                >
-                  <Sparkles className="size-4 text-purple-400" aria-hidden />
+              <div className="px-6 pt-6 pb-4">
+                <div className="mb-1 flex items-center gap-2">
+                  <div
+                    className="flex size-8 items-center justify-center rounded-lg"
+                    style={{
+                      background: "rgba(168,85,247,0.15)",
+                      border: "1px solid rgba(168,85,247,0.25)",
+                    }}
+                  >
+                    <Sparkles className="size-4 text-purple-400" aria-hidden />
+                  </div>
+                  <p className="text-sm font-semibold text-purple-400">WISK AI</p>
                 </div>
-                <p className="text-sm font-semibold text-purple-400">WISK AI</p>
+                <div className="mt-3 flex items-baseline gap-1">
+                  <span className="text-4xl font-bold tracking-tight text-foreground">
+                    £9
+                  </span>
+                  <span className="text-sm text-muted-foreground">/month</span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Billed monthly. Cancel any time.
+                </p>
               </div>
-              <div className="mt-3 flex items-baseline gap-1">
-                <span className="text-4xl font-bold tracking-tight text-foreground">
-                  £9
-                </span>
-                <span className="text-sm text-muted-foreground">/month</span>
+
+              <div className="flex-1 px-6 pb-5">
+                <ul className="space-y-2.5">
+                  {AI_FEATURES.map((f) => (
+                    <li
+                      key={f}
+                      className="flex items-center gap-2.5 text-sm text-muted-foreground"
+                    >
+                      <span
+                        className="size-1.5 shrink-0 rounded-full"
+                        style={{ background: "#a855f7" }}
+                        aria-hidden
+                      />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Billed monthly. Cancel any time.
-              </p>
-            </div>
 
-            {/* Features */}
-            <div className="flex-1 px-6 pb-5">
-              <ul className="space-y-2.5">
-                {AI_FEATURES.map((f) => (
-                  <li key={f} className="flex items-center gap-2.5 text-sm text-muted-foreground">
-                    <span
-                      className="size-1.5 shrink-0 rounded-full"
-                      style={{ background: "#a855f7" }}
-                      aria-hidden
-                    />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* CTA */}
-            <div className="px-6 pb-6">
-              {hasActivePlan ? (
-                <ManageButton
-                  onClick={openPortal}
-                  loading={portalLoading}
-                  accentColor="purple"
-                />
-              ) : (
-                <GetStartedLink
-                  href="/upgrade/ai"
-                  gradient="linear-gradient(135deg, #6d28d9 0%, #a855f7 50%, #14b8a6 100%)"
-                />
-              )}
-            </div>
-          </motion.div>
+              <div className="px-6 pb-6">
+                {plan === "ai" ? (
+                  <ManageButton
+                    onClick={openPortal}
+                    loading={portalLoading}
+                    accentColor="purple"
+                  />
+                ) : (
+                  <GetStartedLink
+                    href="/upgrade/ai"
+                    gradient="linear-gradient(135deg, #6d28d9 0%, #a855f7 50%, #14b8a6 100%)"
+                  />
+                )}
+              </div>
+            </motion.div>
+          ) : null}
 
           {/* ── WISK AI Pro ─────────────────────────────────────────────────── */}
           <motion.div
@@ -432,7 +476,7 @@ export function UpgradePageClient({
 
             {/* CTA */}
             <div className="px-6 pb-6">
-              {hasActivePlan ? (
+              {plan === "ai_pro" || plan === "max" ? (
                 <ManageButton
                   onClick={openPortal}
                   loading={portalLoading}
@@ -447,7 +491,7 @@ export function UpgradePageClient({
             </div>
           </motion.div>
 
-          {!hasPropertiesSubscription ? (
+          {!hasPropertiesSubscription && !hasPropertiesProSubscription ? (
             <motion.div
               initial={noMotion ? false : { opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -518,6 +562,99 @@ export function UpgradePageClient({
                   href="/upgrade/properties"
                   gradient="linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #f97316 100%)"
                 />
+              </div>
+            </motion.div>
+          ) : null}
+
+          {hasPropertiesSubscription || hasPropertiesProSubscription ? (
+            <motion.div
+              initial={noMotion ? false : { opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{
+                duration: 0.4,
+                delay: noMotion ? 0 : 0.2,
+                ease: MOTION_EASE.easeOut,
+              }}
+              whileHover={{ scale: 1.01 }}
+              className="group relative flex flex-col overflow-hidden rounded-2xl border border-amber-600/25 bg-card/90 shadow-[0_4px_24px_-4px_rgba(217,119,6,0.14)] transition-shadow hover:border-amber-600/45 hover:shadow-[0_8px_40px_-8px_rgba(217,119,6,0.28)]"
+            >
+              <span
+                className="absolute top-4 right-4 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400"
+                style={{
+                  background: "rgba(217,119,6,0.12)",
+                  border: "1px solid rgba(217,119,6,0.35)",
+                }}
+              >
+                Landlord Pro
+              </span>
+
+              <div
+                aria-hidden
+                className="h-1 w-full shrink-0"
+                style={{
+                  background:
+                    "linear-gradient(to right, #92400e, #d97706, #ea580c)",
+                }}
+              />
+
+              <div className="px-6 pt-6 pb-4">
+                <div className="mb-1 flex items-center gap-2">
+                  <div
+                    className="flex size-8 items-center justify-center rounded-lg"
+                    style={{
+                      background: "rgba(217,119,6,0.12)",
+                      border: "1px solid rgba(217,119,6,0.3)",
+                    }}
+                  >
+                    <Building2 className="size-4 text-amber-500" aria-hidden />
+                  </div>
+                  <p className="text-sm font-semibold text-amber-500">
+                    WISK Properties Pro
+                  </p>
+                </div>
+                <div className="mt-3 flex items-baseline gap-1">
+                  <span className="text-4xl font-bold tracking-tight text-foreground">
+                    £32
+                  </span>
+                  <span className="text-sm text-muted-foreground">/month</span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Billed monthly. Cancel any time.
+                </p>
+              </div>
+
+              <div className="flex-1 px-6 pb-5">
+                <ul className="space-y-2.5">
+                  {PROPERTIES_PRO_FEATURES.map((feature) => (
+                    <li
+                      key={feature}
+                      className="flex items-center gap-2.5 text-sm text-muted-foreground"
+                    >
+                      <span
+                        className="size-1.5 shrink-0 rounded-full"
+                        style={{ background: "#d97706" }}
+                        aria-hidden
+                      />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="px-6 pb-6">
+                {hasPropertiesProSubscription ? (
+                  <ManageButton
+                    onClick={openPortal}
+                    loading={portalLoading}
+                    accentColor="amber"
+                  />
+                ) : (
+                  <UpgradeToProLink
+                    href="/upgrade/properties-pro"
+                    gradient={PROPERTIES_PRO_GRADIENT}
+                  />
+                )}
               </div>
             </motion.div>
           ) : null}

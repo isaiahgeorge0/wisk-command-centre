@@ -13,6 +13,8 @@ export function resolveBillingPlan(
   if (active.some((sub) => sub.package === "max")) return "max";
   if (active.some((sub) => sub.package === "ai_pro")) return "ai_pro";
   if (active.some((sub) => sub.package === "ai")) return "ai";
+  if (active.some((sub) => sub.package === "properties_pro")) return "properties_pro";
+  if (active.some((sub) => sub.package === "properties")) return "properties";
 
   return "free";
 }

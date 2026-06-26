@@ -7,9 +7,10 @@ import { UpgradePageClient } from "@/components/billing/upgrade-page-client";
 
 export default async function UpgradePage() {
   const { supabase, userId } = await getScopedSupabase();
-  const [billing, hasProperties] = await Promise.all([
+  const [billing, hasProperties, hasPropertiesPro] = await Promise.all([
     getUserBillingSummary(userId),
     hasPackageAccess(userId, "properties", supabase),
+    hasPackageAccess(userId, "properties_pro", supabase),
   ]);
 
   return (
@@ -19,6 +20,7 @@ export default async function UpgradePage() {
         planLabel={billing.planLabel}
         currentPeriodEnd={billing.currentPeriodEnd}
         hasPropertiesSubscription={hasProperties}
+        hasPropertiesProSubscription={hasPropertiesPro}
       />
     </Suspense>
   );

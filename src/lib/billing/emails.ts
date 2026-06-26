@@ -11,6 +11,7 @@ const PACKAGE_DISPLAY_NAMES: Record<WiskPackage, string> = {
   social: "WISK Social",
   commerce: "WISK Commerce",
   properties: "WISK Properties",
+  properties_pro: "WISK Properties Pro",
   max: "WISK Max",
 };
 
@@ -43,6 +44,14 @@ const PACKAGE_FEATURES: Record<string, string[]> = {
     "Document storage",
     "Winston property insights",
   ],
+  "WISK Properties Pro": [
+    "SA105 tax summary",
+    "Legal notice templates",
+    "Winston Pro property insights",
+    "Yield analytics",
+    "Tenant reliability scoring",
+    "Financial reports",
+  ],
 };
 
 // ─── Package CTA destinations ─────────────────────────────────────────────────
@@ -52,6 +61,7 @@ function getPackageCtaUrl(packageName: string): string {
     "WISK AI": siteUrl("/ai-digest"),
     "WISK AI Pro": siteUrl("/ai-digest"),
     "WISK Properties": siteUrl("/properties"),
+    "WISK Properties Pro": siteUrl("/properties"),
   };
   return urls[packageName] ?? siteUrl();
 }

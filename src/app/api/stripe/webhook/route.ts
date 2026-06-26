@@ -223,6 +223,7 @@ function getPriceDisplayString(priceId: string | undefined): string {
   if (priceId === process.env.STRIPE_PRICE_AI_MONTHLY) return "£9/month";
   if (priceId === process.env.STRIPE_PRICE_AI_PRO_MONTHLY) return "£19/month";
   if (priceId === process.env.STRIPE_PRICE_PROPERTIES_MONTHLY) return "£17/month";
+  if (priceId === process.env.STRIPE_PRICE_PROPERTIES_PRO_MONTHLY) return "£32/month";
   return "";
 }
 
