@@ -9,6 +9,7 @@ const MAX_INCLUDES: WiskPackage[] = [
   "social",
   "commerce",
   "properties",
+  "properties_pro",
 ];
 
 export type { WiskPackage };
@@ -30,7 +31,8 @@ export async function hasPackageAccess(
     (sub) =>
       sub.package === pkg ||
       (sub.package === "max" &&
-        (pkg === "max" || MAX_INCLUDES.includes(pkg as WiskPackage)))
+        (pkg === "max" || MAX_INCLUDES.includes(pkg as WiskPackage))) ||
+      (sub.package === "properties_pro" && pkg === "properties")
   );
 }
 
