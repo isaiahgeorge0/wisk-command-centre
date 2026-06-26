@@ -14,7 +14,12 @@ import { UserMenu } from "@/components/layout/user-menu";
 import { cn } from "@/lib/utils";
 import type { Notification } from "@/lib/notifications/types";
 import type { ChangelogEntry } from "@/lib/changelog/types";
-import { isNavActive, DESKTOP_DROPDOWN_GROUPS, DESKTOP_STANDALONE_NAV } from "@/lib/navigation";
+import {
+  isNavActive,
+  DESKTOP_DROPDOWN_GROUPS,
+  DESKTOP_NAV_AFTER_DROPDOWNS,
+  DESKTOP_NAV_OVERVIEW,
+} from "@/lib/navigation";
 
 type TopNavProps = {
   userEmail: string;
@@ -51,7 +56,15 @@ export function TopNav({
         </Link>
 
         <nav className="hidden min-w-0 flex-1 items-center gap-4 overflow-visible md:flex lg:gap-6">
-          {DESKTOP_STANDALONE_NAV.filter(
+          <NavLink
+            href={DESKTOP_NAV_OVERVIEW.href}
+            label={DESKTOP_NAV_OVERVIEW.label}
+            active={isNavActive(pathname, DESKTOP_NAV_OVERVIEW.href)}
+          />
+          {DESKTOP_DROPDOWN_GROUPS.map((group) => (
+            <NavDropdown key={group.label} group={group} />
+          ))}
+          {DESKTOP_NAV_AFTER_DROPDOWNS.filter(
             (item) =>
               !("requiresProperties" in item && item.requiresProperties) ||
               hasProperties
@@ -62,9 +75,6 @@ export function TopNav({
               label={item.label}
               active={isNavActive(pathname, item.href)}
             />
-          ))}
-          {DESKTOP_DROPDOWN_GROUPS.map((group) => (
-            <NavDropdown key={group.label} group={group} />
           ))}
         </nav>
 

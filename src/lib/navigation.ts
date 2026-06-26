@@ -103,6 +103,10 @@ export const DESKTOP_STANDALONE_NAV = [
   { label: "Properties", href: "/properties", requiresProperties: true },
 ] as const;
 
+/** Desktop nav order: Overview · Work · Plan · Grow · Email · Winston (+ Properties when entitled). */
+export const DESKTOP_NAV_OVERVIEW = DESKTOP_STANDALONE_NAV[0];
+export const DESKTOP_NAV_AFTER_DROPDOWNS = DESKTOP_STANDALONE_NAV.slice(1);
+
 export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Overview",

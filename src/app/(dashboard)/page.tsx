@@ -16,10 +16,13 @@ import {
   getUpcomingMortgagePayments,
 } from "@/app/(dashboard)/properties/actions";
 import { OverviewPageClient } from "@/components/overview/overview-page-client";
+import { UpgradeBanner } from "@/components/billing/upgrade-banner";
 import { resolveDisplayName } from "@/lib/auth/resolve-display-name";
 import { getUserProfile } from "@/lib/auth/get-user-profile";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { hasAIAccess, hasPackageAccess } from "@/lib/billing/access";
+import { shouldShowUpgradeBanner } from "@/lib/billing/banner";
+import { getUserBillingSummary } from "@/lib/billing/plan";
 import { getOrCreateUserPreferences } from "@/lib/preferences/get-user-preferences";
 import { buildPortfolioStats } from "@/lib/properties/selectors";
 import { buildOverviewSnapshot } from "@/lib/overview/selectors";
@@ -28,35 +31,55 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export default async function OverviewPage() {
   const { supabase, userId } = await getScopedSupabase();
+  const admin = createAdminClient();
 
-  const [projects, tasks, goals, ideas, leads, contentPosts, profile, preferences, prefsRow] =
-    await Promise.all([
-      getProjects(),
-      getTasks(),
-      getGoals(),
-      getIdeas(),
-      getLeads(),
-      getContentPosts(),
-      getUserProfile(),
-      getOrCreateUserPreferences(),
-      supabase
-        .from("user_preferences")
-        .select("ai_access")
-        .eq("user_id", userId)
-        .maybeSingle(),
-    ]);
+  const [
+    projects,
+    tasks,
+    goals,
+    ideas,
+    leads,
+    contentPosts,
+    profile,
+    preferences,
+    prefsRow,
+    billing,
+    hasProperties,
+    hasPropertiesPro,
+    userRow,
+  ] = await Promise.all([
+    getProjects(),
+    getTasks(),
+    getGoals(),
+    getIdeas(),
+    getLeads(),
+    getContentPosts(),
+    getUserProfile(),
+    getOrCreateUserPreferences(),
+    supabase
+      .from("user_preferences")
+      .select("ai_access, upgrade_banner_dismissed_at")
+      .eq("user_id", userId)
+      .maybeSingle(),
+    getUserBillingSummary(userId),
+    hasPackageAccess(userId, "properties", admin),
+    hasPackageAccess(userId, "properties_pro", admin),
+    supabase.from("users").select("created_at").eq("id", userId).maybeSingle(),
+  ]);
 
   const canAccessWinston = await hasAIAccess(
     userId,
-    createAdminClient(),
+    admin,
     prefsRow.data?.ai_access ?? false
   );
 
-  const hasProperties = await hasPackageAccess(
-    userId,
-    "properties",
-    createAdminClient()
-  );
+  const showUpgradeBanner = shouldShowUpgradeBanner({
+    plan: billing.plan,
+    hasPropertiesSubscription: hasProperties,
+    hasPropertiesProSubscription: hasPropertiesPro,
+    userCreatedAt: userRow.data?.created_at ?? new Date().toISOString(),
+    dismissedAt: prefsRow.data?.upgrade_banner_dismissed_at ?? null,
+  });
 
   let portfolioStats = null;
   let rentDueFlags: Awaited<ReturnType<typeof getRentDueFlags>> = [];
@@ -129,18 +152,21 @@ export default async function OverviewPage() {
   );
 
   return (
-    <OverviewPageClient
-      snapshot={snapshot}
-      suggestions={suggestions}
-      hasProperties={hasProperties}
-      portfolioStats={portfolioStats}
-      rentDueFlags={rentDueFlags}
-      openMaintenanceTickets={openMaintenanceTickets}
-      unreadMessageCount={unreadMessageCount}
-      expiringCertificates={expiringCertificates}
-      pendingAccessRequests={pendingAccessRequests}
-      mortgages={mortgages}
-      insurance={insurance}
-    />
+    <>
+      {showUpgradeBanner ? <UpgradeBanner plan={billing.plan} /> : null}
+      <OverviewPageClient
+        snapshot={snapshot}
+        suggestions={suggestions}
+        hasProperties={hasProperties}
+        portfolioStats={portfolioStats}
+        rentDueFlags={rentDueFlags}
+        openMaintenanceTickets={openMaintenanceTickets}
+        unreadMessageCount={unreadMessageCount}
+        expiringCertificates={expiringCertificates}
+        pendingAccessRequests={pendingAccessRequests}
+        mortgages={mortgages}
+        insurance={insurance}
+      />
+    </>
   );
 }

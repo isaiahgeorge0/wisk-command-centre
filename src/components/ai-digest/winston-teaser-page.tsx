@@ -11,6 +11,7 @@ import {
   Sparkles,
   Trophy,
 } from "lucide-react";
+import Link from "next/link";
 
 import { useMotionSafe } from "@/lib/motion/use-motion-safe";
 import { cn } from "@/lib/utils";
@@ -310,19 +311,19 @@ export function WinstonTeaserPage() {
               your business.
             </p>
 
-            {/* Coming soon badge */}
-            <div className="mt-6 inline-flex items-center rounded-full border border-wisk-purple/30 bg-gradient-to-r from-wisk-purple/10 to-wisk-teal/10 px-4 py-1.5">
-              <span className="bg-gradient-to-r from-wisk-purple to-wisk-teal bg-clip-text text-sm font-bold tracking-widest text-transparent uppercase">
-                Coming Soon
-              </span>
-            </div>
+            <Link
+              href="/upgrade/ai"
+              className="mt-6 inline-flex rounded-xl px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              style={{
+                background:
+                  "linear-gradient(135deg, #6d28d9 0%, #a855f7 50%, #14b8a6 100%)",
+              }}
+            >
+              Get started with Winston
+            </Link>
 
             <p className="mt-3 text-sm text-muted-foreground">
               From £9/mo · 14-day free trial at launch
-            </p>
-
-            <p className="mt-4 max-w-xs text-xs leading-relaxed text-muted-foreground">
-              Early access is invite-only. More spots opening soon.
             </p>
           </motion.div>
         </div>

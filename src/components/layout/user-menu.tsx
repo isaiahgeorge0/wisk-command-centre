@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Settings, Users } from "lucide-react";
+import { ChevronDown, Settings, Sparkles, Users } from "lucide-react";
 import Link from "next/link";
 
 import { signOut } from "@/app/(dashboard)/actions/auth";
@@ -43,6 +43,14 @@ export function UserMenu({ userEmail, userName }: UserMenuProps) {
             <p className="truncate text-xs text-muted-foreground">{userEmail}</p>
           ) : null}
         </div>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          render={<Link href="/upgrade" />}
+          className="flex items-center gap-2 text-purple-400 focus:text-purple-400"
+        >
+          <Sparkles className="size-4 text-purple-400" aria-hidden />
+          Upgrade
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           render={<Link href="/connections" />}
