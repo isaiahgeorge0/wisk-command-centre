@@ -415,6 +415,16 @@ export type PropertyInsightContent = {
   financial_snapshot: string;
   winstons_insight: string;
   maintenance_summary: string;
+  // Pro-only
+  yield_analysis?: string;
+  tenant_risk_summary?: string;
+  financial_health?: string;
+  risk_alerts?: string[];
+  property_deep_dives?: Array<{
+    propertyName: string;
+    insight: string;
+  }>;
+  pro_recommendations?: string[];
 };
 
 export type PropertyInsight = {

@@ -8,7 +8,10 @@ import {
   CheckCircle2,
   Lightbulb,
   Sparkles,
+  Target,
+  TrendingUp,
   Trophy,
+  Zap,
 } from "lucide-react";
 
 import { PageTransition } from "@/components/layout/page-transition";
@@ -236,6 +239,88 @@ export function WinstonDigestPageClient({
               {digest.recommendation}
             </p>
           </div>
+
+          {digest.leadIntelligence ? (
+            <DigestCard
+              icon={<TrendingUp className="size-4" />}
+              iconClass="text-wisk-purple"
+              title="Lead intelligence"
+            >
+              <p className="text-sm leading-relaxed text-foreground">
+                {digest.leadIntelligence}
+              </p>
+            </DigestCard>
+          ) : null}
+
+          {digest.contentStrategy ? (
+            <DigestCard
+              icon={<BarChart2 className="size-4" />}
+              iconClass="text-wisk-teal"
+              title="Content strategy"
+            >
+              <p className="text-sm leading-relaxed text-foreground">
+                {digest.contentStrategy}
+              </p>
+            </DigestCard>
+          ) : null}
+
+          {digest.goalVelocityInsight ? (
+            <DigestCard
+              icon={<Target className="size-4" />}
+              iconClass="text-amber-500"
+              title="Goal trajectory"
+            >
+              <p className="text-sm leading-relaxed text-foreground">
+                {digest.goalVelocityInsight}
+              </p>
+            </DigestCard>
+          ) : null}
+
+          {digest.crossSectionInsights &&
+          digest.crossSectionInsights.length > 0 ? (
+            <DigestCard
+              icon={<Sparkles className="size-4" />}
+              iconClass="text-wisk-purple"
+              title="Patterns noticed"
+              className="sm:col-span-2 xl:col-span-3"
+            >
+              <ul className="space-y-2">
+                {digest.crossSectionInsights.map((item, i) => (
+                  <li key={i} className="flex items-start gap-2.5">
+                    <span
+                      className="mt-1.5 size-2 shrink-0 rounded-full bg-wisk-purple/70"
+                      aria-hidden
+                    />
+                    <span className="text-sm text-foreground">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </DigestCard>
+          ) : null}
+
+          {digest.proRecommendations &&
+          digest.proRecommendations.length > 0 ? (
+            <div className="sm:col-span-2 xl:col-span-3 rounded-xl border border-amber-500/30 bg-amber-500/[0.04] p-5 shadow-sm">
+              <div className="mb-3 flex items-center gap-2.5">
+                <Zap className="size-4 text-amber-500" aria-hidden />
+                <h2 className="text-sm font-semibold text-foreground">
+                  Pro recommendations
+                </h2>
+              </div>
+              <ol className="space-y-3">
+                {digest.proRecommendations.map((item, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-xs font-semibold text-amber-600 dark:text-amber-400">
+                      {i + 1}
+                    </span>
+                    <span className="text-sm leading-relaxed text-foreground">
+                      {item}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ) : null}
 
         </div>
       )}

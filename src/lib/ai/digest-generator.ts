@@ -10,6 +10,12 @@ export type DigestContent = {
   insight: string;
   recommendation: string;
   generatedAt: string;
+  // Pro-only (undefined for base AI)
+  crossSectionInsights?: string[];
+  leadIntelligence?: string;
+  contentStrategy?: string;
+  goalVelocityInsight?: string;
+  proRecommendations?: string[];
 };
 
 // ─── Anthropic response shape (minimal) ───────────────────────────────────────
@@ -34,12 +40,31 @@ export type DigestResult = {
 
 // ─── Prompt builders ──────────────────────────────────────────────────────────
 
-const SYSTEM_PROMPT = `You are Winston, the AI business assistant for WISK — a command centre for ambitious entrepreneurs, creators, and business owners. Your role is to provide a weekly business digest that feels like a trusted advisor — constructive, insightful, warm but direct. You notice patterns, celebrate wins, flag risks early, and always give one clear recommendation for the week ahead. You never lecture or over-criticise. You are on the user's side.`;
+const BASE_SYSTEM_PROMPT = `You are Winston, the AI business assistant for WISK — a command centre for ambitious entrepreneurs, creators, and business owners. Your role is to provide a weekly business digest that feels like a trusted advisor — constructive, insightful, warm but direct. You notice patterns, celebrate wins, flag risks early, and always give one clear recommendation for the week ahead. You never lecture or over-criticise. You are on the user's side.`;
+
+const PRO_SYSTEM_APPENDIX = ` As an AI Pro subscriber, you have access to deeper analytics. Provide richer, more specific insights backed by actual metrics. Reference specific numbers, percentages, and trends. Your recommendations should be actionable within 48 hours.`;
+
+function isProTier(ctx: UserContext): boolean {
+  return ctx.subscriptionTier === "ai_pro" || ctx.subscriptionTier === "max";
+}
+
+function getSystemPrompt(ctx: UserContext): string {
+  if (isProTier(ctx)) {
+    return BASE_SYSTEM_PROMPT + PRO_SYSTEM_APPENDIX;
+  }
+  return BASE_SYSTEM_PROMPT;
+}
 
 function buildUserPrompt(ctx: UserContext): string {
+  const isPro = isProTier(ctx);
   const lines: string[] = [];
 
   lines.push(`Generate a weekly business digest for ${ctx.user.name}.`);
+  if (isPro) {
+    lines.push(
+      `Time horizon: review the past 30 days and look ahead 30 days where relevant.`
+    );
+  }
   lines.push(`Week reviewed: ${ctx.weekStart} to ${ctx.weekEnd}`);
   lines.push(``);
 
@@ -108,6 +133,88 @@ function buildUserPrompt(ctx: UserContext): string {
   }
   lines.push(``);
 
+  if (isPro) {
+    lines.push(`## LEAD INTELLIGENCE`);
+    lines.push(`Active leads: ${ctx.leads.activeLeadCount}`);
+    lines.push(`Conversion rate: ${ctx.leads.conversionRate}%`);
+    lines.push(
+      `Avg response time: ${
+        ctx.leads.avgResponseTimeDays != null
+          ? `${ctx.leads.avgResponseTimeDays} days`
+          : "no data"
+      }`
+    );
+    lines.push(`Pipeline value: £${ctx.leads.totalPipelineValue}`);
+    lines.push(`Overdue follow-ups: ${ctx.leads.overdueFollowUps.length}`);
+    if (ctx.leads.overdueFollowUps.length > 0) {
+      for (const followUp of ctx.leads.overdueFollowUps.slice(0, 8)) {
+        lines.push(
+          `  - ${followUp.name} (due ${followUp.follow_up_date})`
+        );
+      }
+    }
+    lines.push(`Engagement:`);
+    for (const lead of ctx.leads.engagementSummary.slice(0, 10)) {
+      const days =
+        lead.daysSinceActivity != null
+          ? `${lead.daysSinceActivity} days since activity`
+          : "no activity logged";
+      lines.push(`  - ${lead.name} (${lead.status}): ${days}`);
+    }
+    lines.push(``);
+
+    lines.push(`## CONTENT PERFORMANCE`);
+    lines.push(`Publishing streak: ${ctx.content.publishingStreak} weeks`);
+    lines.push(`Avg posts/week (8wk): ${ctx.content.avgPostsPerWeek}`);
+    if (ctx.content.publishedThisWeek.length > 0) {
+      lines.push(`Published this week:`);
+      for (const post of ctx.content.publishedThisWeek) {
+        lines.push(
+          `  - "${post.title}"${post.platforms ? ` (${post.platforms})` : ""}`
+        );
+      }
+    } else {
+      lines.push(`Published this week: none`);
+    }
+    if (ctx.content.scheduledNextWeek.length > 0) {
+      lines.push(`Scheduled next week:`);
+      for (const post of ctx.content.scheduledNextWeek) {
+        lines.push(
+          `  - "${post.title}"${post.platforms ? ` (${post.platforms})` : ""}`
+        );
+      }
+    } else {
+      lines.push(`Scheduled next week: none`);
+    }
+    lines.push(``);
+
+    lines.push(`## GOAL VELOCITY`);
+    if (ctx.goals.velocityByGoal.length > 0) {
+      for (const goal of ctx.goals.velocityByGoal) {
+        const projected = goal.projectedCompletion
+          ? `projected ${goal.projectedCompletion}`
+          : "no projection";
+        lines.push(
+          `- ${goal.title}: ${goal.percentComplete}% complete, ${projected}`
+        );
+      }
+    } else {
+      lines.push(`- No active goals with velocity data`);
+    }
+    if (ctx.goals.noProgressStalled.length > 0) {
+      lines.push(
+        `Stalled goals (no progress 7+ days): ${ctx.goals.noProgressStalled.join(", ")}`
+      );
+    }
+    lines.push(``);
+
+    lines.push(`## CROSS-SECTION PATTERNS`);
+    lines.push(
+      `Analyse patterns across sections — does content publishing correlate with lead generation? Do task completion rates reflect project health? Flag any concerning patterns.`
+    );
+    lines.push(``);
+  }
+
   // Content
   lines.push(`## CONTENT`);
   if (ctx.content.publishedThisWeek.length > 0) {
@@ -143,9 +250,44 @@ function buildUserPrompt(ctx: UserContext): string {
   lines.push(`  "insight": string,        // 1 pattern noticed, 2-3 sentences`);
   lines.push(`  "recommendation": string, // 1 specific action for the week, 2-3 sentences`);
   lines.push(`  "generatedAt": string     // ISO timestamp, use: "${ctx.generatedAt}"`);
+  if (isPro) {
+    lines.push(`  "crossSectionInsights": string[], // 2-3 patterns noticed across sections`);
+    lines.push(`  "leadIntelligence": string,       // deeper lead insight`);
+    lines.push(`  "contentStrategy": string,        // content recommendation`);
+    lines.push(`  "goalVelocityInsight": string,    // goal trajectory`);
+    lines.push(`  "proRecommendations": string[]    // 3 specific actions`);
+  }
   lines.push(`}`);
 
   return lines.join("\n");
+}
+
+function validateDigestShape(
+  digest: DigestContent,
+  isPro: boolean
+): void {
+  if (
+    typeof digest.weekSummary !== "string" ||
+    !Array.isArray(digest.wins) ||
+    !Array.isArray(digest.needsAttention) ||
+    !Array.isArray(digest.weekAhead) ||
+    typeof digest.insight !== "string" ||
+    typeof digest.recommendation !== "string"
+  ) {
+    throw new Error("Claude response did not match DigestContent shape");
+  }
+
+  if (!isPro) return;
+
+  if (
+    !Array.isArray(digest.crossSectionInsights) ||
+    typeof digest.leadIntelligence !== "string" ||
+    typeof digest.contentStrategy !== "string" ||
+    typeof digest.goalVelocityInsight !== "string" ||
+    !Array.isArray(digest.proRecommendations)
+  ) {
+    throw new Error("Claude response did not match AI Pro DigestContent shape");
+  }
 }
 
 // ─── Main function ─────────────────────────────────────────────────────────────
@@ -158,6 +300,8 @@ export async function generateWeeklyDigest(
     throw new Error("ANTHROPIC_API_KEY is not set");
   }
 
+  const isPro = isProTier(context);
+
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -167,8 +311,8 @@ export async function generateWeeklyDigest(
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
-      max_tokens: 1500,
-      system: SYSTEM_PROMPT,
+      max_tokens: isPro ? 2500 : 1500,
+      system: getSystemPrompt(context),
       messages: [
         {
           role: "user",
@@ -215,20 +359,7 @@ export async function generateWeeklyDigest(
   }
 
   const digest = parsed as DigestContent;
-
-  // Basic shape validation
-  if (
-    typeof digest.weekSummary !== "string" ||
-    !Array.isArray(digest.wins) ||
-    !Array.isArray(digest.needsAttention) ||
-    !Array.isArray(digest.weekAhead) ||
-    typeof digest.insight !== "string" ||
-    typeof digest.recommendation !== "string"
-  ) {
-    throw new Error(
-      "Claude response did not match DigestContent shape"
-    );
-  }
+  validateDigestShape(digest, isPro);
 
   // Always stamp with server-side time
   digest.generatedAt = context.generatedAt;

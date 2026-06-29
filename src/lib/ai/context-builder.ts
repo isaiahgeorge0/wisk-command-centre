@@ -40,6 +40,11 @@ export type GoalContext = {
   }>;
   noProgressStalled: string[]; // goal titles with no progress in 7+ days
   completedThisWeek: string[]; // goal titles that hit 100% in last 7 days
+  velocityByGoal: Array<{
+    title: string;
+    percentComplete: number;
+    projectedCompletion: string | null;
+  }>;
 };
 
 export type LeadContext = {
@@ -53,19 +58,27 @@ export type LeadContext = {
     status: string;
     daysSinceActivity: number | null;
   }>;
+  conversionRate: number;
+  avgResponseTimeDays: number | null;
+  activeLeadCount: number;
 };
 
 export type ContentContext = {
   publishedThisWeek: Array<{ title: string; platforms: string }>;
   scheduledNextWeek: Array<{ title: string; platforms: string }>;
+  publishingStreak: number;
+  avgPostsPerWeek: number;
 };
 
 export type IdeaContext = {
   newThisWeek: string[]; // idea titles added in last 7 days
 };
 
+export type SubscriptionTier = "free" | "ai" | "ai_pro" | "max";
+
 export type UserContext = {
   user: { name: string };
+  subscriptionTier: SubscriptionTier;
   generatedAt: string;
   weekStart: string;
   weekEnd: string;
@@ -78,6 +91,78 @@ export type UserContext = {
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function resolveSubscriptionTier(
+  subs: Array<{ package: string }>
+): SubscriptionTier {
+  const packages = subs.map((sub) => sub.package);
+  if (packages.includes("max")) return "max";
+  if (packages.includes("ai_pro")) return "ai_pro";
+  if (packages.includes("ai")) return "ai";
+  return "free";
+}
+
+function startOfWeekMonday(date: Date): Date {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  const day = d.getDay();
+  const offset = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + offset);
+  return d;
+}
+
+function computePublishingStreak(
+  posts: Array<{ published_date: string | null; status: string }>,
+  now: Date
+): number {
+  const publishedDates = posts
+    .filter((post) => post.status === "published" && post.published_date)
+    .map((post) => post.published_date!.split("T")[0]);
+
+  let streak = 0;
+  for (let weekIndex = 0; weekIndex < 8; weekIndex++) {
+    const weekStart = startOfWeekMonday(now);
+    weekStart.setDate(weekStart.getDate() - weekIndex * 7);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 6);
+
+    const weekStartISO = toDateISO(weekStart);
+    const weekEndISO = toDateISO(weekEnd);
+
+    const hasPost = publishedDates.some(
+      (date) => date >= weekStartISO && date <= weekEndISO
+    );
+
+    if (weekIndex === 0) {
+      if (!hasPost) break;
+      streak = 1;
+    } else if (hasPost) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+
+  return streak;
+}
+
+function computeAvgPostsPerWeek(
+  posts: Array<{ published_date: string | null; status: string }>,
+  now: Date
+): number {
+  const windowStart = startOfWeekMonday(now);
+  windowStart.setDate(windowStart.getDate() - 7 * 7);
+  const windowStartISO = toDateISO(windowStart);
+
+  const count = posts.filter(
+    (post) =>
+      post.status === "published" &&
+      post.published_date &&
+      post.published_date.split("T")[0] >= windowStartISO
+  ).length;
+
+  return Math.round((count / 8) * 10) / 10;
+}
 
 function formatPlatforms(platforms: string | null | undefined): string {
   if (!platforms) return "";
@@ -110,6 +195,14 @@ export async function buildUserContext(
     .single();
 
   const userName = userRow?.name ?? "there";
+
+  const { data: subRows } = await supabase
+    .from("user_subscriptions")
+    .select("package, status")
+    .eq("user_id", userId)
+    .in("status", ["active", "trialing"]);
+
+  const subscriptionTier = resolveSubscriptionTier(subRows ?? []);
 
   // ── Projects ───────────────────────────────────────────────────────────────
   const { data: projects } = await supabase
@@ -195,7 +288,9 @@ export async function buildUserContext(
   // ── Goals ──────────────────────────────────────────────────────────────────
   const { data: goals } = await supabase
     .from("goals")
-    .select("id, title, current, target, unit, deadline, status, updated_at")
+    .select(
+      "id, title, current, target, unit, deadline, status, updated_at, created_at"
+    )
     .eq("user_id", userId)
     .not("status", "eq", "archived");
 
@@ -230,10 +325,54 @@ export async function buildUserContext(
     )
     .map((g) => g.title);
 
+  const velocityByGoal = (goals ?? [])
+    .filter(
+      (g) =>
+        g.status === "active" &&
+        (g.target ?? 0) > 0 &&
+        (g.current ?? 0) > 0 &&
+        g.deadline
+    )
+    .map((g) => {
+      const target = g.target ?? 0;
+      const current = g.current ?? 0;
+      const percentComplete =
+        target > 0 ? Math.round((current / target) * 100) : 0;
+
+      if (!g.created_at) {
+        return { title: g.title, percentComplete, projectedCompletion: null };
+      }
+
+      const daysSinceCreated = Math.max(
+        1,
+        Math.floor(
+          (now.getTime() - new Date(g.created_at).getTime()) /
+            (1000 * 60 * 60 * 24)
+        )
+      );
+      const rate = current / daysSinceCreated;
+
+      if (rate <= 0) {
+        return { title: g.title, percentComplete, projectedCompletion: null };
+      }
+
+      const daysToComplete = (target - current) / rate;
+      const projected = new Date(now);
+      projected.setDate(projected.getDate() + Math.ceil(daysToComplete));
+
+      return {
+        title: g.title,
+        percentComplete,
+        projectedCompletion: toDateISO(projected),
+      };
+    });
+
   // ── Leads ──────────────────────────────────────────────────────────────────
   const { data: leads } = await supabase
     .from("leads")
-    .select("id, name, status, value, created_at, updated_at, follow_up_date")
+    .select(
+      "id, name, status, value, created_at, updated_at, follow_up_date, contacted_at"
+    )
     .eq("user_id", userId);
 
   const newLeads = (leads ?? [])
@@ -315,6 +454,36 @@ export async function buildUserContext(
     })
     .slice(0, 10);
 
+  const wonCount = (leads ?? []).filter((l) => l.status === "won").length;
+  const lostCount = (leads ?? []).filter((l) => l.status === "lost").length;
+  const conversionRate =
+    wonCount + lostCount > 0
+      ? Math.round((wonCount / (wonCount + lostCount)) * 1000) / 10
+      : 0;
+
+  const responseTimes: number[] = [];
+  for (const lead of leads ?? []) {
+    if (!lead.created_at || !lead.contacted_at) continue;
+    const days = Math.floor(
+      (new Date(lead.contacted_at).getTime() -
+        new Date(lead.created_at).getTime()) /
+        (1000 * 60 * 60 * 24)
+    );
+    if (days >= 0) responseTimes.push(days);
+  }
+  const avgResponseTimeDays =
+    responseTimes.length > 0
+      ? Math.round(
+          (responseTimes.reduce((sum, value) => sum + value, 0) /
+            responseTimes.length) *
+            10
+        ) / 10
+      : null;
+
+  const activeLeadCount = (leads ?? []).filter(
+    (l) => l.status !== "won" && l.status !== "lost"
+  ).length;
+
   // ── Content ────────────────────────────────────────────────────────────────
   const { data: contentPosts } = await supabase
     .from("content_posts")
@@ -346,6 +515,9 @@ export async function buildUserContext(
       platforms: formatPlatforms(p.platforms),
     }));
 
+  const publishingStreak = computePublishingStreak(contentPosts ?? [], now);
+  const avgPostsPerWeek = computeAvgPostsPerWeek(contentPosts ?? [], now);
+
   // ── Ideas ──────────────────────────────────────────────────────────────────
   const { data: ideas } = await supabase
     .from("ideas")
@@ -355,6 +527,7 @@ export async function buildUserContext(
 
   return {
     user: { name: userName },
+    subscriptionTier,
     generatedAt: now.toISOString(),
     weekStart: sevenDaysAgo,
     weekEnd: sevenDaysAhead,
@@ -374,6 +547,7 @@ export async function buildUserContext(
       all: goalContextAll,
       noProgressStalled: stalledGoals,
       completedThisWeek: completedGoalsThisWeek,
+      velocityByGoal,
     },
     leads: {
       newThisWeek: newLeads,
@@ -382,10 +556,15 @@ export async function buildUserContext(
       totalPipelineValue,
       overdueFollowUps,
       engagementSummary,
+      conversionRate,
+      avgResponseTimeDays,
+      activeLeadCount,
     },
     content: {
       publishedThisWeek,
       scheduledNextWeek,
+      publishingStreak,
+      avgPostsPerWeek,
     },
     ideas: {
       newThisWeek: (ideas ?? []).map((i) => i.title),

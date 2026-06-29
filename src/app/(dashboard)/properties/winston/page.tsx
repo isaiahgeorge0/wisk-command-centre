@@ -8,18 +8,20 @@ import {
 import { PropertiesWinstonClient } from "@/components/properties/properties-winston-client";
 import { isAdminEmail } from "@/lib/auth/is-admin";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
+import { hasPackageAccess } from "@/lib/billing/access";
 import type {
   PropertyComparable,
   PropertyValuation,
 } from "@/lib/properties/types";
 
 export default async function PropertiesWinstonPage() {
-  const { supabase } = await getScopedSupabase();
+  const { supabase, userId } = await getScopedSupabase();
   const { data: authUser } = await supabase.auth.getUser();
 
-  const [insight, properties] = await Promise.all([
+  const [insight, properties, hasProPlan] = await Promise.all([
     getLatestPropertyInsight(),
     getProperties(),
+    hasPackageAccess(userId, "properties_pro", supabase),
   ]);
 
   const valuationEntries = await Promise.all(
@@ -50,6 +52,7 @@ export default async function PropertiesWinstonPage() {
       insight={insight}
       propertyCount={properties.length}
       isAdmin={isAdminEmail(authUser.user?.email)}
+      hasProPlan={hasProPlan}
       properties={properties}
       valuationsByProperty={valuationsByProperty}
       comparablesByProperty={comparablesByProperty}

@@ -5,6 +5,7 @@ import { hasPackageAccess } from "@/lib/billing/access";
 import { logUsage } from "@/lib/ai/usage-logger";
 import {
   buildPropertyPortfolioContext,
+  buildProPropertyPortfolioContext,
   generatePropertyInsights,
   startOfMonthUtc,
   startOfWeekUtc,
@@ -23,7 +24,15 @@ async function generateForUser(
     return { generated: false, skipped: "no subscription" };
   }
 
-  const context = await buildPropertyPortfolioContext(userId, supabase);
+  const hasProAccess = await hasPackageAccess(
+    userId,
+    "properties_pro",
+    supabase
+  );
+
+  const context = hasProAccess
+    ? await buildProPropertyPortfolioContext(userId, supabase)
+    : await buildPropertyPortfolioContext(userId, supabase);
   if (context.propertyCount === 0) {
     return { generated: false, skipped: "no properties" };
   }
@@ -114,6 +123,7 @@ export async function POST(request: Request) {
         .filter(
           (s) =>
             s.package === "properties" ||
+            s.package === "properties_pro" ||
             s.package === "max"
         )
         .map((s) => s.user_id as string)
