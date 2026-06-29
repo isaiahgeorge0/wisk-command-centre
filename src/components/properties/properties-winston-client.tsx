@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   BarChart2,
   Building2,
+  Calendar,
   CheckCircle2,
   Lightbulb,
   Loader2,
@@ -16,7 +17,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 
 import { triggerPropertyInsightsGeneration } from "@/app/(dashboard)/properties/actions";
 import { PropertyValuationSection } from "@/components/properties/property-valuation-section";
@@ -54,17 +55,6 @@ function formatGeneratedDate(iso: string): string {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(iso));
-}
-
-function nextDigestDay(propertyCount: number): string {
-  if (propertyCount >= 3) return "Sunday";
-  const now = new Date();
-  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  return nextMonth.toLocaleDateString("en-GB", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
 }
 
 function InsightCard({
@@ -154,6 +144,26 @@ export function PropertiesWinstonClient({
       content?.financial_health
     );
 
+  const isOnCooldown = useMemo(() => {
+    if (!insight?.generated_at) return false;
+    const generatedAt = new Date(insight.generated_at);
+    const sevenDaysLater = new Date(generatedAt);
+    sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
+    return new Date() < sevenDaysLater;
+  }, [insight?.generated_at]);
+
+  const cooldownLabel = useMemo(() => {
+    if (!insight?.generated_at) return null;
+    const generatedAt = new Date(insight.generated_at);
+    const sevenDaysLater = new Date(generatedAt);
+    sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
+    const daysRemaining = Math.ceil(
+      (sevenDaysLater.getTime() - new Date().getTime()) /
+        (1000 * 60 * 60 * 24)
+    );
+    return daysRemaining > 0 ? `Next in ${daysRemaining}d` : null;
+  }, [insight?.generated_at]);
+
   const handleGenerate = () => {
     setError(null);
     startTransition(async () => {
@@ -182,15 +192,26 @@ export function PropertiesWinstonClient({
         </div>
         <Button
           onClick={handleGenerate}
-          disabled={isPending || propertyCount === 0}
-          className="min-h-11 gap-2 bg-amber-500 text-white hover:bg-amber-500/90"
+          disabled={
+            isPending ||
+            propertyCount === 0 ||
+            (isOnCooldown && !isAdmin)
+          }
+          className={cn(
+            "min-h-11 gap-2 bg-amber-500 text-white hover:bg-amber-500/90",
+            isOnCooldown && !isAdmin && "opacity-70"
+          )}
         >
           {isPending ? (
             <Loader2 className="size-4 animate-spin" />
+          ) : isOnCooldown && !isAdmin ? (
+            <Calendar className="size-4" />
           ) : (
             <Sparkles className="size-4" />
           )}
-          Generate now
+          {isOnCooldown && !isAdmin && cooldownLabel
+            ? cooldownLabel
+            : "Generate now"}
         </Button>
       </div>
 
@@ -209,8 +230,8 @@ export function PropertiesWinstonClient({
             Your first digest is on its way
           </h2>
           <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
-            Winston will generate your first property digest on{" "}
-            {nextDigestDay(propertyCount)}.
+            Winston will generate your first property digest on Monday. Once
+            generated, insights refresh weekly.
             {isAdmin ? " You can also trigger one manually above." : null}
           </p>
         </div>

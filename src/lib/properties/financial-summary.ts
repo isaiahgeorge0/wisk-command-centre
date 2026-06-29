@@ -149,16 +149,34 @@ export function buildFinancialSummary(
   const now = new Date();
   const { start, end, months } = getPeriodRange(period, now);
 
+  const propertyStart = property.created_at
+    ? new Date(property.created_at)
+    : null;
+
+  const effectivePeriodStart =
+    propertyStart && propertyStart > start ? propertyStart : start;
+
+  const effectiveMonths = propertyStart
+    ? Math.max(
+        0,
+        (end.getFullYear() - effectivePeriodStart.getFullYear()) * 12 +
+          (end.getMonth() - effectivePeriodStart.getMonth()) +
+          1
+      )
+    : months;
+
+  const adjustedMonths = Math.min(effectiveMonths, months);
+
   const rentalIncome = sumPaidRentInRange(payments, start, end);
-  const expectedIncome = (property.monthly_rent ?? 0) * months;
+  const expectedIncome = (property.monthly_rent ?? 0) * adjustedMonths;
   const vacancyLoss = Math.max(0, expectedIncome - rentalIncome);
 
   const mortgageCost = mortgages.reduce(
-    (sum, mortgage) => sum + mortgage.monthly_payment * months,
+    (sum, mortgage) => sum + mortgage.monthly_payment * adjustedMonths,
     0
   );
   const insuranceCost = insurance.reduce(
-    (sum, record) => sum + ((record.annual_premium ?? 0) / 12) * months,
+    (sum, record) => sum + ((record.annual_premium ?? 0) / 12) * adjustedMonths,
     0
   );
   const maintenanceCost = sumMaintenanceInRange(tickets, start, end);
