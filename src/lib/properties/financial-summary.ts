@@ -154,10 +154,6 @@ export function buildFinancialSummary(
   const totalCosts = mortgageCost + insuranceCost + maintenanceCost;
   const netIncome = rentalIncome - totalCosts;
 
-  const annualiseFactor = period === "monthly" ? 12 : 1;
-  const annualRentalIncome = rentalIncome * annualiseFactor;
-  const annualNetIncome = netIncome * annualiseFactor;
-
   const contractedAnnualRent = (property.monthly_rent ?? 0) * 12;
 
   const grossYield =
