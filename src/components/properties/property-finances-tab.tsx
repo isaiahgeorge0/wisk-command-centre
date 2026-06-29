@@ -12,6 +12,7 @@ import {
   toggleMortgageAlerts,
   updateRentPayment,
 } from "@/app/(dashboard)/properties/actions";
+import { PropertiesProTeaser } from "@/components/properties/properties-pro-teaser";
 import { PropertyFinancialSummary } from "@/components/properties/property-financial-summary";
 import { PropertyInsuranceFormDialog } from "@/components/properties/property-insurance-form-dialog";
 import { PropertyMortgageFormDialog } from "@/components/properties/property-mortgage-form-dialog";
@@ -59,6 +60,7 @@ type PropertyFinancesTabProps = {
   insurance: PropertyInsurance[];
   monthlyFinancialSummary: FinancialSummary | null;
   annualFinancialSummary: FinancialSummary | null;
+  hasProPlan: boolean;
 };
 
 export function PropertyFinancesTab({
@@ -69,6 +71,7 @@ export function PropertyFinancesTab({
   insurance,
   monthlyFinancialSummary,
   annualFinancialSummary,
+  hasProPlan,
 }: PropertyFinancesTabProps) {
   const router = useRouter();
   const [paymentFormOpen, setPaymentFormOpen] = useState(false);
@@ -140,7 +143,7 @@ export function PropertyFinancesTab({
 
   return (
     <div className="space-y-8">
-      {monthlyFinancialSummary && annualFinancialSummary ? (
+      {hasProPlan && monthlyFinancialSummary && annualFinancialSummary ? (
         <PropertyFinancialSummary
           monthlySummary={monthlyFinancialSummary}
           annualSummary={annualFinancialSummary}
@@ -205,177 +208,202 @@ export function PropertyFinancesTab({
         )}
       </section>
 
-      <section className="space-y-4">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Building2 className="size-5 text-amber-500" />
-            <h2 className="text-lg font-semibold text-foreground">Mortgages</h2>
+      {hasProPlan ? (
+        <section className="space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Building2 className="size-5 text-amber-500" />
+              <h2 className="text-lg font-semibold text-foreground">Mortgages</h2>
+            </div>
+            <Button
+              onClick={() => { setEditingMortgage(null); setMortgageFormOpen(true); }}
+              className="min-h-11 gap-2 bg-amber-500 text-white hover:bg-amber-500/90"
+            >
+              <Plus className="size-4" />
+              Add mortgage
+            </Button>
           </div>
-          <Button
-            onClick={() => { setEditingMortgage(null); setMortgageFormOpen(true); }}
-            className="min-h-11 gap-2 bg-amber-500 text-white hover:bg-amber-500/90"
-          >
-            <Plus className="size-4" />
-            Add mortgage
-          </Button>
-        </div>
 
-        {mortgages.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-amber-500/20 bg-card/40 px-6 py-12 text-center">
-            <p className="text-sm text-muted-foreground">No mortgages added</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {mortgages.map((mortgage) => {
-              const fixedRateDays = daysUntilDate(mortgage.fixed_rate_end_date);
-              return (
-                <div key={mortgage.id} className="rounded-xl border border-border/60 bg-card/40 p-4">
-                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="min-w-0 space-y-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-medium text-foreground">{mortgage.lender}</h3>
-                        <Badge variant="outline">
-                          {getMortgageTypeDisplayName(mortgage.mortgage_type)}
-                        </Badge>
-                      </div>
-                      <p className="text-lg font-semibold tabular-nums text-foreground">
-                        {formatPropertyCurrency(mortgage.monthly_payment)}
-                        <span className="text-sm font-normal text-muted-foreground"> / month</span>
-                      </p>
-                      {mortgage.interest_rate != null ? (
-                        <p className="text-sm text-muted-foreground">
-                          Interest rate: {mortgage.interest_rate}%
-                        </p>
-                      ) : null}
-                      {mortgage.fixed_rate_end_date ? (
-                        <p className={cn("text-sm font-medium", daysUntilExpiryClass(fixedRateDays))}>
-                          Fixed rate ends {formatPropertyDate(mortgage.fixed_rate_end_date)}
-                          {fixedRateDays != null && fixedRateDays >= 0
-                            ? ` · ${fixedRateDays} days`
-                            : fixedRateDays != null && fixedRateDays < 0
-                              ? ` · ended ${Math.abs(fixedRateDays)} days ago`
-                              : ""}
-                        </p>
-                      ) : null}
-                      {mortgage.outstanding_balance != null ? (
-                        <p className="text-sm text-muted-foreground">
-                          Outstanding: {formatPropertyCurrency(mortgage.outstanding_balance)}
-                        </p>
-                      ) : null}
-                      <div className="flex items-center gap-3 pt-1">
-                        <Switch
-                          id={`mortgage-alerts-${mortgage.id}`}
-                          checked={mortgage.alerts_enabled}
-                          onCheckedChange={(checked) =>
-                            handleToggleMortgageAlerts(mortgage.id, checked)
-                          }
-                          disabled={isPending}
-                        />
-                        <Label
-                          htmlFor={`mortgage-alerts-${mortgage.id}`}
-                          className="text-sm text-muted-foreground"
-                        >
-                          Alerts {mortgage.alerts_enabled ? "on" : "off"}
-                        </Label>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="min-h-11" onClick={() => { setEditingMortgage(mortgage); setMortgageFormOpen(true); }}>
-                        <Pencil className="size-4" />
-                      </Button>
-                      <Button variant="outline" size="sm" className="min-h-11 text-destructive" onClick={() => setDeleteMortgageTarget(mortgage)}>
-                        <Trash2 className="size-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      <section className="space-y-4">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Shield className="size-5 text-amber-500" />
-            <h2 className="text-lg font-semibold text-foreground">Insurance</h2>
-          </div>
-          <Button
-            onClick={() => { setEditingInsurance(null); setInsuranceFormOpen(true); }}
-            className="min-h-11 gap-2 bg-amber-500 text-white hover:bg-amber-500/90"
-          >
-            <Plus className="size-4" />
-            Add insurance
-          </Button>
-        </div>
-
-        {insurance.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-amber-500/20 bg-card/40 px-6 py-12 text-center">
-            <p className="text-sm text-muted-foreground">No insurance records added</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {insurance.map((record) => {
-              const renewalDays = daysUntilDate(record.renewal_date);
-              return (
-                <div key={record.id} className="rounded-xl border border-border/60 bg-card/40 p-4">
-                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="min-w-0 space-y-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-medium text-foreground">{record.insurer}</h3>
-                        <Badge variant="outline">
-                          {getInsuranceTypeDisplayName(record.insurance_type)}
-                        </Badge>
-                      </div>
-                      {record.annual_premium != null ? (
+          {mortgages.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-amber-500/20 bg-card/40 px-6 py-12 text-center">
+              <p className="text-sm text-muted-foreground">No mortgages added</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {mortgages.map((mortgage) => {
+                const fixedRateDays = daysUntilDate(mortgage.fixed_rate_end_date);
+                return (
+                  <div key={mortgage.id} className="rounded-xl border border-border/60 bg-card/40 p-4">
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="min-w-0 space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-medium text-foreground">{mortgage.lender}</h3>
+                          <Badge variant="outline">
+                            {getMortgageTypeDisplayName(mortgage.mortgage_type)}
+                          </Badge>
+                        </div>
                         <p className="text-lg font-semibold tabular-nums text-foreground">
-                          {formatPropertyCurrency(record.annual_premium)}
-                          <span className="text-sm font-normal text-muted-foreground"> / year</span>
+                          {formatPropertyCurrency(mortgage.monthly_payment)}
+                          <span className="text-sm font-normal text-muted-foreground"> / month</span>
                         </p>
-                      ) : null}
-                      {record.renewal_date ? (
-                        <p className={cn("text-sm font-medium", daysUntilExpiryClass(renewalDays))}>
-                          Renews {formatPropertyDate(record.renewal_date)}
-                          {renewalDays != null && renewalDays >= 0
-                            ? ` · ${renewalDays} days`
-                            : renewalDays != null && renewalDays < 0
-                              ? ` · overdue ${Math.abs(renewalDays)} days`
-                              : ""}
-                        </p>
-                      ) : null}
-                      <div className="flex items-center gap-3 pt-1">
-                        <Switch
-                          id={`insurance-alerts-${record.id}`}
-                          checked={record.alerts_enabled}
-                          onCheckedChange={(checked) =>
-                            handleToggleInsuranceAlerts(record.id, checked)
-                          }
-                          disabled={isPending}
-                        />
-                        <Label
-                          htmlFor={`insurance-alerts-${record.id}`}
-                          className="text-sm text-muted-foreground"
-                        >
-                          Alerts {record.alerts_enabled ? "on" : "off"}
-                        </Label>
+                        {mortgage.interest_rate != null ? (
+                          <p className="text-sm text-muted-foreground">
+                            Interest rate: {mortgage.interest_rate}%
+                          </p>
+                        ) : null}
+                        {mortgage.fixed_rate_end_date ? (
+                          <p className={cn("text-sm font-medium", daysUntilExpiryClass(fixedRateDays))}>
+                            Fixed rate ends {formatPropertyDate(mortgage.fixed_rate_end_date)}
+                            {fixedRateDays != null && fixedRateDays >= 0
+                              ? ` · ${fixedRateDays} days`
+                              : fixedRateDays != null && fixedRateDays < 0
+                                ? ` · ended ${Math.abs(fixedRateDays)} days ago`
+                                : ""}
+                          </p>
+                        ) : null}
+                        {mortgage.outstanding_balance != null ? (
+                          <p className="text-sm text-muted-foreground">
+                            Outstanding: {formatPropertyCurrency(mortgage.outstanding_balance)}
+                          </p>
+                        ) : null}
+                        <div className="flex items-center gap-3 pt-1">
+                          <Switch
+                            id={`mortgage-alerts-${mortgage.id}`}
+                            checked={mortgage.alerts_enabled}
+                            onCheckedChange={(checked) =>
+                              handleToggleMortgageAlerts(mortgage.id, checked)
+                            }
+                            disabled={isPending}
+                          />
+                          <Label
+                            htmlFor={`mortgage-alerts-${mortgage.id}`}
+                            className="text-sm text-muted-foreground"
+                          >
+                            Alerts {mortgage.alerts_enabled ? "on" : "off"}
+                          </Label>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" className="min-h-11" onClick={() => { setEditingMortgage(mortgage); setMortgageFormOpen(true); }}>
+                          <Pencil className="size-4" />
+                        </Button>
+                        <Button variant="outline" size="sm" className="min-h-11 text-destructive" onClick={() => setDeleteMortgageTarget(mortgage)}>
+                          <Trash2 className="size-4" />
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="min-h-11" onClick={() => { setEditingInsurance(record); setInsuranceFormOpen(true); }}>
-                        <Pencil className="size-4" />
-                      </Button>
-                      <Button variant="outline" size="sm" className="min-h-11 text-destructive" onClick={() => setDeleteInsuranceTarget(record)}>
-                        <Trash2 className="size-4" />
-                      </Button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      ) : (
+        <PropertiesProTeaser
+          title="Mortgage tracking"
+          description="Track mortgage payments, interest rates, and fixed-rate end dates with renewal alerts."
+          features={[
+            "Monthly mortgage cost breakdown",
+            "Fixed-rate end date alerts",
+            "Outstanding balance tracking",
+            "Interest rate monitoring",
+          ]}
+        />
+      )}
+
+      {hasProPlan ? (
+        <section className="space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Shield className="size-5 text-amber-500" />
+              <h2 className="text-lg font-semibold text-foreground">Insurance</h2>
+            </div>
+            <Button
+              onClick={() => { setEditingInsurance(null); setInsuranceFormOpen(true); }}
+              className="min-h-11 gap-2 bg-amber-500 text-white hover:bg-amber-500/90"
+            >
+              <Plus className="size-4" />
+              Add insurance
+            </Button>
+          </div>
+
+          {insurance.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-amber-500/20 bg-card/40 px-6 py-12 text-center">
+              <p className="text-sm text-muted-foreground">No insurance records added</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {insurance.map((record) => {
+                const renewalDays = daysUntilDate(record.renewal_date);
+                return (
+                  <div key={record.id} className="rounded-xl border border-border/60 bg-card/40 p-4">
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="min-w-0 space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-medium text-foreground">{record.insurer}</h3>
+                          <Badge variant="outline">
+                            {getInsuranceTypeDisplayName(record.insurance_type)}
+                          </Badge>
+                        </div>
+                        {record.annual_premium != null ? (
+                          <p className="text-lg font-semibold tabular-nums text-foreground">
+                            {formatPropertyCurrency(record.annual_premium)}
+                            <span className="text-sm font-normal text-muted-foreground"> / year</span>
+                          </p>
+                        ) : null}
+                        {record.renewal_date ? (
+                          <p className={cn("text-sm font-medium", daysUntilExpiryClass(renewalDays))}>
+                            Renews {formatPropertyDate(record.renewal_date)}
+                            {renewalDays != null && renewalDays >= 0
+                              ? ` · ${renewalDays} days`
+                              : renewalDays != null && renewalDays < 0
+                                ? ` · overdue ${Math.abs(renewalDays)} days`
+                                : ""}
+                          </p>
+                        ) : null}
+                        <div className="flex items-center gap-3 pt-1">
+                          <Switch
+                            id={`insurance-alerts-${record.id}`}
+                            checked={record.alerts_enabled}
+                            onCheckedChange={(checked) =>
+                              handleToggleInsuranceAlerts(record.id, checked)
+                            }
+                            disabled={isPending}
+                          />
+                          <Label
+                            htmlFor={`insurance-alerts-${record.id}`}
+                            className="text-sm text-muted-foreground"
+                          >
+                            Alerts {record.alerts_enabled ? "on" : "off"}
+                          </Label>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" className="min-h-11" onClick={() => { setEditingInsurance(record); setInsuranceFormOpen(true); }}>
+                          <Pencil className="size-4" />
+                        </Button>
+                        <Button variant="outline" size="sm" className="min-h-11 text-destructive" onClick={() => setDeleteInsuranceTarget(record)}>
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      ) : (
+        <PropertiesProTeaser
+          title="Insurance tracking"
+          description="Manage building and contents insurance with renewal reminders before they lapse."
+          features={[
+            "Annual premium tracking",
+            "Renewal date alerts",
+            "Multiple policies per property",
+          ]}
+        />
+      )}
 
       <RentPaymentFormDialog open={paymentFormOpen} onOpenChange={setPaymentFormOpen} propertyId={propertyId} tenants={tenants} payment={editingPayment} />
       <PropertyMortgageFormDialog open={mortgageFormOpen} onOpenChange={setMortgageFormOpen} propertyId={propertyId} mortgage={editingMortgage} />

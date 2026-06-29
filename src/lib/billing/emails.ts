@@ -66,6 +66,19 @@ function getPackageCtaUrl(packageName: string): string {
   return urls[packageName] ?? siteUrl();
 }
 
+function getPackageCtaLabel(packageName: string): string {
+  if (packageName === "WISK AI" || packageName === "WISK AI Pro") {
+    return "Go to Winston";
+  }
+  if (
+    packageName === "WISK Properties" ||
+    packageName === "WISK Properties Pro"
+  ) {
+    return "Go to Properties";
+  }
+  return "Go to WISK";
+}
+
 // ─── Date formatting ──────────────────────────────────────────────────────────
 
 function formatDate(date: Date): string {
@@ -168,7 +181,15 @@ function buildSubscriptionConfirmedHtml({
       <p style="color:#71717a;font-size:14px;margin:0 0 24px;">Hi ${greeting} — your subscription is active. Here's what you've unlocked.</p>
       ${featuresSection}
       ${priceSection}
-      ${ctaButton(ctaUrl, "Go to Winston")}
+      ${ctaButton(ctaUrl, getPackageCtaLabel(packageName))}
+      <p style="margin:0 0 20px;">
+        <a href="${siteUrl("/upgrade")}"
+           style="color:#a855f7;font-size:13px;text-decoration:none;
+                  border-bottom:1px solid rgba(168,85,247,0.3);
+                  padding-bottom:1px;">
+          Manage your subscription
+        </a>
+      </p>
       <p style="color:#71717a;font-size:13px;line-height:1.5;border-top:1px solid rgba(255,255,255,0.07);padding-top:20px;margin:8px 0 0;">This is an investment in your business. Make the most of it.</p>
   ${htmlFooter()}`;
 }

@@ -18,6 +18,7 @@ import {
   type PropertyDetailTab,
 } from "@/components/properties/property-detail-client";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
+import { hasPackageAccess } from "@/lib/billing/access";
 
 type PropertyDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -40,9 +41,9 @@ export default async function PropertyDetailPage({
 }: PropertyDetailPageProps) {
   const { id } = await params;
   const { tab } = await searchParams;
-  const { userId } = await getScopedSupabase();
+  const { supabase, userId } = await getScopedSupabase();
 
-  const [property, tenants, maintenanceTickets, rentPayments, certificates, documents, certificateAlerts, mortgages, insurance, monthlyFinancialSummary, annualFinancialSummary, contractors] =
+  const [property, tenants, maintenanceTickets, rentPayments, certificates, documents, certificateAlerts, mortgages, insurance, monthlyFinancialSummary, annualFinancialSummary, contractors, hasProPlan] =
     await Promise.all([
       getProperty(id),
       getTenantsByProperty(id),
@@ -56,6 +57,7 @@ export default async function PropertyDetailPage({
       getFinancialSummary(id, "monthly"),
       getFinancialSummary(id, "annual"),
       getContractors(),
+      hasPackageAccess(userId, "properties_pro", supabase),
     ]);
 
   if (!property) {
@@ -83,6 +85,7 @@ export default async function PropertyDetailPage({
       landlordUserId={userId}
       contractors={contractors}
       initialTab={initialTab}
+      hasProPlan={hasProPlan}
     />
   );
 }

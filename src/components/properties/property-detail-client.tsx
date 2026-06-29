@@ -86,6 +86,7 @@ type PropertyDetailClientProps = {
   landlordUserId: string;
   contractors: Contractor[];
   initialTab?: PropertyDetailTab;
+  hasProPlan: boolean;
 };
 
 export function PropertyDetailClient({
@@ -103,6 +104,7 @@ export function PropertyDetailClient({
   landlordUserId,
   contractors,
   initialTab = "overview",
+  hasProPlan,
 }: PropertyDetailClientProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<PropertyDetailTab>(initialTab);
@@ -204,6 +206,7 @@ export function PropertyDetailClient({
           insurance={insurance}
           monthlyFinancialSummary={monthlyFinancialSummary}
           annualFinancialSummary={annualFinancialSummary}
+          hasProPlan={hasProPlan}
         />
       </div>
       <div className={activeTab === "messages" ? "block" : "hidden"}>

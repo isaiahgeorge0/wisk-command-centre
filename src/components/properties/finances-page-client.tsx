@@ -1,11 +1,12 @@
 "use client";
 
-import { PoundSterling } from "lucide-react";
+import { PoundSterling, TrendingDown } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { PageTransition } from "@/components/layout/page-transition";
+import { PropertiesProTeaser } from "@/components/properties/properties-pro-teaser";
 import { RentPaymentStatusBadge } from "@/components/properties/rent-payment-status-badge";
 import {
   Select,
@@ -24,7 +25,6 @@ import {
 } from "@/lib/properties/display-names";
 import {
   daysUntilDate,
-  daysUntilExpiryClass,
   formatPropertyCurrency,
   formatPropertyDate,
   formatYieldPercent,
@@ -53,6 +53,7 @@ type FinancesPageClientProps = {
   mortgages: PropertyMortgage[];
   insurance: PropertyInsurance[];
   portfolioOverview: PortfolioFinancialOverview;
+  hasProPlan: boolean;
 };
 
 type UpcomingRenewal = {
@@ -72,6 +73,7 @@ export function FinancesPageClient({
   mortgages,
   insurance,
   portfolioOverview,
+  hasProPlan,
 }: FinancesPageClientProps) {
   const [statusFilter, setStatusFilter] = useState<RentPaymentStatus | "all">(
     "all"
@@ -183,106 +185,165 @@ export function FinancesPageClient({
         />
       </div>
 
-      <section className="mb-8 space-y-4 rounded-xl border border-amber-500/15 bg-card/40 p-5">
-        <h2 className="text-sm font-semibold text-foreground">
-          Portfolio financial summary
-        </h2>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <StatTile
-            label="Total net income (monthly)"
-            value={formatPropertyCurrency(portfolioOverview.totalNetIncomeMonthly)}
-          />
-          <StatTile
-            label="Total net income (annual)"
-            value={formatPropertyCurrency(portfolioOverview.totalNetIncomeAnnual)}
-          />
-        </div>
-        {portfolioOverview.bestPerforming ? (
-          <p className="text-sm text-muted-foreground">
-            Best performing:{" "}
-            <span className="font-medium text-foreground">
-              {portfolioOverview.bestPerforming.propertyName}
-            </span>{" "}
-            ({formatYieldPercent(portfolioOverview.bestPerforming.netYield)} net
-            yield)
-          </p>
-        ) : null}
-        {portfolioOverview.negativeNetIncomeProperties.length > 0 ? (
-          <div className="rounded-lg border border-orange-500/30 bg-orange-500/10 p-4">
-            <p className="text-sm font-medium text-orange-800 dark:text-orange-200">
-              Properties with negative net income
-            </p>
-            <ul className="mt-2 space-y-1">
-              {portfolioOverview.negativeNetIncomeProperties.map((item) => (
-                <li key={item.propertyId} className="text-sm">
-                  <Link
-                    href={`/properties/${item.propertyId}?tab=finances`}
-                    className="font-medium text-foreground hover:underline"
-                  >
-                    {item.propertyName}
-                  </Link>
-                  <span className="text-muted-foreground">
-                    {" "}
-                    · {formatPropertyCurrency(item.netIncome)} / year
-                  </span>
-                </li>
-              ))}
-            </ul>
+      {hasProPlan ? (
+        <section className="mb-8 space-y-5">
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-foreground">
+              Financial overview
+            </h2>
+            <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-500">
+              Pro
+            </span>
           </div>
-        ) : null}
-      </section>
 
-      <section className="mb-8 space-y-4 rounded-xl border border-amber-500/15 bg-card/40 p-5">
-        <h2 className="text-sm font-semibold text-foreground">Portfolio summary</h2>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <StatTile
-            label="Total monthly mortgage payments"
-            value={formatPropertyCurrency(totalMonthlyMortgage)}
-          />
-          <StatTile
-            label="Total annual insurance premiums"
-            value={formatPropertyCurrency(totalAnnualInsurance)}
-          />
-        </div>
-        <div>
-          <h3 className="text-sm font-medium text-foreground">
-            Upcoming in the next 90 days
-          </h3>
-          {upcomingRenewals.length === 0 ? (
-            <p className="mt-2 text-sm text-muted-foreground">
-              No fixed rate ends or insurance renewals due soon.
-            </p>
-          ) : (
-            <ul className="mt-3 space-y-2">
-              {upcomingRenewals.map((item) => (
-                <li key={`${item.kind}-${item.id}`}>
-                  <Link
-                    href={`/properties/${item.propertyId}?tab=finances`}
-                    className="flex flex-col gap-1 rounded-lg border border-border/60 bg-card/60 px-4 py-3 transition-colors hover:bg-muted/30 sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-foreground">
-                        {item.label}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {item.propertyName} · {formatPropertyDate(item.date)}
-                      </p>
-                    </div>
-                    <p
-                      className={cn(
-                        "text-sm font-medium",
-                        daysUntilExpiryClass(item.daysUntil)
-                      )}
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <KpiTile
+              label="Total net income (monthly)"
+              value={formatPropertyCurrency(portfolioOverview.totalNetIncomeMonthly)}
+              valueClassName={netIncomeColorClass(
+                portfolioOverview.totalNetIncomeMonthly
+              )}
+            />
+            <KpiTile
+              label="Total net income (annual)"
+              value={formatPropertyCurrency(portfolioOverview.totalNetIncomeAnnual)}
+              valueClassName={netIncomeColorClass(
+                portfolioOverview.totalNetIncomeAnnual
+              )}
+            />
+            <KpiTile
+              label="Total monthly mortgage"
+              value={formatPropertyCurrency(totalMonthlyMortgage)}
+            />
+            <KpiTile
+              label="Total annual insurance"
+              value={formatPropertyCurrency(totalAnnualInsurance)}
+            />
+          </div>
+
+          {portfolioOverview.bestPerforming ? (
+            <div className="rounded-2xl border border-amber-500/15 bg-amber-500/5 px-5 py-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-amber-500">
+                Best performing
+              </p>
+              <p className="mt-1 text-base font-semibold text-foreground">
+                {portfolioOverview.bestPerforming.propertyName}
+              </p>
+              <p className="mt-2 text-3xl font-bold tabular-nums text-amber-500">
+                {formatYieldPercent(portfolioOverview.bestPerforming.netYield)}
+              </p>
+              <p className="text-xs text-muted-foreground">net yield</p>
+              <Link
+                href="/properties/yield-analytics"
+                className="mt-3 inline-block text-sm text-amber-500 hover:text-amber-400"
+              >
+                View full yield analytics →
+              </Link>
+            </div>
+          ) : null}
+
+          {portfolioOverview.negativeNetIncomeProperties.length > 0 ? (
+            <div className="flex gap-3 rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
+              <TrendingDown
+                className="mt-0.5 size-5 shrink-0 text-orange-600 dark:text-orange-300"
+                aria-hidden
+              />
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-orange-800 dark:text-orange-200">
+                  Properties with negative net income
+                </p>
+                <ul className="mt-2 space-y-1">
+                  {portfolioOverview.negativeNetIncomeProperties.map((item) => (
+                    <li key={item.propertyId} className="text-sm">
+                      <Link
+                        href={`/properties/${item.propertyId}?tab=finances`}
+                        className="font-medium text-foreground hover:underline"
+                      >
+                        {item.propertyName}
+                      </Link>
+                      <span className="text-muted-foreground">
+                        {" "}
+                        · {formatPropertyCurrency(item.netIncome)} / year
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          ) : null}
+
+          <div>
+            <h3 className="text-sm font-medium text-foreground">
+              Upcoming renewals
+            </h3>
+            {upcomingRenewals.length === 0 ? (
+              <p className="mt-2 text-sm text-muted-foreground">
+                No fixed rate ends or insurance renewals due soon.
+              </p>
+            ) : (
+              <ul className="mt-3 space-y-2">
+                {upcomingRenewals.map((item) => (
+                  <li key={`${item.kind}-${item.id}`}>
+                    <Link
+                      href={`/properties/${item.propertyId}?tab=finances`}
+                      className="relative flex overflow-hidden rounded-xl border border-border/60 bg-card/60 transition-colors hover:bg-muted/30"
                     >
-                      {item.daysUntil} days
-                    </p>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
+                      <span
+                        className={cn(
+                          "w-1 shrink-0",
+                          item.kind === "mortgage" ? "bg-amber-500" : "bg-blue-500"
+                        )}
+                        aria-hidden
+                      />
+                      <div className="flex flex-1 flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-foreground">
+                            {item.label}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {item.propertyName} · {formatPropertyDate(item.date)}
+                          </p>
+                        </div>
+                        <p
+                          className={cn(
+                            "text-sm font-semibold",
+                            item.kind === "mortgage"
+                              ? "text-amber-500"
+                              : "text-blue-500"
+                          )}
+                        >
+                          {item.daysUntil} days
+                        </p>
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <Link
+            href="/properties/yield-analytics"
+            className="inline-block text-sm text-amber-500 hover:text-amber-400"
+          >
+            View full yield analytics →
+          </Link>
+        </section>
+      ) : (
+        <div className="mb-8">
+          <PropertiesProTeaser
+            title="Portfolio financial overview"
+            description="See your complete financial picture — net income, mortgage costs, insurance, yield performance, and upcoming renewals across your entire portfolio."
+            features={[
+              "Net income tracking (monthly and annual)",
+              "Mortgage and insurance cost summaries",
+              "Best performing property by yield",
+              "Upcoming renewal alerts",
+              "Full yield analytics dashboard",
+            ]}
+          />
         </div>
-      </section>
+      )}
 
       <div className="mb-6 flex flex-col gap-3 sm:flex-row">
         <Select
@@ -374,9 +435,41 @@ function StatTile({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl border border-amber-500/15 bg-card/60 px-4 py-3">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">
+      <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">
         {value}
       </p>
     </div>
   );
+}
+
+function KpiTile({
+  label,
+  value,
+  valueClassName,
+}: {
+  label: string;
+  value: string;
+  valueClassName?: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-border/60 bg-card/60 px-5 py-4">
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+        {label}
+      </p>
+      <p
+        className={cn(
+          "mt-1 text-2xl font-bold tabular-nums text-foreground",
+          valueClassName
+        )}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function netIncomeColorClass(amount: number): string {
+  if (amount > 0) return "text-emerald-500";
+  if (amount < 0) return "text-orange-500";
+  return "text-foreground";
 }
