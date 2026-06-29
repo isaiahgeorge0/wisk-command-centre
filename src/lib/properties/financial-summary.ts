@@ -86,11 +86,23 @@ function buildMonthlyBreakdown(
   mortgages: PropertyMortgage[],
   insurance: PropertyInsurance[],
   tickets: MaintenanceTicket[],
-  now = new Date()
+  now = new Date(),
+  earliestDate?: Date
 ): FinancialSummary["monthly_breakdown"] {
   const months: FinancialSummary["monthly_breakdown"] = [];
 
-  for (let i = 11; i >= 0; i--) {
+  const windowStart = earliestDate
+    ? new Date(earliestDate.getFullYear(), earliestDate.getMonth(), 1)
+    : new Date(now.getFullYear(), now.getMonth() - 11, 1);
+  const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+  const effectiveStart =
+    windowStart > twelveMonthsAgo ? windowStart : twelveMonthsAgo;
+  const monthCount =
+    (now.getFullYear() - effectiveStart.getFullYear()) * 12 +
+    (now.getMonth() - effectiveStart.getMonth()) +
+    1;
+
+  for (let i = monthCount - 1; i >= 0; i--) {
     const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const monthEnd = new Date(
       monthStart.getFullYear(),
@@ -203,7 +215,8 @@ export function buildFinancialSummary(
       mortgages,
       insurance,
       tickets,
-      now
+      now,
+      property.created_at ? new Date(property.created_at) : undefined
     ),
   };
 }

@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { PageTransition } from "@/components/layout/page-transition";
+import { TenantReliabilityBadge } from "@/components/properties/tenant-reliability-badge";
 import { TenantStatusBadge } from "@/components/properties/tenant-status-badge";
 import { Input } from "@/components/ui/input";
 import {
@@ -21,14 +22,29 @@ import {
   formatPropertyDate,
   formatRentFrequency,
 } from "@/lib/properties/format";
+import { cn } from "@/lib/utils";
 import { getTenantFullName } from "@/lib/properties/tenant-form";
-import type { TenantStatus, TenantWithProperty } from "@/lib/properties/types";
+import {
+  calculateReliabilityScore,
+  type TenantReliabilityScore,
+} from "@/lib/properties/reliability";
+import type {
+  RentPaymentWithDetails,
+  TenantStatus,
+  TenantWithProperty,
+} from "@/lib/properties/types";
 
 type TenantsPageClientProps = {
   tenants: TenantWithProperty[];
+  payments: RentPaymentWithDetails[];
+  hasProPlan: boolean;
 };
 
-export function TenantsPageClient({ tenants }: TenantsPageClientProps) {
+export function TenantsPageClient({
+  tenants,
+  payments,
+  hasProPlan,
+}: TenantsPageClientProps) {
   const [statusFilter, setStatusFilter] = useState<TenantStatus | "all">("all");
   const [search, setSearch] = useState("");
 
@@ -42,6 +58,18 @@ export function TenantsPageClient({ tenants }: TenantsPageClientProps) {
       return name.includes(query) || email.includes(query);
     });
   }, [tenants, search, statusFilter]);
+
+  const scoresByTenantId = useMemo(() => {
+    if (!hasProPlan) return new Map<string, TenantReliabilityScore>();
+    const map = new Map<string, TenantReliabilityScore>();
+    for (const tenant of tenants) {
+      const tenantPayments = payments.filter(
+        (payment) => payment.tenant_id === tenant.id
+      );
+      map.set(tenant.id, calculateReliabilityScore(tenant.id, tenantPayments));
+    }
+    return map;
+  }, [tenants, payments, hasProPlan]);
 
   return (
     <PageTransition>
@@ -90,20 +118,31 @@ export function TenantsPageClient({ tenants }: TenantsPageClientProps) {
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border border-border/60 bg-card/40">
-          <div className="hidden grid-cols-6 gap-4 border-b border-border/50 px-4 py-3 text-xs font-medium text-muted-foreground md:grid">
+          <div
+            className={cn(
+              "hidden gap-4 border-b border-border/50 px-4 py-3 text-xs font-medium text-muted-foreground md:grid",
+              hasProPlan ? "grid-cols-7" : "grid-cols-6"
+            )}
+          >
             <span>Tenant</span>
             <span>Property</span>
             <span>Contact</span>
             <span>Tenancy</span>
             <span>Rent</span>
             <span>Status</span>
+            {hasProPlan ? <span>Reliability</span> : null}
           </div>
           <div className="divide-y divide-border/50">
-            {filtered.map((tenant) => (
+            {filtered.map((tenant) => {
+              const score = scoresByTenantId.get(tenant.id);
+              return (
               <Link
                 key={tenant.id}
                 href={`/properties/${tenant.property_id}?tab=tenants`}
-                className="grid gap-3 px-4 py-4 transition-colors hover:bg-muted/30 md:grid-cols-6 md:items-center md:gap-4"
+                className={cn(
+                  "grid gap-3 px-4 py-4 transition-colors hover:bg-muted/30 md:items-center md:gap-4",
+                  hasProPlan ? "md:grid-cols-7" : "md:grid-cols-6"
+                )}
               >
                 <p className="font-medium text-foreground">
                   {getTenantFullName(tenant)}
@@ -125,8 +164,12 @@ export function TenantsPageClient({ tenants }: TenantsPageClientProps) {
                   {formatRentFrequency(tenant.rent_amount, tenant.rent_frequency)}
                 </p>
                 <TenantStatusBadge status={tenant.status} />
+                {hasProPlan && score ? (
+                  <TenantReliabilityBadge score={score} size="sm" />
+                ) : null}
               </Link>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

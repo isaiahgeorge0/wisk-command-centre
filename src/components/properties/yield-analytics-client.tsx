@@ -88,21 +88,31 @@ export function YieldAnalyticsClient({
   );
 
   const monthlyTrend = useMemo(() => {
-    const map = new Map<string, { income: number; costs: number }>();
+    const allMonths = Array.from(
+      new Set(
+        summaries.flatMap((s) =>
+          s.annual.monthly_breakdown.map((m) => m.month)
+        )
+      )
+    ).sort((a, b) => {
+      const parseMonth = (label: string) => {
+        const [mon, yr] = label.split(" ");
+        return new Date(`${mon} 20${yr.replace("'", "")}`);
+      };
+      return parseMonth(a).getTime() - parseMonth(b).getTime();
+    });
 
-    for (const { annual } of summaries) {
-      for (const item of annual.monthly_breakdown) {
-        const current = map.get(item.month) ?? { income: 0, costs: 0 };
-        map.set(item.month, {
-          income: current.income + item.income,
-          costs: current.costs + item.costs,
-        });
-      }
-    }
-
-    return Array.from(map.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([month, values]) => ({ month, ...values }));
+    return allMonths.map((month) => {
+      const income = summaries.reduce((sum, s) => {
+        const entry = s.annual.monthly_breakdown.find((m) => m.month === month);
+        return sum + (entry?.income ?? 0);
+      }, 0);
+      const costs = summaries.reduce((sum, s) => {
+        const entry = s.annual.monthly_breakdown.find((m) => m.month === month);
+        return sum + (entry?.costs ?? 0);
+      }, 0);
+      return { month, income, costs, net: income - costs };
+    });
   }, [summaries]);
 
   const vacancyProperties = useMemo(
