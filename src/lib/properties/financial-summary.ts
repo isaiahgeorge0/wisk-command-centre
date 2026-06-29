@@ -152,9 +152,16 @@ export function buildFinancialSummary(
   const maintenanceCost = sumMaintenanceInRange(tickets, start, end);
 
   const totalCosts = mortgageCost + insuranceCost + maintenanceCost;
-  const netIncome = rentalIncome - totalCosts;
 
   const contractedAnnualRent = (property.monthly_rent ?? 0) * 12;
+  const contractedPeriodIncome =
+    period === "annual"
+      ? contractedAnnualRent
+      : (property.monthly_rent ?? 0);
+  // Use contracted rent as income basis for net income — actual
+  // collected payments are tracked separately via rental_income
+  // and vacancy_loss fields.
+  const netIncome = contractedPeriodIncome - totalCosts;
 
   const grossYield =
     property.current_value && property.current_value > 0 &&
