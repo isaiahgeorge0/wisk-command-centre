@@ -158,19 +158,27 @@ export function buildFinancialSummary(
   const annualRentalIncome = rentalIncome * annualiseFactor;
   const annualNetIncome = netIncome * annualiseFactor;
 
+  const contractedAnnualRent = (property.monthly_rent ?? 0) * 12;
+
   const grossYield =
-    property.current_value && property.current_value > 0
-      ? (annualRentalIncome / property.current_value) * 100
+    property.current_value && property.current_value > 0 &&
+    contractedAnnualRent > 0
+      ? (contractedAnnualRent / property.current_value) * 100
       : null;
 
+  // Net yield: contracted rent minus actual costs, over current value
+  const annualCosts = mortgageCost + insuranceCost + maintenanceCost;
+  const contractedNetIncome = contractedAnnualRent - annualCosts;
   const netYield =
-    property.current_value && property.current_value > 0
-      ? (annualNetIncome / property.current_value) * 100
+    property.current_value && property.current_value > 0 &&
+    contractedAnnualRent > 0
+      ? (contractedNetIncome / property.current_value) * 100
       : null;
 
   const roi =
-    property.purchase_price && property.purchase_price > 0
-      ? (annualNetIncome / property.purchase_price) * 100
+    property.purchase_price && property.purchase_price > 0 &&
+    contractedAnnualRent > 0
+      ? (contractedNetIncome / property.purchase_price) * 100
       : null;
 
   return {

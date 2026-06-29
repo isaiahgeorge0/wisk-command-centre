@@ -1,7 +1,6 @@
-import { redirect } from "next/navigation";
-
 import { getProperties } from "@/app/(dashboard)/properties/actions";
 import { YieldAnalyticsClient } from "@/components/properties/yield-analytics-client";
+import { YieldAnalyticsTeaser } from "@/components/properties/yield-analytics-teaser";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { hasPackageAccess } from "@/lib/billing/access";
 import {
@@ -15,7 +14,7 @@ export default async function YieldAnalyticsPage() {
   const hasProPlan = await hasPackageAccess(userId, "properties_pro", supabase);
 
   if (!hasProPlan) {
-    redirect("/properties/finances");
+    return <YieldAnalyticsTeaser />;
   }
 
   const properties = await getProperties();
