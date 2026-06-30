@@ -3,6 +3,7 @@
 import {
   Building2,
   FileText,
+  FileWarning,
   HardHat,
   LayoutDashboard,
   MessageSquare,
@@ -25,6 +26,7 @@ const NAV_ITEMS: { label: string; href: string; icon: LucideIcon }[] = [
   { label: "Properties", href: "/properties/list", icon: Building2 },
   { label: "Tenants", href: "/properties/tenants", icon: Users },
   { label: "Reliability", href: "/properties/reliability", icon: ShieldCheck },
+  { label: "Notices", href: "/properties/notices", icon: FileWarning },
   { label: "Maintenance", href: "/properties/maintenance", icon: Wrench },
   { label: "Finances", href: "/properties/finances", icon: PoundSterling },
   { label: "Yield Analytics", href: "/properties/yield-analytics", icon: TrendingUp },
