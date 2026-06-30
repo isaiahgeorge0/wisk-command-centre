@@ -8,6 +8,7 @@ import {
   changePassword,
   setUsername,
   updateDisplayName,
+  updateLandlordContactDetails,
   updateProfileName,
 } from "@/app/(dashboard)/settings/actions";
 import { UserAvatar } from "@/components/settings/user-avatar";
@@ -23,12 +24,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { displayUsername } from "@/lib/users/username";
+import type { LandlordContact } from "@/lib/users/landlord-contact";
 
 type SettingsProfileSectionProps = {
   email: string;
   initialDisplayName: string;
   initialName: string;
   initialUsername: string | null;
+  initialLandlordContact: LandlordContact;
 };
 
 export function SettingsProfileSection({
@@ -36,6 +39,7 @@ export function SettingsProfileSection({
   initialDisplayName,
   initialName,
   initialUsername,
+  initialLandlordContact,
 }: SettingsProfileSectionProps) {
   const router = useRouter();
   const [displayName, setDisplayName] = useState(initialDisplayName);
@@ -58,6 +62,19 @@ export function SettingsProfileSection({
   const [usernameMessage, setUsernameMessage] = useState<string | null>(null);
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [isUsernamePending, startUsernameTransition] = useTransition();
+
+  const [addressLine1, setAddressLine1] = useState(
+    initialLandlordContact.addressLine1 ?? ""
+  );
+  const [addressLine2, setAddressLine2] = useState(
+    initialLandlordContact.addressLine2 ?? ""
+  );
+  const [city, setCity] = useState(initialLandlordContact.city ?? "");
+  const [postcode, setPostcode] = useState(initialLandlordContact.postcode ?? "");
+  const [phone, setPhone] = useState(initialLandlordContact.phone ?? "");
+  const [landlordMessage, setLandlordMessage] = useState<string | null>(null);
+  const [landlordError, setLandlordError] = useState<string | null>(null);
+  const [isLandlordPending, startLandlordTransition] = useTransition();
 
   const handleSaveUsername = (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,6 +116,30 @@ export function SettingsProfileSection({
       }
 
       setProfileMessage("Profile saved.");
+      router.refresh();
+    });
+  };
+
+  const handleSaveLandlordContact = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLandlordMessage(null);
+    setLandlordError(null);
+
+    startLandlordTransition(async () => {
+      const result = await updateLandlordContactDetails({
+        addressLine1,
+        addressLine2,
+        city,
+        postcode,
+        phone,
+      });
+
+      if (!result.success) {
+        setLandlordError(result.error);
+        return;
+      }
+
+      setLandlordMessage("Landlord contact details saved.");
       router.refresh();
     });
   };
@@ -253,6 +294,80 @@ export function SettingsProfileSection({
           ) : null}
           <Button type="submit" size="sm" disabled={isProfilePending} className="w-fit">
             {isProfilePending ? "Saving…" : "Save profile"}
+          </Button>
+        </form>
+
+        <form
+          onSubmit={handleSaveLandlordContact}
+          className="grid max-w-md gap-4 border-t border-border/50 pt-8"
+        >
+          <div>
+            <h3 className="text-sm font-medium text-foreground">
+              Landlord contact details
+            </h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Used to pre-fill legal notices in Properties.
+            </p>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="address-line1">Address line 1</Label>
+            <Input
+              id="address-line1"
+              value={addressLine1}
+              onChange={(e) => setAddressLine1(e.target.value)}
+              disabled={isLandlordPending}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="address-line2">Address line 2 (optional)</Label>
+            <Input
+              id="address-line2"
+              value={addressLine2}
+              onChange={(e) => setAddressLine2(e.target.value)}
+              disabled={isLandlordPending}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="city">City</Label>
+            <Input
+              id="city"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              disabled={isLandlordPending}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="postcode">Postcode</Label>
+            <Input
+              id="postcode"
+              value={postcode}
+              onChange={(e) => setPostcode(e.target.value)}
+              disabled={isLandlordPending}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="phone">Phone (optional)</Label>
+            <Input
+              id="phone"
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              disabled={isLandlordPending}
+            />
+          </div>
+          {landlordError ? (
+            <p className="text-sm text-destructive">{landlordError}</p>
+          ) : null}
+          {landlordMessage ? (
+            <p className="text-sm text-wisk-teal">{landlordMessage}</p>
+          ) : null}
+          <Button
+            type="submit"
+            size="sm"
+            disabled={isLandlordPending}
+            className="w-fit"
+          >
+            {isLandlordPending ? "Saving…" : "Save contact details"}
           </Button>
         </form>
 

@@ -21,12 +21,14 @@ import type { MonthlyUsage } from "@/lib/ai/types";
 import type { BillingPlan } from "@/lib/billing/types";
 import type { SafeIntegration } from "@/lib/integrations/types";
 import type { FieldVisibility } from "@/lib/preferences/types";
+import type { LandlordContact } from "@/lib/users/landlord-contact";
 
 type SettingsPageClientProps = {
   email: string;
   displayName: string;
   accountName: string;
   username?: string | null;
+  landlordContact: LandlordContact;
   fieldVisibility: FieldVisibility;
   serviceTypes: string[];
   integrations: SafeIntegration[];
@@ -43,6 +45,7 @@ export function SettingsPageClient({
   displayName,
   accountName,
   username = null,
+  landlordContact,
   fieldVisibility,
   serviceTypes,
   integrations,
@@ -199,6 +202,7 @@ export function SettingsPageClient({
             initialDisplayName={displayName}
             initialName={accountName}
             initialUsername={username ?? null}
+            initialLandlordContact={landlordContact}
           />
           <SettingsToolsSection />
         </>

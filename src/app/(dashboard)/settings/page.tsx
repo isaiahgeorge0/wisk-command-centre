@@ -9,6 +9,7 @@ import { resolveDisplayName } from "@/lib/auth/resolve-display-name";
 import { getUserProfile } from "@/lib/auth/get-user-profile";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { getOrCreateUserPreferences } from "@/lib/preferences/get-user-preferences";
+import type { LandlordContact } from "@/lib/users/landlord-contact";
 
 export default async function SettingsPage() {
   const { supabase, userId } = await getScopedSupabase();
@@ -27,7 +28,9 @@ export default async function SettingsPage() {
       getUserBillingSummary(userId),
       supabase
         .from("users")
-        .select("username")
+        .select(
+          "username, address_line1, address_line2, city, postcode, phone"
+        )
         .eq("id", userId)
         .maybeSingle(),
     ]);
@@ -47,6 +50,14 @@ export default async function SettingsPage() {
     profile.email.split("@")[0] ||
     "User";
 
+  const landlordContact: LandlordContact = {
+    addressLine1: userRow.data?.address_line1 ?? null,
+    addressLine2: userRow.data?.address_line2 ?? null,
+    city: userRow.data?.city ?? null,
+    postcode: userRow.data?.postcode ?? null,
+    phone: userRow.data?.phone ?? null,
+  };
+
   return (
     <Suspense fallback={null}>
       <SettingsPageShell
@@ -54,6 +65,7 @@ export default async function SettingsPage() {
         displayName={displayName}
         accountName={accountName}
         username={userRow.data?.username ?? null}
+        landlordContact={landlordContact}
         fieldVisibility={preferences.fieldVisibility}
         serviceTypes={preferences.serviceTypes}
         integrations={integrations}

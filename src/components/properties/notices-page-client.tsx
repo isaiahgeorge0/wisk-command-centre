@@ -8,6 +8,7 @@ import {
   FileWarning,
   TrendingUp,
 } from "lucide-react";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { PageHeader } from "@/components/layout/page-header";
@@ -25,6 +26,11 @@ import {
 } from "@/lib/properties/notice-calculations";
 import { PROPERTIES_ACCENT } from "@/lib/properties/constants";
 import type { RentPaymentWithDetails, Tenant } from "@/lib/properties/types";
+import {
+  formatLandlordAddress,
+  hasLandlordAddress,
+  type LandlordContact,
+} from "@/lib/users/landlord-contact";
 import { cn } from "@/lib/utils";
 
 type NoticeType = "section_8" | "section_13";
@@ -34,6 +40,7 @@ type NoticesPageClientProps = {
   tenants: Array<Tenant & { property_name?: string }>;
   payments: RentPaymentWithDetails[];
   landlordName: string;
+  landlordContact: LandlordContact;
 };
 
 // ─── Section 8 form state ────────────────────────────────────────────────────
@@ -85,13 +92,88 @@ function DisclaimerBox() {
   );
 }
 
+type LandlordDetailsFieldsProps = {
+  name: string;
+  address: string;
+  phone: string;
+  showSettingsHint: boolean;
+  addressPlaceholder?: string;
+  onNameChange: (value: string) => void;
+  onAddressChange: (value: string) => void;
+  onPhoneChange: (value: string) => void;
+};
+
+function LandlordDetailsFields({
+  name,
+  address,
+  phone,
+  showSettingsHint,
+  addressPlaceholder = "Full postal address for service of proceedings",
+  onNameChange,
+  onAddressChange,
+  onPhoneChange,
+}: LandlordDetailsFieldsProps) {
+  return (
+    <div className="space-y-3">
+      <p className="text-sm font-medium text-foreground">Landlord / agent details</p>
+      <div>
+        <label className="block text-xs text-muted-foreground">Name</label>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => onNameChange(e.target.value)}
+          className="mt-1 w-full rounded-xl border border-border/60 bg-card/60 px-3 py-2 text-sm text-foreground"
+        />
+      </div>
+      <div>
+        <label className="block text-xs text-muted-foreground">Address</label>
+        <textarea
+          rows={3}
+          value={address}
+          onChange={(e) => onAddressChange(e.target.value)}
+          placeholder={addressPlaceholder}
+          className="mt-1 w-full rounded-xl border border-border/60 bg-card/60 px-3 py-2 text-sm text-foreground"
+        />
+        {showSettingsHint ? (
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            Add your address in{" "}
+            <Link
+              href="/settings"
+              className="font-medium text-amber-600 underline underline-offset-2 hover:text-amber-500 dark:text-amber-400"
+            >
+              Settings
+            </Link>{" "}
+            to pre-fill this automatically next time.
+          </p>
+        ) : null}
+      </div>
+      <div>
+        <label className="block text-xs text-muted-foreground">
+          Phone number (optional)
+        </label>
+        <input
+          type="tel"
+          value={phone}
+          onChange={(e) => onPhoneChange(e.target.value)}
+          className="mt-1 w-full rounded-xl border border-border/60 bg-card/60 px-3 py-2 text-sm text-foreground"
+        />
+      </div>
+    </div>
+  );
+}
+
 // ─── Main component ──────────────────────────────────────────────────────────
 
 export function NoticesPageClient({
   tenants,
   payments,
   landlordName: initialLandlordName,
+  landlordContact,
 }: NoticesPageClientProps) {
+  const initialLandlordAddress = formatLandlordAddress(landlordContact);
+  const initialLandlordPhone = landlordContact.phone?.trim() ?? "";
+  const showSettingsHint = !hasLandlordAddress(landlordContact);
+
   const [noticeType, setNoticeType] = useState<NoticeType | null>(null);
   const [step, setStep] = useState<WizardStep>("type");
 
@@ -103,8 +185,8 @@ export function NoticesPageClient({
     explanations: {},
     noticeServedDate: today,
     landlordName: initialLandlordName,
-    landlordAddress: "",
-    landlordPhone: "",
+    landlordAddress: initialLandlordAddress,
+    landlordPhone: initialLandlordPhone,
     confirmed: false,
   });
 
@@ -114,8 +196,8 @@ export function NoticesPageClient({
     lastIncreaseDate: "",
     noticeServedDate: today,
     landlordName: initialLandlordName,
-    landlordAddress: "",
-    landlordPhone: "",
+    landlordAddress: initialLandlordAddress,
+    landlordPhone: initialLandlordPhone,
     confirmed: false,
   });
 
@@ -533,60 +615,21 @@ export function NoticesPageClient({
           </div>
 
           {/* Landlord contact details */}
-          <div className="space-y-3">
-            <p className="text-sm font-medium text-foreground">
-              Landlord / agent details
-            </p>
-            <div>
-              <label className="block text-xs text-muted-foreground">
-                Name
-              </label>
-              <input
-                type="text"
-                value={s8Form.landlordName}
-                onChange={(e) =>
-                  setS8Form((prev) => ({
-                    ...prev,
-                    landlordName: e.target.value,
-                  }))
-                }
-                className="mt-1 w-full rounded-xl border border-border/60 bg-card/60 px-3 py-2 text-sm text-foreground"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-muted-foreground">
-                Address
-              </label>
-              <textarea
-                rows={3}
-                value={s8Form.landlordAddress}
-                onChange={(e) =>
-                  setS8Form((prev) => ({
-                    ...prev,
-                    landlordAddress: e.target.value,
-                  }))
-                }
-                placeholder="Full postal address for service of proceedings"
-                className="mt-1 w-full rounded-xl border border-border/60 bg-card/60 px-3 py-2 text-sm text-foreground"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-muted-foreground">
-                Phone number (optional)
-              </label>
-              <input
-                type="tel"
-                value={s8Form.landlordPhone}
-                onChange={(e) =>
-                  setS8Form((prev) => ({
-                    ...prev,
-                    landlordPhone: e.target.value,
-                  }))
-                }
-                className="mt-1 w-full rounded-xl border border-border/60 bg-card/60 px-3 py-2 text-sm text-foreground"
-              />
-            </div>
-          </div>
+          <LandlordDetailsFields
+            name={s8Form.landlordName}
+            address={s8Form.landlordAddress}
+            phone={s8Form.landlordPhone}
+            showSettingsHint={showSettingsHint}
+            onNameChange={(value) =>
+              setS8Form((prev) => ({ ...prev, landlordName: value }))
+            }
+            onAddressChange={(value) =>
+              setS8Form((prev) => ({ ...prev, landlordAddress: value }))
+            }
+            onPhoneChange={(value) =>
+              setS8Form((prev) => ({ ...prev, landlordPhone: value }))
+            }
+          />
 
           {/* Explanations per ground */}
           <div className="space-y-4">
@@ -854,60 +897,22 @@ export function NoticesPageClient({
           </div>
 
           {/* Landlord contact details */}
-          <div className="space-y-3">
-            <p className="text-sm font-medium text-foreground">
-              Landlord / agent details
-            </p>
-            <div>
-              <label className="block text-xs text-muted-foreground">
-                Name
-              </label>
-              <input
-                type="text"
-                value={s13Form.landlordName}
-                onChange={(e) =>
-                  setS13Form((prev) => ({
-                    ...prev,
-                    landlordName: e.target.value,
-                  }))
-                }
-                className="mt-1 w-full rounded-xl border border-border/60 bg-card/60 px-3 py-2 text-sm text-foreground"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-muted-foreground">
-                Address
-              </label>
-              <textarea
-                rows={3}
-                value={s13Form.landlordAddress}
-                onChange={(e) =>
-                  setS13Form((prev) => ({
-                    ...prev,
-                    landlordAddress: e.target.value,
-                  }))
-                }
-                placeholder="Full postal address"
-                className="mt-1 w-full rounded-xl border border-border/60 bg-card/60 px-3 py-2 text-sm text-foreground"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-muted-foreground">
-                Phone number (optional)
-              </label>
-              <input
-                type="tel"
-                value={s13Form.landlordPhone}
-                onChange={(e) =>
-                  setS13Form((prev) => ({
-                    ...prev,
-                    landlordPhone: e.target.value,
-                  }))
-                }
-                className="mt-1 w-full rounded-xl border border-border/60 bg-card/60 px-3 py-2 text-sm text-foreground"
-              />
-            </div>
-          </div>
+          <LandlordDetailsFields
+            name={s13Form.landlordName}
+            address={s13Form.landlordAddress}
+            phone={s13Form.landlordPhone}
+            showSettingsHint={showSettingsHint}
+            addressPlaceholder="Full postal address"
+            onNameChange={(value) =>
+              setS13Form((prev) => ({ ...prev, landlordName: value }))
+            }
+            onAddressChange={(value) =>
+              setS13Form((prev) => ({ ...prev, landlordAddress: value }))
+            }
+            onPhoneChange={(value) =>
+              setS13Form((prev) => ({ ...prev, landlordPhone: value }))
+            }
+          />
 
           <DisclaimerBox />
 

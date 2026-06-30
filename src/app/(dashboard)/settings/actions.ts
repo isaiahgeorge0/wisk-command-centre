@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { getOrCreateUserPreferences } from "@/lib/preferences/get-user-preferences";
 import {
@@ -86,6 +87,51 @@ export async function updateDisplayName(
   }
 
   revalidateApp();
+  return { success: true };
+}
+
+const landlordContactSchema = z.object({
+  addressLine1: z.string().trim(),
+  addressLine2: z.string().trim(),
+  city: z.string().trim(),
+  postcode: z.string().trim(),
+  phone: z.string().trim(),
+});
+
+export async function updateLandlordContactDetails(input: {
+  addressLine1: string;
+  addressLine2: string;
+  city: string;
+  postcode: string;
+  phone: string;
+}): Promise<SettingsActionResult> {
+  const parsed = landlordContactSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid contact details",
+    };
+  }
+
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { error } = await supabase
+    .from("users")
+    .update({
+      address_line1: parsed.data.addressLine1 || null,
+      address_line2: parsed.data.addressLine2 || null,
+      city: parsed.data.city || null,
+      postcode: parsed.data.postcode || null,
+      phone: parsed.data.phone || null,
+    })
+    .eq("id", userId);
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  revalidateApp();
+  revalidatePath("/properties/notices");
   return { success: true };
 }
 
