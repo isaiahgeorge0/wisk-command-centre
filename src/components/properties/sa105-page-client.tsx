@@ -6,6 +6,7 @@ import {
   Download,
   Info,
   Lightbulb,
+  Pencil,
 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -157,6 +158,8 @@ export function SA105PageClient({
   const [customEnd, setCustomEnd] = useState(
     toDateInputValue(currentTaxYear.end)
   );
+  const [manualBox27, setManualBox27] = useState(0);
+  const [manualBox29, setManualBox29] = useState(0);
 
   const period = useMemo(() => {
     if (dateRangeMode === "current") {
@@ -215,13 +218,17 @@ export function SA105PageClient({
         flatTickets,
         period.start,
         period.end,
-        period.label
+        period.label,
+        manualBox27,
+        manualBox29
       ),
     [
       flatInsurance,
       flatMortgages,
       flatPayments,
       flatTickets,
+      manualBox27,
+      manualBox29,
       period.end,
       period.label,
       period.start,
@@ -388,27 +395,92 @@ export function SA105PageClient({
                 </h2>
               </div>
               <div className="divide-y divide-border/60">
-                {mainBoxes.map((box) => (
-                  <div
-                    key={box.boxNumber}
-                    className="grid gap-1 px-4 py-4 sm:grid-cols-[auto_1fr_auto] sm:items-start sm:gap-4"
-                  >
-                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Box {box.boxNumber}
-                    </span>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">
-                        {box.label}
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {box.description}
-                      </p>
+                {mainBoxes.map((box) => {
+                  const isEditable =
+                    box.boxNumber === "27" || box.boxNumber === "29";
+                  const manualNote =
+                    box.boxNumber === "27"
+                      ? "Enter manually — letting agent fees, legal and professional costs not tracked by WISK"
+                      : box.boxNumber === "29"
+                        ? "Enter manually — travel, phone, admin and other costs not tracked by WISK"
+                        : null;
+
+                  return (
+                    <div
+                      key={box.boxNumber}
+                      className={cn(
+                        "grid gap-1 px-4 py-4 sm:grid-cols-[auto_1fr_auto] sm:items-start sm:gap-4",
+                        isEditable &&
+                          "border-l-2 border-amber-500/40 bg-amber-500/[0.03] print:border-l-0 print:bg-transparent"
+                      )}
+                    >
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Box {box.boxNumber}
+                      </span>
+                      <div>
+                        <p className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                          {isEditable ? (
+                            <Pencil
+                              className="size-3.5 text-amber-500 print:hidden"
+                              aria-hidden
+                            />
+                          ) : null}
+                          {box.label}
+                        </p>
+                        {!isEditable ? (
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {box.description}
+                          </p>
+                        ) : null}
+                        {manualNote ? (
+                          <p className="mt-1 text-xs text-amber-700/80 dark:text-amber-400/80">
+                            {manualNote}
+                          </p>
+                        ) : null}
+                      </div>
+                      {isEditable ? (
+                        <div className="sm:text-right">
+                          <div className="inline-flex items-center gap-1 print:hidden">
+                            <span className="text-sm text-muted-foreground">
+                              £
+                            </span>
+                            <input
+                              type="number"
+                              min={0}
+                              step={1}
+                              value={
+                                box.boxNumber === "27"
+                                  ? manualBox27 || ""
+                                  : manualBox29 || ""
+                              }
+                              placeholder="0"
+                              onChange={(event) => {
+                                const value = Math.max(
+                                  0,
+                                  Number(event.target.value) || 0
+                                );
+                                if (box.boxNumber === "27") {
+                                  setManualBox27(value);
+                                } else {
+                                  setManualBox29(value);
+                                }
+                              }}
+                              className="w-28 rounded-lg border border-border/60 bg-card/60 px-2 py-1.5 text-right text-lg font-semibold tabular-nums text-foreground"
+                              aria-label={`Box ${box.boxNumber} amount`}
+                            />
+                          </div>
+                          <p className="hidden text-lg font-semibold tabular-nums text-foreground print:block sm:text-right">
+                            {formatPropertyCurrency(box.amount)}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-lg font-semibold tabular-nums text-foreground sm:text-right">
+                          {formatPropertyCurrency(box.amount)}
+                        </p>
+                      )}
                     </div>
-                    <p className="text-lg font-semibold tabular-nums text-foreground sm:text-right">
-                      {formatPropertyCurrency(box.amount)}
-                    </p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 

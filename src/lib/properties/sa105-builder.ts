@@ -70,13 +70,21 @@ export function isDomesticItemReplacementTicket(
   );
 }
 
+export function getTicketResolvedDate(
+  ticket: MaintenanceTicket
+): string | null {
+  return ticket.resolved_date ?? ticket.updated_at ?? null;
+}
+
 export function isResolvedTicketInPeriod(
   ticket: MaintenanceTicket,
   periodStart: Date,
   periodEnd: Date
 ): boolean {
-  if (ticket.status !== "resolved" || !ticket.resolved_date) return false;
-  return isDateInTaxYear(ticket.resolved_date, periodStart, periodEnd);
+  if (ticket.status !== "resolved") return false;
+  const resolvedDate = getTicketResolvedDate(ticket);
+  if (!resolvedDate) return false;
+  return isDateInTaxYear(resolvedDate, periodStart, periodEnd);
 }
 
 function sumBox20Income(
@@ -164,7 +172,9 @@ export function buildSA105Summary(
   tickets: MaintenanceTicket[],
   periodStart: Date,
   periodEnd: Date,
-  taxYearLabel: string
+  taxYearLabel: string,
+  manualBox27: number = 0,
+  manualBox29: number = 0
 ): SA105Summary {
   const periodStartISO = periodStart.toISOString().slice(0, 10);
   const periodEndISO = periodEnd.toISOString().slice(0, 10);
@@ -176,8 +186,8 @@ export function buildSA105Summary(
     periodStart,
     periodEnd
   );
-  const box27 = 0;
-  const box29 = 0;
+  const box27 = manualBox27;
+  const box29 = manualBox29;
   const box44 = sumBox44MortgageInterest(
     properties,
     mortgages,

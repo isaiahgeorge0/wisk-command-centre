@@ -832,6 +832,11 @@ export async function updateMaintenanceTicket(
       error: parsed.error.issues[0]?.message ?? "Invalid input",
     };
   }
+
+  if (parsed.data.status === "resolved" && !parsed.data.resolved_date) {
+    parsed.data.resolved_date = new Date().toISOString().slice(0, 10);
+  }
+
   const { supabase, userId } = await getScopedSupabase();
   const payload = toMaintenanceDbPayload(parsed.data as MaintenanceTicketFormInput);
   const { data, error } = await supabase
