@@ -138,6 +138,36 @@ function buildMonthlyBreakdown(
   return months;
 }
 
+export function computeAdjustedMonths(
+  property: Property,
+  periodStart: Date,
+  periodEnd: Date
+): number {
+  const months =
+    (periodEnd.getFullYear() - periodStart.getFullYear()) * 12 +
+    (periodEnd.getMonth() - periodStart.getMonth()) +
+    1;
+  const periodMonths = Math.max(1, months);
+
+  const propertyStart = property.created_at
+    ? new Date(property.created_at)
+    : null;
+
+  const effectivePeriodStart =
+    propertyStart && propertyStart > periodStart ? propertyStart : periodStart;
+
+  const effectiveMonths = propertyStart
+    ? Math.max(
+        0,
+        (periodEnd.getFullYear() - effectivePeriodStart.getFullYear()) * 12 +
+          (periodEnd.getMonth() - effectivePeriodStart.getMonth()) +
+          1
+      )
+    : periodMonths;
+
+  return Math.min(effectiveMonths, periodMonths);
+}
+
 export function buildFinancialSummary(
   property: Property,
   payments: RentPayment[],
@@ -147,25 +177,9 @@ export function buildFinancialSummary(
   period: "monthly" | "annual"
 ): FinancialSummary {
   const now = new Date();
-  const { start, end, months } = getPeriodRange(period, now);
+  const { start, end } = getPeriodRange(period, now);
 
-  const propertyStart = property.created_at
-    ? new Date(property.created_at)
-    : null;
-
-  const effectivePeriodStart =
-    propertyStart && propertyStart > start ? propertyStart : start;
-
-  const effectiveMonths = propertyStart
-    ? Math.max(
-        0,
-        (end.getFullYear() - effectivePeriodStart.getFullYear()) * 12 +
-          (end.getMonth() - effectivePeriodStart.getMonth()) +
-          1
-      )
-    : months;
-
-  const adjustedMonths = Math.min(effectiveMonths, months);
+  const adjustedMonths = computeAdjustedMonths(property, start, end);
 
   const rentalIncome = sumPaidRentInRange(payments, start, end);
   const expectedIncome = (property.monthly_rent ?? 0) * adjustedMonths;
