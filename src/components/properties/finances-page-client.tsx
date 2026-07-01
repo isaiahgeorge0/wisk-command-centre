@@ -1,10 +1,9 @@
 "use client";
 
-import { PoundSterling, TrendingDown } from "lucide-react";
+import { TrendingDown } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
-import { PageHeader } from "@/components/layout/page-header";
 import { PageTransition } from "@/components/layout/page-transition";
 import { PropertiesProTeaser } from "@/components/properties/properties-pro-teaser";
 import { RentPaymentStatusBadge } from "@/components/properties/rent-payment-status-badge";
@@ -16,7 +15,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  PROPERTIES_ACCENT,
   RENT_PAYMENT_STATUSES,
 } from "@/lib/properties/constants";
 import {
@@ -157,15 +155,6 @@ export function FinancesPageClient({
 
   return (
     <PageTransition>
-      <PageHeader
-        title="Finances"
-        subtitle="Rent payments, mortgages, insurance, and financial tracking."
-        icon={
-          <PoundSterling className="size-6" style={{ color: PROPERTIES_ACCENT }} />
-        }
-        className="mb-8"
-      />
-
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatTile
           label="Monthly expected"

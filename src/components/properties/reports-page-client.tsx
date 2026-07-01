@@ -1,12 +1,10 @@
 "use client";
 
-import { Download, PoundSterling } from "lucide-react";
+import { Download } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { PageHeader } from "@/components/layout/page-header";
 import { PageTransition } from "@/components/layout/page-transition";
 import { RentPaymentStatusBadge } from "@/components/properties/rent-payment-status-badge";
-import { PROPERTIES_ACCENT } from "@/lib/properties/constants";
 import {
   getInsuranceTypeDisplayName,
   getMaintenanceCategoryDisplayName,
@@ -162,18 +160,6 @@ export function ReportsPageClient({
       `}</style>
 
       <div className="print:hidden">
-        <PageHeader
-          title="Financial Reports"
-          subtitle="UK tax year reports for your portfolio — print or save as PDF."
-          icon={
-            <PoundSterling
-              className="size-6"
-              style={{ color: PROPERTIES_ACCENT }}
-            />
-          }
-          className="mb-6"
-        />
-
         <div className="mb-8 flex flex-wrap items-center gap-3">
           <div className="flex flex-wrap gap-2">
             <ScopeButton

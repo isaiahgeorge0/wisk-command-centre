@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, TrendingUp } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
 import {
@@ -16,9 +16,7 @@ import {
   YAxis,
 } from "recharts";
 
-import { PageHeader } from "@/components/layout/page-header";
 import { PageTransition } from "@/components/layout/page-transition";
-import { PROPERTIES_ACCENT } from "@/lib/properties/constants";
 import {
   formatPropertyCurrency,
   formatYieldPercent,
@@ -122,15 +120,6 @@ export function YieldAnalyticsClient({
 
   return (
     <PageTransition>
-      <PageHeader
-        title="Yield Analytics"
-        subtitle="Portfolio yield performance and return on investment."
-        icon={
-          <TrendingUp className="size-6" style={{ color: PROPERTIES_ACCENT }} />
-        }
-        className="mb-8"
-      />
-
       <div className="mb-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <KpiTile
           label="Portfolio gross yield"

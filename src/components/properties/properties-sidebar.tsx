@@ -2,7 +2,6 @@
 
 import {
   Building2,
-  Calculator,
   FileText,
   FileWarning,
   HardHat,
@@ -11,7 +10,6 @@ import {
   PoundSterling,
   ShieldCheck,
   Sparkles,
-  TrendingUp,
   Users,
   Wrench,
   type LucideIcon,
@@ -28,16 +26,20 @@ const NAV_ITEMS: { label: string; href: string; icon: LucideIcon }[] = [
   { label: "Tenants", href: "/properties/tenants", icon: Users },
   { label: "Reliability", href: "/properties/reliability", icon: ShieldCheck },
   { label: "Notices", href: "/properties/notices", icon: FileWarning },
-  { label: "SA105 Summary", href: "/properties/sa105", icon: Calculator },
   { label: "Maintenance", href: "/properties/maintenance", icon: Wrench },
   { label: "Finances", href: "/properties/finances", icon: PoundSterling },
-  { label: "Yield Analytics", href: "/properties/yield-analytics", icon: TrendingUp },
-  { label: "Reports", href: "/properties/reports", icon: FileText },
   { label: "Documents", href: "/properties/documents", icon: FileText },
   { label: "Contractors", href: "/properties/contractors", icon: HardHat },
   { label: "Communication", href: "/properties/communication", icon: MessageSquare },
   { label: "Winston", href: "/properties/winston", icon: Sparkles },
 ];
+
+const FINANCES_ROUTES = [
+  "/properties/finances",
+  "/properties/yield-analytics",
+  "/properties/reports",
+  "/properties/sa105",
+] as const;
 
 function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -78,7 +80,13 @@ export function PropertiesSidebar({
       <nav className="flex-1 overflow-y-auto p-2" aria-label="Properties navigation">
         <ul className="space-y-0.5">
           {NAV_ITEMS.map((item) => {
-            const active = isActive(pathname, item.href);
+            const active =
+              item.href === "/properties/finances"
+                ? FINANCES_ROUTES.some(
+                    (route) =>
+                      pathname === route || pathname.startsWith(`${route}/`)
+                  )
+                : isActive(pathname, item.href);
             const Icon = item.icon;
             const showUnreadBadge =
               item.href === "/properties/communication" &&

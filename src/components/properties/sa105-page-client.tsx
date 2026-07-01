@@ -10,9 +10,7 @@ import {
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
-import { PageHeader } from "@/components/layout/page-header";
 import { PageTransition } from "@/components/layout/page-transition";
-import { PROPERTIES_ACCENT } from "@/lib/properties/constants";
 import { formatPropertyCurrency } from "@/lib/properties/format";
 import {
   buildSA105Summary,
@@ -275,18 +273,6 @@ export function SA105PageClient({
       `}</style>
 
       <div className="print:hidden">
-        <PageHeader
-          title="SA105 Tax Summary"
-          subtitle="UK property income summary for your Self Assessment tax return."
-          icon={
-            <Calculator
-              className="size-6"
-              style={{ color: PROPERTIES_ACCENT }}
-            />
-          }
-          className="mb-6"
-        />
-
         <div className="mb-6 flex flex-wrap items-center gap-2">
           <ScopeButton
             active={dateRangeMode === "current"}
