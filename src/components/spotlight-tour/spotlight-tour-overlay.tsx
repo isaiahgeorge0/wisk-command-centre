@@ -174,7 +174,7 @@ function AnimatedFocusRing({
 
   return (
     <motion.div
-      className="pointer-events-none fixed rounded-full border-2 border-wisk-teal/80 shadow-[0_0_24px_rgba(45,212,191,0.35)]"
+      className="pointer-events-none fixed rounded-full border-2 border-wisk-turquoise/80 shadow-[0_0_24px_rgba(45,212,191,0.35)]"
       animate={ring}
       transition={transition}
       aria-hidden

@@ -16,7 +16,7 @@ export function TaskProjectTag({
     <Badge
       variant="outline"
       className={cn(
-        "max-w-[140px] truncate border-wisk-purple/25 bg-wisk-purple/10 text-xs font-normal text-wisk-purple",
+        "max-w-[140px] truncate border-wisk-section-tasks/25 bg-wisk-section-tasks/10 text-xs font-normal text-wisk-section-tasks",
         className
       )}
     >

@@ -30,7 +30,7 @@ export default function GlobalError({
           />
 
           <div className="relative z-10 flex max-w-md flex-col items-center text-center">
-            <span className="bg-gradient-to-r from-wisk-purple to-wisk-teal bg-clip-text text-3xl font-bold tracking-[0.28em] text-transparent uppercase sm:text-4xl">
+            <span className="bg-wisk-lime bg-clip-text text-3xl font-bold tracking-[0.28em] text-transparent uppercase sm:text-4xl">
               WISK
             </span>
 
@@ -45,7 +45,7 @@ export default function GlobalError({
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="mt-8 rounded-lg bg-gradient-to-r from-wisk-purple to-wisk-teal px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              className="mt-8 rounded-lg bg-wisk-lime px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
             >
               Refresh page
             </button>

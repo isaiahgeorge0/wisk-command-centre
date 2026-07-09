@@ -1,6 +1,7 @@
 "use client";
 
 import { FolderKanban, Plus } from "lucide-react";
+import { useTheme } from "next-themes";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -39,6 +40,7 @@ export function ProjectsPageClient({
   integrations,
 }: ProjectsPageClientProps) {
   const router = useRouter();
+  const { resolvedTheme } = useTheme();
   const searchParams = useSearchParams();
   const openProjectId = searchParams.get("project");
   const openTabParam = searchParams.get("tab");
@@ -165,9 +167,12 @@ export function ProjectsPageClient({
           title="Projects"
           subtitle="Client work, status, and next actions at a glance."
           icon={
-            <FolderKanban className="size-6" style={{ color: "#a855f7" }} />
+            <FolderKanban
+              className="size-6"
+              style={{ color: resolvedTheme === "dark" ? "#aca0ff" : "#4a3db0" }}
+            />
           }
-          accentColour="#a855f7"
+          accentColour={resolvedTheme === "dark" ? "#aca0ff" : "#4a3db0"}
         />
         <Button className="shrink-0 gap-2" onClick={openProjectAdd} data-tour="add-project">
           <Plus className="size-4" />

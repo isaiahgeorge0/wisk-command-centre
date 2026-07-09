@@ -126,7 +126,7 @@ export function GoalCard({
 
   if (editing) {
     return (
-      <Card className="border-wisk-purple/25 bg-card/90">
+      <Card className="border-wisk-section-goals/25 bg-card/90">
         <CardHeader className="pb-2">
           <p className="text-sm font-medium text-muted-foreground">Editing goal</p>
         </CardHeader>
@@ -185,7 +185,7 @@ export function GoalCard({
                 <Link
                   href="/content"
                   onClick={(e) => e.stopPropagation()}
-                  className="text-xs font-medium text-wisk-teal hover:underline"
+                  className="text-xs font-medium text-wisk-section-goals hover:underline"
                 >
                   {publishedPostCount} post
                   {publishedPostCount === 1 ? "" : "s"} published

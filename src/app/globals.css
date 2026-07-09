@@ -10,6 +10,22 @@
   --color-surface: var(--surface);
   --color-wisk-purple: var(--wisk-purple);
   --color-wisk-teal: var(--wisk-teal);
+  --color-wisk-lime: var(--wisk-lime);
+  --color-wisk-pink: var(--wisk-pink);
+  --color-wisk-lilac: var(--wisk-lilac);
+  --color-wisk-orange: var(--wisk-orange);
+  --color-wisk-mint: var(--wisk-mint);
+  --color-wisk-turquoise: var(--wisk-turquoise);
+  --color-wisk-ferrari: var(--wisk-ferrari);
+  --color-wisk-section-projects: var(--wisk-section-projects);
+  --color-wisk-section-tasks: var(--wisk-section-tasks);
+  --color-wisk-section-goals: var(--wisk-section-goals);
+  --color-wisk-section-ideas: var(--wisk-section-ideas);
+  --color-wisk-section-leads: var(--wisk-section-leads);
+  --color-wisk-section-content: var(--wisk-section-content);
+  --color-wisk-section-calendar: var(--wisk-section-calendar);
+  --color-wisk-section-winston: var(--wisk-section-winston);
+  --color-wisk-dark: var(--wisk-dark);
   --color-wisk-coral: var(--wisk-coral);
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
@@ -54,14 +70,14 @@
 
 /* Light mode */
 :root {
-  --background: oklch(0.98 0.005 260);
-  --foreground: oklch(0.18 0.02 260);
-  --surface: oklch(0.96 0.008 260);
+  --background: oklch(0.98 0.003 100);
+  --foreground: oklch(0.12 0.02 260);
+  --surface: oklch(0.96 0.005 100);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.02 260);
+  --card-foreground: oklch(0.12 0.02 260);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.02 260);
-  --primary: oklch(0.52 0.19 300);
+  --popover-foreground: oklch(0.12 0.02 260);
+  --primary: oklch(0.42 0.08 210);
   --primary-foreground: oklch(0.99 0 0);
   --secondary: oklch(0.94 0.01 260);
   --secondary-foreground: oklch(0.25 0.02 260);
@@ -72,15 +88,32 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.88 0.01 260);
   --input: oklch(0.88 0.01 260);
-  --ring: oklch(0.52 0.19 300);
-  --wisk-purple: oklch(0.52 0.19 300);
-  --wisk-teal: oklch(0.58 0.12 180);
+  --ring: oklch(0.42 0.08 210);
+  --wisk-lime: oklch(0.42 0.08 210);
+  --wisk-lime-bright: #016c81;
+  --wisk-turquoise: oklch(0.42 0.08 210);
+  --wisk-pink: #fea9e0;
+  --wisk-lilac: oklch(0.52 0.14 280);
+  --wisk-orange: #cc3d00;
+  --wisk-mint: oklch(0.45 0.08 165);
+  --wisk-ferrari: #cc0016;
+  --wisk-section-projects: #4a3db0;
+  --wisk-section-tasks: #016c81;
+  --wisk-section-goals: #085041;
+  --wisk-section-ideas: #c4207e;
+  --wisk-section-leads: #cc3d00;
+  --wisk-section-content: #0044cc;
+  --wisk-section-calendar: #007a70;
+  --wisk-section-winston: #6200b3;
+  --wisk-dark: #141b27;
+  --wisk-purple: var(--wisk-lilac);
+  --wisk-teal: var(--wisk-turquoise);
   --wisk-coral: oklch(0.68 0.17 25);
-  --chart-1: oklch(0.52 0.19 300);
-  --chart-2: oklch(0.58 0.12 180);
+  --chart-1: oklch(0.42 0.08 210);
+  --chart-2: oklch(0.42 0.08 210);
   --chart-3: oklch(0.48 0.02 260);
-  --chart-4: oklch(0.65 0.15 300);
-  --chart-5: oklch(0.7 0.1 180);
+  --chart-4: oklch(0.52 0.14 280);
+  --chart-5: oklch(0.62 0.14 25);
   --radius: 0.625rem;
   --sidebar: oklch(0.96 0.008 260);
   --sidebar-foreground: oklch(0.18 0.02 260);
@@ -93,15 +126,15 @@
 }
 
 .dark {
-  --background: oklch(0.14 0.025 265);
-  --foreground: oklch(0.95 0.01 265);
-  --surface: oklch(0.18 0.03 265);
-  --card: oklch(0.2 0.03 265);
-  --card-foreground: oklch(0.95 0.01 265);
-  --popover: oklch(0.2 0.03 265);
-  --popover-foreground: oklch(0.95 0.01 265);
-  --primary: oklch(0.62 0.2 300);
-  --primary-foreground: oklch(0.98 0 0);
+  --background: oklch(0.155 0.025 245);
+  --foreground: oklch(0.95 0.01 100);
+  --surface: oklch(0.19 0.025 245);
+  --card: oklch(0.21 0.025 245);
+  --card-foreground: oklch(0.95 0.01 100);
+  --popover: oklch(0.21 0.025 245);
+  --popover-foreground: oklch(0.95 0.01 100);
+  --primary: oklch(0.92 0.22 128);
+  --primary-foreground: oklch(0.12 0.02 260);
   --secondary: oklch(0.24 0.03 265);
   --secondary-foreground: oklch(0.95 0.01 265);
   --muted: oklch(0.24 0.03 265);
@@ -111,15 +144,32 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.62 0.2 300);
-  --wisk-purple: oklch(0.68 0.18 300);
-  --wisk-teal: oklch(0.78 0.1 180);
+  --ring: oklch(0.92 0.22 128);
+  --wisk-lime: oklch(0.92 0.22 128);
+  --wisk-lime-bright: #c3ff32;
+  --wisk-turquoise: oklch(0.62 0.1 210);
+  --wisk-pink: #fea9e0;
+  --wisk-lilac: oklch(0.72 0.16 280);
+  --wisk-orange: #ff5d00;
+  --wisk-mint: oklch(0.82 0.12 165);
+  --wisk-ferrari: #e8001d;
+  --wisk-section-projects: #aca0ff;
+  --wisk-section-tasks: #2dd4bf;
+  --wisk-section-goals: #baf7e1;
+  --wisk-section-ideas: #fea9e0;
+  --wisk-section-leads: #ff5d00;
+  --wisk-section-content: #0066ff;
+  --wisk-section-calendar: #00c4b4;
+  --wisk-section-winston: #8b00ff;
+  --wisk-dark: #141b27;
+  --wisk-purple: var(--wisk-lilac);
+  --wisk-teal: var(--wisk-turquoise);
   --wisk-coral: oklch(0.72 0.15 25);
-  --chart-1: oklch(0.68 0.18 300);
-  --chart-2: oklch(0.78 0.1 180);
+  --chart-1: oklch(0.92 0.22 128);
+  --chart-2: oklch(0.62 0.1 210);
   --chart-3: oklch(0.68 0.02 265);
-  --chart-4: oklch(0.55 0.16 300);
-  --chart-5: oklch(0.65 0.08 180);
+  --chart-4: oklch(0.72 0.16 280);
+  --chart-5: oklch(0.72 0.15 25);
   --sidebar: oklch(0.18 0.03 265);
   --sidebar-foreground: oklch(0.95 0.01 265);
   --sidebar-primary: oklch(0.62 0.2 300);
@@ -142,12 +192,12 @@
     background-image:
       radial-gradient(
         ellipse 70% 45% at 0% 0%,
-        oklch(0.55 0.14 300 / 0.035),
+        oklch(0.42 0.08 210 / 0.04),
         transparent 55%
       ),
       radial-gradient(
         ellipse 55% 40% at 100% 100%,
-        oklch(0.65 0.1 180 / 0.025),
+        oklch(0.52 0.14 280 / 0.03),
         transparent 50%
       );
   }
@@ -155,12 +205,12 @@
     background-image:
       radial-gradient(
         ellipse 70% 45% at 0% 0%,
-        oklch(0.55 0.14 300 / 0.05),
+        oklch(0.92 0.22 128 / 0.06),
         transparent 55%
       ),
       radial-gradient(
         ellipse 55% 40% at 100% 100%,
-        oklch(0.65 0.1 180 / 0.035),
+        oklch(0.42 0.08 210 / 0.04),
         transparent 50%
       );
   }

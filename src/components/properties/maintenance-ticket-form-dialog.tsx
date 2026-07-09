@@ -282,7 +282,7 @@ export function MaintenanceTicketFormDialog({
         </form>
         <DialogFooter className="shrink-0 border-t border-border/50 pt-4">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending} className="min-h-11">Cancel</Button>
-          <Button type="submit" form={formId} disabled={isPending} className="min-h-11">{isPending ? "Saving…" : isEditing ? "Save changes" : "Add ticket"}</Button>
+          <Button type="submit" form={formId} disabled={isPending} className="min-h-11 bg-wisk-ferrari text-white hover:bg-wisk-ferrari/90">{isPending ? "Saving…" : isEditing ? "Save changes" : "Add ticket"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

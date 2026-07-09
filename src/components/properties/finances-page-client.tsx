@@ -180,7 +180,7 @@ export function FinancesPageClient({
             <h2 className="text-sm font-semibold text-foreground">
               Financial overview
             </h2>
-            <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-500">
+            <span className="rounded-full border border-wisk-ferrari/20 bg-wisk-ferrari/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-wisk-ferrari">
               Pro
             </span>
           </div>
@@ -211,20 +211,20 @@ export function FinancesPageClient({
           </div>
 
           {portfolioOverview.bestPerforming ? (
-            <div className="rounded-2xl border border-amber-500/15 bg-amber-500/5 px-5 py-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-amber-500">
+            <div className="rounded-2xl border border-wisk-ferrari/15 bg-wisk-ferrari/5 px-5 py-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-wisk-ferrari">
                 Best performing
               </p>
               <p className="mt-1 text-base font-semibold text-foreground">
                 {portfolioOverview.bestPerforming.propertyName}
               </p>
-              <p className="mt-2 text-3xl font-bold tabular-nums text-amber-500">
+              <p className="mt-2 text-3xl font-bold tabular-nums text-wisk-ferrari">
                 {formatYieldPercent(portfolioOverview.bestPerforming.netYield)}
               </p>
               <p className="text-xs text-muted-foreground">net yield</p>
               <Link
                 href="/properties/yield-analytics"
-                className="mt-3 inline-block text-sm text-amber-500 hover:text-amber-400"
+                className="mt-3 inline-block text-sm text-wisk-ferrari hover:text-wisk-ferrari"
               >
                 View full yield analytics →
               </Link>
@@ -280,7 +280,7 @@ export function FinancesPageClient({
                       <span
                         className={cn(
                           "w-1 shrink-0",
-                          item.kind === "mortgage" ? "bg-amber-500" : "bg-blue-500"
+                          item.kind === "mortgage" ? "bg-wisk-ferrari" : "bg-blue-500"
                         )}
                         aria-hidden
                       />
@@ -297,7 +297,7 @@ export function FinancesPageClient({
                           className={cn(
                             "text-sm font-semibold",
                             item.kind === "mortgage"
-                              ? "text-amber-500"
+                              ? "text-wisk-ferrari"
                               : "text-blue-500"
                           )}
                         >
@@ -313,7 +313,7 @@ export function FinancesPageClient({
 
           <Link
             href="/properties/yield-analytics"
-            className="inline-block text-sm text-amber-500 hover:text-amber-400"
+            className="inline-block text-sm text-wisk-ferrari hover:text-wisk-ferrari"
           >
             View full yield analytics →
           </Link>
@@ -373,7 +373,7 @@ export function FinancesPageClient({
       </div>
 
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-amber-500/20 bg-card/40 px-6 py-16 text-center">
+        <div className="rounded-xl border border-dashed border-wisk-ferrari/20 bg-card/40 px-6 py-16 text-center">
           <h2 className="text-lg font-medium text-foreground">
             No rent payments recorded
           </h2>
@@ -422,7 +422,7 @@ export function FinancesPageClient({
 
 function StatTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-amber-500/15 bg-card/60 px-4 py-3">
+    <div className="rounded-xl border border-wisk-ferrari/15 bg-card/60 px-4 py-3">
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">
         {value}

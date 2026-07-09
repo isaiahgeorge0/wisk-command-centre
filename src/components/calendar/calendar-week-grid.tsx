@@ -47,13 +47,13 @@ function WeekDayColumn({
       <div
         className={cn(
           "border-b border-border/50 px-2 py-2 text-center",
-          isToday && "bg-wisk-teal/15"
+          isToday && "bg-wisk-section-calendar/15"
         )}
       >
         <p
           className={cn(
             "text-[11px] font-medium tracking-wide uppercase",
-            isToday ? "text-wisk-teal" : "text-muted-foreground"
+            isToday ? "text-wisk-section-calendar" : "text-muted-foreground"
           )}
         >
           {weekdayLabel} {dayNumber}

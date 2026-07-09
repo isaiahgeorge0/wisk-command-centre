@@ -32,7 +32,7 @@ export function CalendarViewSwitcher({
               index === 0 && "rounded-l-lg",
               index === VIEWS.length - 1 && "rounded-r-lg",
               isActive
-                ? "bg-wisk-teal text-white"
+                ? "bg-wisk-section-calendar text-white"
                 : "bg-transparent text-muted-foreground hover:text-foreground"
             )}
           >

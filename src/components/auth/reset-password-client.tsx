@@ -78,7 +78,7 @@ export function ResetPasswordClient() {
         <div className="relative z-10 w-full max-w-md">
           <motion.div {...formMotion}>
             <div className="mb-8 flex flex-col items-center text-center">
-              <span className="bg-gradient-to-r from-wisk-purple to-wisk-teal bg-clip-text text-2xl font-bold tracking-[0.28em] text-transparent uppercase sm:text-3xl">
+              <span className="bg-wisk-lime bg-clip-text text-2xl font-bold tracking-[0.28em] text-transparent uppercase sm:text-3xl">
                 WISK
               </span>
               <h1 className="mt-6 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
@@ -163,7 +163,7 @@ export function ResetPasswordClient() {
               <button
                 type="submit"
                 disabled={isPending}
-                className="w-full rounded-lg bg-gradient-to-r from-wisk-purple to-wisk-teal px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full rounded-lg bg-wisk-lime px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isPending ? "Updating…" : "Update password"}
               </button>

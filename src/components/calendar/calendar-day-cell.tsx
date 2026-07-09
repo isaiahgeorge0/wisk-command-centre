@@ -64,15 +64,15 @@ export function CalendarDayCell({
         "group relative flex min-h-[5.5rem] cursor-pointer flex-col gap-1 border-b border-r border-border/50 p-1.5 text-left transition-colors hover:bg-muted/40 md:min-h-[6.5rem] md:p-2",
         !day.isCurrentMonth && "bg-muted/20 text-muted-foreground/70",
         day.isToday &&
-          "bg-wisk-teal/10 ring-1 ring-inset ring-wisk-teal/30",
-        selected && "bg-muted/60 ring-1 ring-inset ring-wisk-purple/40"
+          "bg-wisk-section-calendar/10 ring-1 ring-inset ring-wisk-section-calendar/30",
+        selected && "bg-muted/60 ring-1 ring-inset ring-wisk-section-calendar/40"
       )}
     >
       <div className="flex items-start justify-between gap-0.5">
         <span
           className={cn(
             "inline-flex size-6 items-center justify-center rounded-full text-xs font-medium",
-            day.isToday && "bg-wisk-teal text-white",
+            day.isToday && "bg-wisk-section-calendar text-white",
             !day.isToday && day.isCurrentMonth && "text-foreground",
             !day.isCurrentMonth && "text-muted-foreground/60"
           )}
@@ -88,7 +88,7 @@ export function CalendarDayCell({
               onClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
               className={cn(
-                "flex size-[18px] shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-wisk-teal/10 hover:text-wisk-teal focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wisk-teal/40",
+                "flex size-[18px] shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-wisk-section-calendar/10 hover:text-wisk-section-calendar focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wisk-section-calendar/40",
                 "opacity-100 md:opacity-0 md:group-hover:opacity-100",
                 selected && "md:opacity-100"
               )}

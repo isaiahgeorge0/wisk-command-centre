@@ -42,7 +42,7 @@ export function UsernamePromptModal({ onComplete }: UsernamePromptModalProps) {
     >
       <div className="w-full max-w-md rounded-2xl border border-border/60 bg-card p-6 shadow-2xl space-y-5">
         <div className="flex flex-col items-center gap-3 text-center">
-          <div className="flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-wisk-purple to-wisk-teal">
+          <div className="flex size-12 items-center justify-center rounded-xl bg-wisk-lime">
             <Sparkles className="size-6 text-white" aria-hidden />
           </div>
           <div>
@@ -76,7 +76,7 @@ export function UsernamePromptModal({ onComplete }: UsernamePromptModalProps) {
           <Button
             type="submit"
             disabled={!available || !username.trim() || isPending}
-            className="w-full bg-gradient-to-r from-wisk-purple to-wisk-teal text-white hover:opacity-90"
+            className="w-full bg-wisk-lime text-wisk-dark hover:opacity-90"
           >
             {isPending ? "Saving…" : "Set username"}
           </Button>

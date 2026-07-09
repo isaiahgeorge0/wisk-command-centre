@@ -95,7 +95,7 @@ export function MaintenancePageClient({
         <Button
           onClick={() => setFormOpen(true)}
           disabled={properties.length === 0}
-          className="min-h-11 gap-2 bg-amber-500 text-white hover:bg-amber-500/90"
+          className="min-h-11 gap-2 bg-wisk-ferrari text-white hover:bg-wisk-ferrari/90"
         >
           <Plus className="size-4" />
           Add ticket
@@ -162,7 +162,7 @@ export function MaintenancePageClient({
       </div>
 
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-amber-500/20 bg-card/40 px-6 py-16 text-center">
+        <div className="rounded-xl border border-dashed border-wisk-ferrari/20 bg-card/40 px-6 py-16 text-center">
           <h2 className="text-lg font-medium text-foreground">
             No maintenance tickets
           </h2>
@@ -310,7 +310,7 @@ export function MaintenancePageClient({
 
 function StatTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-amber-500/15 bg-card/60 px-4 py-3">
+    <div className="rounded-xl border border-wisk-ferrari/15 bg-card/60 px-4 py-3">
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">
         {value}

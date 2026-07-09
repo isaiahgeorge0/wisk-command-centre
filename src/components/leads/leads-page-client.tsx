@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { KanbanSquare, LayoutList, Plus, Sparkles, TrendingUp, Trophy } from "lucide-react";
+import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -47,11 +48,11 @@ type LeadsPageClientProps = {
 const CELEBRATION_PARTICLES = [
   { x: -220, y: -120, delay: 0, color: "bg-amber-400", size: "size-2.5" },
   { x: -160, y: -170, delay: 0.04, color: "bg-emerald-400", size: "size-2" },
-  { x: -80, y: -150, delay: 0.08, color: "bg-wisk-teal", size: "size-2" },
+  { x: -80, y: -150, delay: 0.08, color: "bg-wisk-section-leads", size: "size-2" },
   { x: 0, y: -190, delay: 0.12, color: "bg-yellow-300", size: "size-2.5" },
   { x: 90, y: -150, delay: 0.16, color: "bg-amber-300", size: "size-2" },
   { x: 170, y: -170, delay: 0.2, color: "bg-emerald-300", size: "size-2" },
-  { x: 230, y: -120, delay: 0.24, color: "bg-wisk-teal", size: "size-2.5" },
+  { x: 230, y: -120, delay: 0.24, color: "bg-wisk-section-leads", size: "size-2.5" },
   { x: -200, y: 90, delay: 0.06, color: "bg-amber-500", size: "size-2" },
   { x: -120, y: 130, delay: 0.1, color: "bg-emerald-500", size: "size-2" },
   { x: -20, y: 160, delay: 0.14, color: "bg-yellow-400", size: "size-2.5" },
@@ -142,6 +143,7 @@ export function LeadsPageClient({
   canAccessWinston,
 }: LeadsPageClientProps) {
   const router = useRouter();
+  const { resolvedTheme } = useTheme();
   const { leadAddOpen, setLeadAddOpen, openLeadAdd } = useQuickAdd();
   const [leads, setLeads] = useState<LeadWithActivity[]>(initialLeads);
   const [view, setView] = useState<LeadsView>("pipeline");
@@ -254,16 +256,21 @@ export function LeadsPageClient({
           className="mb-0"
           title="Leads"
           subtitle="Track your pipeline from first contact to won."
-          icon={<TrendingUp className="size-6" style={{ color: "#6366f1" }} />}
-          accentColour="#6366f1"
+          icon={
+            <TrendingUp
+              className="size-6"
+              style={{ color: resolvedTheme === "dark" ? "#ff5d00" : "#cc3d00" }}
+            />
+          }
+          accentColour={resolvedTheme === "dark" ? "#ff5d00" : "#cc3d00"}
         />
         <div className="flex items-center gap-2 self-end sm:self-auto">
           <button
             type="button"
             onClick={() => setWinstonOpen(true)}
-            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-wisk-purple/30 bg-gradient-to-r from-wisk-purple/10 to-wisk-teal/10 px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-wisk-purple/50 hover:from-wisk-purple/15 hover:to-wisk-teal/15"
+            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-wisk-section-leads/30 bg-gradient-to-r from-wisk-section-leads/10 to-wisk-section-leads/10 px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-wisk-section-leads/50 hover:from-wisk-section-leads/15 hover:to-wisk-section-leads/15"
           >
-            <Sparkles className="size-4 text-wisk-purple" aria-hidden />
+            <Sparkles className="size-4 text-wisk-section-leads" aria-hidden />
             <span className="hidden sm:inline">Winston</span>
           </button>
           <div className="flex items-center rounded-lg border border-border/60 p-0.5">
@@ -275,7 +282,7 @@ export function LeadsPageClient({
               className={cn(
                 "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
                 view === "pipeline"
-                  ? "bg-wisk-teal text-white"
+                  ? "bg-wisk-section-leads text-white"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -290,7 +297,7 @@ export function LeadsPageClient({
               className={cn(
                 "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
                 view === "table"
-                  ? "bg-wisk-teal text-white"
+                  ? "bg-wisk-section-leads text-white"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -340,7 +347,7 @@ export function LeadsPageClient({
                     <button
                       type="button"
                       onClick={() => setFilters({ search: "", stage: "all" })}
-                      className="mt-3 text-sm text-wisk-teal underline-offset-2 hover:underline"
+                      className="mt-3 text-sm text-wisk-section-leads underline-offset-2 hover:underline"
                     >
                       Clear filters
                     </button>

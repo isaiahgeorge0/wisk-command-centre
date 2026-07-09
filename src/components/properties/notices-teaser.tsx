@@ -10,7 +10,7 @@ import {
 import Link from "next/link";
 
 const CTA_GRADIENT =
-  "linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #f97316 100%)";
+  "linear-gradient(135deg, #8b0010 0%, #e8001d 50%, #cc0016 100%)";
 
 const FEATURES = [
   {
@@ -55,11 +55,11 @@ export function NoticesTeaser() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-16">
       <div className="flex flex-col items-center text-center">
-        <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-2xl border border-amber-500/20 bg-amber-500/10">
-          <FileWarning className="size-8 text-amber-500" aria-hidden />
+        <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-2xl border border-wisk-ferrari/20 bg-wisk-ferrari/10">
+          <FileWarning className="size-8 text-wisk-ferrari" aria-hidden />
         </div>
 
-        <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-amber-500">
+        <span className="rounded-full border border-wisk-ferrari/20 bg-wisk-ferrari/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-wisk-ferrari">
           Properties Pro
         </span>
 
@@ -75,9 +75,9 @@ export function NoticesTeaser() {
           {FEATURES.map(({ icon: Icon, title, description }) => (
             <div
               key={title}
-              className="rounded-xl border border-amber-500/15 bg-card/60 px-4 py-4 text-left"
+              className="rounded-xl border border-wisk-ferrari/15 bg-card/60 px-4 py-4 text-left"
             >
-              <Icon className="size-5 text-amber-500" aria-hidden />
+              <Icon className="size-5 text-wisk-ferrari" aria-hidden />
               <p className="mt-2 text-sm font-semibold text-foreground">
                 {title}
               </p>

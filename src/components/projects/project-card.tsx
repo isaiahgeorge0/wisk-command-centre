@@ -139,7 +139,7 @@ export function ProjectCard({
 
   if (editing) {
     return (
-      <Card className="border-wisk-purple/25 bg-card/90">
+      <Card className="border-wisk-section-projects/25 bg-card/90">
         <CardHeader className="pb-2">
           <p className="text-sm font-medium text-muted-foreground">
             Editing project
@@ -182,7 +182,7 @@ export function ProjectCard({
     <Card
       className={cn(
         "relative cursor-pointer border-border/60 bg-card/80 transition-colors hover:border-border hover:bg-card",
-        expanded && "border-wisk-purple/20"
+        expanded && "border-wisk-section-projects/20"
       )}
       onClick={handleCardClick}
     >

@@ -51,7 +51,7 @@ export function ForgotPasswordClient() {
         <SignInEntranceItem>
           <Link
             href="/sign-in"
-            className="bg-gradient-to-r from-wisk-purple to-wisk-teal bg-clip-text text-3xl font-bold tracking-[0.28em] text-transparent uppercase sm:text-4xl"
+            className="bg-wisk-lime bg-clip-text text-3xl font-bold tracking-[0.28em] text-transparent uppercase sm:text-4xl"
           >
             WISK
           </Link>
@@ -60,7 +60,7 @@ export function ForgotPasswordClient() {
         <SignInEntranceItem className="mt-8 w-full">
           <div className="w-full rounded-xl border border-border/60 bg-card/50 p-6 text-center">
             <CheckCircle2
-              className="mx-auto size-10 text-wisk-teal"
+              className="mx-auto size-10 text-wisk-lime"
               aria-hidden
             />
             <h1 className="mt-4 text-xl font-semibold text-foreground">
@@ -100,7 +100,7 @@ export function ForgotPasswordClient() {
       <SignInEntranceItem>
         <Link
           href="/sign-in"
-          className="bg-gradient-to-r from-wisk-purple to-wisk-teal bg-clip-text text-3xl font-bold tracking-[0.28em] text-transparent uppercase sm:text-4xl"
+          className="bg-wisk-lime bg-clip-text text-3xl font-bold tracking-[0.28em] text-transparent uppercase sm:text-4xl"
         >
           WISK
         </Link>
@@ -142,7 +142,7 @@ export function ForgotPasswordClient() {
           <button
             type="submit"
             disabled={isPending}
-            className="mt-6 w-full rounded-lg bg-gradient-to-r from-wisk-purple to-wisk-teal px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-6 w-full rounded-lg bg-wisk-lime px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isPending ? "Sending…" : "Send reset link"}
           </button>

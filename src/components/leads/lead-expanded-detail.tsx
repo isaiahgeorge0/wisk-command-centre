@@ -141,7 +141,7 @@ export function LeadExpandedDetail({
                 Email:{" "}
                 <a
                   href={`mailto:${lead.email}`}
-                  className="text-sm text-wisk-teal hover:underline"
+                  className="text-sm text-wisk-section-leads hover:underline"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {lead.email}

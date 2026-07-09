@@ -68,7 +68,7 @@ export function PropertyCard({
       <Card
         className={cn(
           "overflow-hidden border-border/60 bg-card/60",
-          "border-l-4 border-l-amber-500"
+          "border-l-4 border-l-wisk-ferrari"
         )}
       >
         <CardHeader className="space-y-3 pb-3">
@@ -137,8 +137,8 @@ export function PropertyCard({
               />
             </div>
             {annualYield != null ? (
-              <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2">
-                <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
+              <div className="rounded-lg border border-wisk-ferrari/20 bg-wisk-ferrari/10 px-3 py-2">
+                <p className="text-xs font-medium text-wisk-ferrari">
                   Annual yield
                 </p>
                 <p className="mt-0.5 text-lg font-semibold text-foreground">
@@ -191,7 +191,7 @@ export function PropertyCard({
               href={`/properties/${property.id}`}
               className={cn(
                 buttonVariants({ size: "sm" }),
-                "min-h-11 gap-1.5 bg-amber-500 text-white hover:bg-amber-500/90"
+                "min-h-11 gap-1.5 bg-wisk-ferrari text-white hover:bg-wisk-ferrari/90"
               )}
             >
               View property

@@ -229,7 +229,7 @@ export function AdminQuickActions({ users }: AdminQuickActionsProps) {
             </p>
           ) : null}
           {message ? (
-            <p className="text-sm text-wisk-teal">{message}</p>
+            <p className="text-sm text-wisk-lime">{message}</p>
           ) : null}
         </CardContent>
       </Card>

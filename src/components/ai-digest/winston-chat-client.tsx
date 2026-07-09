@@ -68,7 +68,7 @@ function UsageBar({ percentage }: { percentage: number }) {
             "h-full rounded-full transition-all duration-500",
             isAtLimit
               ? "bg-destructive"
-              : "bg-gradient-to-r from-wisk-purple to-wisk-teal"
+              : "bg-wisk-section-winston"
           )}
           style={{ width: `${Math.min(percentage, 100)}%` }}
         />
@@ -184,7 +184,7 @@ function ConversationsSidebar({
             <div className="px-3 pt-3 shrink-0">
               <button
                 onClick={onNewChat}
-                className="flex w-full items-center gap-2 rounded-lg bg-gradient-to-r from-wisk-purple to-wisk-teal px-3 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
+                className="flex w-full items-center gap-2 rounded-lg bg-wisk-section-winston px-3 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
               >
                 <Plus className="size-4 shrink-0" aria-hidden />
                 New chat
@@ -204,7 +204,7 @@ function ConversationsSidebar({
                       onClick={() => onStartProjectChat(project.id)}
                       className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
                     >
-                      <span className="size-1.5 shrink-0 rounded-full bg-wisk-purple/60" />
+                      <span className="size-1.5 shrink-0 rounded-full bg-wisk-section-winston/60" />
                       <span className="truncate">{project.project_name}</span>
                     </button>
                   ))}
@@ -262,7 +262,7 @@ function ConversationsSidebar({
                           className={cn(
                             "flex w-full flex-col gap-0.5 rounded-lg px-2 py-2 text-left transition-colors",
                             isActive
-                              ? "border-l-2 border-wisk-teal bg-muted/60 pl-[6px]"
+                              ? "border-l-2 border-wisk-section-winston bg-muted/60 pl-[6px]"
                               : "hover:bg-muted/40"
                           )}
                         >
@@ -295,7 +295,7 @@ function ConversationsSidebar({
                               {relativeTime(conv.updated_at)}
                             </span>
                             {conv.project_name && (
-                              <span className="rounded-full bg-wisk-purple/15 px-1.5 py-0.5 text-[9px] font-medium text-wisk-purple">
+                              <span className="rounded-full bg-wisk-section-winston/15 px-1.5 py-0.5 text-[9px] font-medium text-wisk-section-winston">
                                 {conv.project_name}
                               </span>
                             )}
@@ -336,8 +336,8 @@ function EmptyState({ onPrompt }: { onPrompt: (text: string) => void }) {
         transition={{ duration: MOTION_DURATION.normal, ease: MOTION_EASE.smooth }}
         className="flex flex-col items-center gap-4"
       >
-        <div className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-wisk-purple/20 to-wisk-teal/20">
-          <Sparkles className="size-7 text-wisk-teal" aria-hidden />
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-wisk-section-winston/20 to-wisk-section-winston/20">
+          <Sparkles className="size-7 text-wisk-section-winston" aria-hidden />
         </div>
         <p className="text-base font-medium text-foreground">
           Ask Winston anything about your business.
@@ -347,7 +347,7 @@ function EmptyState({ onPrompt }: { onPrompt: (text: string) => void }) {
             <button
               key={prompt}
               onClick={() => onPrompt(prompt)}
-              className="rounded-full border border-border/60 bg-card/60 px-4 py-1.5 text-sm text-muted-foreground transition-colors hover:border-wisk-teal/40 hover:bg-wisk-teal/5 hover:text-foreground"
+              className="rounded-full border border-border/60 bg-card/60 px-4 py-1.5 text-sm text-muted-foreground transition-colors hover:border-wisk-section-winston/40 hover:bg-wisk-section-winston/5 hover:text-foreground"
             >
               {prompt}
             </button>
@@ -379,7 +379,7 @@ function MessageBubble({
       <div className={cn("max-w-[80%] space-y-1", !isUser && "space-y-1.5")}>
         {!isUser ? (
           <div className="flex items-center gap-1.5 pl-1">
-            <Sparkles className="size-3 text-wisk-teal" aria-hidden />
+            <Sparkles className="size-3 text-wisk-section-winston" aria-hidden />
             <span className="text-xs font-medium text-muted-foreground">
               Winston
             </span>
@@ -389,7 +389,7 @@ function MessageBubble({
           className={cn(
             "rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
             isUser
-              ? "bg-gradient-to-r from-wisk-purple to-wisk-teal text-white"
+              ? "bg-wisk-section-winston text-wisk-dark"
               : "border border-border/60 bg-card text-foreground"
           )}
         >
@@ -407,7 +407,7 @@ function TypingIndicator() {
     <div className="flex justify-start">
       <div className="space-y-1.5">
         <div className="flex items-center gap-1.5 pl-1">
-          <Sparkles className="size-3 text-wisk-teal" aria-hidden />
+          <Sparkles className="size-3 text-wisk-section-winston" aria-hidden />
           <span className="text-xs font-medium text-muted-foreground">
             Winston
           </span>
@@ -786,14 +786,14 @@ export function WinstonChatClient({
               }
               disabled={isSending || monthlyLimitHit}
               rows={1}
-              className="flex-1 resize-none rounded-xl border border-border/60 bg-background px-4 py-2.5 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-wisk-teal/40 disabled:opacity-50"
+              className="flex-1 resize-none rounded-xl border border-border/60 bg-background px-4 py-2.5 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-wisk-section-winston/40 disabled:opacity-50"
               style={{ maxHeight: "96px", overflowY: "auto" }}
             />
             <button
               onClick={() => void handleSend()}
               disabled={isSending || !input.trim() || monthlyLimitHit}
               aria-label="Send message"
-              className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-wisk-purple to-wisk-teal text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-wisk-section-winston text-wisk-dark transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {isSending ? (
                 <Loader2 className="size-4 animate-spin" aria-hidden />

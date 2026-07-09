@@ -116,10 +116,10 @@ function CapabilityCard({
         delay: noMotion ? 0 : index * 0.1,
         ease: MOTION_EASE.easeOut,
       }}
-      className="rounded-2xl border border-wisk-purple/15 bg-card/80 p-6 shadow-sm"
+      className="rounded-2xl border border-wisk-lime/15 bg-card/80 p-6 shadow-sm"
     >
-      <div className="mb-4 flex size-10 items-center justify-center rounded-xl border border-wisk-purple/20 bg-wisk-purple/10">
-        <Icon className="size-5 text-wisk-purple" aria-hidden={true} />
+      <div className="mb-4 flex size-10 items-center justify-center rounded-xl border border-wisk-lime/20 bg-wisk-lime/10">
+        <Icon className="size-5 text-wisk-lime" aria-hidden={true} />
       </div>
       <h3 className="mb-2 text-sm font-semibold text-foreground">{title}</h3>
       <p className="text-sm leading-relaxed text-muted-foreground">{body}</p>
@@ -158,7 +158,7 @@ function CheckoutButton({
           : "w-full min-h-[48px] py-3.5"
       )}
       style={{
-        background: "linear-gradient(135deg, #6d28d9 0%, #a855f7 50%, #14b8a6 100%)",
+        background: "linear-gradient(135deg, #c3ff32 0%, #c3ff32 50%, #016c81 100%)",
       }}
     >
       <span
@@ -296,7 +296,7 @@ export function AICheckoutClient({ priceId }: Props) {
               className="block"
               style={{
                 backgroundImage:
-                  "linear-gradient(to right, #c084fc, #a855f7 40%, #14b8a6)",
+                  "linear-gradient(to right, #c084fc, #c3ff32 40%, #016c81)",
                 WebkitBackgroundClip: "text",
                 backgroundClip: "text",
                 color: "transparent",
@@ -381,14 +381,14 @@ export function AICheckoutClient({ priceId }: Props) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-40px" }}
           transition={{ duration: 0.4, ease: MOTION_EASE.easeOut }}
-          className="rounded-2xl border border-wisk-purple/25 bg-card/90 p-8 shadow-[0_8px_40px_-8px_rgba(168,85,247,0.25)]"
+          className="rounded-2xl border border-wisk-lime/25 bg-card/90 p-8 shadow-[0_8px_40px_-8px_rgba(168,85,247,0.25)]"
         >
           {/* Plan name and price */}
           <div className="mb-6 flex items-end justify-between">
             <div>
               <p
                 className="mb-1 text-xs font-semibold uppercase tracking-[0.15em]"
-                style={{ color: "#a855f7" }}
+                style={{ color: "#c3ff32" }}
               >
                 WISK AI
               </p>
@@ -457,9 +457,9 @@ export function AICheckoutClient({ priceId }: Props) {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.4, delay: 0.1, ease: MOTION_EASE.easeOut }}
-          className="rounded-2xl border border-wisk-purple/15 bg-card/50 px-6 py-5"
+          className="rounded-2xl border border-wisk-lime/15 bg-card/50 px-6 py-5"
         >
-          <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.15em] text-wisk-purple">
+          <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.15em] text-wisk-lime">
             Want more?
           </p>
           <p className="mb-3 text-sm leading-relaxed text-muted-foreground">
@@ -467,7 +467,7 @@ export function AICheckoutClient({ priceId }: Props) {
           </p>
           <Link
             href="/upgrade/ai-pro"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-wisk-purple transition-opacity hover:opacity-80"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-wisk-lime transition-opacity hover:opacity-80"
           >
             See WISK AI Pro
             <ArrowRight className="size-4" aria-hidden />

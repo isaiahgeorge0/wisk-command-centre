@@ -18,8 +18,8 @@ function PortfolioPreview() {
   return (
     <div className="pointer-events-none select-none">
       <div className="mb-6 flex items-center gap-3">
-        <div className="flex size-10 items-center justify-center rounded-xl bg-amber-500/15">
-          <Building2 className="size-5 text-amber-500" />
+        <div className="flex size-10 items-center justify-center rounded-xl bg-wisk-ferrari/10">
+          <Building2 className="size-5 text-wisk-ferrari" />
         </div>
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
@@ -75,8 +75,8 @@ export function PropertiesTeaserPage() {
             transition={{ duration: 0.3, ease: "easeOut" }}
             className="flex flex-col items-center px-6 py-10 text-center"
           >
-            <div className="mb-5 flex size-20 items-center justify-center rounded-2xl bg-amber-500/15 shadow-lg ring-1 ring-amber-500/20">
-              <Building2 className="size-9 text-amber-500" />
+            <div className="mb-5 flex size-20 items-center justify-center rounded-2xl bg-wisk-ferrari/10 shadow-lg ring-1 ring-wisk-ferrari/20">
+              <Building2 className="size-9 text-wisk-ferrari" />
             </div>
 
             <h1 className="text-3xl font-bold tracking-tight text-foreground">
@@ -97,7 +97,7 @@ export function PropertiesTeaserPage() {
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2.5 pl-1">
                   <CheckCircle2
-                    className="mt-0.5 size-4 shrink-0 text-amber-500"
+                    className="mt-0.5 size-4 shrink-0 text-wisk-ferrari"
                     aria-hidden
                   />
                   <span className="text-sm leading-relaxed text-muted-foreground">
@@ -111,7 +111,7 @@ export function PropertiesTeaserPage() {
               href="/upgrade/properties"
               className={cn(
                 buttonVariants({ size: "lg" }),
-                "mt-8 gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:opacity-90"
+                "mt-8 gap-2 bg-gradient-to-r from-wisk-ferrari to-wisk-ferrari/60 text-white hover:opacity-90"
               )}
             >
               Unlock Properties

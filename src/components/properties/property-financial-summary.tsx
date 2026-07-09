@@ -25,7 +25,7 @@ const CHART_COLORS = {
   mortgage: "#f59e0b",
   insurance: "#3b82f6",
   maintenance: "#f97316",
-  net: "#14b8a6",
+  net: "#016c81",
   costs: "#f59e0b",
 };
 
@@ -87,7 +87,7 @@ export function PropertyFinancialSummary({
   );
 
   return (
-    <section className="space-y-4 rounded-xl border border-amber-500/15 bg-card/60 p-5">
+    <section className="space-y-4 rounded-xl border border-wisk-ferrari/15 bg-card/60 p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold text-foreground">
@@ -106,7 +106,7 @@ export function PropertyFinancialSummary({
               className={cn(
                 "min-h-10 rounded-md px-4 text-sm font-medium capitalize transition-colors",
                 period === value
-                  ? "bg-amber-500 text-white"
+                  ? "bg-wisk-ferrari text-white"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -284,7 +284,7 @@ export function PropertyFinancialSummary({
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-amber-500/15 bg-card/80 px-4 py-3">
+    <div className="rounded-xl border border-wisk-ferrari/15 bg-card/80 px-4 py-3">
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">
         {value}
@@ -336,7 +336,7 @@ function SummaryRow({
 
 function EmptyChart({ message }: { message: string }) {
   return (
-    <div className="flex h-[240px] items-center justify-center rounded-lg border border-dashed border-amber-500/20 bg-card/30 px-6 text-center">
+    <div className="flex h-[240px] items-center justify-center rounded-lg border border-dashed border-wisk-ferrari/20 bg-card/30 px-6 text-center">
       <p className="max-w-md text-sm text-muted-foreground">{message}</p>
     </div>
   );

@@ -11,7 +11,7 @@ export function OnboardingWelcomeBackground() {
         className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl"
         aria-hidden
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-wisk-purple/20 via-transparent to-wisk-teal/20" />
+        <div className="absolute inset-0 bg-gradient-to-br from-wisk-lime/20 via-transparent to-wisk-turquoise/20" />
       </div>
     );
   }

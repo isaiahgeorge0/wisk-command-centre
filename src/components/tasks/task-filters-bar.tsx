@@ -61,7 +61,7 @@ function FilterSelect<T extends string>({
         size="sm"
         className={cn(
           "h-7 w-auto max-w-[10rem] gap-1 border-border/60 bg-card/40 px-2.5 text-xs font-medium",
-          active && "border-wisk-teal/40 bg-wisk-teal/10 text-wisk-teal"
+          active && "border-wisk-section-tasks/40 bg-wisk-section-tasks/10 text-wisk-section-tasks"
         )}
         aria-label={label}
       >

@@ -166,7 +166,7 @@ export function PropertiesDashboardClient({
         />
         <Button
           onClick={handleAdd}
-          className="min-h-11 gap-2 bg-amber-500 text-white hover:bg-amber-500/90"
+          className="min-h-11 gap-2 bg-wisk-ferrari text-white hover:bg-wisk-ferrari/90"
         >
           <Plus className="size-4" />
           Add property
@@ -174,14 +174,14 @@ export function PropertiesDashboardClient({
       </div>
 
       {properties.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-amber-500/20 bg-card/40 px-6 py-16 text-center">
-          <Building2 className="mb-4 size-10 text-amber-500" />
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-wisk-ferrari/20 bg-card/40 px-6 py-16 text-center">
+          <Building2 className="mb-4 size-10 text-wisk-ferrari" />
           <h2 className="text-lg font-medium text-foreground">No properties yet</h2>
           <p className="mt-2 max-w-sm text-sm text-muted-foreground">
             Add your first property to get started.
           </p>
           <Button
-            className="mt-6 min-h-11 gap-2 bg-amber-500 text-white hover:bg-amber-500/90"
+            className="mt-6 min-h-11 gap-2 bg-wisk-ferrari text-white hover:bg-wisk-ferrari/90"
             onClick={handleAdd}
           >
             <Plus className="size-4" />
@@ -212,7 +212,7 @@ export function PropertiesDashboardClient({
           {rentDueFlags.length > 0 ? (
             <section className="mb-8" aria-label="Rent due">
               <div className="mb-4 flex items-center gap-2">
-                <PoundSterling className="size-5 text-amber-500" />
+                <PoundSterling className="size-5 text-wisk-ferrari" />
                 <h2 className="text-lg font-semibold text-foreground">
                   Rent due
                 </h2>
@@ -227,7 +227,7 @@ export function PropertiesDashboardClient({
                       duration: 0.25,
                       delay: prefersReducedMotion ? 0 : index * 0.05,
                     }}
-                    className="flex flex-col gap-3 rounded-xl border border-amber-500/20 bg-card/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                    className="flex flex-col gap-3 rounded-xl border border-wisk-ferrari/20 bg-card/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div className="min-w-0 space-y-1">
                       <p className="font-medium text-foreground">
@@ -249,7 +249,7 @@ export function PropertiesDashboardClient({
                             "font-medium",
                             flag.days_overdue > 0 && flag.days_overdue >= 4
                               ? "border-orange-500/30 bg-orange-500/10 text-orange-700 dark:text-orange-300"
-                              : "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                              : "border-amber-500/30 bg-wisk-ferrari/10 text-amber-700 dark:text-amber-300"
                           )}
                         >
                           {flag.days_overdue === -1
@@ -281,14 +281,14 @@ export function PropertiesDashboardClient({
             <section className="mb-8" aria-label="Contractor access requests">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <HardHat className="size-5 text-amber-500" />
+                  <HardHat className="size-5 text-wisk-ferrari" />
                   <h2 className="text-lg font-semibold text-foreground">
                     Contractor access requests
                   </h2>
                 </div>
                 <Link
                   href="/properties/maintenance"
-                  className="text-sm text-amber-600 hover:text-amber-500 dark:text-amber-400"
+                  className="text-sm text-wisk-ferrari hover:text-wisk-ferrari/80"
                 >
                   View all
                 </Link>
@@ -318,7 +318,7 @@ export function PropertiesDashboardClient({
                     </div>
                     <Badge
                       variant="outline"
-                      className="shrink-0 border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                      className="shrink-0 border-amber-500/30 bg-wisk-ferrari/10 text-amber-700 dark:text-amber-300"
                     >
                       Pending tenant approval
                     </Badge>
@@ -332,14 +332,14 @@ export function PropertiesDashboardClient({
             <section className="mb-8" aria-label="Open maintenance">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Wrench className="size-5 text-amber-500" />
+                  <Wrench className="size-5 text-wisk-ferrari" />
                   <h2 className="text-lg font-semibold text-foreground">
                     Open maintenance
                   </h2>
                 </div>
                 <Link
                   href="/properties/maintenance"
-                  className="text-sm text-amber-600 hover:text-amber-500 dark:text-amber-400"
+                  className="text-sm text-wisk-ferrari hover:text-wisk-ferrari/80"
                 >
                   View all
                 </Link>
@@ -388,7 +388,7 @@ export function PropertiesDashboardClient({
                                 className={cn(
                                   "font-medium",
                                   jobSheet.status === "in_progress"
-                                    ? "text-amber-600 dark:text-amber-400"
+                                    ? "text-amber-600 dark:text-wisk-ferrari"
                                     : jobSheet.status === "completed"
                                       ? "text-emerald-600 dark:text-emerald-400"
                                       : "text-muted-foreground"
@@ -436,19 +436,19 @@ export function PropertiesDashboardClient({
             <section className="mb-8" aria-label="Unread messages">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <MessageSquare className="size-5 text-amber-500" />
+                  <MessageSquare className="size-5 text-wisk-ferrari" />
                   <h2 className="text-lg font-semibold text-foreground">
                     Unread messages
                   </h2>
                 </div>
                 <Link
                   href="/properties/communication"
-                  className="text-sm text-amber-600 hover:text-amber-500 dark:text-amber-400"
+                  className="text-sm text-wisk-ferrari hover:text-wisk-ferrari/80"
                 >
                   View all
                 </Link>
               </div>
-              <div className="rounded-xl border border-amber-500/20 bg-card/60 px-4 py-3">
+              <div className="rounded-xl border border-wisk-ferrari/20 bg-card/60 px-4 py-3">
                 <p className="text-sm text-muted-foreground">
                   You have{" "}
                   <span className="font-semibold text-foreground">
@@ -459,7 +459,7 @@ export function PropertiesDashboardClient({
                 </p>
                 <Link
                   href="/properties/communication"
-                  className="mt-2 inline-flex text-sm font-medium text-amber-600 hover:text-amber-500 dark:text-amber-400"
+                  className="mt-2 inline-flex text-sm font-medium text-wisk-ferrari hover:text-wisk-ferrari/80"
                 >
                   Open communication hub →
                 </Link>
@@ -471,14 +471,14 @@ export function PropertiesDashboardClient({
             <section className="mb-8" aria-label="Certificate alerts">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <AlertTriangle className="size-5 text-amber-500" />
+                  <AlertTriangle className="size-5 text-wisk-ferrari" />
                   <h2 className="text-lg font-semibold text-foreground">
                     Certificate alerts
                   </h2>
                 </div>
                 <Link
                   href="/properties/list"
-                  className="text-sm text-amber-600 hover:text-amber-500 dark:text-amber-400"
+                  className="text-sm text-wisk-ferrari hover:text-wisk-ferrari/80"
                 >
                   View properties
                 </Link>
@@ -522,10 +522,10 @@ export function PropertiesDashboardClient({
           ) : null}
 
           {showInsightCard && insightContent ? (
-            <div className="mb-8 rounded-xl border border-border/60 border-l-4 border-l-amber-500 bg-card/80 p-5">
+            <div className="mb-8 rounded-xl border border-border/60 border-l-4 border-l-wisk-ferrari bg-card/80 p-5">
               <div className="mb-3 flex items-start justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="size-4 text-amber-500" />
+                  <Sparkles className="size-4 text-wisk-ferrari" />
                   <h2 className="text-sm font-semibold text-foreground">
                     Winston&apos;s take
                   </h2>
@@ -549,7 +549,7 @@ export function PropertiesDashboardClient({
                       key={i}
                       className="flex items-start gap-2 text-sm text-muted-foreground"
                     >
-                      <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-amber-500" />
+                      <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-wisk-ferrari" />
                       {item}
                     </li>
                   ))}
@@ -557,7 +557,7 @@ export function PropertiesDashboardClient({
               ) : null}
               <Link
                 href="/properties/winston"
-                className="mt-4 inline-flex text-sm font-medium text-amber-600 hover:text-amber-500 dark:text-amber-400"
+                className="mt-4 inline-flex text-sm font-medium text-wisk-ferrari hover:text-wisk-ferrari/80"
               >
                 View full insights →
               </Link>
@@ -619,7 +619,7 @@ export function PropertiesDashboardClient({
 
 function StatTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-amber-500/15 bg-card/60 px-4 py-3">
+    <div className="rounded-xl border border-wisk-ferrari/15 bg-card/60 px-4 py-3">
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">
         {value}

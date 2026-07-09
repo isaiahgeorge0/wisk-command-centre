@@ -33,7 +33,7 @@ export function SettingsTabs({ activeTab, onChange }: SettingsTabsProps) {
           className={cn(
             "shrink-0 border-b-2 px-3 py-2 text-sm font-medium transition-colors",
             activeTab === tab.id
-              ? "border-wisk-teal text-foreground"
+              ? "border-wisk-turquoise text-foreground"
               : "border-transparent text-muted-foreground hover:text-foreground"
           )}
         >

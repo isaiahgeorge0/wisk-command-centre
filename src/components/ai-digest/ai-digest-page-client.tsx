@@ -89,7 +89,7 @@ function WinList({ items }: { items: string[] }) {
     <ul className="space-y-2">
       {items.map((item, i) => (
         <li key={i} className="flex items-start gap-2.5">
-          <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-wisk-teal" aria-hidden />
+          <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-wisk-section-winston" aria-hidden />
           <span className="text-sm text-foreground">{item}</span>
         </li>
       ))}
@@ -119,7 +119,7 @@ function WeekAheadList({ items }: { items: string[] }) {
       {items.map((item, i) => (
         <li key={i} className="flex items-start gap-2.5">
           <span
-            className="mt-1.5 size-2 shrink-0 rounded-full bg-wisk-purple/70"
+            className="mt-1.5 size-2 shrink-0 rounded-full bg-wisk-section-winston/70"
             aria-hidden
           />
           <span className="text-sm text-foreground">{item}</span>
@@ -134,8 +134,8 @@ function WeekAheadList({ items }: { items: string[] }) {
 function EmptyState() {
   return (
     <div className="flex flex-col items-center px-4 py-16 text-center">
-      <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-gradient-to-br from-wisk-purple/20 to-wisk-teal/20">
-        <Sparkles className="size-7 text-wisk-teal" />
+      <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-gradient-to-br from-wisk-section-winston/20 to-wisk-section-winston/20">
+        <Sparkles className="size-7 text-wisk-section-winston" />
       </div>
       <h2 className="text-lg font-semibold text-foreground">
         Your first digest is on its way.
@@ -205,7 +205,7 @@ export function WinstonDigestPageClient({
           {/* 4 — Week ahead */}
           <DigestCard
             icon={<Calendar className="size-4" />}
-            iconClass="text-wisk-purple"
+            iconClass="text-wisk-section-winston"
             title="This week ahead"
           >
             <WeekAheadList items={digest.weekAhead} />
@@ -214,11 +214,11 @@ export function WinstonDigestPageClient({
           {/* 5 — Insight */}
           <DigestCard
             icon={<Lightbulb className="size-4" />}
-            iconClass="text-wisk-teal"
+            iconClass="text-wisk-section-winston"
             title="Winston's insight"
             className="sm:col-span-2 xl:col-span-1"
           >
-            <div className="border-l-2 border-wisk-teal/60 pl-4">
+            <div className="border-l-2 border-wisk-section-winston/60 pl-4">
               <p className="text-sm leading-relaxed text-foreground">
                 {digest.insight}
               </p>
@@ -226,9 +226,9 @@ export function WinstonDigestPageClient({
           </DigestCard>
 
           {/* 6 — Recommendation (most prominent) */}
-          <div className="sm:col-span-2 xl:col-span-3 rounded-xl border border-wisk-purple/30 bg-gradient-to-br from-wisk-purple/[0.06] to-wisk-teal/[0.06] p-5 shadow-sm">
+          <div className="sm:col-span-2 xl:col-span-3 rounded-xl border border-wisk-section-winston/30 bg-gradient-to-br from-wisk-section-winston/[0.06] to-wisk-section-winston/[0.06] p-5 shadow-sm">
             <div className="mb-3 flex items-center gap-2.5">
-              <div className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-wisk-purple to-wisk-teal">
+              <div className="flex size-7 items-center justify-center rounded-lg bg-wisk-section-winston">
                 <ArrowRight className="size-4 text-white" />
               </div>
               <h2 className="text-sm font-semibold text-foreground">
@@ -243,7 +243,7 @@ export function WinstonDigestPageClient({
           {digest.leadIntelligence ? (
             <DigestCard
               icon={<TrendingUp className="size-4" />}
-              iconClass="text-wisk-purple"
+              iconClass="text-wisk-section-winston"
               title="Lead intelligence"
             >
               <p className="text-sm leading-relaxed text-foreground">
@@ -255,7 +255,7 @@ export function WinstonDigestPageClient({
           {digest.contentStrategy ? (
             <DigestCard
               icon={<BarChart2 className="size-4" />}
-              iconClass="text-wisk-teal"
+              iconClass="text-wisk-section-winston"
               title="Content strategy"
             >
               <p className="text-sm leading-relaxed text-foreground">
@@ -280,7 +280,7 @@ export function WinstonDigestPageClient({
           digest.crossSectionInsights.length > 0 ? (
             <DigestCard
               icon={<Sparkles className="size-4" />}
-              iconClass="text-wisk-purple"
+              iconClass="text-wisk-section-winston"
               title="Patterns noticed"
               className="sm:col-span-2 xl:col-span-3"
             >
@@ -288,7 +288,7 @@ export function WinstonDigestPageClient({
                 {digest.crossSectionInsights.map((item, i) => (
                   <li key={i} className="flex items-start gap-2.5">
                     <span
-                      className="mt-1.5 size-2 shrink-0 rounded-full bg-wisk-purple/70"
+                      className="mt-1.5 size-2 shrink-0 rounded-full bg-wisk-section-winston/70"
                       aria-hidden
                     />
                     <span className="text-sm text-foreground">{item}</span>

@@ -165,7 +165,7 @@ export function TenantFormDialog({
 
           <div className="space-y-4 border-t border-border/60 pt-4">
             <div className="flex items-center gap-2">
-              <Bell className="size-4 text-amber-500" />
+              <Bell className="size-4 text-wisk-ferrari" />
               <h3 className="text-sm font-semibold text-foreground">Rent reminders</h3>
             </div>
             <div className="space-y-2">
@@ -237,7 +237,7 @@ export function TenantFormDialog({
         </form>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending} className="min-h-11">Cancel</Button>
-          <Button type="submit" form={formId} disabled={isPending} className="min-h-11">{isPending ? "Saving…" : isEditing ? "Save changes" : "Add tenant"}</Button>
+          <Button type="submit" form={formId} disabled={isPending} className="min-h-11 bg-wisk-ferrari text-white hover:bg-wisk-ferrari/90">{isPending ? "Saving…" : isEditing ? "Save changes" : "Add tenant"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -96,7 +96,7 @@ export function IdeaFiltersBar({
               className={cn(
                 "h-7 w-auto max-w-[10rem] gap-1 border-border/60 bg-card/40 px-2.5 text-xs font-medium",
                 filters.category !== DEFAULT_IDEA_FILTERS.category &&
-                  "border-wisk-teal/40 bg-wisk-teal/10 text-wisk-teal"
+                  "border-wisk-section-ideas/40 bg-wisk-section-ideas/10 text-wisk-section-ideas"
               )}
               aria-label="Filter by category"
             >
@@ -129,7 +129,7 @@ export function IdeaFiltersBar({
                 className={cn(
                   "h-7 rounded-md border px-2.5 text-xs font-medium",
                   active
-                    ? "border-wisk-teal/40 bg-wisk-teal/10 text-wisk-teal hover:bg-wisk-teal/10 hover:text-wisk-teal"
+                    ? "border-wisk-section-ideas/40 bg-wisk-section-ideas/10 text-wisk-section-ideas hover:bg-wisk-section-ideas/10 hover:text-wisk-section-ideas"
                     : "border-border/60 bg-card/40 text-muted-foreground hover:text-foreground"
                 )}
                 onClick={() =>

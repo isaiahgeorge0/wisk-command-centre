@@ -128,7 +128,7 @@ export function PropertyMaintenanceTab({
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button onClick={() => { setEditingTicket(null); setFormOpen(true); }} className="min-h-11 gap-2 bg-amber-500 text-white hover:bg-amber-500/90">
+        <Button onClick={() => { setEditingTicket(null); setFormOpen(true); }} className="min-h-11 gap-2 bg-wisk-ferrari text-white hover:bg-wisk-ferrari/90">
           <Plus className="size-4" />
           Add ticket
         </Button>
@@ -230,12 +230,12 @@ export function PropertyMaintenanceTab({
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-amber-500/20 bg-card/40 px-6 py-16 text-center">
+    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-wisk-ferrari/20 bg-card/40 px-6 py-16 text-center">
       <h2 className="text-lg font-medium text-foreground">No maintenance tickets</h2>
       <p className="mt-2 max-w-sm text-sm text-muted-foreground">
         Log repairs and track progress from report to resolution.
       </p>
-      <Button onClick={onAdd} className="mt-6 min-h-11 gap-2 bg-amber-500 text-white hover:bg-amber-500/90">
+      <Button onClick={onAdd} className="mt-6 min-h-11 gap-2 bg-wisk-ferrari text-white hover:bg-wisk-ferrari/90">
         <Plus className="size-4" />
         Add ticket
       </Button>

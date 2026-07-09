@@ -64,14 +64,11 @@ export function PropertiesSidebar({
         className
       )}
     >
-      <div
-        className="h-1 shrink-0 bg-gradient-to-r from-amber-500 via-amber-400 to-orange-500"
-        aria-hidden
-      />
+      <div className="h-1 shrink-0 bg-wisk-ferrari" aria-hidden />
       <div className="border-b border-border/60 px-4 py-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-amber-500/15">
-            <Building2 className="size-4 text-amber-500" aria-hidden />
+          <div className="flex size-8 items-center justify-center rounded-lg bg-wisk-ferrari/10">
+            <Building2 className="size-4 text-wisk-ferrari" aria-hidden />
           </div>
           <p className="text-sm font-semibold text-foreground">Properties</p>
         </div>
@@ -99,7 +96,7 @@ export function PropertiesSidebar({
                   className={cn(
                     "flex min-h-11 items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                     active
-                      ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                      ? "bg-wisk-ferrari/10 text-wisk-ferrari"
                       : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                   )}
                 >
@@ -108,7 +105,7 @@ export function PropertiesSidebar({
                     {showUnreadBadge ? (
                       <span
                         className={cn(
-                          "absolute -top-1.5 -right-1.5 flex min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-semibold leading-none text-white",
+                          "absolute -top-1.5 -right-1.5 flex min-w-4 items-center justify-center rounded-full bg-wisk-ferrari px-1 text-[10px] font-semibold leading-none text-white",
                           localUnreadCount > 9 ? "min-w-[18px]" : "size-4"
                         )}
                       >

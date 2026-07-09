@@ -104,7 +104,7 @@ export function LeadSelector({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search leads..."
-                className="w-full rounded-md border border-border/60 bg-background py-1.5 pr-2 pl-8 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-wisk-teal/40"
+                className="w-full rounded-md border border-border/60 bg-background py-1.5 pr-2 pl-8 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-wisk-section-leads/40"
                 autoFocus
               />
             </div>

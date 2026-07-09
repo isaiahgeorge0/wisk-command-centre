@@ -163,7 +163,7 @@ export function BlogListClient({ posts: initialPosts }: BlogListClientProps) {
                       {status === "published" ? (
                         formatBlogDate(post.published_at)
                       ) : status === "scheduled" ? (
-                        <span className="text-wisk-purple">
+                        <span className="text-wisk-lime">
                           {formatBlogDate(post.scheduled_for)}
                         </span>
                       ) : (

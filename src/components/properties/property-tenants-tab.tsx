@@ -52,7 +52,7 @@ function getPortalStatus(tenant: Tenant): {
     return {
       label: "Awaiting setup",
       className:
-        "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+        "border-amber-500/30 bg-wisk-ferrari/10 text-amber-700 dark:text-amber-300",
     };
   }
 
@@ -129,7 +129,7 @@ export function PropertyTenantsTab({
       <div className="flex justify-end">
         <Button
           onClick={() => { setEditingTenant(null); setFormOpen(true); }}
-          className="min-h-11 gap-2 bg-amber-500 text-white hover:bg-amber-500/90"
+          className="min-h-11 gap-2 bg-wisk-ferrari text-white hover:bg-wisk-ferrari/90"
         >
           <Plus className="size-4" />
           Add tenant
@@ -290,12 +290,12 @@ export function PropertyTenantsTab({
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-amber-500/20 bg-card/40 px-6 py-16 text-center">
+    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-wisk-ferrari/20 bg-card/40 px-6 py-16 text-center">
       <h2 className="text-lg font-medium text-foreground">No tenants yet</h2>
       <p className="mt-2 max-w-sm text-sm text-muted-foreground">
         Add your first tenant to track tenancy details and rent.
       </p>
-      <Button onClick={onAdd} className="mt-6 min-h-11 gap-2 bg-amber-500 text-white hover:bg-amber-500/90">
+      <Button onClick={onAdd} className="mt-6 min-h-11 gap-2 bg-wisk-ferrari text-white hover:bg-wisk-ferrari/90">
         <Plus className="size-4" />
         Add tenant
       </Button>

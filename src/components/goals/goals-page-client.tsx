@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus, Target } from "lucide-react";
+import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
@@ -24,6 +25,7 @@ export function GoalsPageClient({
   publishedPostCounts,
 }: GoalsPageClientProps) {
   const router = useRouter();
+  const { resolvedTheme } = useTheme();
   const { goalAddOpen, setGoalAddOpen, openGoalAdd } = useQuickAdd();
   const [goals, setGoals] = useState(initialGoals);
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -58,8 +60,13 @@ export function GoalsPageClient({
           className="mb-0"
           title="Goals"
           subtitle="Track progress toward what matters most."
-          icon={<Target className="size-6" style={{ color: "#3b82f6" }} />}
-          accentColour="#3b82f6"
+          icon={
+            <Target
+              className="size-6"
+              style={{ color: resolvedTheme === "dark" ? "#baf7e1" : "#085041" }}
+            />
+          }
+          accentColour={resolvedTheme === "dark" ? "#baf7e1" : "#085041"}
         />
         <Button className="shrink-0 gap-2" onClick={openGoalAdd}>
           <Plus className="size-4" />

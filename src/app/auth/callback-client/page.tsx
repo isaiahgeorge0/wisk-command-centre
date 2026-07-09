@@ -124,11 +124,11 @@ export default function AuthCallbackClientPage() {
         }}
       />
       <div className="relative z-10 flex flex-col items-center gap-6 text-center">
-        <span className="bg-gradient-to-r from-wisk-purple to-wisk-teal bg-clip-text text-2xl font-bold tracking-[0.28em] text-transparent uppercase">
+        <span className="bg-wisk-lime bg-clip-text text-2xl font-bold tracking-[0.28em] text-transparent uppercase">
           WISK
         </span>
         <div
-          className="size-6 animate-spin rounded-full border-2 border-border border-t-wisk-teal"
+          className="size-6 animate-spin rounded-full border-2 border-border border-t-wisk-turquoise"
           aria-hidden
         />
         <p className="text-sm text-muted-foreground">

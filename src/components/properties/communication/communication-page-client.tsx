@@ -250,7 +250,7 @@ export function CommunicationPageClient({
           </div>
           {conversations.length === 0 ? (
             <div className="flex flex-1 flex-col items-center justify-center px-6 py-16 text-center">
-              <MessageSquare className="mb-4 size-10 text-amber-500" />
+              <MessageSquare className="mb-4 size-10 text-wisk-ferrari" />
               <h3 className="text-lg font-medium text-foreground">
                 No conversations yet
               </h3>
@@ -271,7 +271,7 @@ export function CommunicationPageClient({
                       className={cn(
                         "flex w-full items-start gap-3 px-4 py-3 text-left transition-colors",
                         isActive
-                          ? "bg-amber-500/10"
+                          ? "bg-wisk-ferrari/10"
                           : "hover:bg-muted/40"
                       )}
                     >
@@ -298,7 +298,7 @@ export function CommunicationPageClient({
                       </div>
                       {conversation.unread_count > 0 ? (
                         <span
-                          className="mt-2 size-2.5 shrink-0 rounded-full bg-amber-500"
+                          className="mt-2 size-2.5 shrink-0 rounded-full bg-wisk-ferrari"
                           aria-label={`${conversation.unread_count} unread`}
                         />
                       ) : null}

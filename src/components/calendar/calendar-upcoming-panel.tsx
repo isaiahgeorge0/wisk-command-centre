@@ -99,7 +99,7 @@ export function CalendarUpcomingPanel({
                 className={cn(
                   "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
                   active
-                    ? "border-wisk-teal/40 bg-wisk-teal/15 text-wisk-teal"
+                    ? "border-wisk-section-calendar/40 bg-wisk-section-calendar/15 text-wisk-section-calendar"
                     : "border-border/60 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                 )}
               >

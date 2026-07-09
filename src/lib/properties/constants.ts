@@ -41,7 +41,7 @@ export const PROPERTY_STATUS_SORT_ORDER: Record<PropertyStatus, number> = {
   listed: 3,
 };
 
-export const PROPERTIES_ACCENT = "#f59e0b";
+export const PROPERTIES_ACCENT = "#e8001d";
 
 export const TENANT_STATUSES = ["active", "notice", "ended"] as const;
 export const TENANT_STATUS_BADGE_CLASS = {

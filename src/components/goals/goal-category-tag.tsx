@@ -16,7 +16,7 @@ export function GoalCategoryTag({
     <Badge
       variant="outline"
       className={cn(
-        "border-wisk-purple/25 bg-wisk-purple/10 text-xs font-normal text-wisk-purple",
+        "border-wisk-section-goals/25 bg-wisk-section-goals/10 text-xs font-normal text-wisk-section-goals",
         className
       )}
     >

@@ -74,7 +74,7 @@ export function SettingsFeedbackSection() {
       id="feedback"
       className={cn(
         "border-border/60 bg-card/80 scroll-mt-24 transition-shadow",
-        highlight && "ring-2 ring-wisk-purple/30"
+        highlight && "ring-2 ring-wisk-turquoise/30"
       )}
     >
       <CardHeader>
@@ -125,7 +125,7 @@ export function SettingsFeedbackSection() {
             </p>
           ) : null}
           {success ? (
-            <p className="text-sm text-wisk-teal">
+            <p className="text-sm text-wisk-turquoise">
               Thanks for your feedback — we really appreciate it.
             </p>
           ) : null}

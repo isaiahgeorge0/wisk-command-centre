@@ -29,7 +29,7 @@ export function NavLink({ href, label, active }: NavLinkProps) {
       {active ? (
         <motion.span
           layoutId={reduced ? undefined : "nav-underline"}
-          className="absolute inset-x-0 -bottom-1 h-0.5 rounded-full bg-wisk-teal/80"
+          className="absolute inset-x-0 -bottom-1 h-0.5 rounded-full bg-wisk-lime/80"
           transition={
             reduced
               ? { duration: 0 }

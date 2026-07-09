@@ -1,6 +1,7 @@
 "use client";
 
 import { CalendarDays } from "lucide-react";
+import { useTheme } from "next-themes";
 import { useEffect, useMemo, useState } from "react";
 
 import { CalendarDayDetailPanel } from "@/components/calendar/calendar-day-detail-panel";
@@ -76,6 +77,7 @@ export function CalendarPageClient({
   contentGoals,
 }: CalendarPageClientProps) {
   const todayISO = getTodayISO();
+  const { resolvedTheme } = useTheme();
   const todayDate = useMemo(() => createTodayDate(), []);
 
   const [view, setView] = useState<CalendarView>("month");
@@ -285,8 +287,13 @@ export function CalendarPageClient({
       <PageHeader
         title="Calendar"
         subtitle="Deadlines, due dates, and milestones across your business."
-        icon={<CalendarDays className="size-6" style={{ color: "#3b82f6" }} />}
-        accentColour="#3b82f6"
+        icon={
+          <CalendarDays
+            className="size-6"
+            style={{ color: resolvedTheme === "dark" ? "#00c4b4" : "#007a70" }}
+          />
+        }
+        accentColour={resolvedTheme === "dark" ? "#00c4b4" : "#007a70"}
       />
 
       <div className="mb-4">

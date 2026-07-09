@@ -1,6 +1,7 @@
 "use client";
 
 import { Clapperboard, Plus } from "lucide-react";
+import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -36,6 +37,7 @@ export function ContentPageClient({
   contentGoals,
 }: ContentPageClientProps) {
   const router = useRouter();
+  const { resolvedTheme } = useTheme();
   const { openContentAdd } = useQuickAdd();
   const [posts, setPosts] = useState(initialPosts);
   const [activeTab, setActiveTab] = useState<ContentViewTab>("calendar");
@@ -117,9 +119,12 @@ export function ContentPageClient({
           title="Content"
           subtitle="Plan, schedule, and track your content across platforms."
           icon={
-            <Clapperboard className="size-6" style={{ color: "#a855f7" }} />
+            <Clapperboard
+              className="size-6"
+              style={{ color: resolvedTheme === "dark" ? "#0066ff" : "#0044cc" }}
+            />
           }
-          accentColour="#a855f7"
+          accentColour={resolvedTheme === "dark" ? "#0066ff" : "#0044cc"}
         />
         <Button className="shrink-0 gap-2" onClick={() => openContentAdd()}>
           <Plus className="size-4" />

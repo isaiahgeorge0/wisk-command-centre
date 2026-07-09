@@ -38,8 +38,8 @@ import { useMotionSafe } from "@/lib/motion/use-motion-safe";
 import { cn } from "@/lib/utils";
 
 const PRESET_COLOURS = [
-  { label: "Purple", hex: "#7c3aed" },
-  { label: "Teal", hex: "#14b8a6" },
+  { label: "Purple", hex: "#c3ff32" },
+  { label: "Teal", hex: "#016c81" },
   { label: "Blue", hex: "#3b82f6" },
   { label: "Amber", hex: "#f59e0b" },
   { label: "Coral", hex: "#f97316" },
@@ -160,7 +160,7 @@ function InboxForm({
       <Input
         value={colour}
         onChange={(event) => setColour(event.target.value)}
-        placeholder="#7c3aed"
+        placeholder="#c3ff32"
         className="min-h-11 font-mono text-sm"
       />
       <div className="flex gap-2">
@@ -491,7 +491,7 @@ function ManagePanelContent({
                 size="sm"
                 className="gap-1"
                 onClick={() =>
-                  setInboxForm({ id: null, name: "", colour: "#7c3aed" })
+                  setInboxForm({ id: null, name: "", colour: "#c3ff32" })
                 }
               >
                 <Plus className="size-3.5" aria-hidden />

@@ -58,7 +58,7 @@ const FEATURES = [
   "Winston property insights",
 ];
 
-const AMBER_GRADIENT = "linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #f97316 100%)";
+const AMBER_GRADIENT = "linear-gradient(135deg, #8b0010 0%, #e8001d 50%, #cc0016 100%)";
 
 function StaggerWords({
   text,
@@ -111,10 +111,10 @@ function CapabilityCard({
         delay: noMotion ? 0 : index * 0.1,
         ease: MOTION_EASE.easeOut,
       }}
-      className="rounded-2xl border border-amber-500/15 bg-card/80 p-6 shadow-sm"
+      className="rounded-2xl border border-wisk-ferrari/15 bg-card/80 p-6 shadow-sm"
     >
-      <div className="mb-4 flex size-10 items-center justify-center rounded-xl border border-amber-500/20 bg-amber-500/10">
-        <Icon className="size-5 text-amber-500" aria-hidden />
+      <div className="mb-4 flex size-10 items-center justify-center rounded-xl border border-wisk-ferrari/20 bg-wisk-ferrari/10">
+        <Icon className="size-5 text-wisk-ferrari" aria-hidden />
       </div>
       <h3 className="mb-2 text-sm font-semibold text-foreground">{title}</h3>
       <p className="text-sm leading-relaxed text-muted-foreground">{body}</p>
@@ -143,7 +143,7 @@ function CheckoutButton({
       aria-label={loading ? "Redirecting to Stripe" : `${label} — secure checkout`}
       className={cn(
         "group relative overflow-hidden rounded-xl text-sm font-semibold text-white",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wisk-ferrari focus-visible:ring-offset-2",
         "disabled:cursor-not-allowed disabled:opacity-50",
         "transition-opacity hover:opacity-90",
         compact ? "min-h-[44px] px-5 py-2.5" : "w-full min-h-[48px] py-3.5"
@@ -247,7 +247,7 @@ export function PropertiesCheckoutClient({ priceId }: Props) {
             initial={noMotion ? false : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.05, ease: MOTION_EASE.easeOut }}
-            className="mb-6 text-xs font-semibold uppercase tracking-[0.2em] text-amber-400"
+            className="mb-6 text-xs font-semibold uppercase tracking-[0.2em] text-wisk-ferrari"
           >
             WISK Properties
           </motion.p>
@@ -264,7 +264,7 @@ export function PropertiesCheckoutClient({ priceId }: Props) {
                 "0 0 0 1px rgba(245,158,11,0.3), 0 0 40px rgba(245,158,11,0.25)",
             }}
           >
-            <Building2 className="size-9 text-amber-300" aria-hidden />
+            <Building2 className="size-9 text-wisk-ferrari" aria-hidden />
           </motion.div>
 
           <h1 className="mb-5 text-4xl font-bold tracking-tight md:text-5xl lg:text-[3.5rem] lg:leading-[1.1]">
@@ -285,7 +285,7 @@ export function PropertiesCheckoutClient({ priceId }: Props) {
                 text="Finally under control."
                 baseDelay={noMotion ? 0 : 0.35}
                 noMotion={noMotion}
-                className="bg-gradient-to-r from-amber-300 via-amber-400 to-orange-400 bg-clip-text text-transparent"
+                className="text-wisk-ferrari"
               />
             </span>
           </h1>
@@ -316,14 +316,14 @@ export function PropertiesCheckoutClient({ priceId }: Props) {
             className="flex flex-wrap items-center justify-center gap-4"
           >
             <span className="flex items-center gap-1.5 text-xs text-white/50">
-              <Building2 className="size-3.5 text-amber-400" aria-hidden />
+              <Building2 className="size-3.5 text-wisk-ferrari" aria-hidden />
               Built for UK landlords
             </span>
             <span className="hidden text-white/20 sm:block" aria-hidden>
               ·
             </span>
             <span className="flex items-center gap-1.5 text-xs text-white/50">
-              <Sparkles className="size-3.5 text-amber-400" aria-hidden />
+              <Sparkles className="size-3.5 text-wisk-ferrari" aria-hidden />
               Winston AI included
             </span>
           </motion.div>
@@ -353,11 +353,11 @@ export function PropertiesCheckoutClient({ priceId }: Props) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-40px" }}
           transition={{ duration: 0.4, ease: MOTION_EASE.easeOut }}
-          className="rounded-2xl border border-amber-500/25 bg-card/90 p-8 shadow-[0_8px_40px_-8px_rgba(245,158,11,0.2)]"
+          className="rounded-2xl border border-wisk-ferrari/20 bg-card/90 p-8 shadow-[0_8px_40px_-8px_rgba(245,158,11,0.2)]"
         >
           <div className="mb-6 flex items-end justify-between">
             <div>
-              <p className="mb-1 text-xs font-semibold uppercase tracking-[0.15em] text-amber-500">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-[0.15em] text-wisk-ferrari">
                 WISK Properties
               </p>
               <div className="flex items-baseline gap-1">
@@ -375,7 +375,7 @@ export function PropertiesCheckoutClient({ priceId }: Props) {
                 boxShadow: "0 0 0 1px rgba(245,158,11,0.25)",
               }}
             >
-              <Building2 className="size-5 text-amber-400" aria-hidden />
+              <Building2 className="size-5 text-wisk-ferrari" aria-hidden />
             </div>
           </div>
 
@@ -387,7 +387,7 @@ export function PropertiesCheckoutClient({ priceId }: Props) {
             {FEATURES.map((feature) => (
               <li key={feature} className="flex items-center gap-3">
                 <span
-                  className="flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] text-amber-300"
+                  className="flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] text-wisk-ferrari"
                   style={{
                     background: "rgba(245,158,11,0.15)",
                     border: "1px solid rgba(245,158,11,0.25)",

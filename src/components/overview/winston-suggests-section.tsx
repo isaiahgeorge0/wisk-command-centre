@@ -123,8 +123,8 @@ export function WinstonSuggestsSection({
   return (
     <section className="mt-10">
       <div className="mb-4 flex items-center gap-2">
-        <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-wisk-purple/20 to-wisk-teal/20">
-          <Sparkles className="size-4 text-wisk-teal" aria-hidden />
+        <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-wisk-section-winston/20 to-wisk-section-winston/20">
+          <Sparkles className="size-4 text-wisk-section-winston" aria-hidden />
         </div>
         <div>
           <h2 className="text-base font-semibold text-foreground">

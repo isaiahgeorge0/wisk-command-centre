@@ -30,7 +30,7 @@ type ReliabilityPageClientProps = {
 const GRADE_BAR_COLORS: Record<ReliabilityGrade, string> = {
   A: "bg-emerald-500",
   B: "bg-teal-500",
-  C: "bg-amber-500",
+  C: "bg-wisk-ferrari",
   D: "bg-orange-500",
   F: "bg-rose-500",
 };
@@ -38,7 +38,7 @@ const GRADE_BAR_COLORS: Record<ReliabilityGrade, string> = {
 const GRADE_LEGEND_COLORS: Record<ReliabilityGrade, string> = {
   A: "bg-emerald-500",
   B: "bg-teal-500",
-  C: "bg-amber-500",
+  C: "bg-wisk-ferrari",
   D: "bg-orange-500",
   F: "bg-rose-500",
 };
@@ -46,7 +46,7 @@ const GRADE_LEGEND_COLORS: Record<ReliabilityGrade, string> = {
 function scoreColorClass(score: number): string {
   if (score >= 85) return "text-emerald-500";
   if (score >= 70) return "text-teal-500";
-  if (score >= 50) return "text-amber-500";
+  if (score >= 50) return "text-wisk-ferrari";
   if (score >= 30) return "text-orange-500";
   return "text-rose-500";
 }
@@ -110,7 +110,7 @@ export function ReliabilityPageClient({
           }
           className="mb-8"
         />
-        <div className="rounded-xl border border-dashed border-amber-500/20 bg-card/40 px-6 py-16 text-center">
+        <div className="rounded-xl border border-dashed border-wisk-ferrari/20 bg-card/40 px-6 py-16 text-center">
           <h2 className="text-lg font-medium text-foreground">No tenants yet</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Add tenants to start tracking reliability scores.
@@ -269,7 +269,7 @@ function TenantScoreCard({
         <TenantReliabilityBadge score={score} size="md" />
         <Link
           href={`/properties/${tenant.property_id}?tab=tenants`}
-          className="text-xs text-amber-500 hover:text-amber-400"
+          className="text-xs text-wisk-ferrari hover:text-wisk-ferrari/80"
         >
           View property
         </Link>

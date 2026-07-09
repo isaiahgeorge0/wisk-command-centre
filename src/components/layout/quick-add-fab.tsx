@@ -38,7 +38,7 @@ export function QuickAddFab() {
       type="button"
       onClick={handleClick}
       aria-label="Quick add"
-      className="fixed bottom-20 right-4 z-40 inline-flex size-12 items-center justify-center rounded-full border border-wisk-purple/20 bg-wisk-purple text-white shadow-[0_0_20px_rgba(139,92,246,0.1)] hover:bg-wisk-purple/90 hover:shadow-[0_0_24px_rgba(45,212,191,0.12)] md:bottom-6 md:right-6 md:z-50"
+      className="fixed bottom-20 right-4 z-40 inline-flex size-12 items-center justify-center rounded-full border border-wisk-lime/20 bg-wisk-lime text-wisk-dark shadow-[0_0_20px_rgba(195,255,50,0.15)] hover:bg-wisk-lime/90 hover:shadow-[0_0_24px_rgba(195,255,50,0.25)] md:bottom-6 md:right-6 md:z-50"
       whileHover={reduced ? undefined : { scale: 1.05 }}
       whileTap={reduced ? undefined : { scale: 0.95 }}
       initial={reduced ? false : { scale: 1 }}

@@ -46,7 +46,7 @@ export function ProjectDetailsTab({
             }
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-1 block truncate text-sm text-wisk-teal hover:underline"
+            className="mt-1 block truncate text-sm text-wisk-section-projects hover:underline"
             onClick={(e) => e.stopPropagation()}
           >
             {project.site_url}

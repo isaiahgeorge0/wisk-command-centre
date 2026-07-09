@@ -128,7 +128,7 @@ export function NotificationPanel({
                         "mt-0.5 size-3.5 shrink-0",
                         notification.read
                           ? "text-muted-foreground/50"
-                          : "text-wisk-teal"
+                          : "text-wisk-lime"
                       )}
                       aria-hidden
                     />

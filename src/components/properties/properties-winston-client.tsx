@@ -93,7 +93,7 @@ function InsightCard({
 
 function ProBadge() {
   return (
-    <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-500">
+    <span className="rounded-full border border-wisk-ferrari/20 bg-wisk-ferrari/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-wisk-ferrari">
       Pro
     </span>
   );
@@ -181,7 +181,7 @@ export function PropertiesWinstonClient({
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <Sparkles className="size-6 text-amber-500" />
+            <Sparkles className="size-6 text-wisk-ferrari" />
             <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
               Winston
             </h1>
@@ -198,7 +198,7 @@ export function PropertiesWinstonClient({
             (isOnCooldown && !isAdmin)
           }
           className={cn(
-            "min-h-11 gap-2 bg-amber-500 text-white hover:bg-amber-500/90",
+            "min-h-11 gap-2 bg-wisk-ferrari text-white hover:bg-wisk-ferrari/90",
             isOnCooldown && !isAdmin && "opacity-70"
           )}
         >
@@ -223,8 +223,8 @@ export function PropertiesWinstonClient({
 
       {!insight || !content ? (
         <div className="flex flex-col items-center px-4 py-16 text-center">
-          <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-amber-500/15">
-            <Sparkles className="size-7 text-amber-500" />
+          <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-wisk-ferrari/10">
+            <Sparkles className="size-7 text-wisk-ferrari" />
           </div>
           <h2 className="text-lg font-semibold text-foreground">
             Your first digest is on its way
@@ -255,14 +255,14 @@ export function PropertiesWinstonClient({
 
             <InsightCard
               icon={<CheckCircle2 className="size-4" />}
-              iconClass="text-amber-500"
+              iconClass="text-wisk-ferrari"
               title="Wins"
             >
               <ul className="space-y-2">
                 {content.wins.map((item, i) => (
                   <li key={i} className="flex items-start gap-2.5">
                     <CheckCircle2
-                      className="mt-0.5 size-4 shrink-0 text-amber-500"
+                      className="mt-0.5 size-4 shrink-0 text-wisk-ferrari"
                       aria-hidden
                     />
                     <span className="text-sm text-foreground">{item}</span>
@@ -293,7 +293,7 @@ export function PropertiesWinstonClient({
 
                 <InsightCard
                   icon={<TrendingUp className="size-4" />}
-                  iconClass="text-amber-500"
+                  iconClass="text-wisk-ferrari"
                   title="Financial health"
                   className="sm:col-span-2 xl:col-span-2"
                 >
@@ -304,10 +304,10 @@ export function PropertiesWinstonClient({
 
                 <InsightCard
                   icon={<Lightbulb className="size-4" />}
-                  iconClass="text-amber-500"
+                  iconClass="text-wisk-ferrari"
                   title="Winston's insight"
                 >
-                  <div className="border-l-2 border-amber-500/60 pl-4">
+                  <div className="border-l-2 border-wisk-ferrari/60 pl-4">
                     <p className="text-sm leading-relaxed text-foreground">
                       {content.winstons_insight}
                     </p>
@@ -317,7 +317,7 @@ export function PropertiesWinstonClient({
                 {content.yield_analysis ? (
                   <InsightCard
                     icon={<BarChart2 className="size-4" />}
-                    iconClass="text-amber-500"
+                    iconClass="text-wisk-ferrari"
                     title="Yield analysis"
                     badge={<ProBadge />}
                   >
@@ -330,7 +330,7 @@ export function PropertiesWinstonClient({
                 {content.tenant_risk_summary ? (
                   <InsightCard
                     icon={<ShieldCheck className="size-4" />}
-                    iconClass="text-amber-500"
+                    iconClass="text-wisk-ferrari"
                     title="Tenant risk summary"
                     badge={<ProBadge />}
                   >
@@ -359,7 +359,7 @@ export function PropertiesWinstonClient({
                 content.property_deep_dives.length > 0 ? (
                   <InsightCard
                     icon={<Building2 className="size-4" />}
-                    iconClass="text-amber-500"
+                    iconClass="text-wisk-ferrari"
                     title="Property deep dives"
                     badge={<ProBadge />}
                     className="sm:col-span-2 xl:col-span-3"
@@ -384,10 +384,10 @@ export function PropertiesWinstonClient({
 
                 {content.pro_recommendations &&
                 content.pro_recommendations.length > 0 ? (
-                  <div className="sm:col-span-2 xl:col-span-3 rounded-xl border border-amber-500/30 bg-amber-500/[0.04] p-5 shadow-sm">
+                  <div className="sm:col-span-2 xl:col-span-3 rounded-xl border border-wisk-ferrari/30 bg-wisk-ferrari/5 p-5 shadow-sm">
                     <div className="mb-3 flex items-center justify-between gap-2.5">
                       <div className="flex items-center gap-2.5">
-                        <Zap className="size-4 text-amber-500" aria-hidden />
+                        <Zap className="size-4 text-wisk-ferrari" aria-hidden />
                         <h2 className="text-sm font-semibold text-foreground">
                           Pro recommendations
                         </h2>
@@ -397,7 +397,7 @@ export function PropertiesWinstonClient({
                     <ol className="space-y-3">
                       {content.pro_recommendations.map((item, i) => (
                         <li key={i} className="flex items-start gap-3">
-                          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-xs font-semibold text-amber-600 dark:text-amber-400">
+                          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-wisk-ferrari/10 text-xs font-semibold text-wisk-ferrari">
                             {i + 1}
                           </span>
                           <span className="text-sm leading-relaxed text-foreground">
@@ -413,7 +413,7 @@ export function PropertiesWinstonClient({
               <>
                 <InsightCard
                   icon={<PoundSterling className="size-4" />}
-                  iconClass="text-amber-500"
+                  iconClass="text-wisk-ferrari"
                   title="Financial snapshot"
                 >
                   <p className="text-sm leading-relaxed text-foreground">
@@ -423,10 +423,10 @@ export function PropertiesWinstonClient({
 
                 <InsightCard
                   icon={<Lightbulb className="size-4" />}
-                  iconClass="text-amber-500"
+                  iconClass="text-wisk-ferrari"
                   title="Winston's insight"
                 >
-                  <div className="border-l-2 border-amber-500/60 pl-4">
+                  <div className="border-l-2 border-wisk-ferrari/60 pl-4">
                     <p className="text-sm leading-relaxed text-foreground">
                       {content.winstons_insight}
                     </p>

@@ -54,15 +54,15 @@ function ActivityIcon({ type }: { type: LeadActivityType }) {
     case "call":
       return <Phone {...props} className={cn(props.className, "text-blue-500")} />;
     case "email":
-      return <Mail {...props} className={cn(props.className, "text-wisk-teal")} />;
+      return <Mail {...props} className={cn(props.className, "text-wisk-section-leads")} />;
     case "meeting":
-      return <Users {...props} className={cn(props.className, "text-wisk-purple")} />;
+      return <Users {...props} className={cn(props.className, "text-wisk-section-leads")} />;
     case "stage_change":
       return <ArrowRight {...props} className={cn(props.className, "text-amber-500")} />;
     case "follow_up_set":
-      return <CalendarDays {...props} className={cn(props.className, "text-wisk-teal")} />;
+      return <CalendarDays {...props} className={cn(props.className, "text-wisk-section-leads")} />;
     case "ai_notes":
-      return <Sparkles {...props} className={cn(props.className, "text-wisk-purple")} />;
+      return <Sparkles {...props} className={cn(props.className, "text-wisk-section-leads")} />;
     default:
       return <FileText {...props} className={cn(props.className, "text-muted-foreground")} />;
   }
@@ -122,7 +122,7 @@ function LogActivityForm({ leadId, onSaved, onCancel }: LogFormProps) {
             className={cn(
               "flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors",
               activityType === type
-                ? "bg-wisk-teal/15 text-wisk-teal border border-wisk-teal/30"
+                ? "bg-wisk-section-leads/15 text-wisk-section-leads border border-wisk-section-leads/30"
                 : "border border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted/60"
             )}
           >
@@ -146,7 +146,7 @@ function LogActivityForm({ leadId, onSaved, onCancel }: LogFormProps) {
             ? "e.g. Discovery call"
             : "e.g. Note about this lead"
         }
-        className="w-full rounded-lg border border-border/60 bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-wisk-teal/40"
+        className="w-full rounded-lg border border-border/60 bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-wisk-section-leads/40"
       />
 
       {/* Content */}
@@ -155,7 +155,7 @@ function LogActivityForm({ leadId, onSaved, onCancel }: LogFormProps) {
         onChange={(e) => setContent(e.target.value)}
         placeholder="Notes (optional)"
         rows={2}
-        className="w-full resize-none rounded-lg border border-border/60 bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-wisk-teal/40"
+        className="w-full resize-none rounded-lg border border-border/60 bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-wisk-section-leads/40"
       />
 
       {error ? (
@@ -175,7 +175,7 @@ function LogActivityForm({ leadId, onSaved, onCancel }: LogFormProps) {
           type="button"
           onClick={handleSave}
           disabled={isPending || !title.trim()}
-          className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-wisk-purple to-wisk-teal px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="flex items-center gap-1.5 rounded-lg bg-wisk-section-leads px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {isPending ? <Loader2 className="size-3 animate-spin" /> : null}
           Save
@@ -244,7 +244,7 @@ function FollowUpReminder({ leadId, followUpDate, onDateChange }: FollowUpProps)
             value={followUpDate}
             onChange={(e) => handleChange(e.target.value || null)}
             disabled={isPending}
-            className="rounded-lg border border-border/60 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-wisk-teal/40 disabled:opacity-50"
+            className="rounded-lg border border-border/60 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-wisk-section-leads/40 disabled:opacity-50"
           />
         </div>
       ) : (
@@ -252,7 +252,7 @@ function FollowUpReminder({ leadId, followUpDate, onDateChange }: FollowUpProps)
           type="date"
           onChange={(e) => { if (e.target.value) handleChange(e.target.value); }}
           disabled={isPending}
-          className="rounded-lg border border-border/60 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-wisk-teal/40 disabled:opacity-50"
+          className="rounded-lg border border-border/60 bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-wisk-section-leads/40 disabled:opacity-50"
         />
       )}
     </div>
@@ -411,7 +411,7 @@ export function LeadActivityTab({
         <button
           type="button"
           onClick={() => setShowLogForm(true)}
-          className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-border/60 py-2 text-xs text-muted-foreground transition-colors hover:border-wisk-teal/40 hover:bg-wisk-teal/5 hover:text-foreground"
+          className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-border/60 py-2 text-xs text-muted-foreground transition-colors hover:border-wisk-section-leads/40 hover:bg-wisk-section-leads/5 hover:text-foreground"
         >
           <Plus className="size-3.5" aria-hidden />
           Log activity

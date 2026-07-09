@@ -47,7 +47,7 @@ function confidenceBadgeClass(confidence: PropertyValuation["confidence"]): stri
     case "high":
       return "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300";
     case "medium":
-      return "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300";
+      return "border-wisk-ferrari/30 bg-wisk-ferrari/10 text-wisk-ferrari";
     case "low":
       return "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300";
   }
@@ -194,7 +194,7 @@ export function PropertyValuationSection({
             <Button
               onClick={handleGenerate}
               disabled={isGenerating || !eligibility.canGenerate}
-              className="min-h-11 gap-2 bg-amber-500 text-white hover:bg-amber-500/90"
+              className="min-h-11 gap-2 bg-wisk-ferrari text-white hover:bg-wisk-ferrari/90"
             >
               {isGenerating ? (
                 <Loader2 className="size-4 animate-spin" />
@@ -312,7 +312,7 @@ export function PropertyValuationSection({
                         href={source.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-sm text-amber-600 hover:underline dark:text-amber-400"
+                        className="inline-flex items-center gap-1.5 text-sm text-wisk-ferrari hover:underline"
                       >
                         {source.title}
                         <ExternalLink className="size-3.5" />

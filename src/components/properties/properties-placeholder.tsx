@@ -18,10 +18,10 @@ export function PropertiesPlaceholder({
       <PageHeader
         title={title}
         subtitle={description}
-        icon={<Icon className="size-6 text-amber-500" />}
-        accentColour="#f59e0b"
+        icon={<Icon className="size-6 text-wisk-ferrari" />}
+        accentColour="#e8001d"
       />
-      <div className="mt-8 rounded-xl border border-dashed border-amber-500/25 bg-amber-500/5 px-6 py-12 text-center">
+      <div className="mt-8 rounded-xl border border-dashed border-wisk-ferrari/25 bg-wisk-ferrari/5 px-6 py-12 text-center">
         <p className="text-sm text-muted-foreground">This section is being built.</p>
       </div>
     </div>

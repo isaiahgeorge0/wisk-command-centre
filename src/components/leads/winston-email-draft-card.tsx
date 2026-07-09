@@ -135,7 +135,7 @@ export function WinstonEmailDraftCard({
               size="sm"
               onClick={handleDraft}
               disabled={drafting}
-              className="w-full gap-1.5 bg-gradient-to-r from-wisk-purple to-wisk-teal text-white hover:opacity-90"
+              className="w-full gap-1.5 bg-wisk-section-leads text-white hover:opacity-90"
             >
               {drafting ? (
                 <Loader2 className="size-3.5 animate-spin" aria-hidden />
@@ -154,7 +154,7 @@ export function WinstonEmailDraftCard({
                   type="text"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
-                  className="w-full rounded-lg border border-border/60 bg-background px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-wisk-teal/40"
+                  className="w-full rounded-lg border border-border/60 bg-background px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-wisk-section-leads/40"
                 />
               </div>
               <div className="space-y-1.5">
@@ -165,7 +165,7 @@ export function WinstonEmailDraftCard({
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
                   rows={6}
-                  className="w-full resize-y rounded-lg border border-border/60 bg-background px-3 py-2 text-xs leading-relaxed text-foreground focus:outline-none focus:ring-1 focus:ring-wisk-teal/40"
+                  className="w-full resize-y rounded-lg border border-border/60 bg-background px-3 py-2 text-xs leading-relaxed text-foreground focus:outline-none focus:ring-1 focus:ring-wisk-section-leads/40"
                 />
               </div>
               <Button

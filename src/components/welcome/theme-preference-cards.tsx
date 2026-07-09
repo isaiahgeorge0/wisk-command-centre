@@ -30,7 +30,7 @@ export function ThemePreferenceCards({
         className={cn(
           "group relative overflow-hidden rounded-xl border-2 p-4 text-left transition-all",
           value === "dark"
-            ? "border-wisk-purple ring-2 ring-wisk-purple/20"
+            ? "border-wisk-lime ring-2 ring-wisk-lime/20"
             : "border-border/60 hover:border-border"
         )}
       >
@@ -47,7 +47,7 @@ export function ThemePreferenceCards({
         className={cn(
           "group relative overflow-hidden rounded-xl border-2 p-4 text-left transition-all",
           value === "light"
-            ? "border-wisk-purple ring-2 ring-wisk-purple/20"
+            ? "border-wisk-lime ring-2 ring-wisk-lime/20"
             : "border-border/60 hover:border-border"
         )}
       >

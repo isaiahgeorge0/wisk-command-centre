@@ -8,10 +8,10 @@ type AcronymRevealProps = {
 };
 
 const WORDS = [
-  { letter: "W", word: "Wisdom", color: "text-[#a855f7]" },
+  { letter: "W", word: "Wisdom", color: "text-[#c3ff32]" },
   { letter: "I", word: "Integrity", color: "text-[#7c9ef0]" },
   { letter: "S", word: "Strength", color: "text-[#4fb8b0]" },
-  { letter: "K", word: "Knowledge", color: "text-[#14b8a6]" },
+  { letter: "K", word: "Knowledge", color: "text-[#016c81]" },
 ];
 
 const WORD_DELAY = 0.3;
@@ -86,7 +86,7 @@ export function AcronymReveal({ onComplete }: AcronymRevealProps) {
             ease: [0.25, 0.1, 0.25, 1],
             delay: WISK_DELAY,
           }}
-          className="mt-8 bg-gradient-to-r from-wisk-purple to-wisk-teal bg-clip-text text-5xl font-bold tracking-widest text-transparent uppercase"
+          className="mt-8 bg-wisk-lime bg-clip-text text-5xl font-bold tracking-widest text-transparent uppercase"
         >
           WISK
         </motion.div>

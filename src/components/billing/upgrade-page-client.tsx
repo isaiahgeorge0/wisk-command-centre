@@ -60,7 +60,7 @@ const PROPERTIES_PRO_FEATURES = [
 ];
 
 const PROPERTIES_PRO_GRADIENT =
-  "linear-gradient(135deg, #92400e 0%, #d97706 50%, #ea580c 100%)";
+  "linear-gradient(135deg, #8b0010 0%, #e8001d 50%, #cc0016 100%)";
 
 const PROPERTIES_FEATURES = [
   "Portfolio dashboard",
@@ -129,14 +129,14 @@ function ManageButton({
 }: {
   onClick: () => void;
   loading: boolean;
-  accentColor: "purple" | "teal" | "amber";
+  accentColor: "purple" | "teal" | "ferrari";
 }) {
   const styles =
     accentColor === "purple"
       ? "border-purple-500/30 bg-purple-500/8 text-purple-400 hover:bg-purple-500/15"
       : accentColor === "teal"
         ? "border-teal-500/30 bg-teal-500/8 text-teal-400 hover:bg-teal-500/15"
-        : "border-amber-600/30 bg-amber-600/8 text-amber-500 hover:bg-amber-600/15";
+        : "border-wisk-ferrari/30 bg-wisk-ferrari/10 text-wisk-ferrari hover:bg-wisk-ferrari/15";
 
   return (
     <button
@@ -269,7 +269,7 @@ export function UpgradePageClient({
               className="block"
               style={{
                 backgroundImage:
-                  "linear-gradient(to right, #c084fc, #a855f7 40%, #14b8a6)",
+                  "linear-gradient(to right, #c084fc, #c3ff32 40%, #016c81)",
                 WebkitBackgroundClip: "text",
                 backgroundClip: "text",
                 color: "transparent",
@@ -334,7 +334,7 @@ export function UpgradePageClient({
                 className="h-1 w-full shrink-0"
                 style={{
                   background:
-                    "linear-gradient(to right, #5b21b6, #a855f7, #7c3aed)",
+                    "linear-gradient(to right, #5b21b6, #c3ff32, #c3ff32)",
                 }}
               />
 
@@ -371,7 +371,7 @@ export function UpgradePageClient({
                     >
                       <span
                         className="size-1.5 shrink-0 rounded-full"
-                        style={{ background: "#a855f7" }}
+                        style={{ background: "#c3ff32" }}
                         aria-hidden
                       />
                       {f}
@@ -390,7 +390,7 @@ export function UpgradePageClient({
                 ) : (
                   <GetStartedLink
                     href="/upgrade/ai"
-                    gradient="linear-gradient(135deg, #6d28d9 0%, #a855f7 50%, #14b8a6 100%)"
+                    gradient="linear-gradient(135deg, #c3ff32 0%, #c3ff32 50%, #016c81 100%)"
                   />
                 )}
               </div>
@@ -416,7 +416,7 @@ export function UpgradePageClient({
               className="h-1 w-full shrink-0"
               style={{
                 background:
-                  "linear-gradient(to right, #0f766e, #14b8a6, #22d3ee)",
+                  "linear-gradient(to right, #0f766e, #016c81, #22d3ee)",
               }}
             />
 
@@ -465,7 +465,7 @@ export function UpgradePageClient({
                   <li key={f} className="flex items-center gap-2.5 text-sm text-muted-foreground">
                     <span
                       className="size-1.5 shrink-0 rounded-full"
-                      style={{ background: "#14b8a6" }}
+                      style={{ background: "#016c81" }}
                       aria-hidden
                     />
                     {f}
@@ -485,7 +485,7 @@ export function UpgradePageClient({
               ) : (
                 <GetStartedLink
                   href="/upgrade/ai-pro"
-                  gradient="linear-gradient(135deg, #0f766e 0%, #14b8a6 50%, #22d3ee 100%)"
+                  gradient="linear-gradient(135deg, #0f766e 0%, #016c81 50%, #22d3ee 100%)"
                 />
               )}
             </div>
@@ -502,14 +502,14 @@ export function UpgradePageClient({
                 ease: MOTION_EASE.easeOut,
               }}
               whileHover={{ scale: 1.01 }}
-              className="group flex flex-col overflow-hidden rounded-2xl border border-amber-500/20 bg-card/90 shadow-[0_4px_24px_-4px_rgba(245,158,11,0.12)] transition-shadow hover:border-amber-500/40 hover:shadow-[0_8px_40px_-8px_rgba(245,158,11,0.25)]"
+              className="group flex flex-col overflow-hidden rounded-2xl border border-wisk-ferrari/20 bg-card/90 shadow-[0_4px_24px_-4px_rgba(232,0,29,0.12)] transition-shadow hover:border-wisk-ferrari/30 hover:shadow-[0_8px_40px_-8px_rgba(232,0,29,0.25)]"
             >
               <div
                 aria-hidden
                 className="h-1 w-full shrink-0"
                 style={{
                   background:
-                    "linear-gradient(to right, #b45309, #f59e0b, #f97316)",
+                    "linear-gradient(to right, #8b0010, #e8001d, #cc0016)",
                 }}
               />
 
@@ -518,13 +518,13 @@ export function UpgradePageClient({
                   <div
                     className="flex size-8 items-center justify-center rounded-lg"
                     style={{
-                      background: "rgba(245,158,11,0.12)",
-                      border: "1px solid rgba(245,158,11,0.25)",
+                      background: "rgba(232,0,29,0.12)",
+                      border: "1px solid rgba(232,0,29,0.25)",
                     }}
                   >
-                    <Building2 className="size-4 text-amber-400" aria-hidden />
+                    <Building2 className="size-4 text-wisk-ferrari" aria-hidden />
                   </div>
-                  <p className="text-sm font-semibold text-amber-400">
+                  <p className="text-sm font-semibold text-wisk-ferrari">
                     WISK Properties
                   </p>
                 </div>
@@ -548,7 +548,7 @@ export function UpgradePageClient({
                     >
                       <span
                         className="size-1.5 shrink-0 rounded-full"
-                        style={{ background: "#f59e0b" }}
+                        style={{ background: "#e8001d" }}
                         aria-hidden
                       />
                       {feature}
@@ -560,7 +560,7 @@ export function UpgradePageClient({
               <div className="px-6 pb-6">
                 <GetStartedLink
                   href="/upgrade/properties"
-                  gradient="linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #f97316 100%)"
+                  gradient="linear-gradient(135deg, #8b0010 0%, #e8001d 50%, #cc0016 100%)"
                 />
               </div>
             </motion.div>
@@ -577,13 +577,13 @@ export function UpgradePageClient({
                 ease: MOTION_EASE.easeOut,
               }}
               whileHover={{ scale: 1.01 }}
-              className="group relative flex flex-col overflow-hidden rounded-2xl border border-amber-600/25 bg-card/90 shadow-[0_4px_24px_-4px_rgba(217,119,6,0.14)] transition-shadow hover:border-amber-600/45 hover:shadow-[0_8px_40px_-8px_rgba(217,119,6,0.28)]"
+              className="group relative flex flex-col overflow-hidden rounded-2xl border border-wisk-ferrari/20 bg-card/90 shadow-[0_4px_24px_-4px_rgba(232,0,29,0.14)] transition-shadow hover:border-wisk-ferrari/30 hover:shadow-[0_8px_40px_-8px_rgba(232,0,29,0.28)]"
             >
               <span
-                className="absolute top-4 right-4 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400"
+                className="absolute top-4 right-4 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-wisk-ferrari"
                 style={{
-                  background: "rgba(217,119,6,0.12)",
-                  border: "1px solid rgba(217,119,6,0.35)",
+                  background: "rgba(232,0,29,0.12)",
+                  border: "1px solid rgba(232,0,29,0.35)",
                 }}
               >
                 Landlord Pro
@@ -594,7 +594,7 @@ export function UpgradePageClient({
                 className="h-1 w-full shrink-0"
                 style={{
                   background:
-                    "linear-gradient(to right, #92400e, #d97706, #ea580c)",
+                    "linear-gradient(to right, #8b0010, #e8001d, #cc0016)",
                 }}
               />
 
@@ -603,13 +603,13 @@ export function UpgradePageClient({
                   <div
                     className="flex size-8 items-center justify-center rounded-lg"
                     style={{
-                      background: "rgba(217,119,6,0.12)",
-                      border: "1px solid rgba(217,119,6,0.3)",
+                      background: "rgba(232,0,29,0.12)",
+                      border: "1px solid rgba(232,0,29,0.3)",
                     }}
                   >
-                    <Building2 className="size-4 text-amber-500" aria-hidden />
+                    <Building2 className="size-4 text-wisk-ferrari" aria-hidden />
                   </div>
-                  <p className="text-sm font-semibold text-amber-500">
+                  <p className="text-sm font-semibold text-wisk-ferrari">
                     WISK Properties Pro
                   </p>
                 </div>
@@ -633,7 +633,7 @@ export function UpgradePageClient({
                     >
                       <span
                         className="size-1.5 shrink-0 rounded-full"
-                        style={{ background: "#d97706" }}
+                        style={{ background: "#e8001d" }}
                         aria-hidden
                       />
                       {feature}
@@ -647,7 +647,7 @@ export function UpgradePageClient({
                   <ManageButton
                     onClick={openPortal}
                     loading={portalLoading}
-                    accentColor="amber"
+                    accentColor="ferrari"
                   />
                 ) : (
                   <UpgradeToProLink

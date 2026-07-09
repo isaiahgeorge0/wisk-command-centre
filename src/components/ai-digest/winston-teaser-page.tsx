@@ -81,7 +81,7 @@ function PreviewWinList({ items }: { items: string[] }) {
     <ul className="space-y-2">
       {items.map((item, i) => (
         <li key={i} className="flex items-start gap-2.5">
-          <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-wisk-teal" aria-hidden />
+          <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-wisk-section-winston" aria-hidden />
           <span className="text-sm text-foreground">{item}</span>
         </li>
       ))}
@@ -119,8 +119,8 @@ function DigestPreview() {
       {/* Fake header */}
       <div className="mb-8">
         <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-wisk-purple/30 to-wisk-teal/30 shadow-sm">
-            <Sparkles className="size-5 text-wisk-teal" />
+          <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-wisk-section-winston/20 to-wisk-section-winston/20 shadow-sm">
+            <Sparkles className="size-5 text-wisk-section-winston" />
           </div>
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
@@ -175,31 +175,31 @@ function DigestPreview() {
 
         <PreviewCard
           icon={<Calendar className="size-4" />}
-          iconClass="text-wisk-purple"
+          iconClass="text-wisk-section-winston"
           title="This week ahead"
         >
           <PreviewBulletList
             items={FAKE_DIGEST.weekAhead}
-            dotClass="bg-wisk-purple/70"
+            dotClass="bg-wisk-section-winston/70"
           />
         </PreviewCard>
 
         <PreviewCard
           icon={<Lightbulb className="size-4" />}
-          iconClass="text-wisk-teal"
+          iconClass="text-wisk-section-winston"
           title="Winston's insight"
           className="sm:col-span-2 xl:col-span-1"
         >
-          <div className="border-l-2 border-wisk-teal/60 pl-4">
+          <div className="border-l-2 border-wisk-section-winston/60 pl-4">
             <p className="text-sm leading-relaxed text-foreground">
               {FAKE_DIGEST.insight}
             </p>
           </div>
         </PreviewCard>
 
-        <div className="sm:col-span-2 xl:col-span-3 rounded-xl border border-wisk-purple/30 bg-gradient-to-br from-wisk-purple/[0.06] to-wisk-teal/[0.06] p-5 shadow-sm">
+        <div className="sm:col-span-2 xl:col-span-3 rounded-xl border border-wisk-section-winston/30 bg-gradient-to-br from-wisk-section-winston/[0.06] to-wisk-section-winston/[0.06] p-5 shadow-sm">
           <div className="mb-3 flex items-center gap-2.5">
-            <div className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-wisk-purple to-wisk-teal">
+            <div className="flex size-7 items-center justify-center rounded-lg bg-wisk-section-winston">
               <ArrowRight className="size-4 text-white" />
             </div>
             <h2 className="text-sm font-semibold text-foreground">
@@ -255,8 +255,8 @@ export function WinstonTeaserPage() {
             className="flex flex-col items-center px-6 py-10 text-center"
           >
             {/* Monogram */}
-            <div className="mb-5 flex size-20 items-center justify-center rounded-2xl bg-gradient-to-br from-wisk-purple/20 to-wisk-teal/20 shadow-lg ring-1 ring-wisk-purple/20">
-              <span className="bg-gradient-to-br from-wisk-purple to-wisk-teal bg-clip-text text-6xl font-bold text-transparent leading-none">
+            <div className="mb-5 flex size-20 items-center justify-center rounded-2xl bg-gradient-to-br from-wisk-section-winston/20 to-wisk-section-winston/20 shadow-lg ring-1 ring-wisk-section-winston/20">
+              <span className="bg-wisk-section-winston bg-clip-text text-6xl font-bold text-transparent leading-none">
                 W
               </span>
             </div>
@@ -295,7 +295,7 @@ export function WinstonTeaserPage() {
               ].map(({ name, desc }) => (
                 <li key={name} className="flex items-start gap-2.5 pl-1">
                   <CheckCircle2
-                    className="mt-0.5 size-4 shrink-0 text-wisk-teal"
+                    className="mt-0.5 size-4 shrink-0 text-wisk-section-winston"
                     aria-hidden
                   />
                   <span className="text-sm leading-relaxed">
@@ -316,7 +316,7 @@ export function WinstonTeaserPage() {
               className="mt-6 inline-flex rounded-xl px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
               style={{
                 background:
-                  "linear-gradient(135deg, #6d28d9 0%, #a855f7 50%, #14b8a6 100%)",
+                  "linear-gradient(135deg, #c3ff32 0%, #c3ff32 50%, #016c81 100%)",
               }}
             >
               Get started with Winston

@@ -53,7 +53,7 @@ export function WhatsNewButton({ entries, unreadCount }: WhatsNewButtonProps) {
       >
         <Sparkles className="size-4" />
         {unreadCount > 0 ? (
-          <span className="absolute top-1.5 right-1.5 flex min-w-4 items-center justify-center rounded-full bg-wisk-purple px-1 py-0.5 text-[10px] font-semibold text-white md:top-1 md:right-1">
+          <span className="absolute top-1.5 right-1.5 flex min-w-4 items-center justify-center rounded-full bg-wisk-section-winston px-1 py-0.5 text-[10px] font-semibold text-white md:top-1 md:right-1">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         ) : null}

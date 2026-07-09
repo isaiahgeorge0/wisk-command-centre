@@ -24,8 +24,8 @@ export function MessageToast({
       transition={{ duration: 0.2 }}
       className="fixed top-6 left-1/2 z-50 flex w-80 -translate-x-1/2 items-start gap-3 rounded-xl border border-border/60 bg-card p-4 shadow-xl"
     >
-      <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-amber-500/10">
-        <MessageSquare className="size-4 text-amber-500" />
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-wisk-ferrari/10">
+        <MessageSquare className="size-4 text-wisk-ferrari" />
       </div>
       <button
         type="button"

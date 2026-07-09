@@ -14,7 +14,7 @@ const PARTICLES = [
   { x: -32, y: 28, color: "bg-yellow-300", size: "size-2" },
   { x: 52, y: 20, color: "bg-emerald-500", size: "size-1.5" },
   { x: 0, y: -52, color: "bg-amber-300", size: "size-2" },
-  { x: -56, y: 8, color: "bg-wisk-teal", size: "size-1.5" },
+  { x: -56, y: 8, color: "bg-wisk-section-leads", size: "size-1.5" },
   { x: 36, y: 36, color: "bg-yellow-400", size: "size-1.5" },
   { x: -20, y: -48, color: "bg-emerald-300", size: "size-1.5" },
   { x: 24, y: -24, color: "bg-amber-500", size: "size-1" },

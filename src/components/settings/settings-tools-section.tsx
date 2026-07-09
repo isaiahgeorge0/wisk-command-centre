@@ -23,7 +23,7 @@ export function SettingsToolsSection() {
           href="/ai-digest"
           className="flex min-h-11 items-center gap-3 px-6 py-3 transition-colors hover:bg-muted/50"
         >
-          <Sparkles className="size-5 shrink-0 text-wisk-purple" aria-hidden />
+          <Sparkles className="size-5 shrink-0 text-wisk-turquoise" aria-hidden />
           <span className="min-w-0 flex-1 font-medium text-foreground">
             AI Digest
           </span>

@@ -14,8 +14,8 @@ export function OverviewHeader({ header }: OverviewHeaderProps) {
       subtitle={header.subtitle}
       icon={<LayoutDashboard className="size-6 text-white" />}
       gradient
-      gradientFrom="#a855f7"
-      gradientTo="#14b8a6"
+      gradientFrom="#c3ff32"
+      gradientTo="#016c81"
     />
   );
 }

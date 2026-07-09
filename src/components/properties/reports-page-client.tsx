@@ -41,7 +41,7 @@ import type {
 import { cn } from "@/lib/utils";
 
 const CTA_GRADIENT =
-  "linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #f97316 100%)";
+  "linear-gradient(135deg, #8b0010 0%, #e8001d 50%, #cc0016 100%)";
 
 type ReportsPageClientProps = {
   properties: Property[];
@@ -275,7 +275,7 @@ function ScopeButton({
       className={cn(
         "rounded-xl px-4 py-2 text-sm font-medium min-h-10 transition-colors",
         active
-          ? "bg-amber-500 text-white"
+          ? "bg-wisk-ferrari text-white"
           : "border border-border/60 bg-card/60 text-muted-foreground hover:text-foreground"
       )}
     >
@@ -887,6 +887,6 @@ function netIncomeColorClass(amount: number): string {
 
 function getYieldColorClass(yieldPercent: number): string {
   if (yieldPercent >= 7) return "text-emerald-500";
-  if (yieldPercent >= 4) return "text-amber-500";
+  if (yieldPercent >= 4) return "text-wisk-ferrari";
   return "text-orange-500";
 }

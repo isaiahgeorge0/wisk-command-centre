@@ -82,8 +82,8 @@ function WinstonToggle({
       className={cn(
         "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors duration-150",
         optimistic
-          ? "border-wisk-teal/40 bg-wisk-teal/10 text-wisk-teal hover:bg-wisk-teal/20"
-          : "border-border bg-muted text-muted-foreground hover:border-wisk-purple/40 hover:bg-wisk-purple/10 hover:text-wisk-purple",
+          ? "border-wisk-turquoise/40 bg-wisk-turquoise/10 text-wisk-turquoise hover:bg-wisk-turquoise/20"
+          : "border-border bg-muted text-muted-foreground hover:border-wisk-lime/40 hover:bg-wisk-lime/10 hover:text-wisk-lime",
         pending && "cursor-not-allowed opacity-60"
       )}
     >
@@ -130,7 +130,7 @@ function GenerateDigestButton({ userId }: { userId: string }) {
         className={cn(
           "inline-flex items-center justify-center rounded-full border p-1.5 transition-colors duration-150",
           state === "idle" &&
-            "border-border bg-muted text-muted-foreground hover:border-wisk-teal/40 hover:bg-wisk-teal/10 hover:text-wisk-teal",
+            "border-border bg-muted text-muted-foreground hover:border-wisk-turquoise/40 hover:bg-wisk-turquoise/10 hover:text-wisk-lime",
           state === "loading" &&
             "cursor-not-allowed border-border bg-muted text-muted-foreground opacity-60",
           state === "success" &&
@@ -165,14 +165,14 @@ const PACKAGE_LABEL: Record<string, string> = {
 };
 
 const PACKAGE_CLASS: Record<string, string> = {
-  ai: "border-wisk-teal/30 bg-wisk-teal/10 text-wisk-teal",
-  ai_pro: "border-wisk-purple/30 bg-wisk-purple/10 text-wisk-purple",
+  ai: "border-wisk-turquoise/30 bg-wisk-turquoise/10 text-wisk-lime",
+  ai_pro: "border-wisk-lime/30 bg-wisk-lime/10 text-wisk-lime",
   social: "border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400",
   commerce:
     "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400",
   properties:
     "border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400",
-  max: "border-wisk-teal/30 bg-wisk-teal/10 text-foreground",
+  max: "border-wisk-turquoise/30 bg-wisk-turquoise/10 text-foreground",
 };
 
 function SubscriptionBadges({
@@ -315,7 +315,7 @@ export function UsersHealthClient({ users, summary }: UsersHealthClientProps) {
               <th className="px-4 py-3 font-medium">Status</th>
               <th className="px-4 py-3 font-medium">
                 <span className="flex items-center gap-1">
-                  <Sparkles className="size-3 text-wisk-teal" aria-hidden />
+                  <Sparkles className="size-3 text-wisk-lime" aria-hidden />
                   Winston
                 </span>
               </th>

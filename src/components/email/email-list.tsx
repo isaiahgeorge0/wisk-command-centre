@@ -236,7 +236,7 @@ function WinstonPicksSection({
   return (
     <>
       <div className="border-b border-border/60 px-3 pt-3 pb-2">
-        <div className="overflow-hidden rounded-lg border border-border/60 border-l-[3px] border-l-wisk-purple bg-gradient-to-r from-wisk-purple/5 to-wisk-teal/5">
+        <div className="overflow-hidden rounded-lg border border-border/60 border-l-[3px] border-l-wisk-lime bg-wisk-lime/10">
           <button
             type="button"
             onClick={() => {
@@ -244,7 +244,7 @@ function WinstonPicksSection({
             }}
             className="flex min-h-11 w-full items-center gap-2 px-3 py-2.5 text-left"
           >
-            <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-wisk-purple to-wisk-teal">
+            <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-wisk-lime">
               <Sparkles className="size-3.5 text-white" aria-hidden />
             </div>
 

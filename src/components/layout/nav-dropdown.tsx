@@ -122,7 +122,7 @@ export function NavDropdown({ group }: NavDropdownProps) {
         {active ? (
           <motion.span
             layoutId={reduced ? undefined : "nav-underline"}
-            className="absolute inset-x-0 -bottom-1 h-0.5 rounded-full bg-wisk-teal/80"
+            className="absolute inset-x-0 -bottom-1 h-0.5 rounded-full bg-wisk-lime/80"
             transition={
               reduced
                 ? { duration: 0 }
@@ -164,7 +164,7 @@ export function NavDropdown({ group }: NavDropdownProps) {
                         <Icon
                           className={cn(
                             "mt-0.5 size-4 shrink-0",
-                            itemActive ? "text-wisk-teal" : "text-muted-foreground"
+                            itemActive ? "text-wisk-lime" : "text-muted-foreground"
                           )}
                         />
                         <span className="min-w-0">

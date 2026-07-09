@@ -78,7 +78,7 @@ export function WelcomePageClient({
           className="flex flex-col items-center text-center"
           {...fadeUp(0, reduced)}
         >
-          <span className="bg-gradient-to-r from-wisk-purple to-wisk-teal bg-clip-text text-3xl font-bold tracking-[0.28em] text-transparent uppercase sm:text-4xl">
+          <span className="bg-wisk-lime bg-clip-text text-3xl font-bold tracking-[0.28em] text-transparent uppercase sm:text-4xl">
             WISK
           </span>
         </motion.div>

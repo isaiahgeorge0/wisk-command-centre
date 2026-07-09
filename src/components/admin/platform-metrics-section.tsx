@@ -34,7 +34,7 @@ export function PlatformMetricsSection({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold text-wisk-teal">
+            <p className="text-3xl font-semibold text-wisk-lime">
               {metrics.totalTasks}
             </p>
           </CardContent>

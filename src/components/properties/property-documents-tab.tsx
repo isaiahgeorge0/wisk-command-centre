@@ -161,8 +161,8 @@ export function PropertyDocumentsTab({
         className={cn(
           "rounded-xl border border-dashed p-6 transition-colors",
           dragOver
-            ? "border-amber-500 bg-amber-500/5"
-            : "border-amber-500/30 bg-card/40"
+            ? "border-wisk-ferrari bg-wisk-ferrari/5"
+            : "border-wisk-ferrari/30 bg-card/40"
         )}
         onDragOver={(e) => {
           e.preventDefault();
@@ -264,12 +264,12 @@ export function PropertyDocumentsTab({
           >
             {uploading ? (
               <>
-                <Loader2 className="size-6 animate-spin text-amber-500" />
+                <Loader2 className="size-6 animate-spin text-wisk-ferrari" />
                 <span className="text-sm text-muted-foreground">Uploading…</span>
               </>
             ) : (
               <>
-                <Upload className="size-6 text-amber-500" />
+                <Upload className="size-6 text-wisk-ferrari" />
                 <span className="text-sm font-medium text-foreground">
                   Drag and drop or click to upload
                 </span>
@@ -290,8 +290,8 @@ export function PropertyDocumentsTab({
       </div>
 
       {documents.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-amber-500/20 bg-card/40 px-6 py-16 text-center">
-          <FileText className="mb-4 size-10 text-amber-500" />
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-wisk-ferrari/20 bg-card/40 px-6 py-16 text-center">
+          <FileText className="mb-4 size-10 text-wisk-ferrari" />
           <h2 className="text-lg font-medium text-foreground">
             No documents uploaded yet
           </h2>
@@ -375,8 +375,8 @@ function DocumentRow({
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card/40 p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex min-w-0 items-start gap-3">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
-          <Icon className="size-5 text-amber-500" />
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-wisk-ferrari/10">
+          <Icon className="size-5 text-wisk-ferrari" />
         </div>
         <div className="min-w-0">
           <p className="truncate font-medium text-foreground">{doc.name}</p>
@@ -395,7 +395,7 @@ function DocumentRow({
               >
                 <Badge
                   variant="outline"
-                  className="border-amber-500/30 bg-amber-500/10 text-amber-700 hover:bg-amber-500/15 dark:text-amber-300"
+                  className="border-wisk-ferrari/30 bg-wisk-ferrari/10 text-wisk-ferrari hover:bg-wisk-ferrari/15"
                 >
                   {getCertificateTypeDisplayName(doc.certificate_type)}
                 </Badge>

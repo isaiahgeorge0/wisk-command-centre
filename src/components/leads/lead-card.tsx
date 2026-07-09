@@ -87,7 +87,7 @@ export function LeadCard({
 
   if (editing) {
     return (
-      <Card className="border-border/70 border-wisk-purple/25 bg-card/90 shadow-sm">
+      <Card className="border-border/70 border-wisk-section-leads/25 bg-card/90 shadow-sm">
         <CardHeader className="gap-2 px-4 pb-2 pt-4">
           <p className="text-sm font-medium text-muted-foreground">Editing lead</p>
         </CardHeader>

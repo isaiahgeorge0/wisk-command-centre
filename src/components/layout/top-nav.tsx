@@ -48,11 +48,27 @@ export function TopNav({
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-border/60 bg-surface/90 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 md:gap-4 md:px-6 lg:gap-8 lg:px-8">
-        <Link
-          href="/"
-          className="shrink-0 bg-gradient-to-r from-wisk-purple to-wisk-teal bg-clip-text text-base font-bold tracking-[0.22em] text-transparent uppercase md:text-lg"
-        >
-          WISK
+        <Link href="/" className="shrink-0 flex items-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/wisk-logo-white.png"
+            alt="WISK"
+            className="h-7 w-auto dark:hidden"
+            style={{
+              filter:
+                "brightness(0) saturate(100%) invert(65%) sepia(40%) saturate(600%) hue-rotate(200deg) brightness(110%)",
+            }}
+          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/wisk-logo-white.png"
+            alt="WISK"
+            className="h-7 w-auto hidden dark:block"
+            style={{
+              filter:
+                "brightness(0) saturate(100%) invert(93%) sepia(55%) saturate(900%) hue-rotate(33deg) brightness(105%)",
+            }}
+          />
         </Link>
 
         <nav className="hidden min-w-0 flex-1 items-center gap-4 overflow-visible md:flex lg:gap-6">

@@ -110,7 +110,7 @@ export function TenantsPageClient({
       </div>
 
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-amber-500/20 bg-card/40 px-6 py-16 text-center">
+        <div className="rounded-xl border border-dashed border-wisk-ferrari/20 bg-card/40 px-6 py-16 text-center">
           <h2 className="text-lg font-medium text-foreground">No tenants yet</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Add tenants from a property detail page.

@@ -161,7 +161,7 @@ export function MaintenanceJobSheetSection({
         <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
           <Link
             href="/properties/contractors"
-            className="font-medium text-amber-600 hover:underline dark:text-amber-400"
+            className="font-medium text-wisk-ferrari hover:underline"
           >
             Add a contractor
           </Link>{" "}
@@ -198,7 +198,7 @@ export function MaintenanceJobSheetSection({
           size="sm"
           disabled={isPending}
           onClick={handleCreateAndSend}
-          className="min-h-11 bg-amber-500 text-white hover:bg-amber-500/90"
+          className="min-h-11 bg-wisk-ferrari text-white hover:bg-wisk-ferrari/90"
         >
           {isPending ? "Creating…" : "Create job sheet & send email"}
         </Button>

@@ -33,7 +33,7 @@ function WinstonGradientIcon({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "flex size-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-wisk-purple to-wisk-teal",
+        "flex size-9 shrink-0 items-center justify-center rounded-lg bg-wisk-section-leads",
         className
       )}
     >
@@ -131,7 +131,7 @@ function TeaserContent({ onClose }: { onClose: () => void }) {
         <Link href="/upgrade" className="block">
           <Button
             type="button"
-            className="w-full bg-gradient-to-r from-wisk-purple to-wisk-teal text-white hover:opacity-90"
+            className="w-full bg-wisk-section-leads text-white hover:opacity-90"
           >
             Upgrade to WISK AI
           </Button>
@@ -197,8 +197,8 @@ function PipelineHealthCard() {
   return (
     <div className="rounded-xl border border-border/40 bg-muted/10 p-4 opacity-70">
       <div className="flex items-start gap-3">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-wisk-teal/10">
-          <BarChart2 className="size-4 text-wisk-teal" aria-hidden />
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-wisk-section-leads/10">
+          <BarChart2 className="size-4 text-wisk-section-leads" aria-hidden />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">

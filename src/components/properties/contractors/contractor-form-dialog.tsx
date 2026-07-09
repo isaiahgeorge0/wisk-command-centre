@@ -166,7 +166,7 @@ export function ContractorFormDialog({
           <Button
             onClick={handleSubmit}
             disabled={isPending || !values.name.trim()}
-            className="min-h-11 bg-amber-500 text-white hover:bg-amber-500/90"
+            className="min-h-11 bg-wisk-ferrari text-white hover:bg-wisk-ferrari/90"
           >
             {isPending ? "Saving…" : contractor ? "Save changes" : "Add contractor"}
           </Button>

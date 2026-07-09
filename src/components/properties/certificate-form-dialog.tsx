@@ -362,9 +362,9 @@ export function CertificateFormDialog({
               </SelectContent>
             </Select>
             {activeDuration?.note ? (
-              <div className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
+              <div className="flex items-start gap-2 rounded-lg border border-wisk-ferrari/20 bg-wisk-ferrari/5 px-3 py-2">
                 <Info
-                  className="mt-0.5 size-4 shrink-0 text-amber-500"
+                  className="mt-0.5 size-4 shrink-0 text-wisk-ferrari"
                   aria-hidden
                 />
                 <p className="text-xs leading-relaxed text-muted-foreground">
@@ -513,11 +513,11 @@ export function CertificateFormDialog({
                       className={cn(
                         "flex min-h-24 w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-6 text-center transition-colors disabled:opacity-50",
                         dragOver
-                          ? "border-amber-500 bg-amber-500/5"
+                          ? "border-wisk-ferrari bg-wisk-ferrari/5"
                           : "border-border/60 bg-muted/20 hover:bg-muted/40"
                       )}
                     >
-                      <Upload className="size-6 text-amber-500" />
+                      <Upload className="size-6 text-wisk-ferrari" />
                       <span className="text-sm font-medium text-foreground">
                         Drag and drop or click to select
                       </span>
@@ -589,7 +589,7 @@ export function CertificateFormDialog({
             type="submit"
             form={formId}
             disabled={isBusy}
-            className="min-h-11"
+            className="min-h-11 bg-wisk-ferrari text-white hover:bg-wisk-ferrari/90"
           >
             {submitLabel}
           </Button>

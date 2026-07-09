@@ -77,7 +77,7 @@ export function FeedbackWelcomeModal({
 
         <div className="relative z-10">
           <h2 className="text-2xl font-semibold tracking-tight">
-            <span className="bg-gradient-to-r from-wisk-purple to-wisk-teal bg-clip-text text-transparent">
+            <span className="bg-wisk-lime bg-clip-text text-transparent">
               Welcome to WISK, {displayName}.
             </span>
           </h2>

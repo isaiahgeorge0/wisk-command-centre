@@ -84,7 +84,7 @@ export function BottomNav() {
                   className={cn(
                     "flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-1 py-1.5 text-[10px] font-medium transition-all duration-100 active:scale-95 active:opacity-70",
                     active
-                      ? "text-wisk-teal"
+                      ? "text-wisk-lime"
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >

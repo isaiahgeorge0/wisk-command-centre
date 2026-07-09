@@ -13,7 +13,7 @@ type UpgradeBannerProps = {
 };
 
 const CTA_GRADIENT =
-  "linear-gradient(135deg, #6d28d9 0%, #a855f7 50%, #14b8a6 100%)";
+  "linear-gradient(135deg, #c3ff32 0%, #c3ff32 50%, #016c81 100%)";
 
 export function UpgradeBanner({ plan }: UpgradeBannerProps) {
   const reduced = useReducedMotion();

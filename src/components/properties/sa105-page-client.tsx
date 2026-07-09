@@ -37,7 +37,7 @@ import type {
 import { cn } from "@/lib/utils";
 
 const CTA_GRADIENT =
-  "linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #f97316 100%)";
+  "linear-gradient(135deg, #8b0010 0%, #e8001d 50%, #cc0016 100%)";
 
 type SA105PageClientProps = {
   properties: Property[];
@@ -357,7 +357,7 @@ export function SA105PageClient({
             </p>
             <Link
               href="/properties/finances"
-              className="mt-6 text-sm font-medium text-amber-600 underline underline-offset-2 hover:text-amber-500 dark:text-amber-400 print:hidden"
+              className="mt-6 text-sm font-medium text-wisk-ferrari underline underline-offset-2 hover:text-wisk-ferrari/80 print:hidden"
             >
               Go to Finances
             </Link>
@@ -411,7 +411,7 @@ export function SA105PageClient({
                       className={cn(
                         "grid gap-1 px-4 py-4 sm:grid-cols-[auto_1fr_auto] sm:items-start sm:gap-4",
                         isEditable &&
-                          "border-l-2 border-amber-500/40 bg-amber-500/[0.03] print:border-l-0 print:bg-transparent"
+                          "border-l-2 border-wisk-ferrari/30 bg-wisk-ferrari/5 print:border-l-0 print:bg-transparent"
                       )}
                     >
                       <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -421,7 +421,7 @@ export function SA105PageClient({
                         <p className="flex items-center gap-1.5 text-sm font-medium text-foreground">
                           {isEditable ? (
                             <Pencil
-                              className="size-3.5 text-amber-500 print:hidden"
+                              className="size-3.5 text-wisk-ferrari print:hidden"
                               aria-hidden
                             />
                           ) : null}
@@ -433,7 +433,7 @@ export function SA105PageClient({
                           </p>
                         ) : null}
                         {manualNote ? (
-                          <p className="mt-1 text-xs text-amber-700/80 dark:text-amber-400/80">
+                          <p className="mt-1 text-xs text-wisk-ferrari/80">
                             {manualNote}
                           </p>
                         ) : null}

@@ -54,9 +54,9 @@ export function SettingsBillingSection({
                 "text-sm",
                 plan === "free" && "border-border bg-muted text-foreground",
                 plan === "ai" &&
-                  "border-wisk-teal/30 bg-wisk-teal/10 text-wisk-teal",
+                  "border-wisk-turquoise/30 bg-wisk-turquoise/10 text-wisk-turquoise",
                 (plan === "ai_pro" || plan === "max") &&
-                  "border-wisk-purple/30 bg-wisk-purple/10 text-wisk-purple"
+                  "border-wisk-turquoise/30 bg-wisk-turquoise/10 text-wisk-turquoise"
               )}
             >
               {planLabel}
@@ -72,7 +72,7 @@ export function SettingsBillingSection({
           <p className="text-sm">
             <Link
               href="/upgrade"
-              className="font-medium text-wisk-teal hover:underline"
+              className="font-medium text-wisk-turquoise hover:underline"
             >
               {isPaid ? "Manage subscription" : "Upgrade"}
             </Link>

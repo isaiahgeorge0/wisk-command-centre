@@ -158,7 +158,7 @@ export function ConvertLeadDialog({
             type="button"
             disabled={isPending || !name.trim()}
             onClick={() => handleConvert(false)}
-            className="bg-gradient-to-r from-wisk-purple to-wisk-teal text-white hover:opacity-90"
+            className="bg-wisk-section-leads text-white hover:opacity-90"
           >
             {isPending ? "Converting…" : "Convert"}
           </Button>

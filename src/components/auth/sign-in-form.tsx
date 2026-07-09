@@ -116,7 +116,7 @@ export function SignInForm() {
           <SignInEntranceItem>
             <Link
               href="/sign-in"
-              className="bg-gradient-to-r from-wisk-purple to-wisk-teal bg-clip-text text-3xl font-bold tracking-[0.28em] text-transparent uppercase sm:text-4xl"
+              className="bg-wisk-lime bg-clip-text text-3xl font-bold tracking-[0.28em] text-transparent uppercase sm:text-4xl"
             >
               WISK
             </Link>

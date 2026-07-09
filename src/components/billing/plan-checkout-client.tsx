@@ -34,14 +34,14 @@ type PlanCheckoutClientProps = {
 
 const ACCENT: Record<"ai" | "ai_pro", { text: string; border: string; bg: string }> = {
   ai: {
-    text: "text-wisk-teal",
-    border: "border-wisk-teal/30",
-    bg: "bg-wisk-teal/10",
+    text: "text-wisk-lime",
+    border: "border-wisk-turquoise/30",
+    bg: "bg-wisk-turquoise/10",
   },
   ai_pro: {
-    text: "text-wisk-purple",
-    border: "border-wisk-purple/30",
-    bg: "bg-wisk-purple/10",
+    text: "text-wisk-lime",
+    border: "border-wisk-lime/30",
+    bg: "bg-wisk-lime/10",
   },
 };
 
@@ -78,8 +78,8 @@ export function PlanCheckoutClient({ plan, showUpsell }: PlanCheckoutClientProps
   const accent = ACCENT[plan.key];
 
   // Gradient colours per plan
-  const gradientFrom = plan.key === "ai" ? "#14b8a6" : "#a855f7";
-  const gradientTo = plan.key === "ai" ? "#a855f7" : "#6366f1";
+  const gradientFrom = plan.key === "ai" ? "#016c81" : "#c3ff32";
+  const gradientTo = plan.key === "ai" ? "#c3ff32" : "#6366f1";
 
   async function handleGetStarted() {
     if (loading || !plan.priceId) return;
@@ -161,7 +161,7 @@ export function PlanCheckoutClient({ plan, showUpsell }: PlanCheckoutClientProps
           <Card className="border-border/60 bg-card/60 shadow-sm">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-base text-foreground">
-                <Zap className="size-4 text-amber-500" aria-hidden />
+                <Zap className="size-4 text-wisk-ferrari" aria-hidden />
                 What you get from day one
               </CardTitle>
             </CardHeader>
@@ -169,8 +169,8 @@ export function PlanCheckoutClient({ plan, showUpsell }: PlanCheckoutClientProps
               <ul className="space-y-3">
                 {plan.dayOneUnlocks.map((unlock) => (
                   <li key={unlock} className="flex items-start gap-3">
-                    <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border border-amber-500/30 bg-amber-500/10">
-                      <Check className="size-3 text-amber-500" aria-hidden />
+                    <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border border-wisk-ferrari/20 bg-wisk-ferrari/10">
+                      <Check className="size-3 text-wisk-ferrari" aria-hidden />
                     </span>
                     <span className="text-sm text-muted-foreground">{unlock}</span>
                   </li>
@@ -214,8 +214,8 @@ export function PlanCheckoutClient({ plan, showUpsell }: PlanCheckoutClientProps
                   className={cn(
                     "w-full font-medium",
                     plan.key === "ai"
-                      ? "bg-wisk-teal text-white hover:bg-wisk-teal/90"
-                      : "bg-wisk-purple text-white hover:bg-wisk-purple/90"
+                      ? "bg-wisk-lime text-wisk-dark hover:bg-wisk-lime/90"
+                      : "bg-wisk-lime text-wisk-dark hover:bg-wisk-lime/90"
                   )}
                   onClick={handleGetStarted}
                   disabled={loading || !plan.priceId}
@@ -235,9 +235,9 @@ export function PlanCheckoutClient({ plan, showUpsell }: PlanCheckoutClientProps
 
           {/* Upsell — AI only */}
           {showUpsell && (
-            <Card className="border-wisk-purple/20 bg-wisk-purple/5 shadow-sm">
+            <Card className="border-wisk-lime/20 bg-wisk-lime/5 shadow-sm">
               <CardContent className="px-5 py-4">
-                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-wisk-purple">
+                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-wisk-lime">
                   Most popular upgrade
                 </p>
                 <p className="text-sm font-medium text-foreground">WISK AI Pro</p>
@@ -247,7 +247,7 @@ export function PlanCheckoutClient({ plan, showUpsell }: PlanCheckoutClientProps
                 </p>
                 <Link
                   href="/upgrade/ai-pro"
-                  className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-wisk-purple transition-opacity hover:opacity-80"
+                  className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-wisk-lime transition-opacity hover:opacity-80"
                 >
                   Upgrade to AI Pro instead
                   <ArrowLeft className="size-3.5 rotate-180" aria-hidden />

@@ -45,7 +45,7 @@ function EmailLogPrompt({ onConfirm, onDismiss, isPending }: EmailLogPromptProps
           size="sm"
           onClick={onConfirm}
           disabled={isPending}
-          className="bg-gradient-to-r from-wisk-purple to-wisk-teal text-white hover:opacity-90"
+          className="bg-wisk-section-leads text-white hover:opacity-90"
         >
           {isPending ? <Loader2 className="size-3.5 animate-spin" /> : null}
           Yes, log it
@@ -163,7 +163,7 @@ export function LeadEmailActions({
             size="sm"
             className={cn(
               emailButtonClass,
-              "border-wisk-purple/30 text-wisk-purple hover:bg-wisk-purple/10"
+              "border-wisk-section-leads/30 text-wisk-section-leads hover:bg-wisk-section-leads/10"
             )}
             onClick={handleWinstonDraft}
             disabled={drafting}

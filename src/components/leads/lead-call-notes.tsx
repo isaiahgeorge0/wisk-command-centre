@@ -246,7 +246,7 @@ export function LeadCallNotes({
           Process call notes with Winston — available on{" "}
           <Link
             href="/upgrade"
-            className="font-medium text-wisk-purple underline-offset-2 hover:underline"
+            className="font-medium text-wisk-section-leads underline-offset-2 hover:underline"
           >
             WISK AI
           </Link>
@@ -260,9 +260,9 @@ export function LeadCallNotes({
       <button
         type="button"
         onClick={() => setState("input")}
-        className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-wisk-purple/25 bg-gradient-to-r from-wisk-purple/5 to-wisk-teal/5 px-3 py-2 text-xs font-medium text-foreground transition-colors hover:border-wisk-purple/40 hover:from-wisk-purple/10 hover:to-wisk-teal/10"
+        className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-wisk-section-leads/25 bg-wisk-section-leads/10 px-3 py-2 text-xs font-medium text-foreground transition-colors hover:border-wisk-section-leads/40 hover:from-wisk-section-leads/10 hover:to-wisk-section-leads/10"
       >
-        <Sparkles className="size-3.5 text-wisk-purple" aria-hidden />
+        <Sparkles className="size-3.5 text-wisk-section-leads" aria-hidden />
         Process call notes with Winston
       </button>
     );
@@ -278,7 +278,7 @@ export function LeadCallNotes({
           value={notes}
           onChange={(e) => setNotes(e.target.value.slice(0, MAX_NOTES_LENGTH))}
           placeholder="Paste your call transcript, voice memo transcription, or typed notes from the call…"
-          className="min-h-[120px] max-h-[300px] w-full resize-y rounded-lg border border-border/60 bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-wisk-teal/40"
+          className="min-h-[120px] max-h-[300px] w-full resize-y rounded-lg border border-border/60 bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-wisk-section-leads/40"
         />
         <div className="flex items-center justify-between text-[10px] text-muted-foreground">
           <span>Winston will extract key details, next steps, and suggested actions.</span>
@@ -299,7 +299,7 @@ export function LeadCallNotes({
             type="button"
             onClick={handleAnalyse}
             disabled={notes.trim().length < MIN_NOTES_LENGTH}
-            className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-wisk-purple to-wisk-teal px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-lg bg-wisk-section-leads px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
           >
             <Sparkles className="size-3" aria-hidden />
             Analyse with Winston
@@ -312,7 +312,7 @@ export function LeadCallNotes({
   if (state === "processing") {
     return (
       <div className="flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-muted/20 px-3 py-6 text-center">
-        <Sparkles className="size-5 animate-pulse text-wisk-purple" aria-hidden />
+        <Sparkles className="size-5 animate-pulse text-wisk-section-leads" aria-hidden />
         <p className="text-xs text-muted-foreground">Winston is reading your notes…</p>
       </div>
     );
@@ -320,8 +320,8 @@ export function LeadCallNotes({
 
   if (state === "applied") {
     return (
-      <div className="flex flex-col items-center gap-2 rounded-xl border border-wisk-teal/30 bg-wisk-teal/5 px-3 py-5 text-center">
-        <CheckCircle2 className="size-5 text-wisk-teal" aria-hidden />
+      <div className="flex flex-col items-center gap-2 rounded-xl border border-wisk-section-leads/30 bg-wisk-section-leads/5 px-3 py-5 text-center">
+        <CheckCircle2 className="size-5 text-wisk-section-leads" aria-hidden />
         <p className="text-xs font-medium text-foreground">
           Winston&apos;s notes applied successfully.
         </p>
@@ -377,7 +377,7 @@ export function LeadCallNotes({
             <ul className="space-y-1">
               {result.nextSteps.map((step) => (
                 <li key={step} className="flex gap-2 text-xs text-muted-foreground">
-                  <Check className="mt-0.5 size-3 shrink-0 text-wisk-teal" aria-hidden />
+                  <Check className="mt-0.5 size-3 shrink-0 text-wisk-section-leads" aria-hidden />
                   {step}
                 </li>
               ))}
@@ -473,7 +473,7 @@ export function LeadCallNotes({
           type="button"
           onClick={handleApply}
           disabled={isPending}
-          className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-wisk-purple to-wisk-teal px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="flex items-center gap-1.5 rounded-lg bg-wisk-section-leads px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {isPending ? <Loader2 className="size-3 animate-spin" /> : null}
           Apply selected

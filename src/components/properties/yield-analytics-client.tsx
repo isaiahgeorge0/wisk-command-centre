@@ -284,8 +284,8 @@ export function YieldAnalyticsClient({
                   ]}
                 />
                 <Legend />
-                <Bar dataKey="gross" name="Gross yield" fill="#f59e0b" radius={[0, 4, 4, 0]} />
-                <Bar dataKey="net" name="Net yield" fill="#14b8a6" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="gross" name="Gross yield" fill="#e8001d" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="net" name="Net yield" fill="#016c81" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -323,16 +323,16 @@ export function YieldAnalyticsClient({
                   type="monotone"
                   dataKey="income"
                   name="Income"
-                  stroke="#f59e0b"
-                  fill="#f59e0b"
+                  stroke="#e8001d"
+                  fill="#e8001d"
                   fillOpacity={0.15}
                 />
                 <Area
                   type="monotone"
                   dataKey="costs"
                   name="Costs"
-                  stroke="#f97316"
-                  fill="#f97316"
+                  stroke="#cc0016"
+                  fill="#cc0016"
                   fillOpacity={0.15}
                 />
               </AreaChart>
@@ -366,7 +366,7 @@ export function YieldAnalyticsClient({
                     Actual {formatPropertyCurrency(annual.rental_income)}
                   </p>
                 </div>
-                <p className="text-sm font-semibold tabular-nums text-orange-500">
+                <p className="text-sm font-semibold tabular-nums text-wisk-ferrari">
                   −{formatPropertyCurrency(annual.vacancy_loss)}
                 </p>
               </div>
@@ -430,6 +430,6 @@ function YieldValue({ value }: { value: number | null }) {
 
 function getYieldColorClass(yieldPercent: number): string {
   if (yieldPercent >= 7) return "text-emerald-500";
-  if (yieldPercent >= 4) return "text-amber-500";
-  return "text-orange-500";
+  if (yieldPercent >= 4) return "text-wisk-ferrari";
+  return "text-wisk-ferrari";
 }

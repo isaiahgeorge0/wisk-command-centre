@@ -7,7 +7,7 @@ import { formatDateGB } from "@/lib/properties/notice-calculations";
 import type { Tenant } from "@/lib/properties/types";
 
 const CTA_GRADIENT =
-  "linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #f97316 100%)";
+  "linear-gradient(135deg, #8b0010 0%, #e8001d 50%, #cc0016 100%)";
 
 type Section13NoticeDocumentProps = {
   tenant: Tenant & { property_name?: string };

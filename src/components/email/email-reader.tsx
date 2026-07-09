@@ -116,7 +116,7 @@ export function EmailReader({
               type="button"
               size="sm"
               onClick={() => setDraftOpen(true)}
-              className="gap-1.5 bg-gradient-to-r from-wisk-purple to-wisk-teal text-white hover:opacity-90"
+              className="gap-1.5 bg-wisk-lime text-wisk-dark hover:opacity-90"
             >
               <Sparkles className="size-3.5" aria-hidden />
               Ask Winston

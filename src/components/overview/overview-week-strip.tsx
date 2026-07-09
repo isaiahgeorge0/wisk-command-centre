@@ -26,7 +26,7 @@ export function OverviewWeekStrip({ snapshot }: OverviewWeekStripProps) {
             className={cn(
               "flex min-h-[4.5rem] flex-col items-center justify-center rounded-xl border px-1 py-2.5 transition-colors",
               day.isToday
-                ? "border-wisk-teal/50 bg-wisk-teal/10"
+                ? "border-wisk-section-winston/50 bg-wisk-section-winston/10"
                 : "border-border/60 bg-card/40 text-muted-foreground hover:bg-card/70 hover:text-foreground"
             )}
             aria-label={`${day.weekdayLabel} ${day.dayNumber}${
@@ -36,7 +36,7 @@ export function OverviewWeekStrip({ snapshot }: OverviewWeekStripProps) {
             <span
               className={cn(
                 "text-[11px] font-medium",
-                day.isToday ? "text-wisk-teal" : "text-muted-foreground"
+                day.isToday ? "text-wisk-section-winston" : "text-muted-foreground"
               )}
             >
               {day.weekdayLabel}
@@ -45,7 +45,7 @@ export function OverviewWeekStrip({ snapshot }: OverviewWeekStripProps) {
               className={cn(
                 "mt-1 flex size-7 items-center justify-center rounded-full text-sm font-semibold tabular-nums",
                 day.isToday
-                  ? "bg-wisk-teal text-white"
+                  ? "bg-wisk-section-winston text-wisk-dark"
                   : "text-foreground"
               )}
             >
@@ -56,7 +56,7 @@ export function OverviewWeekStrip({ snapshot }: OverviewWeekStripProps) {
                 "mt-1.5 size-1.5 rounded-full",
                 day.hasEvents
                   ? day.isToday
-                    ? "bg-wisk-teal"
+                    ? "bg-wisk-section-winston"
                     : "bg-foreground/70"
                   : "bg-transparent"
               )}

@@ -146,7 +146,7 @@ export function EmailTeaserPage() {
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2.5 pl-1">
                   <CheckCircle2
-                    className="mt-0.5 size-4 shrink-0 text-wisk-teal"
+                    className="mt-0.5 size-4 shrink-0 text-wisk-lime"
                     aria-hidden
                   />
                   <span className="text-sm leading-relaxed text-muted-foreground">

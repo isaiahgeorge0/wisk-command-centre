@@ -67,7 +67,7 @@ export function SignInBridgeOverlay({
         />
 
         <motion.span
-          className="relative bg-gradient-to-r from-wisk-purple to-wisk-teal bg-clip-text text-4xl font-bold tracking-[0.28em] text-transparent uppercase sm:text-5xl"
+          className="relative bg-wisk-lime bg-clip-text text-4xl font-bold tracking-[0.28em] text-transparent uppercase sm:text-5xl"
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: MOTION_DURATION.normal, ease: "easeOut" }}

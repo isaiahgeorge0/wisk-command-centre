@@ -29,7 +29,7 @@ export function ConvertSuccessToast({
         Project created.{" "}
         <Link
           href="/projects"
-          className="font-medium text-wisk-teal hover:underline"
+          className="font-medium text-wisk-section-leads hover:underline"
           onClick={onDismiss}
         >
           View it in Projects →

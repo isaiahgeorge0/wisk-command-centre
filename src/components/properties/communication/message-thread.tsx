@@ -123,7 +123,7 @@ export function MessageThread({
                   className={cn(
                     "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
                     isOwn
-                      ? "bg-amber-500 text-white"
+                      ? "bg-wisk-ferrari text-white"
                       : "bg-muted text-foreground"
                   )}
                 >
@@ -174,7 +174,7 @@ export function MessageThread({
             type="button"
             onClick={handleSend}
             disabled={isPending || !draft.trim()}
-            className="min-h-11 shrink-0 gap-2 bg-amber-500 text-white hover:bg-amber-500/90"
+            className="min-h-11 shrink-0 gap-2 bg-wisk-ferrari text-white hover:bg-wisk-ferrari/90"
           >
             {isPending ? (
               <Loader2 className="size-4 animate-spin" />

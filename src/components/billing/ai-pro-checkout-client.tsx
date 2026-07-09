@@ -199,7 +199,7 @@ function CheckoutButton({
           : "w-full min-h-[48px] py-3.5"
       )}
       style={{
-        background: "linear-gradient(135deg, #0f766e 0%, #14b8a6 50%, #22d3ee 100%)",
+        background: "linear-gradient(135deg, #0f766e 0%, #016c81 50%, #22d3ee 100%)",
       }}
     >
       <span
@@ -331,7 +331,7 @@ export function AIProCheckoutClient({ priceId }: Props) {
               className="block"
               style={{
                 backgroundImage:
-                  "linear-gradient(to right, #2dd4bf, #14b8a6 40%, #22d3ee)",
+                  "linear-gradient(to right, #2dd4bf, #016c81 40%, #22d3ee)",
                 WebkitBackgroundClip: "text",
                 backgroundClip: "text",
                 color: "transparent",
@@ -538,7 +538,7 @@ export function AIProCheckoutClient({ priceId }: Props) {
             <div>
               <p
                 className="mb-1 text-xs font-semibold uppercase tracking-[0.15em]"
-                style={{ color: "#14b8a6" }}
+                style={{ color: "#016c81" }}
               >
                 WISK AI PRO
               </p>

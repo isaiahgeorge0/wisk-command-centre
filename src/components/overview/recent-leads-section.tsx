@@ -28,7 +28,7 @@ export function RecentLeadsSection({ snapshot }: RecentLeadsSectionProps) {
         {recentLeads.length > 0 ? (
           <Link
             href="/leads"
-            className="text-xs font-medium text-wisk-teal hover:underline"
+            className="text-xs font-medium text-wisk-section-winston hover:underline"
           >
             View all
           </Link>

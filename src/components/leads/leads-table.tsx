@@ -141,7 +141,7 @@ export function LeadsTable({
         <button
           type="button"
           onClick={() => onFiltersChange({ search: "", stage: "all" })}
-          className="mt-3 text-sm text-wisk-teal underline-offset-2 hover:underline"
+          className="mt-3 text-sm text-wisk-section-leads underline-offset-2 hover:underline"
         >
           Clear filters
         </button>

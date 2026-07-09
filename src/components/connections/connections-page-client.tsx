@@ -59,7 +59,7 @@ function ProfileAvatar({
   return (
     <div
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500/30 to-wisk-teal/30 font-semibold text-foreground ring-2 ring-border/60",
+        "flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500/30 to-wisk-turquoise/30 font-semibold text-foreground ring-2 ring-border/60",
         size === "sm" && "size-8 text-xs",
         size === "md" && "size-10 text-sm",
         size === "lg" && "size-12 text-base"
@@ -164,7 +164,7 @@ function SearchSection() {
               {sentIds.has(user.id) ? (
                 <Badge
                   variant="outline"
-                  className="shrink-0 border-wisk-teal/40 bg-wisk-teal/10 text-wisk-teal text-xs"
+                  className="shrink-0 border-wisk-turquoise/40 bg-wisk-turquoise/10 text-wisk-turquoise text-xs"
                 >
                   <Check className="mr-1 size-3" />
                   Sent
@@ -260,7 +260,7 @@ function PendingRequestsSection({
                   size="sm"
                   disabled={isPending}
                   onClick={() => handle(conn.id, "accept")}
-                  className="text-xs bg-wisk-teal/90 hover:bg-wisk-teal text-white"
+                  className="text-xs bg-wisk-turquoise/90 hover:bg-wisk-lime text-wisk-dark"
                 >
                   {isPending ? (
                     <Loader2 className="size-3 animate-spin" />

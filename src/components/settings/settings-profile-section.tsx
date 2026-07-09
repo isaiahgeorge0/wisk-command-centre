@@ -208,7 +208,7 @@ export function SettingsProfileSection({
                 Change
               </Button>
               {usernameMessage ? (
-                <p className="text-xs text-wisk-teal">{usernameMessage}</p>
+                <p className="text-xs text-wisk-turquoise">{usernameMessage}</p>
               ) : null}
             </div>
           ) : (
@@ -290,7 +290,7 @@ export function SettingsProfileSection({
             <p className="text-sm text-destructive">{profileError}</p>
           ) : null}
           {profileMessage ? (
-            <p className="text-sm text-wisk-teal">{profileMessage}</p>
+            <p className="text-sm text-wisk-turquoise">{profileMessage}</p>
           ) : null}
           <Button type="submit" size="sm" disabled={isProfilePending} className="w-fit">
             {isProfilePending ? "Saving…" : "Save profile"}
@@ -359,7 +359,7 @@ export function SettingsProfileSection({
             <p className="text-sm text-destructive">{landlordError}</p>
           ) : null}
           {landlordMessage ? (
-            <p className="text-sm text-wisk-teal">{landlordMessage}</p>
+            <p className="text-sm text-wisk-turquoise">{landlordMessage}</p>
           ) : null}
           <Button
             type="submit"
@@ -423,7 +423,7 @@ export function SettingsProfileSection({
             <p className="text-sm text-destructive">{passwordError}</p>
           ) : null}
           {passwordMessage ? (
-            <p className="text-sm text-wisk-teal">{passwordMessage}</p>
+            <p className="text-sm text-wisk-turquoise">{passwordMessage}</p>
           ) : null}
           <Button type="submit" size="sm" disabled={isPasswordPending} className="w-fit">
             {isPasswordPending ? "Saving…" : "Update password"}

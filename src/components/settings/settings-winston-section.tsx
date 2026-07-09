@@ -178,7 +178,7 @@ export function SettingsWinstonSection({
         <Card className="border-border/60 bg-card/80">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Sparkles className="size-4 text-wisk-teal" aria-hidden />
+              <Sparkles className="size-4 text-wisk-turquoise" aria-hidden />
               Winston Usage
             </CardTitle>
             <CardDescription>
@@ -202,7 +202,7 @@ export function SettingsWinstonSection({
                     "h-full rounded-full transition-all duration-500",
                     atLimit
                       ? "bg-destructive"
-                      : "bg-gradient-to-r from-wisk-purple to-wisk-teal"
+                      : "bg-wisk-turquoise"
                   )}
                   style={{ width: `${Math.min(percentage, 100)}%` }}
                 />

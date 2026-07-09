@@ -256,7 +256,7 @@ export function PropertyInsuranceFormDialog({
           >
             Cancel
           </Button>
-          <Button type="submit" form={formId} disabled={isPending} className="min-h-11">
+          <Button type="submit" form={formId} disabled={isPending} className="min-h-11 bg-wisk-ferrari text-white hover:bg-wisk-ferrari/90">
             {isPending ? "Saving…" : isEditing ? "Save changes" : "Add insurance"}
           </Button>
         </DialogFooter>

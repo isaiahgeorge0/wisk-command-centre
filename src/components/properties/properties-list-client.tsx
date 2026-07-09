@@ -71,7 +71,7 @@ export function PropertiesListClient({
         />
         <Button
           onClick={handleAdd}
-          className="min-h-11 gap-2 bg-amber-500 text-white hover:bg-amber-500/90"
+          className="min-h-11 gap-2 bg-wisk-ferrari text-white hover:bg-wisk-ferrari/90"
         >
           <Plus className="size-4" />
           Add property
@@ -79,15 +79,15 @@ export function PropertiesListClient({
       </div>
 
       {properties.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-amber-500/20 bg-card/40 px-6 py-16 text-center">
-          <Building2 className="mb-4 size-10 text-amber-500" />
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-wisk-ferrari/20 bg-card/40 px-6 py-16 text-center">
+          <Building2 className="mb-4 size-10 text-wisk-ferrari" />
           <h2 className="text-lg font-medium text-foreground">No properties yet</h2>
           <p className="mt-2 max-w-sm text-sm text-muted-foreground">
             Add your first property to start tracking tenants, maintenance, and
             portfolio performance.
           </p>
           <Button
-            className="mt-6 min-h-11 gap-2 bg-amber-500 text-white hover:bg-amber-500/90"
+            className="mt-6 min-h-11 gap-2 bg-wisk-ferrari text-white hover:bg-wisk-ferrari/90"
             onClick={handleAdd}
           >
             <Plus className="size-4" />

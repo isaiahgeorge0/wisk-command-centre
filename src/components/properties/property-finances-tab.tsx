@@ -162,7 +162,7 @@ export function PropertyFinancesTab({
           <Button
             onClick={() => { setEditingPayment(null); setPaymentFormOpen(true); }}
             disabled={tenants.length === 0}
-            className="min-h-11 gap-2 bg-amber-500 text-white hover:bg-amber-500/90"
+            className="min-h-11 gap-2 bg-wisk-ferrari text-white hover:bg-wisk-ferrari/90"
           >
             <Plus className="size-4" />
             Add payment
@@ -212,12 +212,12 @@ export function PropertyFinancesTab({
         <section className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <Building2 className="size-5 text-amber-500" />
+              <Building2 className="size-5 text-wisk-ferrari" />
               <h2 className="text-lg font-semibold text-foreground">Mortgages</h2>
             </div>
             <Button
               onClick={() => { setEditingMortgage(null); setMortgageFormOpen(true); }}
-              className="min-h-11 gap-2 bg-amber-500 text-white hover:bg-amber-500/90"
+              className="min-h-11 gap-2 bg-wisk-ferrari text-white hover:bg-wisk-ferrari/90"
             >
               <Plus className="size-4" />
               Add mortgage
@@ -225,7 +225,7 @@ export function PropertyFinancesTab({
           </div>
 
           {mortgages.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-amber-500/20 bg-card/40 px-6 py-12 text-center">
+            <div className="rounded-xl border border-dashed border-wisk-ferrari/20 bg-card/40 px-6 py-12 text-center">
               <p className="text-sm text-muted-foreground">No mortgages added</p>
             </div>
           ) : (
@@ -315,12 +315,12 @@ export function PropertyFinancesTab({
         <section className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <Shield className="size-5 text-amber-500" />
+              <Shield className="size-5 text-wisk-ferrari" />
               <h2 className="text-lg font-semibold text-foreground">Insurance</h2>
             </div>
             <Button
               onClick={() => { setEditingInsurance(null); setInsuranceFormOpen(true); }}
-              className="min-h-11 gap-2 bg-amber-500 text-white hover:bg-amber-500/90"
+              className="min-h-11 gap-2 bg-wisk-ferrari text-white hover:bg-wisk-ferrari/90"
             >
               <Plus className="size-4" />
               Add insurance
@@ -328,7 +328,7 @@ export function PropertyFinancesTab({
           </div>
 
           {insurance.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-amber-500/20 bg-card/40 px-6 py-12 text-center">
+            <div className="rounded-xl border border-dashed border-wisk-ferrari/20 bg-card/40 px-6 py-12 text-center">
               <p className="text-sm text-muted-foreground">No insurance records added</p>
             </div>
           ) : (
@@ -465,7 +465,7 @@ export function PropertyFinancesTab({
 
 function StatTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-amber-500/15 bg-card/60 px-4 py-3">
+    <div className="rounded-xl border border-wisk-ferrari/15 bg-card/60 px-4 py-3">
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">{value}</p>
     </div>
@@ -474,12 +474,12 @@ function StatTile({ label, value }: { label: string; value: string }) {
 
 function RentEmptyState({ onAdd }: { onAdd: () => void }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-amber-500/20 bg-card/40 px-6 py-16 text-center">
+    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-wisk-ferrari/20 bg-card/40 px-6 py-16 text-center">
       <h2 className="text-lg font-medium text-foreground">No rent payments recorded</h2>
       <p className="mt-2 max-w-sm text-sm text-muted-foreground">
         Add a payment to start tracking rent collection.
       </p>
-      <Button onClick={onAdd} className="mt-6 min-h-11 gap-2 bg-amber-500 text-white hover:bg-amber-500/90">
+      <Button onClick={onAdd} className="mt-6 min-h-11 gap-2 bg-wisk-ferrari text-white hover:bg-wisk-ferrari/90">
         <Plus className="size-4" />
         Add payment
       </Button>

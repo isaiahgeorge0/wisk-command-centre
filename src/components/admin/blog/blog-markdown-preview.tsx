@@ -43,7 +43,7 @@ export function BlogMarkdownPreview({
           a: ({ href, children }) => (
             <a
               href={href}
-              className="text-wisk-teal underline-offset-2 hover:underline"
+              className="text-wisk-turquoise underline-offset-2 hover:underline"
               target="_blank"
               rel="noreferrer"
             >

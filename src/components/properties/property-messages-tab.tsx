@@ -132,7 +132,7 @@ export function PropertyMessagesTab({
 
   if (tenants.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-amber-500/20 bg-card/40 px-6 py-12 text-center">
+      <div className="rounded-xl border border-dashed border-wisk-ferrari/20 bg-card/40 px-6 py-12 text-center">
         <p className="text-sm text-muted-foreground">
           Add a tenant to start messaging.
         </p>
@@ -152,7 +152,7 @@ export function PropertyMessagesTab({
               className={cn(
                 "min-h-10 shrink-0 rounded-md px-3 text-sm font-medium transition-colors",
                 selectedTenantId === tenant.id
-                  ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                  ? "bg-wisk-ferrari/10 text-wisk-ferrari"
                   : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
               )}
             >

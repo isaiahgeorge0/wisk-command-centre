@@ -8,12 +8,12 @@ import { Button } from "@/components/ui/button";
 import { MOTION_DURATION } from "@/lib/motion/config";
 
 const PARTICLES = [
-  { x: -18, y: -12, color: "bg-wisk-teal" },
+  { x: -18, y: -12, color: "bg-wisk-turquoise" },
   { x: 16, y: -16, color: "bg-emerald-300" },
   { x: -10, y: 14, color: "bg-emerald-300" },
-  { x: 20, y: 8, color: "bg-wisk-teal" },
+  { x: 20, y: 8, color: "bg-wisk-turquoise" },
   { x: 0, y: -20, color: "bg-emerald-400" },
-  { x: -22, y: 4, color: "bg-wisk-teal" },
+  { x: -22, y: 4, color: "bg-wisk-turquoise" },
 ];
 
 function ProjectTourConfetti() {
@@ -22,7 +22,7 @@ function ProjectTourConfetti() {
   if (reduced) {
     return (
       <div
-        className="pointer-events-none absolute inset-0 rounded-2xl bg-wisk-teal/10"
+        className="pointer-events-none absolute inset-0 rounded-2xl bg-wisk-turquoise/10"
         aria-hidden
       />
     );
@@ -31,7 +31,7 @@ function ProjectTourConfetti() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
       <motion.div
-        className="absolute inset-0 bg-wisk-teal/15"
+        className="absolute inset-0 bg-wisk-turquoise/15"
         initial={{ opacity: 0.7 }}
         animate={{ opacity: 0 }}
         transition={{ duration: MOTION_DURATION.fast, ease: "easeOut" }}
@@ -97,8 +97,8 @@ export function ProjectTourCelebration({
         <ProjectTourConfetti />
 
         <div className="relative z-10 flex flex-col items-center">
-          <div className="flex size-16 items-center justify-center rounded-full bg-wisk-teal/15">
-            <CheckCircle2 className="size-9 text-wisk-teal" aria-hidden />
+          <div className="flex size-16 items-center justify-center rounded-full bg-wisk-turquoise/15">
+            <CheckCircle2 className="size-9 text-wisk-lime" aria-hidden />
           </div>
 
           <h2 className="mt-5 text-2xl font-semibold tracking-tight text-foreground">

@@ -175,7 +175,7 @@ export function PropertyDetailClient({
             className={cn(
               "min-h-11 shrink-0 rounded-md px-3 py-2 text-sm font-medium transition-colors",
               activeTab === tab.id
-                ? "bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                ? "bg-wisk-ferrari/10 text-wisk-ferrari"
                 : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
             )}
           >
@@ -326,8 +326,8 @@ function OverviewTab({
       </div>
 
       {annualYield != null ? (
-        <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-5">
-          <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
+        <div className="rounded-xl border border-wisk-ferrari/20 bg-wisk-ferrari/10 p-5">
+          <p className="text-sm font-medium text-wisk-ferrari">
             Annual yield
           </p>
           <p className="mt-2 text-3xl font-semibold tracking-tight text-foreground">
@@ -382,10 +382,10 @@ function StatCard({
   icon: typeof Users;
 }) {
   return (
-    <div className="rounded-xl border border-amber-500/15 bg-card/60 px-4 py-3">
+    <div className="rounded-xl border border-wisk-ferrari/15 bg-card/60 px-4 py-3">
       <div className="mb-2 flex items-center gap-2">
-        <div className="flex size-8 items-center justify-center rounded-lg bg-amber-500/10">
-          <Icon className="size-4 text-amber-500" aria-hidden />
+        <div className="flex size-8 items-center justify-center rounded-lg bg-wisk-ferrari/10">
+          <Icon className="size-4 text-wisk-ferrari" aria-hidden />
         </div>
         <p className="text-xs text-muted-foreground">{label}</p>
       </div>

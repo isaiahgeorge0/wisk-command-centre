@@ -135,7 +135,7 @@ export function PropertyCertificatesTab({
             setEditingCertificate(null);
             setFormOpen(true);
           }}
-          className="min-h-11 gap-2 bg-amber-500 text-white hover:bg-amber-500/90"
+          className="min-h-11 gap-2 bg-wisk-ferrari text-white hover:bg-wisk-ferrari/90"
         >
           <Plus className="size-4" />
           Add certificate

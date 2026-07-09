@@ -53,7 +53,7 @@ export function SectionSubNav({ items, desktopHidden = false }: SectionSubNavPro
               {isActive ? (
                 <motion.span
                   layoutId={reduced ? undefined : "sub-nav-underline"}
-                  className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-gradient-to-r from-wisk-purple to-wisk-teal"
+                  className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-wisk-lime"
                   transition={
                     reduced
                       ? { duration: 0 }

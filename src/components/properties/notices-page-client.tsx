@@ -139,7 +139,7 @@ function LandlordDetailsFields({
             Add your address in{" "}
             <Link
               href="/settings"
-              className="font-medium text-amber-600 underline underline-offset-2 hover:text-amber-500 dark:text-amber-400"
+              className="font-medium text-wisk-ferrari underline underline-offset-2 hover:text-wisk-ferrari/80"
             >
               Settings
             </Link>{" "}
@@ -299,9 +299,9 @@ export function NoticesPageClient({
               setNoticeType("section_8");
               setStep("select");
             }}
-            className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card/60 p-6 text-left transition-colors hover:border-amber-500/40 hover:bg-amber-500/5"
+            className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card/60 p-6 text-left transition-colors hover:border-wisk-ferrari/30 hover:bg-wisk-ferrari/5"
           >
-            <FileWarning className="size-7 text-amber-500" aria-hidden />
+            <FileWarning className="size-7 text-wisk-ferrari" aria-hidden />
             <div>
               <p className="font-semibold text-foreground">
                 Section 8 — Notice seeking possession
@@ -318,9 +318,9 @@ export function NoticesPageClient({
               setNoticeType("section_13");
               setStep("select");
             }}
-            className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card/60 p-6 text-left transition-colors hover:border-amber-500/40 hover:bg-amber-500/5"
+            className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card/60 p-6 text-left transition-colors hover:border-wisk-ferrari/30 hover:bg-wisk-ferrari/5"
           >
-            <TrendingUp className="size-7 text-amber-500" aria-hidden />
+            <TrendingUp className="size-7 text-wisk-ferrari" aria-hidden />
             <div>
               <p className="font-semibold text-foreground">
                 Section 13 — Rent increase notice
@@ -423,7 +423,7 @@ export function NoticesPageClient({
               <p className="mt-0.5 text-xs text-muted-foreground">
                 ≈ {arrearsStatus.monthsEquivalent} months equivalent
               </p>
-              <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+              <p className="mt-2 text-xs text-wisk-ferrari">
                 Note: arrears caused by Universal Credit payment delays are
                 excluded from the Ground 8 threshold under current law but
                 cannot be detected automatically from your payment records.
@@ -474,7 +474,7 @@ export function NoticesPageClient({
                             checked={s8Form.selectedGrounds.includes(ground.id)}
                             disabled={isDisabled}
                             onChange={() => toggleGround(ground.id)}
-                            className="mt-0.5 size-4 accent-amber-500"
+                            className="mt-0.5 size-4 accent-wisk-ferrari"
                           />
                           <div className="flex-1">
                             <p className="text-sm font-medium text-foreground">
@@ -491,7 +491,7 @@ export function NoticesPageClient({
                               </p>
                             ) : null}
                             {isGround8Disabled ? (
-                              <p className="mt-2 text-xs font-medium text-amber-600 dark:text-amber-400">
+                              <p className="mt-2 text-xs font-medium text-wisk-ferrari">
                                 Arrears do not currently meet the 3-month
                                 threshold required for Ground 8 (mandatory). You
                                 may still select Ground 10 or 11
@@ -522,7 +522,7 @@ export function NoticesPageClient({
                           type="checkbox"
                           checked={s8Form.selectedGrounds.includes(ground.id)}
                           onChange={() => toggleGround(ground.id)}
-                          className="mt-0.5 size-4 accent-amber-500"
+                          className="mt-0.5 size-4 accent-wisk-ferrari"
                         />
                         <div>
                           <p className="text-sm font-medium text-foreground">
@@ -558,7 +558,7 @@ export function NoticesPageClient({
             type="button"
             disabled={s8Form.selectedGrounds.length === 0 || !s8Form.tenantId}
             onClick={() => setStep("review")}
-            className="rounded-xl bg-amber-500 px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-xl bg-wisk-ferrari px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Continue
           </button>
@@ -670,7 +670,7 @@ export function NoticesPageClient({
               onChange={(e) =>
                 setS8Form((prev) => ({ ...prev, confirmed: e.target.checked }))
               }
-              className="mt-0.5 size-4 accent-amber-500"
+              className="mt-0.5 size-4 accent-wisk-ferrari"
             />
             <span className="text-sm text-foreground">
               I have read and understood the above. I confirm I am responsible
@@ -688,7 +688,7 @@ export function NoticesPageClient({
               !s8Form.landlordAddress.trim()
             }
             onClick={() => setStep("document")}
-            className="rounded-xl bg-amber-500 px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-xl bg-wisk-ferrari px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Generate notice
           </button>
@@ -817,7 +817,7 @@ export function NoticesPageClient({
                 </p>
               </div>
               {form4ADateResult.warning ? (
-                <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                <p className="mt-2 text-xs text-wisk-ferrari">
                   {form4ADateResult.warning}
                 </p>
               ) : null}
@@ -834,7 +834,7 @@ export function NoticesPageClient({
               !form4ADateResult
             }
             onClick={() => setStep("review")}
-            className="rounded-xl bg-amber-500 px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-xl bg-wisk-ferrari px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Continue
           </button>
@@ -888,7 +888,7 @@ export function NoticesPageClient({
                   {formatDateGB(form4ADateResult.earliestStartDate)}
                 </p>
                 {form4ADateResult.warning ? (
-                  <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                  <p className="mt-1 text-xs text-wisk-ferrari">
                     {form4ADateResult.warning}
                   </p>
                 ) : null}
@@ -926,7 +926,7 @@ export function NoticesPageClient({
                   confirmed: e.target.checked,
                 }))
               }
-              className="mt-0.5 size-4 accent-amber-500"
+              className="mt-0.5 size-4 accent-wisk-ferrari"
             />
             <span className="text-sm text-foreground">
               I have read and understood the above. I confirm I am responsible
@@ -942,7 +942,7 @@ export function NoticesPageClient({
               !s13Form.confirmed || !s13Form.landlordAddress.trim()
             }
             onClick={() => setStep("document")}
-            className="rounded-xl bg-amber-500 px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-xl bg-wisk-ferrari px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Generate notice
           </button>

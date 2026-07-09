@@ -146,7 +146,7 @@ export function UpgradeSuccessClient({
                 Welcome to{" "}
                 <span
                   style={{
-                    backgroundImage: "linear-gradient(to right, #14b8a6, #a855f7)",
+                    backgroundImage: "linear-gradient(to right, #016c81, #c3ff32)",
                     WebkitBackgroundClip: "text",
                     backgroundClip: "text",
                     color: "transparent",
@@ -185,7 +185,7 @@ export function UpgradeSuccessClient({
             href={primaryCta.href}
             className={cn(
               buttonVariants({ size: "lg" }),
-              "bg-wisk-teal text-white hover:bg-wisk-teal/90"
+              "bg-wisk-lime text-wisk-dark hover:bg-wisk-lime/90"
             )}
           >
             {primaryCta.label}

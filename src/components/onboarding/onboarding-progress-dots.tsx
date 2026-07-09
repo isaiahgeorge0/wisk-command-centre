@@ -13,7 +13,7 @@ export function OnboardingProgressDots({ current }: OnboardingProgressDotsProps)
           key={index}
           className={cn(
             "size-1.5 rounded-full transition-colors",
-            index === current ? "bg-wisk-teal" : "bg-muted-foreground/30"
+            index === current ? "bg-wisk-turquoise" : "bg-muted-foreground/30"
           )}
         />
       ))}

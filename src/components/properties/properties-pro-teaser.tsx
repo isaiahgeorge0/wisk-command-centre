@@ -16,8 +16,8 @@ export function PropertiesProTeaser({
   features,
 }: PropertiesProTeaserProps) {
   return (
-    <div className="flex flex-col items-start gap-4 rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-orange-500/5 px-6 py-8">
-      <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-amber-500">
+    <div className="flex flex-col items-start gap-4 rounded-2xl border border-wisk-ferrari/20 bg-gradient-to-br from-wisk-ferrari/5 to-wisk-ferrari/5 px-6 py-8">
+      <span className="rounded-full border border-wisk-ferrari/20 bg-wisk-ferrari/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-wisk-ferrari">
         Properties Pro
       </span>
       <div className="space-y-1">
@@ -31,7 +31,7 @@ export function PropertiesProTeaser({
             className="flex items-center gap-2.5 text-sm text-muted-foreground"
           >
             <span
-              className="size-1.5 shrink-0 rounded-full bg-amber-500"
+              className="size-1.5 shrink-0 rounded-full bg-wisk-ferrari"
               aria-hidden
             />
             {feature}

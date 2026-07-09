@@ -166,7 +166,7 @@ export function WinstonDraftPanel({
           >
             <div className="flex items-start justify-between gap-3 border-b border-border/60 px-4 py-4">
               <div className="flex items-start gap-3">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-wisk-purple to-wisk-teal">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-wisk-lime">
                   <Sparkles className="size-4 text-white" aria-hidden />
                 </div>
                 <div>
@@ -201,7 +201,7 @@ export function WinstonDraftPanel({
                     className={cn(
                       "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
                       tone === option.id
-                        ? "bg-gradient-to-r from-wisk-purple/20 to-wisk-teal/20 text-foreground"
+                        ? "bg-gradient-to-r from-wisk-lime/20 to-wisk-turquoise/20 text-foreground"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     )}
                   >
@@ -215,7 +215,7 @@ export function WinstonDraftPanel({
               {isLoading ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <Sparkles
-                    className="mb-3 size-8 animate-pulse text-wisk-purple"
+                    className="mb-3 size-8 animate-pulse text-wisk-lime"
                     aria-hidden
                   />
                   <p className="text-sm text-muted-foreground">
@@ -266,7 +266,7 @@ export function WinstonDraftPanel({
             <div className="space-y-2 border-t border-border/60 p-4">
               <Button
                 type="button"
-                className="w-full gap-1.5 bg-gradient-to-r from-wisk-purple to-wisk-teal text-white hover:opacity-90"
+                className="w-full gap-1.5 bg-wisk-lime text-wisk-dark hover:opacity-90"
                 disabled={!composeUrl || isLoading}
                 onClick={() => {
                   if (composeUrl) window.open(composeUrl, "_blank", "noopener");

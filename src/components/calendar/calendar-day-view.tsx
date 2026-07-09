@@ -50,8 +50,8 @@ const TYPE_ICONS: Record<CalendarEventType, typeof FolderKanban> = {
 };
 
 const TYPE_BORDER_CLASS: Record<CalendarEventType, string> = {
-  project: "border-l-wisk-purple",
-  task: "border-l-wisk-teal",
+  project: "border-l-wisk-section-projects",
+  task: "border-l-wisk-section-tasks",
   goal: "border-l-amber-400",
   content: "border-l-wisk-coral",
   milestone: "border-l-rose-400",
