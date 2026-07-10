@@ -440,6 +440,7 @@ function FormSection({ reduced }: { reduced: boolean }) {
         data: {
           full_name: name.trim(),
           name: name.trim(),
+          password_set: true,
         },
         emailRedirectTo: `${origin}/auth/callback`,
       },

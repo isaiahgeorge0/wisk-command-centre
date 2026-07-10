@@ -105,10 +105,10 @@ export default function AuthCallbackClientPage() {
       try {
         const res = await fetch("/api/auth/personalisation-status");
         const json = (await res.json()) as { personalised: boolean };
-        router.replace(json.personalised ? "/" : "/set-password");
+        router.replace(json.personalised ? "/" : "/welcome");
       } catch {
-        // Fallback: send to set-password — safe for new users.
-        router.replace("/set-password");
+        // Fallback: send to welcome — safe for new users.
+        router.replace("/welcome");
       }
     }
   }, [router]);

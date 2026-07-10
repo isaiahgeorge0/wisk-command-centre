@@ -7,7 +7,7 @@ import { isTenantPortalUser } from "@/lib/portal/is-tenant-user";
 const PUBLIC_PATHS = [
   "/sign-in",
   "/sign-up",
-  "/set-password",
+  "/welcome",
   "/forgot-password",
   "/auth/callback",
   "/auth/callback-client",
@@ -31,7 +31,7 @@ const PUBLIC_PATHS = [
 const PORTAL_PUBLIC_PATHS = ["/portal/login", "/portal/setup"];
 
 // Paths accessible to authenticated users before personalisation is complete.
-const SETUP_PATHS = ["/welcome", "/set-password"];
+const SETUP_PATHS = ["/welcome"];
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some(
@@ -62,7 +62,7 @@ function withPathnameHeader(response: NextResponse, pathname: string) {
  * Returns true only when a user_preferences row exists and
  * personalisation_completed is explicitly true.
  * Missing row, false flag, query error, or thrown exception → false
- * (treat as not personalised → redirect to /set-password).
+ * (treat as not personalised → redirect to /welcome).
  */
 async function isPersonalisationCompleted(userId: string): Promise<boolean> {
   try {
@@ -165,7 +165,7 @@ export async function middleware(request: NextRequest) {
 
     if (pathname === "/sign-in") {
       const url = request.nextUrl.clone();
-      url.pathname = personalisationCompleted ? "/" : "/set-password";
+      url.pathname = personalisationCompleted ? "/" : "/welcome";
       return withPathnameHeader(NextResponse.redirect(url), pathname);
     }
 
@@ -184,7 +184,7 @@ export async function middleware(request: NextRequest) {
       !personalisationCompleted
     ) {
       const url = request.nextUrl.clone();
-      url.pathname = "/set-password";
+      url.pathname = "/welcome";
       return withPathnameHeader(NextResponse.redirect(url), pathname);
     }
   }

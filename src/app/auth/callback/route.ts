@@ -100,6 +100,88 @@ export async function GET(request: Request) {
     return response;
   }
 
+  if (tokenHash && type === "signup") {
+    const cookieStore = await cookies();
+
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          },
+        },
+      }
+    );
+
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: "signup",
+    });
+
+    if (error) {
+      console.error("[auth/callback] signup verification error:", error);
+      return NextResponse.redirect(
+        `${baseUrl}/sign-in?error=confirmation_failed`
+      );
+    }
+
+    // Redirect to welcome/onboarding after successful confirmation
+    const response = NextResponse.redirect(`${baseUrl}/welcome`);
+
+    cookieStore.getAll().forEach((cookie) => {
+      response.cookies.set(cookie.name, cookie.value, {
+        path: "/",
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        httpOnly: true,
+      });
+    });
+
+    return response;
+  }
+
+  if (tokenHash && type === "email_change") {
+    const cookieStore = await cookies();
+
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          },
+        },
+      }
+    );
+
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: "email_change",
+    });
+
+    if (error) {
+      console.error("[auth/callback] email change error:", error);
+      return NextResponse.redirect(
+        `${baseUrl}/sign-in?error=email_change_failed`
+      );
+    }
+
+    return NextResponse.redirect(`${baseUrl}/settings`);
+  }
+
   // Recovery flow where Supabase's verify endpoint already exchanged the
   // token before landing here — the session is established but there's no
   // code or token_hash in the URL. Check for an active session and, if

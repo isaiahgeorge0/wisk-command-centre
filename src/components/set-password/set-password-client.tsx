@@ -19,11 +19,13 @@ import type { ThemePreference } from "@/lib/preferences/types";
 type SetPasswordClientProps = {
   email: string;
   defaultName: string;
+  hasPassword?: boolean;
 };
 
 export function SetPasswordClient({
   email,
   defaultName,
+  hasPassword = false,
 }: SetPasswordClientProps) {
   const router = useRouter();
   const reduced = useReducedMotion() ?? false;
@@ -63,23 +65,37 @@ export function SetPasswordClient({
       setError("Please choose an available username.");
       return;
     }
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
-      return;
+
+    if (!hasPassword) {
+      if (!password) {
+        setError("Please set a password.");
+        return;
+      }
+      if (password.length < 8) {
+        setError("Password must be at least 8 characters.");
+        return;
+      }
+      if (password !== confirmPassword) {
+        setError("Passwords do not match.");
+        return;
+      }
     }
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+
+    if (!agreedToTerms) {
+      setError("Please agree to the Terms of Service and Privacy Policy.");
       return;
     }
 
     startTransition(async () => {
-      const supabase = createClient();
-      const { error: pwError } = await supabase.auth.updateUser({ password });
+      if (!hasPassword) {
+        const supabase = createClient();
+        const { error: pwError } = await supabase.auth.updateUser({ password });
 
-      if (pwError) {
-        setError("Could not set your password. Please try again.");
-        console.error("set-password updateUser:", pwError);
-        return;
+        if (pwError) {
+          setError("Could not set your password. Please try again.");
+          console.error("set-password updateUser:", pwError);
+          return;
+        }
       }
 
       const result = await updateAccountSetup({ displayName, username, themePreference });
@@ -182,66 +198,70 @@ export function SetPasswordClient({
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="sp-password">Password</Label>
-                  <div className="relative">
-                    <Input
-                      id="sp-password"
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      disabled={isPending}
-                      autoComplete="new-password"
-                      required
-                      className="pr-10"
-                    />
-                    <button
-                      type="button"
-                      tabIndex={-1}
-                      aria-label={showPassword ? "Hide password" : "Show password"}
-                      onClick={toggleShowPassword}
-                      className="absolute inset-y-0 right-3 flex items-center text-muted-foreground hover:text-foreground"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="size-4" />
-                      ) : (
-                        <Eye className="size-4" />
-                      )}
-                    </button>
+                {!hasPassword ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="sp-password">Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="sp-password"
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        disabled={isPending}
+                        autoComplete="new-password"
+                        required
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        tabIndex={-1}
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        onClick={toggleShowPassword}
+                        className="absolute inset-y-0 right-3 flex items-center text-muted-foreground hover:text-foreground"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="size-4" />
+                        ) : (
+                          <Eye className="size-4" />
+                        )}
+                      </button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      At least 8 characters
+                    </p>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    At least 8 characters
-                  </p>
-                </div>
+                ) : null}
 
-                <div className="space-y-2">
-                  <Label htmlFor="sp-confirm">Confirm password</Label>
-                  <div className="relative">
-                    <Input
-                      id="sp-confirm"
-                      type={showConfirm ? "text" : "password"}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      disabled={isPending}
-                      autoComplete="new-password"
-                      required
-                      className="pr-10"
-                    />
-                    <button
-                      type="button"
-                      tabIndex={-1}
-                      aria-label={showConfirm ? "Hide password" : "Show password"}
-                      onClick={toggleShowConfirm}
-                      className="absolute inset-y-0 right-3 flex items-center text-muted-foreground hover:text-foreground"
-                    >
-                      {showConfirm ? (
-                        <EyeOff className="size-4" />
-                      ) : (
-                        <Eye className="size-4" />
-                      )}
-                    </button>
+                {!hasPassword ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="sp-confirm">Confirm password</Label>
+                    <div className="relative">
+                      <Input
+                        id="sp-confirm"
+                        type={showConfirm ? "text" : "password"}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        disabled={isPending}
+                        autoComplete="new-password"
+                        required
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        tabIndex={-1}
+                        aria-label={showConfirm ? "Hide password" : "Show password"}
+                        onClick={toggleShowConfirm}
+                        className="absolute inset-y-0 right-3 flex items-center text-muted-foreground hover:text-foreground"
+                      >
+                        {showConfirm ? (
+                          <EyeOff className="size-4" />
+                        ) : (
+                          <Eye className="size-4" />
+                        )}
+                      </button>
+                    </div>
                   </div>
-                </div>
+                ) : null}
 
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input
@@ -284,7 +304,11 @@ export function SetPasswordClient({
                   disabled={isPending || !agreedToTerms || !usernameAvailable}
                   className="w-full rounded-lg bg-wisk-lime px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {isPending ? "Setting up…" : "Get started →"}
+                  {isPending
+                    ? "Setting up…"
+                    : hasPassword
+                      ? "Set up my workspace"
+                      : "Create my account"}
                 </button>
               </form>
             </motion.div>

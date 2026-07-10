@@ -92,6 +92,11 @@ export function SignUpConfirm({ email }: SignUpConfirmProps) {
           . Click it to activate your account and get started.
         </p>
 
+        <p className="mt-2 text-center text-sm text-white/40">
+          After confirming, you&apos;ll be taken through a quick setup to
+          personalise your workspace.
+        </p>
+
         <p className="mt-6 text-sm text-white/40">
           Didn&apos;t get it? Check your spam folder
           {email ? (
