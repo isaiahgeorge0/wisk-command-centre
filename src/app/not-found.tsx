@@ -1,8 +1,5 @@
 import Link from "next/link";
 
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-
 export default function NotFound() {
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background px-6 py-12">
@@ -11,7 +8,7 @@ export default function NotFound() {
         aria-hidden
         style={{
           background:
-            "radial-gradient(ellipse 60% 50% at 50% 0%, oklch(0.55 0.14 300 / 0.08), transparent 60%), radial-gradient(ellipse 50% 40% at 100% 100%, oklch(0.65 0.1 180 / 0.06), transparent 50%)",
+            "radial-gradient(ellipse 60% 50% at 50% 0%, oklch(0.92 0.22 128 / 0.08), transparent 60%), radial-gradient(ellipse 50% 40% at 100% 100%, oklch(0.62 0.1 210 / 0.06), transparent 50%)",
         }}
       />
 
@@ -27,7 +24,10 @@ export default function NotFound() {
           Whatever you were looking for isn&apos;t here.
         </p>
 
-        <Link href="/" className={cn(buttonVariants({ size: "lg" }), "mt-8")}>
+        <Link
+          href="/"
+          className="mt-8 inline-flex h-11 items-center justify-center rounded-xl bg-wisk-lime px-8 text-sm font-semibold text-wisk-dark transition-opacity hover:opacity-90"
+        >
           Go to dashboard
         </Link>
 
