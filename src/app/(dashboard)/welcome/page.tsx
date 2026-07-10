@@ -24,13 +24,16 @@ export default async function WelcomePage() {
   await getOrCreateUserPreferences();
 
   const email = user.email ?? "";
-  const prefillName = await getPrefilledName(email);
+  // Try user_metadata.full_name first (set during sign-up form)
+  const metaName =
+    (user.user_metadata?.full_name as string | undefined)?.trim() ?? "";
+  const prefillName = metaName || (await getPrefilledName(email));
 
-  // Email+password signup sets user_metadata.password_set; magic-link /
-  // invite users do not, so they still need to choose a password here.
-  // (Both flows use the "email" identity provider, so identities alone
-  // cannot distinguish them.)
-  const hasPassword = user.user_metadata?.password_set === true;
+  // password_set is set by the sign-up form; full_name covers users who
+  // signed up before that flag existed. Magic link / invite users have neither.
+  const hasPassword =
+    user.user_metadata?.password_set === true ||
+    !!(user.user_metadata?.full_name as string | undefined)?.trim();
 
   return (
     <SetPasswordClient
