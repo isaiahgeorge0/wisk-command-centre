@@ -6,6 +6,7 @@ import { isTenantPortalUser } from "@/lib/portal/is-tenant-user";
 
 const PUBLIC_PATHS = [
   "/sign-in",
+  "/sign-up",
   "/set-password",
   "/forgot-password",
   "/auth/callback",
