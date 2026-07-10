@@ -59,12 +59,12 @@ type PropertiesOverviewSummaryProps = {
 };
 
 const TYPE_COLOURS: Record<TimelineEvent["type"], string> = {
-  rent: "bg-amber-500",
+  rent: "bg-wisk-ferrari",
   contractor: "bg-blue-500",
   certificate: "bg-rose-500",
   mortgage: "bg-purple-500",
   insurance: "bg-teal-500",
-  access: "bg-orange-500",
+  access: "bg-wisk-ferrari",
 };
 
 const TYPE_LABELS: Record<TimelineEvent["type"], string> = {
@@ -260,11 +260,11 @@ export function PropertiesOverviewSummary({
             return (
               <div
                 key={stat.label}
-                className="rounded-xl border border-amber-500/15 bg-card/60 p-4"
+                className="rounded-xl border border-wisk-ferrari/15 bg-card/60 p-4"
               >
                 <div className="mb-3 flex items-center gap-2">
-                  <div className="flex size-8 items-center justify-center rounded-lg bg-amber-500/10">
-                    <Icon className="size-4 text-amber-500" aria-hidden />
+                  <div className="flex size-8 items-center justify-center rounded-lg bg-wisk-ferrari/10">
+                    <Icon className="size-4 text-wisk-ferrari" aria-hidden />
                   </div>
                   <p className="text-xs font-medium text-muted-foreground">
                     {stat.label}
@@ -299,7 +299,7 @@ export function PropertiesOverviewSummary({
                     "mt-1.5 size-2 shrink-0 rounded-full",
                     item.severity === "high"
                       ? "bg-rose-500"
-                      : "bg-amber-500"
+                      : "bg-wisk-ferrari"
                   )}
                 />
                 <div className="min-w-0">
@@ -320,7 +320,7 @@ export function PropertiesOverviewSummary({
         <section aria-label="Upcoming 30 days">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Calendar className="size-5 text-amber-500" />
+              <Calendar className="size-5 text-wisk-ferrari" />
               <h2 className="text-lg font-semibold text-foreground">
                 Next 30 days
               </h2>
@@ -398,14 +398,14 @@ export function PropertiesOverviewSummary({
         <section aria-label="Open maintenance">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Wrench className="size-5 text-amber-500" />
+              <Wrench className="size-5 text-wisk-ferrari" />
               <h2 className="text-lg font-semibold text-foreground">
                 Open maintenance
               </h2>
             </div>
             <Link
               href="/properties/maintenance"
-              className="text-sm text-amber-600 hover:text-amber-500 dark:text-amber-400"
+              className="text-sm text-wisk-ferrari hover:text-wisk-ferrari/80"
             >
               View all
             </Link>
@@ -471,19 +471,19 @@ export function PropertiesOverviewSummary({
         <section aria-label="Unread messages">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <MessageSquare className="size-5 text-amber-500" />
+              <MessageSquare className="size-5 text-wisk-ferrari" />
               <h2 className="text-lg font-semibold text-foreground">
                 Unread messages
               </h2>
             </div>
             <Link
               href="/properties/communication"
-              className="text-sm text-amber-600 hover:text-amber-500 dark:text-amber-400"
+              className="text-sm text-wisk-ferrari hover:text-wisk-ferrari/80"
             >
               Open hub
             </Link>
           </div>
-          <div className="rounded-xl border border-amber-500/20 bg-card/60 px-4 py-3">
+          <div className="rounded-xl border border-wisk-ferrari/20 bg-card/60 px-4 py-3">
             <p className="text-sm text-muted-foreground">
               You have{" "}
               <span className="font-semibold text-foreground">
@@ -494,7 +494,7 @@ export function PropertiesOverviewSummary({
             </p>
             <Link
               href="/properties/communication"
-              className="mt-2 inline-flex text-sm font-medium text-amber-600 hover:text-amber-500 dark:text-amber-400"
+              className="mt-2 inline-flex text-sm font-medium text-wisk-ferrari hover:text-wisk-ferrari/80"
             >
               View messages →
             </Link>
