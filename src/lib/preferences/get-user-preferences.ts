@@ -29,18 +29,21 @@ export async function getOrCreateUserPreferences(): Promise<UserPreferences> {
     return rowToUserPreferences(existing as UserPreferencesRow);
   }
 
-  const { data: created, error: insertError } = await supabase
+  const { data: created, error: upsertError } = await supabase
     .from("user_preferences")
-    .insert({
-      user_id: userId,
-      field_visibility: DEFAULT_FIELD_VISIBILITY,
-      service_types: [...DEFAULT_SERVICE_TYPES],
-    })
+    .upsert(
+      {
+        user_id: userId,
+        field_visibility: DEFAULT_FIELD_VISIBILITY,
+        service_types: [...DEFAULT_SERVICE_TYPES],
+      },
+      { onConflict: "user_id", ignoreDuplicates: false }
+    )
     .select("*")
     .single();
 
-  if (insertError) {
-    throw new Error(insertError.message);
+  if (upsertError) {
+    throw new Error(upsertError.message);
   }
 
   return rowToUserPreferences(created as UserPreferencesRow);
