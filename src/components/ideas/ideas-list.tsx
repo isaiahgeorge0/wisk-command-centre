@@ -24,6 +24,26 @@ function isStatus(idea: Idea, status: IdeaStatus): boolean {
   return normalizeIdeaStatus(idea.status) === status;
 }
 
+function SectionHeading({
+  label,
+  count,
+}: {
+  label: string;
+  count: number;
+}) {
+  return (
+    <div className="mb-4 flex items-center gap-2">
+      <span className="inline-block size-1.5 shrink-0 rounded-full bg-wisk-section-ideas" />
+      <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">
+        {label}
+      </span>
+      <span className="rounded-full bg-wisk-section-ideas/10 px-1.5 py-0.5 text-[10px] font-bold text-wisk-section-ideas">
+        {count}
+      </span>
+    </div>
+  );
+}
+
 function IdeaGrid({
   ideas,
   onIdeaDelete,
@@ -39,7 +59,7 @@ function IdeaGrid({
 
   return (
     <StaggerList
-      className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3"
+      className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 xl:grid-cols-3"
       stagger={stagger}
     >
       {ideas.map((idea) => (
@@ -122,9 +142,10 @@ export function IdeasList({
     <div className="space-y-8">
       {showNewSection && newAndExploring.length > 0 ? (
         <section>
-          <h2 className="mb-4 text-sm font-medium tracking-wide text-muted-foreground uppercase">
-            New & exploring
-          </h2>
+          <SectionHeading
+            label="New & exploring"
+            count={newAndExploring.length}
+          />
           <IdeaGrid
             ideas={newAndExploring}
             onIdeaDelete={onIdeaDelete}
@@ -133,9 +154,7 @@ export function IdeasList({
         </section>
       ) : showNewSection && showEmptyGroupMessages ? (
         <section>
-          <h2 className="mb-4 text-sm font-medium tracking-wide text-muted-foreground uppercase">
-            New & exploring
-          </h2>
+          <SectionHeading label="New & exploring" count={0} />
           <p className="text-sm text-muted-foreground">
             No new or exploring ideas right now.
           </p>
@@ -144,9 +163,7 @@ export function IdeasList({
 
       {showProgressSection && inProgress.length > 0 ? (
         <section>
-          <h2 className="mb-4 text-sm font-medium tracking-wide text-muted-foreground uppercase">
-            In progress
-          </h2>
+          <SectionHeading label="In progress" count={inProgress.length} />
           <IdeaGrid
             ideas={inProgress}
             onIdeaDelete={onIdeaDelete}
@@ -155,9 +172,7 @@ export function IdeasList({
         </section>
       ) : showProgressSection && showEmptyGroupMessages ? (
         <section>
-          <h2 className="mb-4 text-sm font-medium tracking-wide text-muted-foreground uppercase">
-            In progress
-          </h2>
+          <SectionHeading label="In progress" count={0} />
           <p className="text-sm text-muted-foreground">
             Nothing in progress yet.
           </p>
@@ -184,9 +199,10 @@ export function IdeasList({
                 : `Show parked & dropped (${parkedDropped.length})`}
             </Button>
           ) : (
-            <h2 className="mb-4 text-sm font-medium tracking-wide text-muted-foreground uppercase">
-              Parked & dropped
-            </h2>
+            <SectionHeading
+              label="Parked & dropped"
+              count={parkedDropped.length}
+            />
           )}
 
           {parkedExpanded || statusFilter !== "all" ? (

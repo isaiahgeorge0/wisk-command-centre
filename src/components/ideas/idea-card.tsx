@@ -111,95 +111,116 @@ export function IdeaCard({ idea, onDelete }: IdeaCardProps) {
     <>
       <Card
         className={cn(
-          "cursor-pointer border-border/60 bg-card/80 transition-colors hover:border-border hover:bg-card",
-          expanded && "border-wisk-section-ideas/20"
+          "group relative cursor-pointer overflow-hidden",
+          "bg-card/60 transition-all duration-200",
+          "border hover:bg-card/80 hover:shadow-sm",
+          expanded
+            ? "border-wisk-section-ideas/40 shadow-[0_0_20px_-4px_rgba(254,169,224,0.12)]"
+            : "border-border/60 hover:border-wisk-section-ideas/25"
         )}
         onClick={handleCardClick}
       >
-      <CardHeader className="gap-2 pb-2">
-        <h3 className="line-clamp-1 text-base font-semibold text-foreground">
-          {idea.title}
-        </h3>
-        {(vis.categoryTag || vis.statusBadge) ? (
-          <div className="flex flex-wrap items-center gap-2">
-            {vis.categoryTag ? (
-              <IdeaCategoryTag category={idea.category} />
-            ) : null}
-            {vis.statusBadge ? (
-              <IdeaStatusBadge status={idea.status} />
-            ) : null}
+        {/* Pink accent strip */}
+        <div
+          className="absolute inset-x-0 top-0 h-[2px] rounded-t-xl"
+          style={{
+            background: "linear-gradient(to right, #fea9e0, #fea9e080)",
+            opacity: expanded ? 1 : 0.5,
+          }}
+        />
+        <CardHeader className="gap-1.5 pb-2 pt-5">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="line-clamp-2 flex-1 text-sm font-bold tracking-tight text-foreground">
+              {idea.title}
+            </h3>
+            <span className="mt-0.5 shrink-0 text-[10px] text-muted-foreground/50 tabular-nums">
+              {idea.created_at
+                ? new Date(idea.created_at).toLocaleDateString("en-GB", {
+                    day: "numeric",
+                    month: "short",
+                  })
+                : null}
+            </span>
           </div>
-        ) : null}
-      </CardHeader>
-
-      <CardContent className="pt-0">
-        {!expanded ? (
-          <p
-            className={cn(
-              "line-clamp-2 text-sm",
-              descriptionPreview
-                ? "text-muted-foreground"
-                : "text-muted-foreground/70 italic"
-            )}
-          >
-            {descriptionPreview || "No description yet."}
-          </p>
-        ) : null}
-        <ExpandableSection open={expanded}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <p className="whitespace-pre-wrap text-sm text-foreground">
-              {descriptionPreview || "No description yet."}
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setExpanded(true);
-                  setEditing(true);
-                }}
-              >
-                Edit
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setConvertMode("project");
-                }}
-              >
-                To project
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setConvertMode("content");
-                }}
-              >
-                To content
-              </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                onClick={() => onDelete(idea)}
-              >
-                Delete
-              </Button>
+          {(vis.categoryTag || vis.statusBadge) ? (
+            <div className="flex flex-wrap items-center gap-1.5">
+              {vis.categoryTag ? (
+                <IdeaCategoryTag category={idea.category} />
+              ) : null}
+              {vis.statusBadge ? (
+                <IdeaStatusBadge status={idea.status} />
+              ) : null}
             </div>
-          </div>
-        </ExpandableSection>
-      </CardContent>
+          ) : null}
+        </CardHeader>
 
-      {!expanded ? (
-        <CardFooter className="pt-0 pb-3">
-          <p className="text-xs text-muted-foreground">Click to expand</p>
-        </CardFooter>
-      ) : null}
+        <CardContent className="pt-0 pb-4">
+          {!expanded ? (
+            <>
+              <p
+                className={cn(
+                  "line-clamp-3 text-sm leading-relaxed",
+                  descriptionPreview
+                    ? "text-foreground/70"
+                    : "text-muted-foreground/50 italic"
+                )}
+              >
+                {descriptionPreview || "No description yet — tap to add one."}
+              </p>
+              <p className="mt-3 text-xs text-wisk-section-ideas/50 transition-colors group-hover:text-wisk-section-ideas/70">
+                Tap to expand →
+              </p>
+            </>
+          ) : null}
+          <ExpandableSection open={expanded}>
+            <div onClick={(e) => e.stopPropagation()}>
+              <p className="whitespace-pre-wrap text-sm text-foreground">
+                {descriptionPreview || "No description yet."}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setExpanded(true);
+                    setEditing(true);
+                  }}
+                >
+                  Edit
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConvertMode("project");
+                  }}
+                >
+                  To project
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConvertMode("content");
+                  }}
+                >
+                  To content
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => onDelete(idea)}
+                >
+                  Delete
+                </Button>
+              </div>
+            </div>
+          </ExpandableSection>
+        </CardContent>
       </Card>
 
       <ConvertIdeaDialog
