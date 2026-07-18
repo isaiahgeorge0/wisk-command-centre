@@ -432,6 +432,7 @@ function FormSection({ reduced }: { reduced: boolean }) {
     const supabase = createClient();
     const origin =
       process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     const { error: signUpError } = await supabase.auth.signUp({
       email: email.trim(),
@@ -441,6 +442,7 @@ function FormSection({ reduced }: { reduced: boolean }) {
           full_name: name.trim(),
           name: name.trim(),
           password_set: true,
+          timezone,
         },
         emailRedirectTo: `${origin}/auth/callback`,
       },

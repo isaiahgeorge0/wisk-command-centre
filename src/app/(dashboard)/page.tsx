@@ -4,6 +4,7 @@ import { getGoals } from "@/app/(dashboard)/goals/actions";
 import { getLeads } from "@/app/(dashboard)/leads/actions";
 import { getProjects } from "@/app/(dashboard)/projects/actions";
 import { getTasks } from "@/app/(dashboard)/tasks/actions";
+import { updateLastActive } from "@/app/(dashboard)/actions/update-last-active";
 import {
   getAllRentPayments,
   getExpiringCertificates,
@@ -20,9 +21,11 @@ import { UpgradeBanner } from "@/components/billing/upgrade-banner";
 import { resolveDisplayName } from "@/lib/auth/resolve-display-name";
 import { getUserProfile } from "@/lib/auth/get-user-profile";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
+import { getAwaySummary } from "@/lib/away/away-store";
 import { hasAIAccess, hasPackageAccess } from "@/lib/billing/access";
 import { shouldShowUpgradeBanner } from "@/lib/billing/banner";
 import { getUserBillingSummary } from "@/lib/billing/plan";
+import { getTodaysBriefing } from "@/lib/morning/briefing-store";
 import { getOrCreateUserPreferences } from "@/lib/preferences/get-user-preferences";
 import { buildPortfolioStats } from "@/lib/properties/selectors";
 import { buildOverviewSnapshot } from "@/lib/overview/selectors";
@@ -46,6 +49,10 @@ export default async function OverviewPage() {
     billing,
     hasProperties,
     hasPropertiesPro,
+    hasAiPro,
+    awaySummaryResult,
+    todaysBriefing,
+    emailIntegrationsResult,
     userRow,
   ] = await Promise.all([
     getProjects(),
@@ -58,12 +65,21 @@ export default async function OverviewPage() {
     getOrCreateUserPreferences(),
     supabase
       .from("user_preferences")
-      .select("ai_access, upgrade_banner_dismissed_at")
+      .select("ai_access, upgrade_banner_dismissed_at, last_active_at")
       .eq("user_id", userId)
       .maybeSingle(),
     getUserBillingSummary(userId),
     hasPackageAccess(userId, "properties", admin),
     hasPackageAccess(userId, "properties_pro", admin),
+    hasPackageAccess(userId, "ai_pro", admin),
+    getAwaySummary(userId),
+    getTodaysBriefing(userId),
+    supabase
+      .from("user_integrations")
+      .select("id, provider, label, email_address")
+      .eq("user_id", userId)
+      .in("provider", ["gmail", "outlook"])
+      .limit(3),
     supabase.from("users").select("created_at").eq("id", userId).maybeSingle(),
   ]);
 
@@ -72,6 +88,9 @@ export default async function OverviewPage() {
     admin,
     prefsRow.data?.ai_access ?? false
   );
+  const lastActiveAt = prefsRow.data?.last_active_at ?? null;
+
+  void updateLastActive().catch(() => {});
 
   const showUpgradeBanner = shouldShowUpgradeBanner({
     plan: billing.plan,
@@ -157,6 +176,17 @@ export default async function OverviewPage() {
       <OverviewPageClient
         snapshot={snapshot}
         suggestions={suggestions}
+        canAccessWhileAway={hasAiPro}
+        morningBriefing={todaysBriefing}
+        awaySummary={awaySummaryResult.summary}
+        lastSyncedAt={
+          awaySummaryResult.lastSyncedAt?.toISOString() ?? null
+        }
+        lastActiveAt={lastActiveAt}
+        projects={projects}
+        goals={goals}
+        ideas={ideas}
+        leads={leads}
         hasProperties={hasProperties}
         portfolioStats={portfolioStats}
         rentDueFlags={rentDueFlags}
@@ -166,6 +196,13 @@ export default async function OverviewPage() {
         pendingAccessRequests={pendingAccessRequests}
         mortgages={mortgages}
         insurance={insurance}
+        emailIntegrations={(emailIntegrationsResult.data ?? []).map(
+          (integration) => ({
+            id: integration.id,
+            provider: integration.provider,
+            label: integration.label ?? integration.email_address ?? null,
+          })
+        )}
       />
     </>
   );

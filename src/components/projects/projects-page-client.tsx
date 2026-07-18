@@ -1,7 +1,6 @@
 "use client";
 
 import { FolderKanban, Plus } from "lucide-react";
-import { useTheme } from "next-themes";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -40,7 +39,6 @@ export function ProjectsPageClient({
   integrations,
 }: ProjectsPageClientProps) {
   const router = useRouter();
-  const { resolvedTheme } = useTheme();
   const searchParams = useSearchParams();
   const openProjectId = searchParams.get("project");
   const openTabParam = searchParams.get("tab");
@@ -166,13 +164,8 @@ export function ProjectsPageClient({
           className="mb-0"
           title="Projects"
           subtitle="Client work, status, and next actions at a glance."
-          icon={
-            <FolderKanban
-              className="size-6"
-              style={{ color: resolvedTheme === "dark" ? "#aca0ff" : "#4a3db0" }}
-            />
-          }
-          accentColour={resolvedTheme === "dark" ? "#aca0ff" : "#4a3db0"}
+          icon={<FolderKanban className="size-6 text-wisk-section-projects" />}
+          accent="projects"
         />
         <Button className="shrink-0 gap-2" onClick={openProjectAdd} data-tour="add-project">
           <Plus className="size-4" />
@@ -208,7 +201,11 @@ export function ProjectsPageClient({
             <>
               {grouped.active.length > 0 ? (
                 <>
-                  <h2 className="mt-6 mb-3 text-sm font-medium text-muted-foreground">
+                  <h2 className="mt-6 mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">
+                    <span
+                      className="inline-block size-1.5 rounded-full"
+                      style={{ background: "#aca0ff" }}
+                    />
                     Active
                   </h2>
                   <ProjectsList
@@ -220,7 +217,11 @@ export function ProjectsPageClient({
 
               {grouped.paused.length > 0 ? (
                 <>
-                  <h2 className="mt-6 mb-3 text-sm font-medium text-muted-foreground">
+                  <h2 className="mt-6 mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">
+                    <span
+                      className="inline-block size-1.5 rounded-full"
+                      style={{ background: "#aca0ff" }}
+                    />
                     Paused
                   </h2>
                   <ProjectsList
@@ -232,7 +233,11 @@ export function ProjectsPageClient({
 
               {grouped.completedAndArchived.length > 0 ? (
                 <>
-                  <h2 className="mt-6 mb-3 text-sm font-medium text-muted-foreground">
+                  <h2 className="mt-6 mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">
+                    <span
+                      className="inline-block size-1.5 rounded-full"
+                      style={{ background: "#aca0ff" }}
+                    />
                     Completed & Archived
                   </h2>
                   <ProjectsList

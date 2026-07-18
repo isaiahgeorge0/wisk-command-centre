@@ -20,10 +20,17 @@ async function getPrefilledName(email: string): Promise<string> {
 }
 
 export default async function WelcomePage() {
-  const { user } = await getAuthContext();
+  const { supabase, user } = await getAuthContext();
   await getOrCreateUserPreferences();
 
   const email = user.email ?? "";
+  const timezone =
+    (user.user_metadata?.timezone as string | undefined) ?? "Europe/London";
+  await supabase
+    .from("user_preferences")
+    .update({ timezone })
+    .eq("user_id", user.id);
+
   // Try user_metadata.full_name first (set during sign-up form)
   const metaName =
     (user.user_metadata?.full_name as string | undefined)?.trim() ?? "";

@@ -1,8 +1,15 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { KanbanSquare, LayoutList, Plus, Sparkles, TrendingUp, Trophy } from "lucide-react";
-import { useTheme } from "next-themes";
+import {
+  CheckSquare,
+  KanbanSquare,
+  LayoutList,
+  Plus,
+  Sparkles,
+  TrendingUp,
+  Trophy,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -12,6 +19,7 @@ import { PageTransition } from "@/components/layout/page-transition";
 import { ConvertSuccessToast } from "@/components/leads/convert-success-toast";
 import { DeleteLeadDialog } from "@/components/leads/delete-lead-dialog";
 import { LeadFormDialog } from "@/components/leads/lead-form-dialog";
+import { LeadsBulkActionBar } from "@/components/leads/leads-bulk-action-bar";
 import { LeadsEmptyState } from "@/components/leads/leads-empty-state";
 import { LeadsFiltersBar } from "@/components/leads/leads-filters-bar";
 import { LeadsPipeline } from "@/components/leads/leads-pipeline";
@@ -143,7 +151,6 @@ export function LeadsPageClient({
   canAccessWinston,
 }: LeadsPageClientProps) {
   const router = useRouter();
-  const { resolvedTheme } = useTheme();
   const { leadAddOpen, setLeadAddOpen, openLeadAdd } = useQuickAdd();
   const [leads, setLeads] = useState<LeadWithActivity[]>(initialLeads);
   const [view, setView] = useState<LeadsView>("pipeline");
@@ -162,6 +169,8 @@ export function LeadsPageClient({
   const [convertSuccessOpen, setConvertSuccessOpen] = useState(false);
   const [wonLeadName, setWonLeadName] = useState<string | null>(null);
   const [winstonOpen, setWinstonOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkMode, setBulkMode] = useState(false);
 
   useEffect(() => {
     setLeads(initialLeads);
@@ -178,6 +187,24 @@ export function LeadsPageClient({
     setView(nextView);
     localStorage.setItem(LEADS_VIEW_STORAGE_KEY, nextView);
   };
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((previous) => {
+      const next = new Set(previous);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const selectAll = useCallback(() => {
+    setSelectedIds(new Set(leads.map((lead) => lead.id)));
+  }, [leads]);
+
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+    setBulkMode(false);
+  }, []);
 
   const filteredLeads = useMemo(
     () => filterLeads(leads, filters),
@@ -210,6 +237,10 @@ export function LeadsPageClient({
         lead.id === updated.id ? { ...lead, ...updated } : lead
       )
     );
+  }, []);
+
+  const handleBulkLeadDelete = useCallback((lead: Lead) => {
+    setLeads((previous) => previous.filter((item) => item.id !== lead.id));
   }, []);
 
   const handleLeadStatusChange = useCallback(
@@ -256,13 +287,8 @@ export function LeadsPageClient({
           className="mb-0"
           title="Leads"
           subtitle="Track your pipeline from first contact to won."
-          icon={
-            <TrendingUp
-              className="size-6"
-              style={{ color: resolvedTheme === "dark" ? "#ff5d00" : "#cc3d00" }}
-            />
-          }
-          accentColour={resolvedTheme === "dark" ? "#ff5d00" : "#cc3d00"}
+          icon={<TrendingUp className="size-6 text-wisk-section-leads" />}
+          accent="leads"
         />
         <div className="flex items-center gap-2 self-end sm:self-auto">
           <button
@@ -305,6 +331,34 @@ export function LeadsPageClient({
               <span className="hidden sm:inline">Table</span>
             </button>
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              if (bulkMode) {
+                clearSelection();
+              } else {
+                setBulkMode(true);
+              }
+            }}
+            className={cn(
+              "flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all",
+              bulkMode
+                ? "border-wisk-section-leads/40 bg-wisk-section-leads/10 text-wisk-section-leads"
+                : "border-border/60 text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <CheckSquare className="size-3.5" />
+            {bulkMode ? `${selectedIds.size} selected` : "Select"}
+          </button>
+          {bulkMode && selectedIds.size < leads.length ? (
+            <button
+              type="button"
+              onClick={selectAll}
+              className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Select all
+            </button>
+          ) : null}
           <Button className="shrink-0 gap-2" onClick={openLeadAdd}>
             <Plus className="size-4" />
             Add lead
@@ -336,6 +390,9 @@ export function LeadsPageClient({
                     grouped={grouped}
                     onDelete={handleDeleteRequest}
                     onLeadUpdate={handleLeadUpdate}
+                    bulkMode={bulkMode}
+                    selectedIds={selectedIds}
+                    toggleSelect={toggleSelect}
                     onProjectCreated={() => setConvertSuccessOpen(true)}
                     onLeadStatusChange={handleLeadStatusChange}
                   />
@@ -362,6 +419,10 @@ export function LeadsPageClient({
                   onFiltersChange={setFilters}
                   onDelete={handleDeleteRequest}
                   onLeadUpdate={handleLeadUpdate}
+                  bulkMode={bulkMode}
+                  selectedIds={selectedIds}
+                  toggleSelect={toggleSelect}
+                  selectAll={selectAll}
                   onProjectCreated={() => setConvertSuccessOpen(true)}
                   onLeadStatusChange={handleLeadStatusChange}
                 />
@@ -398,6 +459,13 @@ export function LeadsPageClient({
       <WonLeadCelebrationOverlay
         leadName={wonLeadName}
         onDismiss={() => setWonLeadName(null)}
+      />
+      <LeadsBulkActionBar
+        selectedIds={selectedIds}
+        leads={leads}
+        onClear={clearSelection}
+        onLeadUpdate={handleLeadUpdate}
+        onLeadDelete={handleBulkLeadDelete}
       />
     </PageTransition>
   );

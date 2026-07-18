@@ -1,7 +1,6 @@
 "use client";
 
 import { Lightbulb, Plus } from "lucide-react";
-import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -28,7 +27,6 @@ type IdeasPageClientProps = {
 
 export function IdeasPageClient({ initialIdeas }: IdeasPageClientProps) {
   const router = useRouter();
-  const { resolvedTheme } = useTheme();
   const { ideaAddOpen, setIdeaAddOpen, openIdeaAdd } = useQuickAdd();
   const [ideas, setIdeas] = useState(initialIdeas);
   const [filters, setFilters] = useState<IdeaFilters>(DEFAULT_IDEA_FILTERS);
@@ -75,13 +73,8 @@ export function IdeasPageClient({ initialIdeas }: IdeasPageClientProps) {
           className="mb-0"
           title="Ideas"
           subtitle="Capture, explore, and convert your best thinking."
-          icon={
-            <Lightbulb
-              className="size-6"
-              style={{ color: resolvedTheme === "dark" ? "#fea9e0" : "#c4207e" }}
-            />
-          }
-          accentColour={resolvedTheme === "dark" ? "#fea9e0" : "#c4207e"}
+          icon={<Lightbulb className="size-6 text-wisk-section-ideas" />}
+          accent="ideas"
         />
         <Button className="shrink-0 gap-2" onClick={openIdeaAdd}>
           <Plus className="size-4" />

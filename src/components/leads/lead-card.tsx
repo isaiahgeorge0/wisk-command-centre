@@ -7,6 +7,8 @@ import { updateLead } from "@/app/(dashboard)/leads/actions";
 import { ExpandableSection } from "@/components/motion/expandable-section";
 import { LeadExpandedDetail } from "@/components/leads/lead-expanded-detail";
 import { LeadForm } from "@/components/leads/lead-form";
+import { LeadQuickActions } from "@/components/leads/lead-quick-actions";
+import { LeadScoreBadge } from "@/components/leads/lead-score-badge";
 import { LeadSourceBadge } from "@/components/leads/lead-source-badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +30,9 @@ type LeadCardProps = {
   onProjectCreated?: (projectId: string) => void;
   onStatusChange?: (status: LeadStatus) => void;
   isDragOverlay?: boolean;
+  bulkMode?: boolean;
+  selectedIds?: Set<string>;
+  toggleSelect?: (id: string) => void;
   className?: string;
 };
 
@@ -38,6 +43,9 @@ export function LeadCard({
   onProjectCreated,
   onStatusChange,
   isDragOverlay = false,
+  bulkMode = false,
+  selectedIds,
+  toggleSelect,
   className,
 }: LeadCardProps) {
   const router = useRouter();
@@ -48,6 +56,13 @@ export function LeadCard({
   const [isPending, startTransition] = useTransition();
   const formId = `edit-lead-${lead.id}`;
   const status = (lead.status as LeadStatus) ?? "new";
+  const STATUS_STRIP_COLOUR: Record<string, string> = {
+    new: "#2dd4bf",
+    contacted: "#aca0ff",
+    qualified: "#f59e0b",
+    proposal_sent: "#ff5d00",
+    won: "#10b981",
+  };
 
   const handleLeadUpdated = useCallback(
     (updated: Lead) => {
@@ -125,15 +140,46 @@ export function LeadCard({
   return (
     <Card
       className={cn(
-        "relative border-border/70 bg-card/80 shadow-sm transition-colors hover:bg-card",
-        isDragOverlay && "shadow-md",
-        !isDragOverlay && "cursor-pointer",
+        "group/lead relative overflow-hidden bg-card/60 transition-all duration-200 hover:bg-card/80",
+        isDragOverlay && "rotate-1 shadow-lg",
+        !isDragOverlay && "cursor-pointer hover:shadow-sm",
         LEAD_CARD_STATUS_CLASS[status] ?? LEAD_CARD_STATUS_CLASS.new,
         className
       )}
       onClick={isDragOverlay ? undefined : handleCardClick}
     >
-      <CardHeader className="gap-2 px-4 pb-2 pt-4">
+      {status !== "lost" ? (
+        <div
+          className="absolute inset-y-0 left-0 w-[3px] rounded-l-xl"
+          style={{
+            background: STATUS_STRIP_COLOUR[status] ?? "#aca0ff",
+            opacity: 0.6,
+          }}
+        />
+      ) : null}
+
+      {bulkMode ? (
+        <div
+          className="absolute right-3 top-3 z-10"
+          onClick={(event) => event.stopPropagation()}
+          onPointerDown={(event) => event.stopPropagation()}
+        >
+          <input
+            type="checkbox"
+            checked={selectedIds?.has(lead.id) ?? false}
+            onChange={() => toggleSelect?.(lead.id)}
+            className="size-4 rounded accent-wisk-section-leads"
+            aria-label={`Select ${lead.name}`}
+          />
+        </div>
+      ) : null}
+
+      <CardHeader
+        className={cn(
+          "gap-2 pb-2 pl-5 pr-4 pt-4",
+          bulkMode && "pr-10"
+        )}
+      >
         <div className="flex items-start justify-between gap-2">
           <h3
             className={cn(
@@ -143,11 +189,14 @@ export function LeadCard({
           >
             {lead.name}
           </h3>
-          <LeadSourceBadge source={lead.source} />
+          <div className="flex items-center gap-2">
+            <LeadScoreBadge lead={lead} size="sm" />
+            <LeadSourceBadge source={lead.source} />
+          </div>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-2 px-4 pb-4 text-sm">
+      <CardContent className="space-y-2 pb-4 pl-5 pr-4 text-sm">
         <p
           className={cn(
             "line-clamp-2 text-muted-foreground",
@@ -165,6 +214,15 @@ export function LeadCard({
           </span>
         </div>
 
+        {!expanded && status !== "won" && status !== "lost" ? (
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <LeadQuickActions lead={lead} onLeadUpdate={onLeadUpdate} />
+            <p className="text-xs text-wisk-section-leads/60 transition-colors group-hover/lead:text-wisk-section-leads/80">
+              Tap card to expand →
+            </p>
+          </div>
+        ) : null}
+
         <ExpandableSection
           open={expanded}
           className="space-y-0 border-t border-border/50 pt-3"
@@ -180,8 +238,10 @@ export function LeadCard({
           </div>
         </ExpandableSection>
 
-        {!expanded ? (
-          <p className="text-xs text-muted-foreground">Click to expand</p>
+        {!expanded && (status === "won" || status === "lost") ? (
+          <p className="text-xs text-wisk-section-leads/60 transition-colors group-hover/lead:text-wisk-section-leads/80">
+            Tap to expand →
+          </p>
         ) : null}
       </CardContent>
     </Card>

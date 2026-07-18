@@ -70,5 +70,12 @@ export async function POST(request: Request) {
     );
   }
 
+  if (draft.body.startsWith("NO_REPLY_NEEDED:")) {
+    return NextResponse.json({
+      noReplyNeeded: true,
+      reason: draft.body.replace("NO_REPLY_NEEDED:", "").trim(),
+    });
+  }
+
   return NextResponse.json({ draft } satisfies { draft: WinstonDraft });
 }

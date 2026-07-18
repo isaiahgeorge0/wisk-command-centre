@@ -167,7 +167,7 @@ export function NotesList({
                     className={cn(
                       "group relative flex items-start gap-2 rounded-lg border border-transparent px-3 py-3 transition-colors",
                       selected
-                        ? "border-sky-500/30 bg-sky-500/10"
+                        ? "border-wisk-section-notes/30 bg-wisk-section-notes/10"
                         : "hover:bg-muted/50"
                     )}
                   >

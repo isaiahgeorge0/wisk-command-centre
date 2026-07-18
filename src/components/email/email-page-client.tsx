@@ -28,8 +28,6 @@ import type {
 } from "@/lib/email/types";
 import { cn } from "@/lib/utils";
 
-const EMAIL_ACCENT = "#3b82f6";
-
 type ProviderFilter = "all" | EmailProvider;
 
 type EmailPageClientProps = {
@@ -393,8 +391,8 @@ export function EmailPageClient({
           className="mb-0"
           title="Email"
           subtitle="Read Gmail and Outlook in one unified inbox."
-          icon={<Mail className="size-6" style={{ color: EMAIL_ACCENT }} />}
-          accentColour={EMAIL_ACCENT}
+          icon={<Mail className="size-6 text-wisk-section-email" />}
+          accent="email"
         />
       </div>
 

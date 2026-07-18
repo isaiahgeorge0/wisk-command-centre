@@ -17,6 +17,9 @@ type LeadDraggableCardProps = {
   dndEnabled: boolean;
   onDelete: (lead: Lead) => void;
   onLeadUpdate: (lead: Lead) => void;
+  bulkMode?: boolean;
+  selectedIds?: Set<string>;
+  toggleSelect?: (id: string) => void;
   onProjectCreated?: (projectId: string) => void;
   onStatusChange: (lead: Lead, status: LeadStatus) => void;
   layoutAnimation: boolean;
@@ -28,6 +31,9 @@ export function LeadDraggableCard({
   dndEnabled,
   onDelete,
   onLeadUpdate,
+  bulkMode = false,
+  selectedIds,
+  toggleSelect,
   onProjectCreated,
   onStatusChange,
   layoutAnimation,
@@ -69,6 +75,9 @@ export function LeadDraggableCard({
         lead={lead}
         onDelete={onDelete}
         onLeadUpdate={onLeadUpdate}
+        bulkMode={bulkMode}
+        selectedIds={selectedIds}
+        toggleSelect={toggleSelect}
         onProjectCreated={onProjectCreated}
         onStatusChange={(nextStatus) => onStatusChange(lead, nextStatus)}
         isDragOverlay={false}

@@ -50,7 +50,18 @@ Match the greeting formality to the tone:
 - Friendly: 'Hi [Name],'
 - Casual: 'Hey [Name],' or just 'Hi [Name],'
 
-Draft a response to the email below. Return ONLY the email body — include the greeting and message content, but no subject line or sign-off/signature. Keep it concise and appropriate to the tone.`;
+Only draft a response if the email genuinely warrants one:
+- It contains a direct question or request
+- It is from a known client, lead, or business contact
+- It requires a decision or action from the recipient
+
+If the email is a newsletter, notification, automated message, or does not require a personal response, say so briefly and do not draft a reply.
+
+When you do draft, be concise — most business emails need 3-5 sentences, not paragraphs. Do not over-explain.
+
+If you determine this email does not need a reply, respond with exactly: NO_REPLY_NEEDED: [brief reason]
+
+Otherwise, return ONLY the email body — include the greeting and message content, but no subject line or sign-off/signature.`;
 }
 
 export type GenerateEmailDraftInput = {

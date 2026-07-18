@@ -8,7 +8,62 @@ import { StaggerList } from "@/components/motion/stagger-list";
 import { TaskRow } from "@/components/tasks/task-row";
 import { Button } from "@/components/ui/button";
 import { useStaggerOnce } from "@/lib/motion/use-stagger-once";
+import { getDueDateTone } from "@/lib/tasks/format";
 import type { ProjectOption, TaskWithProject } from "@/lib/tasks/types";
+import { cn } from "@/lib/utils";
+
+type TaskGroupTone = "overdue" | "today" | "upcoming" | "no-date";
+
+const TASK_GROUP_STYLES: Record<
+  TaskGroupTone,
+  { dot: string; badge: string }
+> = {
+  overdue: {
+    dot: "bg-red-500",
+    badge: "bg-red-500/10 text-red-500",
+  },
+  today: {
+    dot: "bg-orange-500",
+    badge: "bg-orange-500/10 text-orange-500",
+  },
+  upcoming: {
+    dot: "bg-wisk-section-tasks",
+    badge: "bg-wisk-section-tasks/10 text-wisk-section-tasks",
+  },
+  "no-date": {
+    dot: "bg-muted-foreground",
+    badge: "bg-muted text-muted-foreground",
+  },
+};
+
+function TaskGroupHeader({
+  label,
+  count,
+  tone,
+}: {
+  label: string;
+  count: number;
+  tone: TaskGroupTone;
+}) {
+  const styles = TASK_GROUP_STYLES[tone];
+
+  return (
+    <div className="mb-3 flex items-center gap-2">
+      <span className={cn("inline-block size-1.5 rounded-full", styles.dot)} />
+      <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">
+        {label}
+      </span>
+      <span
+        className={cn(
+          "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
+          styles.badge
+        )}
+      >
+        {count}
+      </span>
+    </div>
+  );
+}
 
 type TasksListProps = {
   tasks: TaskWithProject[];
@@ -46,23 +101,64 @@ export function TasksList({
     return { incomplete: incompleteTasks, completed: completedTasks };
   }, [tasks]);
 
+  const incompleteGroups = useMemo(() => {
+    const overdue: TaskWithProject[] = [];
+    const today: TaskWithProject[] = [];
+    const upcoming: TaskWithProject[] = [];
+    const noDate: TaskWithProject[] = [];
+
+    for (const task of incomplete) {
+      if (!task.due_date) {
+        noDate.push(task);
+        continue;
+      }
+
+      const tone = getDueDateTone(task.due_date, false);
+      if (tone === "overdue") {
+        overdue.push(task);
+      } else if (tone === "today") {
+        today.push(task);
+      } else {
+        upcoming.push(task);
+      }
+    }
+
+    return [
+      { label: "Overdue", tone: "overdue" as const, tasks: overdue },
+      { label: "Due today", tone: "today" as const, tasks: today },
+      { label: "Upcoming", tone: "upcoming" as const, tasks: upcoming },
+      { label: "No date", tone: "no-date" as const, tasks: noDate },
+    ].filter((group) => group.tasks.length > 0);
+  }, [incomplete]);
+
   return (
     <div>
       {incomplete.length > 0 ? (
-        <StaggerList stagger={stagger}>
-          {incomplete.map((task) => (
-            <StaggerItem key={task.id} stagger={stagger} as="div">
-              <TaskRow
-                task={task}
-                projects={projects}
-                expanded={expandedTaskId === task.id}
-                onExpandToggle={() => handleExpandToggle(task.id)}
-                onUpdate={onTaskUpdate}
-                onDelete={onTaskDelete}
+        <div>
+          {incompleteGroups.map((group, index) => (
+            <section key={group.tone} className={index > 0 ? "mt-5" : undefined}>
+              <TaskGroupHeader
+                label={group.label}
+                count={group.tasks.length}
+                tone={group.tone}
               />
-            </StaggerItem>
+              <StaggerList stagger={stagger}>
+                {group.tasks.map((task) => (
+                  <StaggerItem key={task.id} stagger={stagger} as="div">
+                    <TaskRow
+                      task={task}
+                      projects={projects}
+                      expanded={expandedTaskId === task.id}
+                      onExpandToggle={() => handleExpandToggle(task.id)}
+                      onUpdate={onTaskUpdate}
+                      onDelete={onTaskDelete}
+                    />
+                  </StaggerItem>
+                ))}
+              </StaggerList>
+            </section>
           ))}
-        </StaggerList>
+        </div>
       ) : (
         <p className="rounded-xl border border-border/60 bg-card px-4 py-6 text-center text-sm text-muted-foreground shadow-sm">
           No open tasks — you&apos;re all caught up.

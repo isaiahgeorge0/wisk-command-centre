@@ -10,8 +10,6 @@ import { NotesList } from "@/components/notes/notes-list";
 import type { Note } from "@/lib/notes/types";
 import { cn } from "@/lib/utils";
 
-const NOTES_ACCENT = "#0ea5e9";
-
 type NotesPageClientProps = {
   initialNotes: Note[];
 };
@@ -80,10 +78,8 @@ export function NotesPageClient({ initialNotes }: NotesPageClientProps) {
           className="mb-0"
           title="Notes"
           subtitle="Capture thoughts, plans, and ideas in one place."
-          icon={
-            <NotebookPen className="size-6" style={{ color: NOTES_ACCENT }} />
-          }
-          accentColour={NOTES_ACCENT}
+          icon={<NotebookPen className="size-6 text-wisk-section-notes" />}
+          accent="notes"
         />
       </div>
 

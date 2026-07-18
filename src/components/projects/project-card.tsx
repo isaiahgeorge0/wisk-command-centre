@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 
 import { updateProject } from "@/app/(dashboard)/projects/actions";
@@ -181,11 +181,21 @@ export function ProjectCard({
   return (
     <Card
       className={cn(
-        "relative cursor-pointer border-border/60 bg-card/80 transition-colors hover:border-border hover:bg-card",
-        expanded && "border-wisk-section-projects/20"
+        "group relative cursor-pointer overflow-hidden border bg-card/60 transition-all duration-200 hover:bg-card/80",
+        expanded
+          ? "border-wisk-section-projects/40 shadow-[0_0_24px_-4px_rgba(172,160,255,0.15)]"
+          : "border-border/60 hover:border-wisk-section-projects/30 hover:shadow-[0_0_20px_-4px_rgba(172,160,255,0.1)]"
       )}
       onClick={handleCardClick}
     >
+      <div
+        className="absolute inset-y-0 left-0 w-[3px] rounded-l-xl transition-opacity duration-200"
+        style={{
+          background: "linear-gradient(to bottom, #aca0ff, #aca0ff80)",
+          opacity: expanded ? 1 : 0.4,
+        }}
+      />
+
       {expanded && !selectedTask ? (
         <button
           type="button"
@@ -200,10 +210,10 @@ export function ProjectCard({
         </button>
       ) : null}
 
-      <CardHeader className="gap-2 pb-2">
+      <CardHeader className="gap-2 pb-2 pl-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <h3 className="truncate text-base font-semibold text-foreground">
+            <h3 className="truncate text-base font-bold tracking-tight text-foreground">
               {getProjectDisplayName(project)}
             </h3>
             {getProjectClientLabel(project) ? (
@@ -219,40 +229,58 @@ export function ProjectCard({
       <CardContent className="space-y-2 text-sm">
         {vis.serviceType ? (
           <div className="flex justify-between gap-2">
-            <span className="text-muted-foreground">Project type</span>
-            <span className="truncate text-right text-foreground">
+            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground/70">
+              Project type
+            </span>
+            <span className="truncate text-right text-sm font-medium text-foreground">
               {project.service_type ?? "—"}
             </span>
           </div>
         ) : null}
         {vis.nextAction ? (
           <div className="flex justify-between gap-2">
-            <span className="text-muted-foreground">Next</span>
-            <span className="line-clamp-2 text-right text-foreground">
-              {project.next_action?.trim() || "—"}
+            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground/70">
+              Next
             </span>
+            {project.next_action?.trim() ? (
+              <span className="inline-block line-clamp-2 rounded-md bg-wisk-section-projects/8 px-2 py-0.5 text-right text-sm font-medium text-wisk-section-projects">
+                {project.next_action.trim()}
+              </span>
+            ) : (
+              <span className="line-clamp-2 text-right text-sm font-medium text-foreground/90">
+                —
+              </span>
+            )}
           </div>
         ) : null}
         {vis.deadline ? (
           <div className="flex justify-between gap-2">
-            <span className="text-muted-foreground">Deadline</span>
-            <span>{formatProjectDeadline(project.deadline)}</span>
+            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground/70">
+              Deadline
+            </span>
+            <span className="truncate text-right text-sm font-medium text-foreground">
+              {formatProjectDeadline(project.deadline)}
+            </span>
           </div>
         ) : null}
         {vis.value ? (
           <div className="flex justify-between gap-2">
-            <span className="text-muted-foreground">Value</span>
-            <span className="font-medium tabular-nums">
+            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground/70">
+              Value
+            </span>
+            <span className="truncate text-right text-sm font-medium tabular-nums text-foreground">
               {formatProjectValue(project.value)}
             </span>
           </div>
         ) : null}
 
         {taskStats.total >= 1 ? (
-          <ProjectTaskProgressBar
-            completed={taskStats.completed}
-            total={taskStats.total}
-          />
+          <div className="mt-3 rounded-xl border border-wisk-section-projects/15 bg-wisk-section-projects/5 px-3 py-2.5">
+            <ProjectTaskProgressBar
+              completed={taskStats.completed}
+              total={taskStats.total}
+            />
+          </div>
         ) : null}
 
         <ExpandableSection
@@ -304,9 +332,10 @@ export function ProjectCard({
           </div>
         </ExpandableSection>
         {!expanded ? (
-          <p className="pt-1 text-xs text-muted-foreground">
-            Click to expand details
-          </p>
+          <div className="flex items-center gap-1.5 pt-1 text-xs text-wisk-section-projects/60 transition-colors group-hover:text-wisk-section-projects/80">
+            <span>View details</span>
+            <ChevronDown className="size-3 transition-transform group-hover:translate-y-0.5" />
+          </div>
         ) : null}
       </CardContent>
 

@@ -12,6 +12,7 @@ export type Task = {
   completed: boolean;
   raw_content: string | null;
   created_at: string;
+  updated_at?: string;
 };
 
 /** Typed for future Supabase Storage wiring — not queried yet. */

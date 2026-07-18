@@ -30,7 +30,7 @@ export function ProjectTaskProgressBar({
 
   return (
     <div className={cn(compact ? "space-y-1" : "space-y-1.5", className)}>
-      <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-muted/80 md:h-2">
+      <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted/60 md:h-2.5">
         <motion.div
           className={cn("h-full rounded-full", TASK_PROGRESS_FILL_CLASS[tone])}
           initial={reduced ? false : { width: 0 }}
@@ -40,9 +40,14 @@ export function ProjectTaskProgressBar({
       </div>
       {!compact ? (
         <div className="flex items-center justify-between text-xs">
-          <span className="text-muted-foreground">Task progress</span>
-          <span className="font-medium tabular-nums text-foreground">
-            {completed}/{total} · {percent}%
+          <span className="text-xs uppercase tracking-wide text-muted-foreground/70">
+            Tasks
+          </span>
+          <span className="text-xs font-bold tabular-nums text-foreground">
+            {completed}/{total}
+            <span className="ml-1 font-normal text-muted-foreground">
+              · {percent}%
+            </span>
           </span>
         </div>
       ) : (

@@ -40,7 +40,7 @@ function ProviderBadge({ provider }: { provider: EmailProvider }) {
         "rounded-full px-2 py-0.5 text-[11px] font-medium",
         provider === "gmail"
           ? "bg-teal-500/15 text-teal-700 dark:text-teal-300"
-          : "bg-blue-500/15 text-blue-700 dark:text-blue-300"
+          : "bg-wisk-section-email/15 text-wisk-section-email"
       )}
     >
       {provider === "gmail" ? "Gmail" : "Outlook"}

@@ -26,6 +26,9 @@ type LeadsPipelineProps = {
   grouped: Record<LeadStatus, Lead[]>;
   onDelete: (lead: Lead) => void;
   onLeadUpdate: (lead: Lead) => void;
+  bulkMode?: boolean;
+  selectedIds?: Set<string>;
+  toggleSelect?: (id: string) => void;
   onProjectCreated?: (projectId: string) => void;
   onLeadStatusChange: (
     lead: Lead,
@@ -55,10 +58,14 @@ export function LeadsPipeline({
   grouped,
   onDelete,
   onLeadUpdate,
+  bulkMode = false,
+  selectedIds,
+  toggleSelect,
   onProjectCreated,
   onLeadStatusChange,
 }: LeadsPipelineProps) {
-  const dndEnabled = usePointerDndEnabled();
+  const pointerDndEnabled = usePointerDndEnabled();
+  const dndEnabled = pointerDndEnabled && !bulkMode;
   const { expanded, toggle, expandStage } = usePipelineCollapse(grouped);
   const [activeLead, setActiveLead] = useState<Lead | null>(null);
   const [layoutAnimation, setLayoutAnimation] = useState(true);
@@ -141,6 +148,9 @@ export function LeadsPipeline({
             isDragging={isDragging}
             onDelete={onDelete}
             onLeadUpdate={onLeadUpdate}
+            bulkMode={bulkMode}
+            selectedIds={selectedIds}
+            toggleSelect={toggleSelect}
             onProjectCreated={onProjectCreated}
             onStatusChange={handleStatusChange}
             layoutAnimation={layoutAnimation}

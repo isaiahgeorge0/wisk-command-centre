@@ -117,7 +117,7 @@ function ProviderBadge({
         "max-w-[140px] truncate rounded-full px-2 py-0.5 text-[10px] font-medium",
         email.provider === "gmail"
           ? "bg-teal-500/15 text-teal-700 dark:text-teal-300"
-          : "bg-blue-500/15 text-blue-700 dark:text-blue-300"
+          : "bg-wisk-section-email/15 text-wisk-section-email"
       )}
       title={label}
     >
@@ -602,7 +602,7 @@ export function EmailList({
                 className={cn(
                   "min-h-11 rounded-md px-3 text-xs font-medium transition-colors md:min-h-8",
                   activeProvider === tab.id
-                    ? "bg-blue-500/15 text-blue-700 dark:text-blue-300"
+                    ? "bg-wisk-section-email/15 text-wisk-section-email"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
@@ -703,7 +703,7 @@ export function EmailList({
                     className={cn(
                       "group/email-row relative flex w-full items-stretch rounded-lg border border-transparent transition-colors",
                       selected
-                        ? "border-blue-500/30 bg-blue-500/10"
+                        ? "border-wisk-section-email/30 bg-wisk-section-email/10"
                         : "hover:bg-muted/50",
                       email.category === "leads" &&
                         !email.customInboxId &&
@@ -720,7 +720,7 @@ export function EmailList({
                           <ActionIndicator actionItem={actionItem} />
                         ) : !email.isRead ? (
                           <span
-                            className="mt-1.5 size-2 shrink-0 rounded-full bg-blue-500"
+                            className="mt-1.5 size-2 shrink-0 rounded-full bg-wisk-section-email"
                             aria-hidden
                           />
                         ) : (

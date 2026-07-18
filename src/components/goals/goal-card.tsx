@@ -9,7 +9,7 @@ import { updateGoal, updateGoalCurrent } from "@/app/(dashboard)/goals/actions";
 import { usePreferences } from "@/components/preferences/preferences-context";
 import { GoalCategoryTag } from "@/components/goals/goal-category-tag";
 import { GoalForm } from "@/components/goals/goal-form";
-import { GoalProgressBar, useGoalProgress } from "@/components/goals/goal-progress-bar";
+import { GoalProgressBar } from "@/components/goals/goal-progress-bar";
 import { GoalStatusBadge } from "@/components/goals/goal-status-badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,11 +27,11 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { PROGRESS_ACCENT_BORDER_CLASS } from "@/lib/goals/constants";
 import { CONTENT_GOAL_CATEGORY } from "@/lib/content/constants";
 import {
   formatGoalDeadline,
   formatGoalProgressLabel,
+  getProgressPercent,
 } from "@/lib/goals/format";
 import { goalToFormInput } from "@/lib/goals/form";
 import type { Goal, GoalFormInput } from "@/lib/goals/types";
@@ -47,7 +47,6 @@ type GoalCardProps = {
 
 export function GoalCard({
   goal,
-  showProgressAccent = false,
   publishedPostCount = 0,
   onUpdate,
   onDelete,
@@ -62,8 +61,25 @@ export function GoalCard({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const formId = `edit-goal-${goal.id}`;
-
-  const { tone } = useGoalProgress(goal.current, goal.target);
+  const percent = getProgressPercent(goal.current, goal.target);
+  const daysUntilDeadline = goal.deadline
+    ? Math.ceil(
+        (new Date(goal.deadline).getTime() - Date.now()) /
+          (1000 * 60 * 60 * 24)
+      )
+    : null;
+  const deadlineUrgency =
+    daysUntilDeadline === null
+      ? "none"
+      : daysUntilDeadline < 0
+        ? "overdue"
+        : daysUntilDeadline <= 7
+          ? "critical"
+          : daysUntilDeadline <= 30
+            ? "soon"
+            : "ok";
+  const progressColour =
+    percent >= 75 ? "#baf7e1" : percent >= 40 ? "#ff5d00" : "#e8001d";
 
   const applyCurrent = (nextCurrent: number) => {
     const clamped = Math.max(0, nextCurrent);
@@ -165,16 +181,33 @@ export function GoalCard({
   return (
     <Card
       className={cn(
-        "group border-border/60 bg-card/80 transition-colors hover:border-border hover:bg-card",
-        showProgressAccent && "border-l-4",
-        showProgressAccent && PROGRESS_ACCENT_BORDER_CLASS[tone]
+        "group relative cursor-pointer overflow-hidden border bg-card/60 transition-all duration-200 hover:bg-card/80 hover:shadow-sm",
+        percent === 100
+          ? "border-emerald-500/40 hover:border-emerald-500/50"
+          : "border-border/60 hover:border-wisk-section-goals/30"
       )}
       onClick={() => setEditing(true)}
     >
-      <CardHeader className="gap-2 pb-2">
+      <div
+        className="absolute inset-x-0 top-0 h-[2px] rounded-t-xl transition-all duration-500"
+        style={{ background: progressColour, opacity: 0.8 }}
+      />
+      {percent === 100 ? (
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(ellipse 80% 40% at 50% 0%, rgba(186,247,225,0.06), transparent 60%)",
+          }}
+        />
+      ) : null}
+
+      <CardHeader className="gap-2 pb-2 pt-5">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <h3 className="text-base font-semibold text-foreground">{goal.title}</h3>
+            <h3 className="text-base font-bold tracking-tight text-foreground">
+              {goal.title}
+            </h3>
             <div className="mt-1.5 flex flex-wrap items-center gap-2">
               {vis.categoryTag ? (
                 <GoalCategoryTag category={goal.category} />
@@ -192,6 +225,17 @@ export function GoalCard({
                 </Link>
               ) : null}
             </div>
+          </div>
+          <div className="flex shrink-0 flex-col items-end">
+            <span
+              className="text-3xl font-black leading-none tabular-nums"
+              style={{ color: progressColour }}
+            >
+              {percent}%
+            </span>
+            <span className="mt-0.5 text-[10px] uppercase tracking-wide text-muted-foreground/60">
+              complete
+            </span>
           </div>
         </div>
       </CardHeader>
@@ -241,15 +285,33 @@ export function GoalCard({
           </PopoverContent>
         </Popover>
 
-        <p className="text-sm font-medium text-foreground">
+        <p className="text-sm font-semibold tabular-nums text-foreground/80">
           {formatGoalProgressLabel(goal.current, goal.target, goal.unit)}
         </p>
 
         {vis.deadline || vis.quickControls ? (
           <div className="flex items-center justify-between gap-2">
             {vis.deadline ? (
-              <span className="text-xs text-muted-foreground">
-                Deadline: {formatGoalDeadline(goal.deadline)}
+              <span
+                className={cn(
+                  "text-xs font-medium",
+                  deadlineUrgency === "overdue" && "text-red-500",
+                  deadlineUrgency === "critical" && "text-orange-500",
+                  deadlineUrgency === "soon" && "text-amber-500",
+                  (deadlineUrgency === "ok" ||
+                    deadlineUrgency === "none") &&
+                    "text-muted-foreground"
+                )}
+              >
+                {deadlineUrgency === "overdue"
+                  ? `Overdue by ${Math.abs(daysUntilDeadline ?? 0)} days`
+                  : deadlineUrgency === "critical"
+                    ? `${daysUntilDeadline} days left`
+                    : deadlineUrgency === "soon"
+                      ? `${daysUntilDeadline} days · ${formatGoalDeadline(goal.deadline)}`
+                      : goal.deadline
+                        ? `Due ${formatGoalDeadline(goal.deadline)}`
+                        : "No deadline"}
               </span>
             ) : (
               <span />

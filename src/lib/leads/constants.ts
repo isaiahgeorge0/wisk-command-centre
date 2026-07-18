@@ -45,10 +45,10 @@ export const LEAD_SOURCE_BADGE_CLASS: Record<LeadSource, string> = {
 };
 
 export const LEAD_CARD_STATUS_CLASS: Record<LeadStatus, string> = {
-  new: "border-border/60",
-  contacted: "border-border/60",
-  qualified: "border-border/60",
-  proposal_sent: "border-border/60",
+  new: "border-wisk-section-tasks/20",
+  contacted: "border-wisk-section-projects/20",
+  qualified: "border-amber-500/25",
+  proposal_sent: "border-orange-500/25",
   won: "border-emerald-500/40 bg-emerald-500/[0.04]",
-  lost: "border-border/40 opacity-70",
+  lost: "border-border/40 opacity-60",
 };

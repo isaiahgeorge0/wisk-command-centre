@@ -34,7 +34,7 @@ export function GoalProgressBar({
     <div className={cn("space-y-1.5", className)}>
       <div
         className={cn(
-          "relative h-2.5 w-full overflow-hidden rounded-full bg-muted/80",
+          "relative h-3 w-full overflow-hidden rounded-full bg-muted/60",
           onClick && "cursor-pointer"
         )}
         onClick={onClick}
@@ -61,15 +61,11 @@ export function GoalProgressBar({
           animate={{ width: `${percent}%` }}
           transition={progressTransition}
         />
-        {percent > 12 ? (
-          <span className="absolute inset-y-0 left-2 flex items-center text-[10px] font-semibold text-white/95 drop-shadow-sm">
-            {percent}%
-          </span>
-        ) : null}
       </div>
       <div className="flex items-center justify-between text-xs">
-        <span className="text-muted-foreground">Progress</span>
-        <span className="font-medium tabular-nums text-foreground">{percent}%</span>
+        <span className="text-[10px] uppercase tracking-wide text-muted-foreground/60">
+          {current} of {target ?? "—"}
+        </span>
       </div>
     </div>
   );

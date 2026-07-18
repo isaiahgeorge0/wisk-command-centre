@@ -45,6 +45,7 @@ export function WinstonDraftPanel({
     preGeneratedDraft?.tone ?? "professional"
   );
   const [draft, setDraft] = useState<WinstonDraft | null>(null);
+  const [noReplyReason, setNoReplyReason] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -53,6 +54,7 @@ export function WinstonDraftPanel({
     async (selectedTone: DraftTone) => {
       setIsLoading(true);
       setError(null);
+      setNoReplyReason(null);
 
       try {
         const response = await fetch("/api/email/draft", {
@@ -68,6 +70,8 @@ export function WinstonDraftPanel({
 
         const data = (await response.json()) as {
           draft?: WinstonDraft;
+          noReplyNeeded?: boolean;
+          reason?: string;
           error?: string;
         };
 
@@ -75,10 +79,17 @@ export function WinstonDraftPanel({
           throw new Error(data.error ?? "Could not generate draft");
         }
 
+        if (data.noReplyNeeded) {
+          setDraft(null);
+          setNoReplyReason(data.reason ?? "No personal response is required.");
+          return;
+        }
+
         if (!data.draft) {
           throw new Error("No draft returned");
         }
 
+        setNoReplyReason(null);
         setDraft(data.draft);
       } catch (draftError) {
         setError(
@@ -98,13 +109,22 @@ export function WinstonDraftPanel({
     setCopied(false);
 
     if (preGeneratedDraft && tone === preGeneratedDraft.tone) {
-      setDraft(preGeneratedDraft);
+      if (preGeneratedDraft.body.startsWith("NO_REPLY_NEEDED:")) {
+        setDraft(null);
+        setNoReplyReason(
+          preGeneratedDraft.body.replace("NO_REPLY_NEEDED:", "").trim()
+        );
+      } else {
+        setDraft(preGeneratedDraft);
+        setNoReplyReason(null);
+      }
       setError(null);
       setIsLoading(false);
       return;
     }
 
     setDraft(null);
+    setNoReplyReason(null);
     void generateDraft(tone);
   }, [open, preGeneratedDraft, generateDraft, tone]);
 
@@ -226,6 +246,15 @@ export function WinstonDraftPanel({
                 <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                   {error}
                 </p>
+              ) : noReplyReason ? (
+                <div className="rounded-lg border border-wisk-section-winston/20 bg-wisk-section-winston/10 p-3">
+                  <p className="text-sm font-medium text-foreground">
+                    Winston thinks this email doesn&apos;t need a reply.
+                  </p>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    {noReplyReason}
+                  </p>
+                </div>
               ) : draft ? (
                 <div className="space-y-3">
                   <div className="rounded-lg border border-border/60 bg-muted/20 p-3">

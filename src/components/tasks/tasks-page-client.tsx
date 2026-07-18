@@ -1,7 +1,6 @@
 "use client";
 
 import { CheckSquare, Plus } from "lucide-react";
-import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -27,7 +26,6 @@ export function TasksPageClient({
   projects,
 }: TasksPageClientProps) {
   const router = useRouter();
-  const { resolvedTheme } = useTheme();
   const { openTaskAdd } = useQuickAdd();
   const [tasks, setTasks] = useState(initialTasks);
   const [filters, setFilters] = useState<TaskFilters>(DEFAULT_TASK_FILTERS);
@@ -82,13 +80,8 @@ export function TasksPageClient({
           className="mb-0"
           title="Tasks"
           subtitle="What needs doing, by when, and for which client."
-          icon={
-            <CheckSquare
-              className="size-6"
-              style={{ color: resolvedTheme === "dark" ? "#2dd4bf" : "#016c81" }}
-            />
-          }
-          accentColour={resolvedTheme === "dark" ? "#2dd4bf" : "#016c81"}
+          icon={<CheckSquare className="size-6 text-wisk-section-tasks" />}
+          accent="tasks"
         />
         <Button className="shrink-0 gap-2" onClick={() => openTaskAdd()}>
           <Plus className="size-4" />

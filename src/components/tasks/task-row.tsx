@@ -43,6 +43,14 @@ export function TaskRow({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const formId = `edit-task-${task.id}`;
+  const PRIORITY_LEFT_COLOUR: Record<string, string> = {
+    high: "#e8001d",
+    medium: "#ff5d00",
+    low: "#aca0ff",
+  };
+  const priorityColour = task.priority
+    ? PRIORITY_LEFT_COLOUR[task.priority] ?? "#aca0ff"
+    : "#aca0ff";
 
   const cancelEdit = () => {
     setValues(taskToFormInput(task));
@@ -134,7 +142,22 @@ export function TaskRow({
   }
 
   return (
-    <div className="relative mb-2 rounded-xl border border-border/60 bg-card p-4 shadow-sm">
+    <div
+      className={cn(
+        "group/row relative mb-2 overflow-hidden rounded-xl border bg-card/60 p-4 transition-all duration-150",
+        task.completed
+          ? "border-border/40 opacity-60"
+          : "border-border/60 hover:border-wisk-section-tasks/30 hover:bg-card/80 hover:shadow-sm",
+        expanded && !task.completed && "border-wisk-section-tasks/30"
+      )}
+    >
+      {!task.completed ? (
+        <div
+          className="absolute inset-y-0 left-0 w-[3px] rounded-l-xl"
+          style={{ background: priorityColour, opacity: 0.7 }}
+        />
+      ) : null}
+
       {expanded ? (
         <button
           type="button"
@@ -149,7 +172,7 @@ export function TaskRow({
       <div
         role="button"
         tabIndex={0}
-        className="group flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-2 pr-6 transition-colors sm:flex-nowrap"
+        className="group flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-2 pl-2 pr-6 transition-colors sm:flex-nowrap"
         onClick={handleRowClick}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
@@ -158,24 +181,36 @@ export function TaskRow({
           }
         }}
       >
-        <Checkbox
-          checked={task.completed}
-          onCheckedChange={handleToggle}
-          onClick={(e) => e.stopPropagation()}
-          disabled={isPending}
-          aria-label={task.completed ? "Mark incomplete" : "Mark complete"}
-        />
+        <div className="flex size-5 shrink-0 items-center justify-center">
+          <Checkbox
+            checked={task.completed}
+            onCheckedChange={handleToggle}
+            onClick={(e) => e.stopPropagation()}
+            disabled={isPending}
+            aria-label={task.completed ? "Mark incomplete" : "Mark complete"}
+            className="size-4.5"
+          />
+        </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span
               className={cn(
-                "font-medium text-foreground",
-                task.completed && "text-muted-foreground line-through"
+                "text-sm font-semibold tracking-tight",
+                task.completed
+                  ? "text-muted-foreground/50 line-through"
+                  : "text-foreground"
               )}
             >
               {task.title}
             </span>
+            {!task.completed && task.priority ? (
+              <span
+                className="inline-flex size-2 shrink-0 rounded-full"
+                style={{ background: priorityColour }}
+                title={task.priority}
+              />
+            ) : null}
             {vis.priorityBadge ? (
               <TaskPriorityBadge priority={task.priority} />
             ) : null}

@@ -43,8 +43,8 @@ function InboxPreview() {
   return (
     <div className="pointer-events-none select-none">
       <div className="mb-6 flex items-center gap-3">
-        <div className="flex size-10 items-center justify-center rounded-xl bg-blue-500/15">
-          <Mail className="size-5 text-blue-500" />
+        <div className="flex size-10 items-center justify-center rounded-xl bg-wisk-section-email/15">
+          <Mail className="size-5 text-wisk-section-email" />
         </div>
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
@@ -125,8 +125,8 @@ export function EmailTeaserPage() {
             transition={{ duration: 0.3, ease: "easeOut" }}
             className="flex flex-col items-center px-6 py-10 text-center"
           >
-            <div className="mb-5 flex size-20 items-center justify-center rounded-2xl bg-blue-500/15 shadow-lg ring-1 ring-blue-500/20">
-              <Mail className="size-9 text-blue-500" />
+            <div className="mb-5 flex size-20 items-center justify-center rounded-2xl bg-wisk-section-email/15 shadow-lg ring-1 ring-wisk-section-email/20">
+              <Mail className="size-9 text-wisk-section-email" />
             </div>
 
             <h1 className="text-3xl font-bold tracking-tight text-foreground">

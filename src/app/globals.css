@@ -25,6 +25,8 @@
   --color-wisk-section-content: var(--wisk-section-content);
   --color-wisk-section-calendar: var(--wisk-section-calendar);
   --color-wisk-section-winston: var(--wisk-section-winston);
+  --color-wisk-section-email: var(--wisk-section-email);
+  --color-wisk-section-notes: var(--wisk-section-notes);
   --color-wisk-dark: var(--wisk-dark);
   --color-wisk-coral: var(--wisk-coral);
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
@@ -105,6 +107,8 @@
   --wisk-section-content: #0044cc;
   --wisk-section-calendar: #007a70;
   --wisk-section-winston: #6200b3;
+  --wisk-section-email: #3730a3;
+  --wisk-section-notes: #a16207;
   --wisk-dark: #141b27;
   --wisk-purple: var(--wisk-lilac);
   --wisk-teal: var(--wisk-turquoise);
@@ -161,6 +165,8 @@
   --wisk-section-content: #0066ff;
   --wisk-section-calendar: #00c4b4;
   --wisk-section-winston: #8b00ff;
+  --wisk-section-email: #818cf8;
+  --wisk-section-notes: #fbbf24;
   --wisk-dark: #141b27;
   --wisk-purple: var(--wisk-lilac);
   --wisk-teal: var(--wisk-turquoise);

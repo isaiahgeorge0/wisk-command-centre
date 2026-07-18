@@ -102,9 +102,18 @@ export function GoalsList({
   return (
     <div className="space-y-8">
       <section>
-        <h2 className="mb-4 text-sm font-medium tracking-wide text-muted-foreground uppercase">
-          Active
-        </h2>
+        <div className="mb-4 flex items-center gap-2">
+          <span
+            className="inline-block size-1.5 shrink-0 rounded-full"
+            style={{ background: "#baf7e1" }}
+          />
+          <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">
+            Active
+          </span>
+          <span className="rounded-full bg-wisk-section-goals/10 px-1.5 py-0.5 text-[10px] font-bold text-wisk-section-goals">
+            {active.length}
+          </span>
+        </div>
         {active.length > 0 ? (
           <GoalGrid
             goals={active}

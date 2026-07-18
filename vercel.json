@@ -1,1 +1,16 @@
-{}
+{
+  "crons": [
+    {
+      "path": "/api/morning-briefing/generate",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/morning-briefing/send",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/away-sync/run",
+      "schedule": "*/15 * * * *"
+    }
+  ]
+}

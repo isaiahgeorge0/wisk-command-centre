@@ -7,7 +7,8 @@ export type UsageFeature =
   | "property_insights"
   | "email_picks_draft"
   | "portal_triage"
-  | "property_valuation";
+  | "property_valuation"
+  | "morning_briefing";
 
 export async function logUsage(
   userId: string,

@@ -63,7 +63,7 @@ function ToolbarButton({
       className={cn(
         "inline-flex min-h-11 min-w-11 items-center justify-center rounded-md px-2 text-sm font-medium transition-colors md:min-h-8 md:min-w-8",
         isActive
-          ? "bg-sky-500/20 text-sky-700 ring-1 ring-sky-500/40 dark:text-sky-300"
+          ? "bg-wisk-section-notes/20 text-wisk-section-notes ring-1 ring-wisk-section-notes/40"
           : "text-muted-foreground hover:bg-muted hover:text-foreground"
       )}
     >

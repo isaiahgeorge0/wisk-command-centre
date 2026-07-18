@@ -5,6 +5,7 @@ import { Fragment, useMemo, useState } from "react";
 
 import { LeadExpandedDetail } from "@/components/leads/lead-expanded-detail";
 import { LeadInlineStatus } from "@/components/leads/lead-inline-status";
+import { LeadScoreBadge } from "@/components/leads/lead-score-badge";
 import { LeadSourceBadge } from "@/components/leads/lead-source-badge";
 import { LeadStatusBadge } from "@/components/leads/lead-status-badge";
 import { LeadsFiltersBar } from "@/components/leads/leads-filters-bar";
@@ -38,6 +39,10 @@ type LeadsTableProps = {
   onFiltersChange: (filters: LeadsFilterState) => void;
   onDelete: (lead: Lead) => void;
   onLeadUpdate: (lead: Lead) => void;
+  bulkMode?: boolean;
+  selectedIds?: Set<string>;
+  toggleSelect?: (id: string) => void;
+  selectAll?: () => void;
   onProjectCreated?: (projectId: string) => void;
   onLeadStatusChange: (
     lead: Lead,
@@ -97,6 +102,10 @@ export function LeadsTable({
   onFiltersChange,
   onDelete,
   onLeadUpdate,
+  bulkMode = false,
+  selectedIds,
+  toggleSelect,
+  selectAll,
   onProjectCreated,
   onLeadStatusChange,
 }: LeadsTableProps) {
@@ -109,6 +118,8 @@ export function LeadsTable({
     () => sortLeads(leads, sortKey, sortDirection),
     [leads, sortKey, sortDirection]
   );
+  const allVisibleSelected =
+    leads.length > 0 && leads.every((lead) => selectedIds?.has(lead.id));
 
   const handleHeaderSort = (key: LeadsSortKey) => {
     if (sortKey === key) {
@@ -166,6 +177,23 @@ export function LeadsTable({
           <table className="w-full border-collapse text-sm">
             <thead className="sticky top-0 z-10 border-b border-border/60 bg-muted/40 backdrop-blur-sm">
               <tr>
+                {bulkMode ? (
+                  <th className="px-4 py-3 text-left">
+                    <input
+                      type="checkbox"
+                      checked={allVisibleSelected}
+                      onChange={() => {
+                        if (allVisibleSelected) {
+                          leads.forEach((lead) => toggleSelect?.(lead.id));
+                        } else {
+                          selectAll?.();
+                        }
+                      }}
+                      className="size-4 rounded accent-wisk-section-leads"
+                      aria-label="Select all leads"
+                    />
+                  </th>
+                ) : null}
                 {SORTABLE_COLUMNS.slice(0, 3).map((column) => (
                   <th
                     key={column.key}
@@ -223,11 +251,26 @@ export function LeadsTable({
                         isExpanded && "bg-muted/20"
                       )}
                     >
+                      {bulkMode ? (
+                        <td className="px-4 py-3 align-top">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds?.has(lead.id) ?? false}
+                            onChange={() => toggleSelect?.(lead.id)}
+                            onClick={(event) => event.stopPropagation()}
+                            className="size-4 rounded accent-wisk-section-leads"
+                            aria-label={`Select ${lead.name}`}
+                          />
+                        </td>
+                      ) : null}
                       <td className="px-4 py-3 align-top">
                         <div className="min-w-0">
-                          <p className="truncate font-medium text-foreground">
-                            {lead.name}
-                          </p>
+                          <div className="flex items-center gap-2">
+                            <p className="truncate font-medium text-foreground">
+                              {lead.name}
+                            </p>
+                            <LeadScoreBadge lead={lead} size="sm" />
+                          </div>
                           {lead.email ? (
                             <p className="truncate text-xs text-muted-foreground">
                               {lead.email}
@@ -289,7 +332,10 @@ export function LeadsTable({
                     </tr>
                     {isExpanded ? (
                       <tr className="border-b border-border/40 bg-muted/10">
-                        <td colSpan={COLUMN_COUNT} className="px-4 py-4">
+                        <td
+                          colSpan={COLUMN_COUNT + (bulkMode ? 1 : 0)}
+                          className="px-4 py-4"
+                        >
                           <LeadExpandedDetail
                             lead={lead}
                             onDelete={onDelete}
@@ -320,17 +366,37 @@ export function LeadsTable({
           return (
             <div
               key={lead.id}
-              className="overflow-hidden rounded-xl border border-border/60 bg-card/80"
+              className="relative overflow-hidden rounded-xl border border-border/60 bg-card/80"
             >
+              {bulkMode ? (
+                <div
+                  className="absolute left-3 top-3 z-10"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedIds?.has(lead.id) ?? false}
+                    onChange={() => toggleSelect?.(lead.id)}
+                    className="size-4 rounded accent-wisk-section-leads"
+                    aria-label={`Select ${lead.name}`}
+                  />
+                </div>
+              ) : null}
               <button
                 type="button"
                 onClick={() => toggleExpanded(lead.id)}
-                className="w-full px-4 py-3 text-left"
+                className={cn(
+                  "w-full px-4 py-3 text-left",
+                  bulkMode && "pl-10"
+                )}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <p className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
-                    {lead.name}
-                  </p>
+                  <div className="flex min-w-0 flex-1 items-center gap-2">
+                    <p className="truncate text-sm font-semibold text-foreground">
+                      {lead.name}
+                    </p>
+                    <LeadScoreBadge lead={lead} size="sm" />
+                  </div>
                   <LeadStatusBadge status={status} />
                 </div>
                 <div className="mt-2 flex items-center justify-between gap-2 text-xs">

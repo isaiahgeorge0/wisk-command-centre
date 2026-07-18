@@ -170,7 +170,7 @@ async function generatePicks(
       usageFeature: "email_picks_draft",
     });
 
-    if (!draft) continue;
+    if (!draft || draft.body.startsWith("NO_REPLY_NEEDED:")) continue;
 
     picks.push({
       emailId: email.id,
