@@ -20,6 +20,7 @@ const URGENCY_COLOURS = {
 
 const CATEGORY_ICONS: Record<string, string> = {
   Tasks: "✓",
+  Projects: "▣",
   Leads: "◎",
   Goals: "◈",
   Content: "◻",
@@ -32,6 +33,11 @@ export function MorningBriefingModal({
   onClose,
 }: MorningBriefingModalProps) {
   const reduced = useReducedMotion() ?? false;
+  const summary =
+    briefing.summary?.trim() ||
+    briefing.headline?.trim() ||
+    briefing.teaser?.trim() ||
+    "";
 
   return (
     <AnimatePresence>
@@ -86,45 +92,56 @@ export function MorningBriefingModal({
             <h2 className="mt-3 text-lg font-bold text-foreground">
               {briefing.greeting}
             </h2>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              {briefing.headline}
-            </p>
+            {summary ? (
+              <p className="mt-3 max-h-[32vh] overflow-y-auto text-sm leading-relaxed text-foreground/80 scrollbar-hide">
+                {summary}
+              </p>
+            ) : null}
           </div>
 
-          <div className="my-4 border-t border-border/40" />
+          {(briefing.focuses?.length ?? 0) > 0 ? (
+            <>
+              <div className="my-4 border-t border-border/40" />
 
-          <div className="max-h-[40vh] space-y-1 overflow-y-auto scrollbar-hide">
-            {briefing.focuses.map((focus, index) => {
-              const colour =
-                URGENCY_COLOURS[focus.urgency] ?? URGENCY_COLOURS.low;
-              return (
-                <Link
-                  key={`${focus.category}-${focus.item}-${index}`}
-                  href={focus.href}
-                  onClick={onClose}
-                  className="flex items-start gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-muted/30"
-                >
-                  <div
-                    className="mt-0.5 h-5 w-[3px] shrink-0 rounded-full"
-                    style={{ background: colour }}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <span
-                      className="text-[10px] font-semibold uppercase tracking-wider"
-                      style={{ color: colour }}
+              <div className="max-h-[28vh] space-y-1 overflow-y-auto scrollbar-hide">
+                {briefing.focuses.map((focus, index) => {
+                  const colour =
+                    URGENCY_COLOURS[focus.urgency] ?? URGENCY_COLOURS.low;
+                  return (
+                    <Link
+                      key={`${focus.category}-${focus.item}-${index}`}
+                      href={focus.href}
+                      onClick={onClose}
+                      className="flex items-start gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-muted/30"
                     >
-                      {CATEGORY_ICONS[focus.category] ?? "·"} {focus.category}
-                    </span>
-                    <p className="text-sm text-foreground/90">{focus.item}</p>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+                      <div
+                        className="mt-0.5 h-5 w-[3px] shrink-0 rounded-full"
+                        style={{ background: colour }}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <span
+                          className="text-[10px] font-semibold uppercase tracking-wider"
+                          style={{ color: colour }}
+                        >
+                          {CATEGORY_ICONS[focus.category] ?? "·"}{" "}
+                          {focus.category}
+                        </span>
+                        <p className="text-sm text-foreground/90">
+                          {focus.item}
+                        </p>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </>
+          ) : null}
 
-          <p className="mt-5 text-center text-xs italic text-muted-foreground/60">
-            &ldquo;{briefing.encouragement}&rdquo; — Winston
-          </p>
+          {briefing.encouragement ? (
+            <p className="mt-5 text-center text-xs italic text-muted-foreground/60">
+              &ldquo;{briefing.encouragement}&rdquo; — Winston
+            </p>
+          ) : null}
 
           <div className="mt-6 flex items-center gap-3">
             <Link

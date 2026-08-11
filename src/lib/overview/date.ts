@@ -38,8 +38,12 @@ export function isWithinNext7Days(
   );
 }
 
-export function formatOverviewDate(date: Date = new Date()): string {
+export function formatOverviewDate(
+  date: Date = new Date(),
+  timezone?: string
+): string {
   return new Intl.DateTimeFormat("en-GB", {
+    ...(timezone ? { timeZone: timezone } : {}),
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -72,7 +76,45 @@ export type OverviewDateContext = {
   hour: number;
 };
 
-export function getOverviewDateContext(now: Date = new Date()): OverviewDateContext {
+export function getOverviewDateContext(
+  now: Date = new Date(),
+  timezone?: string
+): OverviewDateContext {
+  if (timezone) {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: timezone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      weekday: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(now);
+
+    const get = (type: Intl.DateTimeFormatPartTypes) =>
+      parts.find((part) => part.type === type)?.value ?? "";
+
+    const weekday = get("weekday");
+    const weekdayMap: Record<string, number> = {
+      Sun: 0,
+      Mon: 1,
+      Tue: 2,
+      Wed: 3,
+      Thu: 4,
+      Fri: 5,
+      Sat: 6,
+    };
+
+    const todayISO = `${get("year")}-${get("month")}-${get("day")}`;
+    return {
+      todayISO,
+      weekEndISO: addDaysToISO(todayISO, 6),
+      dayOfWeek: weekdayMap[weekday] ?? now.getDay(),
+      hour: Number(get("hour")),
+    };
+  }
+
   const todayISO = toDateISO(now);
   return {
     todayISO,
@@ -89,9 +131,10 @@ export type OverviewHeaderContent = {
 
 export function getOverviewHeader(
   now: Date = new Date(),
-  displayName?: string | null
+  displayName?: string | null,
+  timezone?: string
 ): OverviewHeaderContent {
-  const { dayOfWeek, hour } = getOverviewDateContext(now);
+  const { dayOfWeek, hour } = getOverviewDateContext(now, timezone);
 
   if (dayOfWeek === 1) {
     return {
@@ -115,6 +158,6 @@ export function getOverviewHeader(
 
   return {
     title,
-    subtitle: formatOverviewDate(now),
+    subtitle: formatOverviewDate(now, timezone),
   };
 }

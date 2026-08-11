@@ -9,6 +9,7 @@ import { resolveDisplayName } from "@/lib/auth/resolve-display-name";
 import { getUserProfile } from "@/lib/auth/get-user-profile";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { getOrCreateUserPreferences } from "@/lib/preferences/get-user-preferences";
+import { normalizeGender } from "@/lib/morning/greeting";
 import type { LandlordContact } from "@/lib/users/landlord-contact";
 
 export default async function SettingsPage() {
@@ -21,7 +22,7 @@ export default async function SettingsPage() {
       getIntegrations(),
       supabase
         .from("user_preferences")
-        .select("ai_access, winston_email_picks_enabled")
+        .select("ai_access, winston_email_picks_enabled, gender, greeting_term")
         .eq("user_id", userId)
         .maybeSingle(),
       getMonthlyUsage(),
@@ -76,6 +77,8 @@ export default async function SettingsPage() {
         billingPlan={billing.plan}
         billingPlanLabel={billing.planLabel}
         billingPeriodEnd={billing.currentPeriodEnd}
+        gender={normalizeGender(prefsRow.data?.gender)}
+        greetingTerm={prefsRow.data?.greeting_term ?? null}
       />
     </Suspense>
   );

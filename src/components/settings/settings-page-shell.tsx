@@ -7,6 +7,7 @@ import { PAGE_TITLE_CLASS, PAGE_SUBTITLE_CLASS } from "@/lib/navigation";
 import type { MonthlyUsage } from "@/lib/ai/types";
 import type { BillingPlan } from "@/lib/billing/types";
 import type { SafeIntegration } from "@/lib/integrations/types";
+import type { UserGender } from "@/lib/morning/greeting";
 import type { FieldVisibility } from "@/lib/preferences/types";
 import type { LandlordContact } from "@/lib/users/landlord-contact";
 
@@ -26,6 +27,8 @@ type SettingsPageShellProps = {
   billingPlan?: BillingPlan;
   billingPlanLabel?: string;
   billingPeriodEnd?: string | null;
+  gender?: UserGender;
+  greetingTerm?: string | null;
 };
 
 export function SettingsPageShell({

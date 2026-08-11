@@ -453,3 +453,45 @@ export async function updateWinstonFeatureToggle(
   revalidatePath("/settings");
   return { success: true };
 }
+
+const greetingPreferencesSchema = z.object({
+  gender: z.enum(["male", "female", "unspecified"]),
+  greetingTerm: z
+    .string()
+    .max(40, "Greeting term must be 40 characters or fewer"),
+});
+
+export async function updateGreetingPreferences(input: {
+  gender: string;
+  greetingTerm: string;
+}): Promise<SettingsActionResult> {
+  const parsed = greetingPreferencesSchema.safeParse({
+    gender: input.gender,
+    greetingTerm: input.greetingTerm.trim(),
+  });
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid greeting preferences",
+    };
+  }
+
+  const greetingTerm = parsed.data.greetingTerm.trim() || null;
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { error } = await supabase
+    .from("user_preferences")
+    .update({
+      gender: parsed.data.gender,
+      greeting_term: greetingTerm,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", userId);
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  revalidateApp();
+  return { success: true };
+}

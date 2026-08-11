@@ -7,6 +7,7 @@ import { SettingsBillingSection } from "@/components/settings/settings-billing-s
 import { SettingsFeedbackSection } from "@/components/settings/settings-feedback-section";
 import { SettingsHelpSection } from "@/components/settings/settings-help-section";
 import { SettingsIntegrationsSection } from "@/components/settings/settings-integrations-section";
+import { SettingsPersonalisationSection } from "@/components/settings/settings-personalisation-section";
 import { SettingsPreferencesSection } from "@/components/settings/settings-preferences-section";
 import { SettingsProfileSection } from "@/components/settings/settings-profile-section";
 import { SettingsServiceTypesSection } from "@/components/settings/settings-service-types-section";
@@ -20,6 +21,7 @@ import {
 import type { MonthlyUsage } from "@/lib/ai/types";
 import type { BillingPlan } from "@/lib/billing/types";
 import type { SafeIntegration } from "@/lib/integrations/types";
+import type { UserGender } from "@/lib/morning/greeting";
 import type { FieldVisibility } from "@/lib/preferences/types";
 import type { LandlordContact } from "@/lib/users/landlord-contact";
 
@@ -38,6 +40,8 @@ type SettingsPageClientProps = {
   billingPlan?: BillingPlan;
   billingPlanLabel?: string;
   billingPeriodEnd?: string | null;
+  gender?: UserGender;
+  greetingTerm?: string | null;
 };
 
 export function SettingsPageClient({
@@ -55,6 +59,8 @@ export function SettingsPageClient({
   billingPlan = "free",
   billingPlanLabel = "Free",
   billingPeriodEnd = null,
+  gender = "unspecified",
+  greetingTerm = null,
 }: SettingsPageClientProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -210,6 +216,10 @@ export function SettingsPageClient({
 
       {activeTab === "preferences" ? (
         <div className="space-y-8">
+          <SettingsPersonalisationSection
+            initialGender={gender}
+            initialGreetingTerm={greetingTerm}
+          />
           <SettingsPreferencesSection fieldVisibility={fieldVisibility} />
           <SettingsBillingSection
             plan={billingPlan}

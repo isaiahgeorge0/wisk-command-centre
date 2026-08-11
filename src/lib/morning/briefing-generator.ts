@@ -1,10 +1,20 @@
 import { logUsage } from "@/lib/ai/usage-logger";
-import { formatLocalDate } from "@/lib/morning/timezone";
+import {
+  buildDeadlineTeaser,
+  buildGreetingLine,
+  resolveGreetingTerm,
+  type UserGender,
+} from "@/lib/morning/greeting";
+import { formatLocalDate, getLocalTime } from "@/lib/morning/timezone";
 
 export type MorningBriefingContent = {
   greeting: string;
   date: string;
+  /** Collapsed-card teaser. Missing on pre-066 rows — fall back to headline. */
+  teaser?: string;
   headline: string;
+  /** Expanded modal prose. Missing on pre-066 rows — fall back to headline. */
+  summary?: string;
   focuses: Array<{
     category: string;
     item: string;
@@ -23,6 +33,8 @@ export type BriefingContext = {
   contentDueToday: Array<{ title: string }>;
   openMaintenance: number;
   rentDueCount: number;
+  projectsPastDeadline: Array<{ title: string; deadline: string }>;
+  projectsApproachingDeadline: Array<{ title: string; deadline: string }>;
 };
 
 type AnthropicResponse = {
@@ -39,6 +51,7 @@ type GeneratedFocus = {
 
 const CATEGORY_HREFS: Record<string, string> = {
   Tasks: "/tasks",
+  Projects: "/projects",
   Leads: "/leads",
   Goals: "/goals",
   Content: "/content",
@@ -47,12 +60,27 @@ const CATEGORY_HREFS: Record<string, string> = {
 
 const URGENCIES = new Set(["high", "medium", "low"]);
 
+export type GenerateBriefingOptions = {
+  userId: string;
+  displayName: string;
+  gender?: UserGender | null;
+  greetingTerm?: string | null;
+  context: BriefingContext;
+  timezone: string;
+};
+
 export async function generateMorningBriefing(
-  userId: string,
-  displayName: string,
-  context: BriefingContext,
-  timezone: string
+  options: GenerateBriefingOptions
 ): Promise<MorningBriefingContent> {
+  const {
+    userId,
+    displayName,
+    gender,
+    greetingTerm,
+    context,
+    timezone,
+  } = options;
+
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     throw new Error("ANTHROPIC_API_KEY is not configured");
@@ -60,14 +88,24 @@ export async function generateMorningBriefing(
 
   const now = new Date();
   const dateLabel = formatLocalDate(timezone, now);
-  const systemPrompt = `You are Winston, WISK's AI business assistant. You are generating a morning briefing for ${displayName}. Be concise, warm, and direct. Sound like a trusted advisor who knows their business well — not a corporate assistant. Never use filler phrases like "Certainly!" or "Great question!".
+  const { hour } = getLocalTime(timezone, now);
+  const term = resolveGreetingTerm(gender, greetingTerm);
+  const greeting = buildGreetingLine(hour, term);
+  const teaser = buildDeadlineTeaser(
+    greeting,
+    context.projectsApproachingDeadline.length,
+    context.projectsPastDeadline.length
+  );
+
+  const systemPrompt = `You are Winston, WISK's AI business assistant. You are generating a morning briefing for someone you address as "${term}" (display name on file: ${displayName}). Be confident, direct, and premium — warm without being corporate or cheesy. Never use filler phrases like "Certainly!" or "Great question!".
 
 Return ONLY valid JSON matching this exact shape:
 {
   "headline": "one sentence, Winston's read on today",
+  "summary": "a flowing natural-language paragraph covering what matters today",
   "focuses": [
     {
-      "category": "Tasks|Leads|Goals|Content|Properties",
+      "category": "Tasks|Projects|Leads|Goals|Content|Properties",
       "item": "specific actionable item",
       "urgency": "high|medium|low"
     }
@@ -76,15 +114,32 @@ Return ONLY valid JSON matching this exact shape:
 }
 
 Rules:
-- focuses: 3-5 items maximum, most urgent first
-- Only include focuses that genuinely need attention today
-- If something is overdue, say so directly
-- encouragement: one sentence, no exclamation marks
-- headline: under 15 words, specific to their situation`;
+- summary: target 150–200 words when there is enough to say. Shorter is fine if the day is light. Only go longer when there is genuinely a lot that needs attention. Cover key tasks, projects, goals, and other time-sensitive items. Do not invent urgency — if nothing is urgent, say the day looks manageable and point to useful focus areas.
+- focuses: 3-5 items maximum, most urgent first. Only include items that genuinely need attention today.
+- If something is overdue, say so directly.
+- encouragement: one sentence, no exclamation marks.
+- headline: under 15 words, specific to their situation.
+- Do not include a greeting or teaser in the JSON — those are built separately.`;
 
   const userPrompt = `Today is ${dateLabel}.
 
 Business context:
+${
+  context.projectsPastDeadline.length > 0
+    ? `PROJECTS PAST DEADLINE (${context.projectsPastDeadline.length}): ${context.projectsPastDeadline
+        .slice(0, 5)
+        .map((project) => project.title)
+        .join(", ")}`
+    : "No projects past deadline."
+}
+${
+  context.projectsApproachingDeadline.length > 0
+    ? `PROJECTS APPROACHING DEADLINE (${context.projectsApproachingDeadline.length}): ${context.projectsApproachingDeadline
+        .slice(0, 5)
+        .map((project) => `${project.title} (${project.deadline})`)
+        .join(", ")}`
+    : "No projects approaching deadline."
+}
 ${
   context.overdueTasks.length > 0
     ? `OVERDUE TASKS (${context.overdueTasks.length}): ${context.overdueTasks
@@ -146,7 +201,7 @@ Generate the morning briefing JSON.`;
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
-      max_tokens: 600,
+      max_tokens: 1200,
       system: systemPrompt,
       messages: [{ role: "user", content: userPrompt }],
     }),
@@ -164,12 +219,14 @@ Generate the morning briefing JSON.`;
   const clean = text.replace(/```json/g, "").replace(/```/g, "").trim();
   const parsed = JSON.parse(clean) as {
     headline?: unknown;
+    summary?: unknown;
     focuses?: unknown;
     encouragement?: unknown;
   };
 
   if (
     typeof parsed.headline !== "string" ||
+    typeof parsed.summary !== "string" ||
     !Array.isArray(parsed.focuses) ||
     typeof parsed.encouragement !== "string"
   ) {
@@ -203,9 +260,11 @@ Generate the morning briefing JSON.`;
   );
 
   return {
-    greeting: `Good morning, ${displayName}`,
+    greeting,
     date: dateLabel,
+    teaser,
     headline: parsed.headline,
+    summary: parsed.summary,
     focuses,
     encouragement: parsed.encouragement,
     generatedAt: now.toISOString(),

@@ -661,7 +661,7 @@ export function OverviewPageClient({
                 <OverviewHeader header={snapshot.header} />
               </div>
 
-              {canAccessWhileAway ? (
+              {canAccessWhileAway && morningBriefing ? (
                 <div className="hidden w-72 shrink-0 md:block">
                   <MorningBriefing
                     briefing={morningBriefing}

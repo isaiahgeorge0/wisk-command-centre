@@ -145,3 +145,23 @@ Hard-won notes from building the Properties package and contractor portal. Worth
 **Migrations**
 - `pgcrypto` extension required for `gen_random_bytes()` — always add `create extension if not exists pgcrypto` at the top of migrations that use it, or use `gen_random_uuid()` concatenation as an alternative
 - Migration ordering matters — policies referencing tables must come after those tables are created
+
+### Vercel crons (Hobby plan)
+- Hobby plan only supports once-per-day crons — expressions like */5 or */15 will fail deployment
+- Use `0 H * * *` format (e.g. `0 7 * * *` for 7am UTC)
+- Upgrade to Vercel Pro for per-minute precision needed by morning briefing and away sync
+
+### Hydration errors from CSS functions
+- color-mix() in inline style props renders differently server vs client — causes React hydration mismatch
+- Always use rgba() equivalents instead: color-mix(in srgb, #aca0ff 15%, transparent) = rgba(172,160,255,0.15)
+- This applies to all dynamically computed background/border colours in style={{}} props
+
+### Sign-up flow (new)
+- New users go through /sign-up → email confirmation → /auth/callback?type=signup → /welcome
+- /welcome is the onboarding page (was /set-password) — checks user_metadata.password_set to hide password fields for email+password signups
+- getOrCreateUserPreferences uses upsert (not insert) to handle race conditions with DB triggers
+
+### Section colours (theme-aware)
+- SECTION_COLOURS must be split into SECTION_COLOURS_DARK and SECTION_COLOURS_LIGHT
+- Use useTheme() from next-themes inside client components to switch between them
+- Never use hardcoded dark-mode hex for section colours — they break in light mode

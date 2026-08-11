@@ -14,6 +14,7 @@ export async function updateAccountSetup(input: {
   displayName: string;
   username: string;
   themePreference: ThemePreference;
+  gender?: string;
 }): Promise<AccountSetupResult> {
   const trimmedName = input.displayName.trim();
   if (!trimmedName) {
@@ -55,11 +56,17 @@ export async function updateAccountSetup(input: {
     return { success: false, error: "Could not save your details. Please try again." };
   }
 
+  const gender =
+    input.gender === "male" || input.gender === "female"
+      ? input.gender
+      : "unspecified";
+
   const { error: prefsError } = await supabase
     .from("user_preferences")
     .update({
       display_name: trimmedName,
       theme_preference: input.themePreference,
+      gender,
       personalisation_completed: true,
       username_set: true,
       updated_at: new Date().toISOString(),

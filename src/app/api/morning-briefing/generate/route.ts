@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { buildBriefingContext } from "@/lib/morning/briefing-context";
 import { generateMorningBriefing } from "@/lib/morning/briefing-generator";
+import { normalizeGender } from "@/lib/morning/greeting";
 import {
   getTodaysBriefing,
   storeMorningBriefing,
@@ -49,7 +50,7 @@ export async function GET(request: Request) {
   const [{ data: preferences }, { data: users }] = await Promise.all([
     supabase
       .from("user_preferences")
-      .select("user_id, timezone, display_name")
+      .select("user_id, timezone, display_name, gender, greeting_term")
       .in("user_id", userIds),
     supabase.from("users").select("id, name").in("id", userIds),
   ]);
@@ -86,12 +87,14 @@ export async function GET(request: Request) {
         usersById.get(userId)?.name?.trim() ||
         "there";
       const context = await buildBriefingContext(userId, timezone);
-      const content = await generateMorningBriefing(
+      const content = await generateMorningBriefing({
         userId,
         displayName,
+        gender: normalizeGender(preference?.gender),
+        greetingTerm: preference?.greeting_term ?? null,
         context,
-        timezone
-      );
+        timezone,
+      });
       await storeMorningBriefing(userId, content, timezone, now);
       generated += 1;
     } catch (error) {

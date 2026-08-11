@@ -26,6 +26,7 @@ import { hasAIAccess, hasPackageAccess } from "@/lib/billing/access";
 import { shouldShowUpgradeBanner } from "@/lib/billing/banner";
 import { getUserBillingSummary } from "@/lib/billing/plan";
 import { getTodaysBriefing } from "@/lib/morning/briefing-store";
+import { normaliseTimezone } from "@/lib/morning/timezone";
 import { getOrCreateUserPreferences } from "@/lib/preferences/get-user-preferences";
 import { buildPortfolioStats } from "@/lib/properties/selectors";
 import { buildOverviewSnapshot } from "@/lib/overview/selectors";
@@ -65,7 +66,7 @@ export default async function OverviewPage() {
     getOrCreateUserPreferences(),
     supabase
       .from("user_preferences")
-      .select("ai_access, upgrade_banner_dismissed_at, last_active_at")
+      .select("ai_access, upgrade_banner_dismissed_at, last_active_at, timezone")
       .eq("user_id", userId)
       .maybeSingle(),
     getUserBillingSummary(userId),
@@ -89,6 +90,7 @@ export default async function OverviewPage() {
     prefsRow.data?.ai_access ?? false
   );
   const lastActiveAt = prefsRow.data?.last_active_at ?? null;
+  const timezone = normaliseTimezone(prefsRow.data?.timezone);
 
   void updateLastActive().catch(() => {});
 
@@ -167,7 +169,8 @@ export default async function OverviewPage() {
     leads,
     contentPosts,
     new Date(),
-    displayName
+    displayName,
+    timezone
   );
 
   return (

@@ -101,7 +101,7 @@ export async function sendMorningBriefingEmail({
           <tr>
             <td style="padding-bottom:32px;text-align:center;">
               <p style="margin:0;font-size:15px;color:rgba(255,255,255,0.55);line-height:1.5;">
-                ${escapeHtml(content.headline)}
+                ${escapeHtml(content.summary?.trim() || content.headline)}
               </p>
             </td>
           </tr>

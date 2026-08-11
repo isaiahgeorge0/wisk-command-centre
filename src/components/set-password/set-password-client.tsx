@@ -12,6 +12,7 @@ import { UsernameField } from "@/components/username/username-field";
 import { ThemePreferenceCards } from "@/components/welcome/theme-preference-cards";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { normalizeGender, type UserGender } from "@/lib/morning/greeting";
 import { MOTION_DURATION, MOTION_EASE } from "@/lib/motion/config";
 import { createClient } from "@/lib/supabase/client";
 import type { ThemePreference } from "@/lib/preferences/types";
@@ -36,6 +37,7 @@ export function SetPasswordClient({
   const [username, setUsername] = useState("");
   const [usernameAvailable, setUsernameAvailable] = useState(false);
   const [themePreference, setThemePreference] = useState<ThemePreference>("dark");
+  const [gender, setGender] = useState<UserGender>("unspecified");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, toggleShowPassword] = useReducer((s) => !s, false);
@@ -98,7 +100,12 @@ export function SetPasswordClient({
         }
       }
 
-      const result = await updateAccountSetup({ displayName, username, themePreference });
+      const result = await updateAccountSetup({
+        displayName,
+        username,
+        themePreference,
+        gender,
+      });
 
       if (!result.success) {
         setError(result.error);
@@ -195,6 +202,30 @@ export function SetPasswordClient({
                   />
                   <p className="text-xs text-muted-foreground">
                     You can change this any time in Settings.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="sp-gender">
+                    How should Winston address you?{" "}
+                    <span className="font-normal text-muted-foreground">
+                      (optional)
+                    </span>
+                  </Label>
+                  <select
+                    id="sp-gender"
+                    value={gender}
+                    onChange={(e) => setGender(normalizeGender(e.target.value))}
+                    disabled={isPending}
+                    className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="unspecified">Prefer not to say</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                  </select>
+                  <p className="text-xs text-muted-foreground">
+                    Used for morning briefing greetings. You can change this or
+                    add a custom greeting term later in Settings.
                   </p>
                 </div>
 

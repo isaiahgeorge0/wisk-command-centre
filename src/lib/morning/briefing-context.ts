@@ -3,6 +3,8 @@ import { getLocalDateKey } from "@/lib/morning/timezone";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+/** Projects with deadlines within this many days (future) count as "approaching". */
+const PROJECT_APPROACHING_DAYS = 14;
 
 export async function buildBriefingContext(
   userId: string,
@@ -10,61 +12,100 @@ export async function buildBriefingContext(
 ): Promise<BriefingContext> {
   const supabase = createAdminClient();
   const today = getLocalDateKey(timezone);
-  const deadlineCutoff = getLocalDateKey(
+  const approachingCutoff = getLocalDateKey(
     timezone,
-    new Date(Date.now() + 14 * DAY_MS)
+    new Date(Date.now() + PROJECT_APPROACHING_DAYS * DAY_MS)
   );
+  const goalDeadlineCutoff = approachingCutoff;
 
-  const [tasks, leads, goals, content, maintenance, rent] = await Promise.all([
-    supabase
-      .from("tasks")
-      .select("title, due_date, completed")
-      .eq("user_id", userId)
-      .eq("completed", false)
-      .not("due_date", "is", null)
-      .lte("due_date", today)
-      .order("due_date", { ascending: true })
-      .limit(10),
-    supabase
-      .from("leads")
-      .select("name, updated_at, status")
-      .eq("user_id", userId)
-      .not("status", "in", "(won,lost)")
-      .lt("updated_at", new Date(Date.now() - 7 * DAY_MS).toISOString())
-      .limit(5),
-    supabase
-      .from("goals")
-      .select("title, deadline, status")
-      .eq("user_id", userId)
-      .eq("status", "active")
-      .not("deadline", "is", null)
-      .gte("deadline", today)
-      .lte("deadline", deadlineCutoff)
-      .order("deadline", { ascending: true })
-      .limit(5),
-    supabase
-      .from("content_posts")
-      .select("title, scheduled_date")
-      .eq("user_id", userId)
-      .eq("scheduled_date", today)
-      .limit(5),
-    supabase
-      .from("maintenance_tickets")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .in("status", ["new", "in_progress"]),
-    supabase
-      .from("rent_payments")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .eq("status", "pending")
-      .lte("due_date", today),
-  ]);
+  const [tasks, leads, goals, content, maintenance, rent, projects] =
+    await Promise.all([
+      supabase
+        .from("tasks")
+        .select("title, due_date, completed")
+        .eq("user_id", userId)
+        .eq("completed", false)
+        .not("due_date", "is", null)
+        .lte("due_date", today)
+        .order("due_date", { ascending: true })
+        .limit(10),
+      supabase
+        .from("leads")
+        .select("name, updated_at, status")
+        .eq("user_id", userId)
+        .not("status", "in", "(won,lost)")
+        .lt("updated_at", new Date(Date.now() - 7 * DAY_MS).toISOString())
+        .limit(5),
+      supabase
+        .from("goals")
+        .select("title, deadline, status")
+        .eq("user_id", userId)
+        .eq("status", "active")
+        .not("deadline", "is", null)
+        .gte("deadline", today)
+        .lte("deadline", goalDeadlineCutoff)
+        .order("deadline", { ascending: true })
+        .limit(5),
+      supabase
+        .from("content_posts")
+        .select("title, scheduled_date")
+        .eq("user_id", userId)
+        .eq("scheduled_date", today)
+        .limit(5),
+      supabase
+        .from("maintenance_tickets")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .in("status", ["new", "in_progress"]),
+      supabase
+        .from("rent_payments")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("status", "pending")
+        .lte("due_date", today),
+      supabase
+        .from("projects")
+        .select("project_name, deadline, status")
+        .eq("user_id", userId)
+        .in("status", ["active", "paused"])
+        .not("deadline", "is", null)
+        .lte("deadline", approachingCutoff)
+        .order("deadline", { ascending: true })
+        .limit(20),
+    ]);
 
   const taskRows = (tasks.data ?? []).filter(
     (task): task is typeof task & { due_date: string } =>
       typeof task.due_date === "string"
   );
+
+  const projectRows = (projects.data ?? []).filter(
+    (
+      project
+    ): project is typeof project & {
+      deadline: string;
+      project_name: string;
+    } =>
+      typeof project.deadline === "string" &&
+      typeof project.project_name === "string"
+  );
+
+  const projectsPastDeadline = projectRows
+    .filter((project) => project.deadline < today)
+    .map((project) => ({
+      title: project.project_name,
+      deadline: project.deadline,
+    }));
+
+  const projectsApproachingDeadline = projectRows
+    .filter(
+      (project) =>
+        project.deadline >= today && project.deadline <= approachingCutoff
+    )
+    .map((project) => ({
+      title: project.project_name,
+      deadline: project.deadline,
+    }));
 
   return {
     overdueTasks: taskRows
@@ -90,5 +131,7 @@ export async function buildBriefingContext(
     })),
     openMaintenance: maintenance.count ?? 0,
     rentDueCount: rent.count ?? 0,
+    projectsPastDeadline,
+    projectsApproachingDeadline,
   };
 }
