@@ -2,19 +2,21 @@ import {
   ACTIVE_PIPELINE_STATUSES,
   PIPELINE_STATUSES,
 } from "@/lib/leads/constants";
-import { daysInStage } from "@/lib/leads/format";
+import { daysInStage, sumLeadValuesByType } from "@/lib/leads/format";
 import type {
   Lead,
   LeadStatus,
   LeadWithActivity,
   LeadsFilterState,
   LeadsSortKey,
+  PipelineValueSplit,
 } from "@/lib/leads/types";
 
 export type LeadStats = {
   leadsThisMonth: number;
   conversionRate: number;
-  pipelineValue: number;
+  /** Prefer showing via formatPipelineValueSplit — do not blend units. */
+  pipelineValue: PipelineValueSplit;
   averageResponseDays: number | null;
 };
 
@@ -51,11 +53,10 @@ export function buildLeadStats(leads: Lead[], now: Date = new Date()): LeadStats
   const closed = won + lost;
   const conversionRate = closed > 0 ? Math.round((won / closed) * 100) : 0;
 
-  const pipelineValue = leads
-    .filter((lead) =>
-      ACTIVE_PIPELINE_STATUSES.includes(lead.status as LeadStatus)
-    )
-    .reduce((sum, lead) => sum + (lead.value ?? 0), 0);
+  const activeLeads = leads.filter((lead) =>
+    ACTIVE_PIPELINE_STATUSES.includes(lead.status as LeadStatus)
+  );
+  const pipelineValue = sumLeadValuesByType(activeLeads);
 
   const responseDays = leads
     .filter((lead) => lead.contacted_at)

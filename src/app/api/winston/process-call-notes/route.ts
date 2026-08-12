@@ -2,10 +2,13 @@ import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { z } from "zod";
 
+import { ANTHROPIC_TIMEOUT_MS } from "@/lib/ai/constants";
+import { cachedSystemPrompt } from "@/lib/ai/anthropic";
 import { logUsage } from "@/lib/ai/usage-logger";
 import { hasAIAccess } from "@/lib/billing/access";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { LEAD_STATUS_LABELS } from "@/lib/leads/constants";
+import { formatLeadValue } from "@/lib/leads/format";
 import type { CallNotesResult } from "@/lib/leads/types";
 import { LEAD_STATUSES } from "@/lib/leads/types";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -106,7 +109,7 @@ export async function POST(request: Request) {
 
     const { data: lead, error: leadError } = await supabase
       .from("leads")
-      .select("id, name, status, service_interest, value, notes")
+      .select("id, name, status, service_interest, value, value_type, notes")
       .eq("id", leadId)
       .eq("user_id", userId)
       .maybeSingle();
@@ -136,7 +139,14 @@ export async function POST(request: Request) {
     const userPrompt = `Lead name: ${lead.name}
 Current stage: ${stageLabel} (${lead.status})
 Service interest: ${lead.service_interest}
-Current value: ${lead.value ?? "Not set"}
+Current value: ${
+  lead.value != null
+    ? formatLeadValue(
+        lead.value,
+        lead.value_type === "monthly" ? "monthly" : "one_time"
+      )
+    : "Not set"
+}
 
 Call notes/transcript:
 ${notes}
@@ -164,11 +174,12 @@ Extract and return this JSON structure:
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 1024,
-        system: SYSTEM_PROMPT,
+        system: cachedSystemPrompt(SYSTEM_PROMPT),
         messages: [{ role: "user", content: userPrompt }],
       }),
+      signal: AbortSignal.timeout(ANTHROPIC_TIMEOUT_MS),
     });
 
     if (!claudeResponse.ok) {

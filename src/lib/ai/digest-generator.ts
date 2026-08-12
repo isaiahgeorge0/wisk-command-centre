@@ -1,4 +1,7 @@
 import type { UserContext } from "@/lib/ai/context-builder";
+import { formatBusinessContext } from "@/lib/ai/format-user-context";
+import { ANTHROPIC_TIMEOUT_MS } from "@/lib/ai/constants";
+import { cachedSystemPrompt } from "@/lib/ai/anthropic";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -66,192 +69,38 @@ function buildUserPrompt(ctx: UserContext): string {
     );
   }
   lines.push(`Week reviewed: ${ctx.weekStart} to ${ctx.weekEnd}`);
-  lines.push(``);
-
-  // Projects
-  lines.push(`## PROJECTS (Active: ${ctx.projects.active.length})`);
-  for (const p of ctx.projects.active) {
-    const deadline = p.deadline ? `, deadline ${p.deadline}` : "";
-    const value = p.value ? `, value £${p.value}` : "";
-    const tasks = p.task_count > 0 ? `, ${p.task_count} open tasks` : "";
-    const next = p.next_action ? `, next: "${p.next_action}"` : "";
-    lines.push(`- ${p.name}${deadline}${value}${tasks}${next}`);
-  }
-  if (ctx.projects.stalled.length > 0) {
-    lines.push(`Stalled (no update in 7+ days): ${ctx.projects.stalled.join(", ")}`);
-  }
-  if (ctx.projects.deadlineSoon.length > 0) {
-    lines.push(`Deadline this week: ${ctx.projects.deadlineSoon.join(", ")}`);
-  }
-  lines.push(``);
-
-  // Tasks
-  lines.push(`## TASKS`);
-  lines.push(`Completed this week: ${ctx.tasks.completedCount}`);
-  if (ctx.tasks.completedTitles.length > 0) {
-    lines.push(`Completed titles: ${ctx.tasks.completedTitles.slice(0, 10).join(", ")}`);
-  }
-  if (ctx.tasks.overdue.length > 0) {
-    lines.push(`Overdue (${ctx.tasks.overdue.length}): ${ctx.tasks.overdue.slice(0, 8).join(", ")}`);
-  }
-  if (ctx.tasks.dueSoon.length > 0) {
-    lines.push(`Due this week: ${ctx.tasks.dueSoon.slice(0, 8).join(", ")}`);
-  }
-  if (ctx.tasks.highPriorityIncomplete.length > 0) {
-    lines.push(`High priority incomplete: ${ctx.tasks.highPriorityIncomplete.slice(0, 5).join(", ")}`);
-  }
-  lines.push(``);
-
-  // Goals
-  lines.push(`## GOALS`);
-  for (const g of ctx.goals.all.slice(0, 8)) {
-    const deadline = g.deadline ? `, deadline ${g.deadline}` : "";
-    lines.push(`- ${g.title}: ${g.percentComplete}% (${g.current}/${g.target} ${g.unit ?? ""})${deadline} [${g.status}]`);
-  }
-  if (ctx.goals.completedThisWeek.length > 0) {
-    lines.push(`Reached 100% this week: ${ctx.goals.completedThisWeek.join(", ")}`);
-  }
-  if (ctx.goals.noProgressStalled.length > 0) {
-    lines.push(`No progress in 7+ days: ${ctx.goals.noProgressStalled.join(", ")}`);
-  }
-  lines.push(``);
-
-  // Leads
-  lines.push(`## LEADS`);
-  lines.push(`Total pipeline value: £${ctx.leads.totalPipelineValue}`);
-  if (ctx.leads.newThisWeek.length > 0) {
-    lines.push(`New this week: ${ctx.leads.newThisWeek.join(", ")}`);
-  }
-  if (ctx.leads.wonThisWeek.length > 0) {
-    const wonStr = ctx.leads.wonThisWeek
-      .map((l) => (l.value ? `${l.name} (£${l.value})` : l.name))
-      .join(", ");
-    lines.push(`Won this week: ${wonStr}`);
-  }
-  if (ctx.leads.stalled.length > 0) {
-    lines.push(`Stalled 14+ days: ${ctx.leads.stalled.join(", ")}`);
-  }
-  lines.push(``);
+  lines.push("");
+  lines.push(formatBusinessContext(ctx, { includeProExtras: isPro }));
+  lines.push("");
 
   if (isPro) {
-    lines.push(`## LEAD INTELLIGENCE`);
-    lines.push(`Active leads: ${ctx.leads.activeLeadCount}`);
-    lines.push(`Conversion rate: ${ctx.leads.conversionRate}%`);
-    lines.push(
-      `Avg response time: ${
-        ctx.leads.avgResponseTimeDays != null
-          ? `${ctx.leads.avgResponseTimeDays} days`
-          : "no data"
-      }`
-    );
-    lines.push(`Pipeline value: £${ctx.leads.totalPipelineValue}`);
-    lines.push(`Overdue follow-ups: ${ctx.leads.overdueFollowUps.length}`);
-    if (ctx.leads.overdueFollowUps.length > 0) {
-      for (const followUp of ctx.leads.overdueFollowUps.slice(0, 8)) {
-        lines.push(
-          `  - ${followUp.name} (due ${followUp.follow_up_date})`
-        );
-      }
-    }
-    lines.push(`Engagement:`);
-    for (const lead of ctx.leads.engagementSummary.slice(0, 10)) {
-      const days =
-        lead.daysSinceActivity != null
-          ? `${lead.daysSinceActivity} days since activity`
-          : "no activity logged";
-      lines.push(`  - ${lead.name} (${lead.status}): ${days}`);
-    }
-    lines.push(``);
-
-    lines.push(`## CONTENT PERFORMANCE`);
-    lines.push(`Publishing streak: ${ctx.content.publishingStreak} weeks`);
-    lines.push(`Avg posts/week (8wk): ${ctx.content.avgPostsPerWeek}`);
-    if (ctx.content.publishedThisWeek.length > 0) {
-      lines.push(`Published this week:`);
-      for (const post of ctx.content.publishedThisWeek) {
-        lines.push(
-          `  - "${post.title}"${post.platforms ? ` (${post.platforms})` : ""}`
-        );
-      }
-    } else {
-      lines.push(`Published this week: none`);
-    }
-    if (ctx.content.scheduledNextWeek.length > 0) {
-      lines.push(`Scheduled next week:`);
-      for (const post of ctx.content.scheduledNextWeek) {
-        lines.push(
-          `  - "${post.title}"${post.platforms ? ` (${post.platforms})` : ""}`
-        );
-      }
-    } else {
-      lines.push(`Scheduled next week: none`);
-    }
-    lines.push(``);
-
-    lines.push(`## GOAL VELOCITY`);
-    if (ctx.goals.velocityByGoal.length > 0) {
-      for (const goal of ctx.goals.velocityByGoal) {
-        const projected = goal.projectedCompletion
-          ? `projected ${goal.projectedCompletion}`
-          : "no projection";
-        lines.push(
-          `- ${goal.title}: ${goal.percentComplete}% complete, ${projected}`
-        );
-      }
-    } else {
-      lines.push(`- No active goals with velocity data`);
-    }
-    if (ctx.goals.noProgressStalled.length > 0) {
-      lines.push(
-        `Stalled goals (no progress 7+ days): ${ctx.goals.noProgressStalled.join(", ")}`
-      );
-    }
-    lines.push(``);
-
     lines.push(`## CROSS-SECTION PATTERNS`);
     lines.push(
       `Analyse patterns across sections — does content publishing correlate with lead generation? Do task completion rates reflect project health? Flag any concerning patterns.`
     );
-    lines.push(``);
-  }
-
-  // Content
-  lines.push(`## CONTENT`);
-  if (ctx.content.publishedThisWeek.length > 0) {
-    lines.push(`Published this week:`);
-    for (const p of ctx.content.publishedThisWeek) {
-      lines.push(`  - "${p.title}"${p.platforms ? ` (${p.platforms})` : ""}`);
-    }
-  } else {
-    lines.push(`Published this week: none`);
-  }
-  if (ctx.content.scheduledNextWeek.length > 0) {
-    lines.push(`Scheduled next 7 days:`);
-    for (const p of ctx.content.scheduledNextWeek) {
-      lines.push(`  - "${p.title}"${p.platforms ? ` (${p.platforms})` : ""}`);
-    }
-  }
-  lines.push(``);
-
-  // Ideas
-  if (ctx.ideas.newThisWeek.length > 0) {
-    lines.push(`## IDEAS CAPTURED THIS WEEK`);
-    lines.push(ctx.ideas.newThisWeek.slice(0, 8).join(", "));
-    lines.push(``);
+    lines.push("");
   }
 
   lines.push(`---`);
-  lines.push(`Respond ONLY with valid JSON — no markdown fences, no preamble, no commentary outside the JSON. The JSON must exactly match this TypeScript type:`);
+  lines.push(
+    `Respond ONLY with valid JSON — no markdown fences, no preamble, no commentary outside the JSON. The JSON must exactly match this TypeScript type:`
+  );
   lines.push(`{`);
   lines.push(`  "weekSummary": string,   // 2-3 sentence overview of the week`);
   lines.push(`  "wins": string[],         // 3-5 specific wins`);
   lines.push(`  "needsAttention": string[], // 2-4 specific concerns`);
   lines.push(`  "weekAhead": string[],    // 3-5 key things coming up`);
   lines.push(`  "insight": string,        // 1 pattern noticed, 2-3 sentences`);
-  lines.push(`  "recommendation": string, // 1 specific action for the week, 2-3 sentences`);
-  lines.push(`  "generatedAt": string     // ISO timestamp, use: "${ctx.generatedAt}"`);
+  lines.push(
+    `  "recommendation": string, // 1 specific action for the week, 2-3 sentences`
+  );
+  lines.push(
+    `  "generatedAt": string     // ISO timestamp, use: "${ctx.generatedAt}"`
+  );
   if (isPro) {
-    lines.push(`  "crossSectionInsights": string[], // 2-3 patterns noticed across sections`);
+    lines.push(
+      `  "crossSectionInsights": string[], // 2-3 patterns noticed across sections`
+    );
     lines.push(`  "leadIntelligence": string,       // deeper lead insight`);
     lines.push(`  "contentStrategy": string,        // content recommendation`);
     lines.push(`  "goalVelocityInsight": string,    // goal trajectory`);
@@ -312,7 +161,7 @@ export async function generateWeeklyDigest(
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
       max_tokens: isPro ? 2500 : 1500,
-      system: getSystemPrompt(context),
+      system: cachedSystemPrompt(getSystemPrompt(context)),
       messages: [
         {
           role: "user",
@@ -320,6 +169,7 @@ export async function generateWeeklyDigest(
         },
       ],
     }),
+    signal: AbortSignal.timeout(ANTHROPIC_TIMEOUT_MS),
   });
 
   if (!response.ok) {

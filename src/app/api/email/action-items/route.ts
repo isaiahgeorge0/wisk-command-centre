@@ -4,8 +4,16 @@ import { z } from "zod";
 
 import { UnauthorizedError } from "@/lib/auth/errors";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
+import { ANTHROPIC_TIMEOUT_MS } from "@/lib/ai/constants";
+import { cachedSystemPrompt } from "@/lib/ai/anthropic";
 import { logUsage } from "@/lib/ai/usage-logger";
 import { hasPackageAccess } from "@/lib/billing/access";
+import {
+  fingerprintActionItemEmails,
+  isActionItemsCacheFresh,
+  readActionItemsCache,
+  writeActionItemsCache,
+} from "@/lib/email/action-items-cache";
 import type { EmailActionItem, EmailThread } from "@/lib/email/types";
 
 export const runtime = "nodejs";
@@ -118,7 +126,16 @@ export async function POST(request: Request) {
   const emails = parsed.data.emails as EmailThread[];
 
   if (emails.length === 0) {
-    return NextResponse.json({ actionItems: [] });
+    return NextResponse.json({ actionItems: [], cached: false });
+  }
+
+  const fingerprint = fingerprintActionItemEmails(emails);
+  const cached = await readActionItemsCache(userId);
+  if (cached && isActionItemsCacheFresh(cached, fingerprint)) {
+    return NextResponse.json({
+      actionItems: cached.items,
+      cached: true,
+    });
   }
 
   const userPrompt = emails
@@ -151,11 +168,12 @@ Unread: ${email.isRead ? "no" : "yes"}`
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 800,
-        system: SYSTEM_PROMPT,
+        system: cachedSystemPrompt(SYSTEM_PROMPT),
         messages: [{ role: "user", content: userPrompt }],
       }),
+      signal: AbortSignal.timeout(ANTHROPIC_TIMEOUT_MS),
     });
 
     if (!claudeResponse.ok) {
@@ -185,7 +203,9 @@ Unread: ${email.isRead ? "no" : "yes"}`
       claudeData.usage?.output_tokens ?? 0
     );
 
-    return NextResponse.json({ actionItems });
+    await writeActionItemsCache(userId, fingerprint, actionItems);
+
+    return NextResponse.json({ actionItems, cached: false });
   } catch (error) {
     console.error("[email/action-items] error:", error);
     Sentry.captureException(error);

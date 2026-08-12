@@ -4,7 +4,10 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ExternalLink, X } from "lucide-react";
 import Link from "next/link";
 
-import type { MorningBriefingContent } from "@/lib/morning/briefing-generator";
+import {
+  isFreeBriefing,
+  type MorningBriefingContent,
+} from "@/lib/morning/briefing-generator";
 
 type MorningBriefingModalProps = {
   cardId: string;
@@ -33,6 +36,12 @@ export function MorningBriefingModal({
   onClose,
 }: MorningBriefingModalProps) {
   const reduced = useReducedMotion() ?? false;
+  const free = isFreeBriefing(briefing);
+  const insight =
+    briefing.insight?.trim() ||
+    briefing.headline?.trim() ||
+    briefing.teaser?.trim() ||
+    "";
   const summary =
     briefing.summary?.trim() ||
     briefing.headline?.trim() ||
@@ -84,7 +93,7 @@ export function MorningBriefingModal({
               id={`morning-modal-${cardId}`}
               className="text-xs font-semibold uppercase tracking-wider text-[#c3ff32]"
             >
-              Morning briefing
+              {free ? "Morning insight" : "Morning briefing"}
             </p>
             <p className="mt-1 text-[10px] text-muted-foreground">
               {briefing.date}
@@ -92,14 +101,20 @@ export function MorningBriefingModal({
             <h2 className="mt-3 text-lg font-bold text-foreground">
               {briefing.greeting}
             </h2>
-            {summary ? (
+            {free ? (
+              insight ? (
+                <p className="mt-4 text-sm leading-relaxed text-foreground/85">
+                  {insight}
+                </p>
+              ) : null
+            ) : summary ? (
               <p className="mt-3 max-h-[32vh] overflow-y-auto text-sm leading-relaxed text-foreground/80 scrollbar-hide">
                 {summary}
               </p>
             ) : null}
           </div>
 
-          {(briefing.focuses?.length ?? 0) > 0 ? (
+          {!free && (briefing.focuses?.length ?? 0) > 0 ? (
             <>
               <div className="my-4 border-t border-border/40" />
 
@@ -137,20 +152,33 @@ export function MorningBriefingModal({
             </>
           ) : null}
 
-          {briefing.encouragement ? (
+          {!free && briefing.encouragement ? (
             <p className="mt-5 text-center text-xs italic text-muted-foreground/60">
               &ldquo;{briefing.encouragement}&rdquo; — Winston
             </p>
           ) : null}
 
+          {free ? (
+            <p className="mt-6 text-center text-xs leading-relaxed text-muted-foreground/70">
+              Want Winston&apos;s full daily briefing?{" "}
+              <Link
+                href="/upgrade"
+                onClick={onClose}
+                className="font-medium text-[#c3ff32]/90 underline-offset-2 hover:underline"
+              >
+                Unlock with WISK AI
+              </Link>
+            </p>
+          ) : null}
+
           <div className="mt-6 flex items-center gap-3">
             <Link
-              href="/"
+              href={free ? "/upgrade" : "/"}
               onClick={onClose}
               className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#c3ff32] py-2.5 text-sm font-semibold text-[#141b27] transition-opacity hover:opacity-90"
             >
               <ExternalLink className="size-4" />
-              Open WISK
+              {free ? "See plans" : "Open WISK"}
             </Link>
             <button
               type="button"

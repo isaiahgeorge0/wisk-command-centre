@@ -11,6 +11,11 @@ import type {
   ConversationMessage,
   MonthlyUsage,
 } from "@/lib/ai/types";
+import {
+  isWinstonScopeKey,
+  SCOPE_KEY_TITLES,
+  type WinstonScopeKey,
+} from "@/lib/winston/scope";
 
 // ─── Legacy: single-conversation history ─────────────────────────────────────
 
@@ -113,8 +118,12 @@ export async function getConversations(): Promise<
 
   const { data, error } = await supabase
     .from("ai_conversations")
-    .select("id, user_id, title, project_id, created_at, updated_at, projects(project_name)")
+    .select(
+      "id, user_id, title, project_id, note_id, scope_key, created_at, updated_at, projects(project_name)"
+    )
     .eq("user_id", userId)
+    .is("note_id", null)
+    .is("scope_key", null)
     .order("updated_at", { ascending: false })
     .limit(50);
 
@@ -132,6 +141,8 @@ export async function getConversations(): Promise<
       row.projects && !Array.isArray(row.projects)
         ? (row.projects as { project_name: string }).project_name
         : null,
+    note_id: row.note_id ?? null,
+    scope_key: row.scope_key ?? null,
     created_at: row.created_at,
     updated_at: row.updated_at,
   }));
@@ -181,8 +192,222 @@ export async function createConversation(
       title: data.title,
       project_id: data.project_id ?? null,
       project_name: null,
+      note_id: null,
+      scope_key: null,
       created_at: data.created_at,
       updated_at: data.updated_at,
+    },
+  };
+}
+
+const CONVERSATION_ROW_SELECT =
+  "id, user_id, title, project_id, note_id, scope_key, created_at, updated_at";
+
+function toAIConversation(
+  row: {
+    id: string;
+    user_id: string;
+    title: string;
+    project_id: string | null;
+    note_id?: string | null;
+    scope_key?: string | null;
+    created_at: string;
+    updated_at: string;
+  },
+  extras?: { project_name?: string | null; note_id?: string | null }
+): AIConversation {
+  return {
+    id: row.id,
+    user_id: row.user_id,
+    title: row.title,
+    project_id: row.project_id ?? null,
+    project_name: extras?.project_name ?? null,
+    note_id: extras?.note_id ?? row.note_id ?? null,
+    scope_key: row.scope_key ?? null,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+
+export async function getOrCreateNoteConversation(
+  noteId: string
+): Promise<
+  ActionResult<{
+    conversation: AIConversation;
+    messages: ConversationMessage[];
+  }>
+> {
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { data: note, error: noteError } = await supabase
+    .from("notes")
+    .select("id, title")
+    .eq("id", noteId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (noteError) {
+    console.error("getOrCreateNoteConversation note:", noteError);
+    return { success: false, error: noteError.message };
+  }
+
+  if (!note) {
+    return { success: false, error: "Note not found" };
+  }
+
+  const { data: existing, error: existingError } = await supabase
+    .from("ai_conversations")
+    .select(CONVERSATION_ROW_SELECT)
+    .eq("user_id", userId)
+    .eq("note_id", noteId)
+    .maybeSingle();
+
+  if (existingError) {
+    console.error("getOrCreateNoteConversation find:", existingError);
+    return { success: false, error: existingError.message };
+  }
+
+  let conversationRow = existing;
+
+  if (!conversationRow) {
+    const title = note.title.trim()
+      ? `${note.title.trim().slice(0, 60)} brainstorm`
+      : "Note brainstorm";
+
+    const { data: created, error: createError } = await supabase
+      .from("ai_conversations")
+      .insert({
+        user_id: userId,
+        title,
+        note_id: noteId,
+      })
+      .select(CONVERSATION_ROW_SELECT)
+      .single();
+
+    if (createError) {
+      if (createError.code === "23505") {
+        const { data: raced } = await supabase
+          .from("ai_conversations")
+          .select(CONVERSATION_ROW_SELECT)
+          .eq("user_id", userId)
+          .eq("note_id", noteId)
+          .maybeSingle();
+        if (!raced) {
+          console.error("getOrCreateNoteConversation race miss:", createError);
+          return { success: false, error: createError.message };
+        }
+        conversationRow = raced;
+      } else {
+        console.error("getOrCreateNoteConversation create:", createError);
+        return { success: false, error: createError.message };
+      }
+    } else {
+      conversationRow = created;
+    }
+  }
+
+  if (!conversationRow) {
+    return { success: false, error: "Failed to open conversation" };
+  }
+
+  const messagesResult = await getConversationMessages(conversationRow.id);
+  if (!messagesResult.success) {
+    return { success: false, error: messagesResult.error };
+  }
+
+  return {
+    success: true,
+    data: {
+      conversation: toAIConversation(conversationRow, {
+        note_id: conversationRow.note_id ?? noteId,
+      }),
+      messages: messagesResult.data ?? [],
+    },
+  };
+}
+
+/**
+ * Get or create a page-level scoped brainstorm conversation (Calendar, Content, …).
+ * Isolated from note_id / project_id / other scope_key threads.
+ */
+export async function getOrCreateScopedConversation(
+  scopeKey: WinstonScopeKey | string
+): Promise<
+  ActionResult<{
+    conversation: AIConversation;
+    messages: ConversationMessage[];
+  }>
+> {
+  if (!isWinstonScopeKey(scopeKey)) {
+    return { success: false, error: "Invalid conversation scope" };
+  }
+
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { data: existing, error: existingError } = await supabase
+    .from("ai_conversations")
+    .select(CONVERSATION_ROW_SELECT)
+    .eq("user_id", userId)
+    .eq("scope_key", scopeKey)
+    .maybeSingle();
+
+  if (existingError) {
+    console.error("getOrCreateScopedConversation find:", existingError);
+    return { success: false, error: existingError.message };
+  }
+
+  let conversationRow = existing;
+
+  if (!conversationRow) {
+    const { data: created, error: createError } = await supabase
+      .from("ai_conversations")
+      .insert({
+        user_id: userId,
+        title: SCOPE_KEY_TITLES[scopeKey],
+        scope_key: scopeKey,
+      })
+      .select(CONVERSATION_ROW_SELECT)
+      .single();
+
+    if (createError) {
+      if (createError.code === "23505") {
+        const { data: raced } = await supabase
+          .from("ai_conversations")
+          .select(CONVERSATION_ROW_SELECT)
+          .eq("user_id", userId)
+          .eq("scope_key", scopeKey)
+          .maybeSingle();
+        if (!raced) {
+          console.error(
+            "getOrCreateScopedConversation race miss:",
+            createError
+          );
+          return { success: false, error: createError.message };
+        }
+        conversationRow = raced;
+      } else {
+        console.error("getOrCreateScopedConversation create:", createError);
+        return { success: false, error: createError.message };
+      }
+    } else {
+      conversationRow = created;
+    }
+  }
+
+  if (!conversationRow) {
+    return { success: false, error: "Failed to open conversation" };
+  }
+
+  const messagesResult = await getConversationMessages(conversationRow.id);
+  if (!messagesResult.success) {
+    return { success: false, error: messagesResult.error };
+  }
+
+  return {
+    success: true,
+    data: {
+      conversation: toAIConversation(conversationRow),
+      messages: messagesResult.data ?? [],
     },
   };
 }

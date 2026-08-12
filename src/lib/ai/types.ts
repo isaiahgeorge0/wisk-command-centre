@@ -25,6 +25,8 @@ export type AIConversation = {
   title: string;
   project_id: string | null;
   project_name: string | null;
+  note_id: string | null;
+  scope_key: string | null;
   created_at: string;
   updated_at: string;
 };

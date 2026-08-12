@@ -41,6 +41,7 @@ Dark mode → Light mode:
 --wisk-section-projects, --wisk-section-tasks, --wisk-section-goals
 --wisk-section-ideas, --wisk-section-leads, --wisk-section-content
 --wisk-section-calendar, --wisk-section-winston
+--wisk-section-*-fg (on-accent text for solid fills; luminance-derived per theme)
 
 ### Light/Dark Mode Rules
 - Lime (#c3ff32) is dark mode only — use turquoise in light mode for UI accents
@@ -48,6 +49,7 @@ Dark mode → Light mode:
 - All section colours have light variants defined in SECTION_COLOURS_LIGHT
 - Use useTheme() to switch between variants in client components
 - Never use color-mix() in inline styles — use rgba() instead (causes hydration errors)
+- **Text on solid section accents** — do not pair with `text-wisk-dark` / `text-white` from theme. Use `--wisk-section-*-fg` / Tailwind `text-wisk-section-*-fg`, derived from WCAG luminance of the active section hex (`src/lib/color/readable-text.ts`). Light-mode section colours were darkened for contrast and almost all need white text; several dark-mode accents are light and need black.
 
 ## Typography
 - Body: system font stack (-apple-system, BlinkMacSystemFont, Segoe UI)

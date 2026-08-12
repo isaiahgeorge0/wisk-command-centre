@@ -175,7 +175,7 @@ function LogActivityForm({ leadId, onSaved, onCancel }: LogFormProps) {
           type="button"
           onClick={handleSave}
           disabled={isPending || !title.trim()}
-          className="flex items-center gap-1.5 rounded-lg bg-wisk-section-leads px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="flex items-center gap-1.5 rounded-lg bg-wisk-section-leads px-3 py-1.5 text-xs font-medium text-wisk-section-leads-fg transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {isPending ? <Loader2 className="size-3 animate-spin" /> : null}
           Save

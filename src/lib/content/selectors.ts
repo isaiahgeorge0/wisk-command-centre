@@ -25,6 +25,10 @@ export type ContentStats = {
   platformBreakdown: { platform: ContentPlatform; count: number }[];
 };
 
+export function isContentAwaitingDate(post: ContentPost): boolean {
+  return !post.scheduled_date?.trim();
+}
+
 export function groupPostsByStatus(
   posts: ContentPost[]
 ): Record<ContentStatus, ContentPost[]> {

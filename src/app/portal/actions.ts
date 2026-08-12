@@ -24,7 +24,7 @@ import type {
 } from "@/lib/properties/types";
 import { requireTenantContext } from "@/lib/portal/get-tenant-context";
 import type { PortalTheme } from "@/lib/portal/types";
-import { portalUrl } from "@/lib/url";
+import { emailUrl } from "@/lib/email/base-url";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -94,7 +94,7 @@ export async function submitPortalMaintenanceRequest(
     `Category: ${parsed.data.category}`,
     `Tenant: ${getTenantFullName(tenant)}`,
     ``,
-    `View ticket: ${portalUrl(`/properties/${property.id}?tab=maintenance`)}`,
+    `View ticket: ${emailUrl(`/properties/${property.id}?tab=maintenance`)}`,
   ].join("\n");
 
   const { error: taskError } = await admin.from("tasks").insert({
@@ -144,7 +144,7 @@ export async function submitPortalMaintenanceRequest(
       ),
       winstonAttempted: parsed.data.winstonAttempted ?? false,
       winstonSteps: parsed.data.winstonSteps ?? null,
-      propertyUrl: portalUrl(
+      propertyUrl: emailUrl(
         `/properties/${property.id}?tab=maintenance`
       ),
     });

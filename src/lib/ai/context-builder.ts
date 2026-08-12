@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { ACTIVE_PIPELINE_STATUSES } from "@/lib/leads/constants";
 import { toDateISO, addDaysToISO } from "@/lib/overview/date";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -49,9 +50,15 @@ export type GoalContext = {
 
 export type LeadContext = {
   newThisWeek: string[]; // lead names added in last 7 days
-  wonThisWeek: Array<{ name: string; value: number | null }>;
+  wonThisWeek: Array<{
+    name: string;
+    value: number | null;
+    value_type?: "one_time" | "monthly";
+  }>;
   stalled: string[]; // lead names in same stage 14+ days
+  /** Prefer pipelineValue split; annualized kept for any legacy consumers. */
   totalPipelineValue: number;
+  pipelineValue: { oneTime: number; monthly: number };
   overdueFollowUps: Array<{ name: string; follow_up_date: string }>;
   engagementSummary: Array<{
     name: string;
@@ -256,33 +263,39 @@ export async function buildUserContext(
     )
     .map((p) => p.project_name);
 
-  // ── Tasks ──────────────────────────────────────────────────────────────────
-  const { data: allTasks } = await supabase
-    .from("tasks")
-    .select("title, due_date, priority, completed, updated_at")
-    .eq("user_id", userId);
+  // ── Tasks (scoped queries — not every task the user has ever created) ──────
+  const [
+    { data: incompleteTasks },
+    { data: completedThisWeekRows },
+  ] = await Promise.all([
+    supabase
+      .from("tasks")
+      .select("title, due_date, priority, completed, updated_at")
+      .eq("user_id", userId)
+      .eq("completed", false),
+    supabase
+      .from("tasks")
+      .select("title, due_date, priority, completed, updated_at")
+      .eq("user_id", userId)
+      .eq("completed", true)
+      .gte("updated_at", `${sevenDaysAgo}T00:00:00`),
+  ]);
 
-  const completedThisWeek = (allTasks ?? []).filter(
-    (t) =>
-      t.completed &&
-      t.updated_at &&
-      t.updated_at >= `${sevenDaysAgo}T00:00:00`
+  const completedThisWeek = completedThisWeekRows ?? [];
+
+  const overdueTasks = (incompleteTasks ?? []).filter(
+    (t) => t.due_date && t.due_date < todayISO
   );
 
-  const overdueTasks = (allTasks ?? []).filter(
-    (t) => !t.completed && t.due_date && t.due_date < todayISO
-  );
-
-  const dueSoonTasks = (allTasks ?? []).filter(
+  const dueSoonTasks = (incompleteTasks ?? []).filter(
     (t) =>
-      !t.completed &&
       t.due_date &&
       t.due_date >= todayISO &&
       t.due_date <= sevenDaysAhead
   );
 
-  const highPriorityTasks = (allTasks ?? []).filter(
-    (t) => !t.completed && t.priority === "high"
+  const highPriorityTasks = (incompleteTasks ?? []).filter(
+    (t) => t.priority === "high"
   );
 
   // ── Goals ──────────────────────────────────────────────────────────────────
@@ -367,66 +380,100 @@ export async function buildUserContext(
       };
     });
 
-  // ── Leads ──────────────────────────────────────────────────────────────────
-  const { data: leads } = await supabase
-    .from("leads")
-    .select(
-      "id, name, status, value, created_at, updated_at, follow_up_date, contacted_at"
-    )
-    .eq("user_id", userId);
+  // ── Leads (active + recent closed; counts for conversion) ──────────────────
+  const ninetyDaysAgo = addDaysToISO(todayISO, -90);
+  const leadSelect =
+    "id, name, status, value, value_type, created_at, updated_at, follow_up_date, contacted_at";
 
-  const newLeads = (leads ?? [])
-    .filter(
-      (l) =>
-        l.created_at &&
-        l.created_at >= `${sevenDaysAgo}T00:00:00`
-    )
-    .map((l) => l.name);
+  const [
+    { data: activeLeads },
+    { data: recentClosedLeads },
+    { data: newLeadRows },
+    { count: wonCount },
+    { count: lostCount },
+  ] = await Promise.all([
+    supabase
+      .from("leads")
+      .select(leadSelect)
+      .eq("user_id", userId)
+      .in("status", [...ACTIVE_PIPELINE_STATUSES]),
+    supabase
+      .from("leads")
+      .select(leadSelect)
+      .eq("user_id", userId)
+      .in("status", ["won", "lost"])
+      .gte("updated_at", `${ninetyDaysAgo}T00:00:00`),
+    supabase
+      .from("leads")
+      .select("name, created_at")
+      .eq("user_id", userId)
+      .gte("created_at", `${sevenDaysAgo}T00:00:00`),
+    supabase
+      .from("leads")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("status", "won"),
+    supabase
+      .from("leads")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("status", "lost"),
+  ]);
 
-  const wonLeads = (leads ?? [])
+  const activeLeadRows = activeLeads ?? [];
+  const closedRows = recentClosedLeads ?? [];
+
+  const newLeads = (newLeadRows ?? []).map((l) => l.name);
+
+  const wonLeads = closedRows
     .filter(
       (l) =>
         l.status === "won" &&
         l.updated_at &&
         l.updated_at >= `${sevenDaysAgo}T00:00:00`
     )
-    .map((l) => ({ name: l.name, value: l.value }));
+    .map((l) => ({
+      name: l.name,
+      value: l.value,
+      value_type:
+        l.value_type === "monthly"
+          ? ("monthly" as const)
+          : ("one_time" as const),
+    }));
 
-  const stalledLeads = (leads ?? [])
+  const stalledLeads = activeLeadRows
     .filter(
-      (l) =>
-        l.status !== "won" &&
-        l.status !== "lost" &&
-        l.updated_at &&
-        l.updated_at < `${fourteenDaysAgo}T00:00:00`
+      (l) => l.updated_at && l.updated_at < `${fourteenDaysAgo}T00:00:00`
     )
     .map((l) => l.name);
 
-  const totalPipelineValue = (leads ?? [])
-    .filter((l) => l.status !== "lost")
-    .reduce((sum, l) => sum + (l.value ?? 0), 0);
+  const pipelineValue = activeLeadRows.reduce(
+    (acc, l) => {
+      const amount = l.value ?? 0;
+      if (amount <= 0) return acc;
+      if (l.value_type === "monthly") acc.monthly += amount;
+      else acc.oneTime += amount;
+      return acc;
+    },
+    { oneTime: 0, monthly: 0 }
+  );
+  // Annualized for a single comparable figure in prompts that need one number.
+  const totalPipelineValue = pipelineValue.oneTime + pipelineValue.monthly * 12;
 
-  const overdueFollowUps = (leads ?? [])
-    .filter(
-      (l) =>
-        l.follow_up_date &&
-        l.follow_up_date < todayISO &&
-        l.status !== "won" &&
-        l.status !== "lost"
-    )
+  const overdueFollowUps = activeLeadRows
+    .filter((l) => l.follow_up_date && l.follow_up_date < todayISO)
     .map((l) => ({ name: l.name, follow_up_date: l.follow_up_date as string }));
 
-  // Fetch last activity date per active lead
-  const activeLeadIds = (leads ?? [])
-    .filter((l) => l.status !== "won" && l.status !== "lost")
-    .map((l) => l.id);
+  const activeLeadIds = activeLeadRows.map((l) => l.id);
 
   const lastActivityMap = new Map<string, string>();
   if (activeLeadIds.length > 0) {
+    // Only need the newest activity per lead; bound lookback to a year.
     const { data: activityRows } = await supabase
       .from("lead_activities")
       .select("lead_id, created_at")
       .in("lead_id", activeLeadIds)
+      .gte("created_at", `${addDaysToISO(todayISO, -365)}T00:00:00`)
       .order("created_at", { ascending: false });
 
     for (const row of activityRows ?? []) {
@@ -436,8 +483,7 @@ export async function buildUserContext(
     }
   }
 
-  const engagementSummary = (leads ?? [])
-    .filter((l) => l.status !== "won" && l.status !== "lost")
+  const engagementSummary = activeLeadRows
     .map((l) => {
       const lastActivity = lastActivityMap.get(l.id);
       const daysSinceActivity = lastActivity
@@ -454,15 +500,15 @@ export async function buildUserContext(
     })
     .slice(0, 10);
 
-  const wonCount = (leads ?? []).filter((l) => l.status === "won").length;
-  const lostCount = (leads ?? []).filter((l) => l.status === "lost").length;
+  const closedTotal = (wonCount ?? 0) + (lostCount ?? 0);
   const conversionRate =
-    wonCount + lostCount > 0
-      ? Math.round((wonCount / (wonCount + lostCount)) * 1000) / 10
+    closedTotal > 0
+      ? Math.round(((wonCount ?? 0) / closedTotal) * 1000) / 10
       : 0;
 
+  const responseTimeSource = [...activeLeadRows, ...closedRows];
   const responseTimes: number[] = [];
-  for (const lead of leads ?? []) {
+  for (const lead of responseTimeSource) {
     if (!lead.created_at || !lead.contacted_at) continue;
     const days = Math.floor(
       (new Date(lead.contacted_at).getTime() -
@@ -480,9 +526,7 @@ export async function buildUserContext(
         ) / 10
       : null;
 
-  const activeLeadCount = (leads ?? []).filter(
-    (l) => l.status !== "won" && l.status !== "lost"
-  ).length;
+  const activeLeadCount = activeLeadRows.length;
 
   // ── Content ────────────────────────────────────────────────────────────────
   const { data: contentPosts } = await supabase
@@ -554,6 +598,7 @@ export async function buildUserContext(
       wonThisWeek: wonLeads,
       stalled: stalledLeads,
       totalPipelineValue,
+      pipelineValue,
       overdueFollowUps,
       engagementSummary,
       conversionRate,

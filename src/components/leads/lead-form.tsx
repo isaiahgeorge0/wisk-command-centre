@@ -156,15 +156,43 @@ export function LeadForm({
 
       <div className="grid gap-2">
         <Label htmlFor={`${formId}-value`}>Estimated value (GBP)</Label>
-        <Input
-          id={`${formId}-value`}
-          type="number"
-          min="0"
-          step="1"
-          value={values.value ?? ""}
-          onChange={(e) => setField("value", e.target.value)}
-          disabled={disabled}
-        />
+        <div className="grid grid-cols-[1fr_auto] gap-2">
+          <Input
+            id={`${formId}-value`}
+            type="number"
+            min="0"
+            step="1"
+            value={values.value ?? ""}
+            onChange={(e) => setField("value", e.target.value)}
+            disabled={disabled}
+          />
+          <div className="flex overflow-hidden rounded-md border border-input">
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={() => setField("value_type", "one_time")}
+              className={`px-3 text-xs font-medium transition-colors ${
+                (values.value_type ?? "one_time") === "one_time"
+                  ? "bg-muted text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Upfront
+            </button>
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={() => setField("value_type", "monthly")}
+              className={`border-l border-input px-3 text-xs font-medium transition-colors ${
+                values.value_type === "monthly"
+                  ? "bg-muted text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Monthly
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-2">

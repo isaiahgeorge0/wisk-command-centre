@@ -1,10 +1,33 @@
 # WISK — Roadmap & Feature Status
 
-Last updated: July 2026
+Last updated: August 2026 (second sync this month — a full day of Winston/AI feature work, reliability fixes, and cost optimization)
+
+---
+
+## Sync Notes (August 2026, second pass)
+
+Confirmed directly by Zay, correcting the previous sync:
+- **Mobile QA pass — done.**
+- **Content, Calendar, and Email page UI refreshes — all done.**
+- **Lead automation (auto-draft follow-up for stalled leads) — done**, built this session on top of Pipeline Health.
+- **Companies House / ICO registration — Zay is handling directly, not tracked here.**
+
+Shipped this session (see `winston.md`, `leads.md`, `notes.md`, `calendar.md`, `content.md`, `ideas.md`, `database-schema.md` for full detail per area):
+- **Pipeline Health** — built from stub to fully live, then two real bugs fixed (stuck-loading spinner from a client effect race; a currency display bug where Winston's own prose misstated a lead's value, now fixed with a standing rule that Winston never restates numbers it didn't compute in code).
+- **Lead value types** — `value_type` (`one_time`/`monthly`) added, upfront/recurring shown as two figures everywhere rather than blended.
+- **Token/latency optimization** — all seven items from the optimization pass shipped: timeouts on every Anthropic call, digest batch entitlement gating fixed (was running for every user, not just entitled ones), Winston Chat streaming, Anthropic prompt caching across most call sites, model rebalancing (several routes moved Sonnet→Haiku, Pipeline Health moved Haiku→Sonnet), context slimming across chat/digest/Pipeline Health/Properties insights/email drafts, and email action-items caching/dedup.
+- **Morning briefing** — made a standard feature for every user (previously `ai_pro`/`max` only), with a real free/paid split (Haiku single-insight for free, unchanged Sonnet full briefing for paid). Two real production bugs found and fixed along the way: a stale time-window gate that silently skipped every user, every day, on Vercel Hobby (zero briefings were ever generated before this fix); and a localhost-link incident where a manual verification run sent real emails to real users with broken links, which led to a dedicated production-locked email URL helper and a guard preventing local runs from touching production data without deliberate override.
+- **Shared Winston propose-review-commit infrastructure** — new pattern (`src/lib/winston/proposal.ts`, `commit-proposal.ts`, `src/components/winston/`) for any feature where Winston proposes multiple structured items for review before creation. Nothing built on this reuses or duplicates creation logic — everything dispatches to existing per-entity Server Actions.
+- **Notes brainstorming with Winston** — conversational, note-scoped, reuses the Winston Chat streaming infra.
+- **Notes → projects/tasks conversion** — built on the shared proposal infra; can attach tasks to existing projects, not just new ones; traces created projects back to their source note.
+- **Winston in Calendar and Content Calendar** — brainstorm chat + "Schedule this," producing real calendar events/content posts when a date is confident, or parking as an idea/undated content post (with a one-shot reminder, no new cron) when it isn't.
+- **Winston conversation persistence + tab scoping** — migration 072 `ai_conversations.scope_key`; Calendar (`calendar`) and Content (`content-calendar`) each get an isolated durable thread; server-side message persistence hardened; reopen rehydrates history (same pattern as Notes).
 
 ---
 
 ## Current Phase: 3.3 (Social Media Integration — not yet started)
+
+Confirmed via codebase audit: no dedicated API routes, OAuth callbacks, or publishing/ingestion services for YouTube/Instagram/Meta/LinkedIn/TikTok exist yet. Everything shipped this session was Winston/AI reliability and feature work layered on top of the existing product, not Phase 3.3 itself — that phase remains genuinely next whenever it's picked up.
 
 ---
 
@@ -24,8 +47,8 @@ Last updated: July 2026
 - Tenant Reliability Scoring (/properties/reliability) — A-F grade, 0-100 score, payment history
 - Financial Reports (/properties/reports) — UK tax year aligned, per-property + portfolio, print to PDF
 - Legal Notice Templates (/properties/notices) — Section 8 (Form 3A) + Section 13 (Form 4A), verbatim statutory wording, eligibility checks, disclaimer
-- SA105 Tax Summary (/properties/sa105) — HMRC box-by-box (Box 20/24/25/27/29/36/38/41/44), Box 44 correctly NOT deducted, editable Box 27/29, 6 researched insights
-- Winston Properties Pro — 8-10 card layout using yield, reliability, financial data, risk alerts, property deep dives, pro recommendations
+- SA105 Tax Summary (/properties/sa105) — HMRC box-by-box, Box 44 correctly NOT deducted, editable Box 27/29, 6 researched insights
+- Winston Properties Pro — 8-10 card layout, now with narrowed DB selects (24-month cap) and capped prompt list sizes (properties 25, tenants 20, maintenance 15, reliability 20)
 - Finances sub-nav grouping (Overview, Yield Analytics, Reports, SA105 Summary)
 - Portfolio Documents page (/properties/documents)
 - All features Pro-gated with inline PropertiesProTeaser components
@@ -42,83 +65,53 @@ Last updated: July 2026
 - properties_pro implicitly grants properties access in hasPackageAccess()
 - user_subscriptions_package_check constraint updated (migration 061)
 - Landlord contact details added to users table (migration 062) — pre-fills Section 8/13 notices
+- **Note:** users can hold multiple simultaneous active `user_subscriptions` rows (one per package) — this caused a real bug in morning briefing's original eligibility logic assumption; any new entitlement check should account for it
 
 ### Winston AI Pro Digest
 - Subscription-aware context builder (subscriptionTier field)
 - Richer context for ai_pro/max: lead intelligence, content strategy, goal velocity, cross-section patterns
 - Additional Pro cards in ai-digest-page-client.tsx
-- Properties Pro uses buildProPropertyPortfolioContext with yield + reliability + financial data
+- Batch generation now correctly filters to entitled users only (was previously ungated — real cost leak, now fixed)
 
-### Morning Briefing — Complete
-- Winston-generated daily briefing stored in morning_briefings table (migration 065)
-- Cron: generate at 7am UTC, send at 8am UTC (once/day — Vercel Hobby limit)
-- Upgrade to Vercel Pro for */5 cadence
-- Resend email: dark branded template, lime accent strip, focus items with urgency colours
-- In-app card inline with overview header (right side), expandable Framer Motion modal
-- Visible for the full local calendar day (briefing_date === today in user_preferences.timezone) — not gated by hour-of-day
-- Content shape includes teaser (collapsed card) + summary prose (modal) alongside focuses[]
-- Greeting term from optional gender / custom greeting_term (migration 066)
-- Timezone stored in user_preferences (captured on sign-up via Intl API)
+### Morning Briefing — Complete, now standard/free + paid tiers
+See Sync Notes above and `winston.md` for full detail. No longer `ai_pro`/`max`-gated; free tier is Haiku/single-insight, paid tier is the original Sonnet/full-briefing experience unchanged.
 
 ### While You Were Away — Complete
 - away_summaries table (migration 064) — per-user cached summary
 - On-demand sync via /api/away-sync/user when cache stale
-- Cron: 6am UTC (once/day on Hobby)
+- Cron: 6am UTC (once/day on Hobby), now tracks a `failed` count like the other crons
 - Shows new emails, new leads, overdue tasks, new tenant messages
 - Empty state: "Nothing to catch up on. Everything's quiet."
-- AI Pro/Max only. Shows below section cards on Overview.
+- AI Pro/Max only (intentionally narrower than digest/briefing) — shows below section cards on Overview
 
 ### Auth/Onboarding Overhaul
-- /sign-up — immersive Framer Motion scroll experience (cursor glow, character animation, marquee ticker, dot constellation, blur-to-focus form)
+- /sign-up — immersive Framer Motion scroll experience
 - /sign-up/confirm — confirmation page with resend option
 - /auth/callback handles type=signup and type=email_change OTP verification
-- /welcome — onboarding page (renamed from /set-password), name pre-populated from user_metadata
+- /welcome — onboarding page, name pre-populated from user_metadata
 - Password fields hidden on /welcome for email+password sign-up users
-- /set-password redirects to /welcome for backward compat
 - Timezone captured on sign-up (Intl.DateTimeFormat API), stored in user_preferences
+- Gender/greeting_term preferences (migration 066) feed morning briefing personalisation
 
 ### Brand Refresh — Complete
-- New wordmark: PNG-MAIN-WISK-LOGO-WHITE.png with CSS filter (lime dark, lilac light)
-- Dark mode primary: #c3ff32 (lime) — logo, CTAs, active states
-- Light mode primary: #016c81 (turquoise) — logo uses lilac #aca0ff filter
-- Properties accent: #e8001d dark / #cc0016 light (Ferrari red) — replaces amber throughout Properties
-- Section-specific accent colours (light/dark variants):
-  - Projects: #aca0ff / #4a3db0
-  - Tasks: #2dd4bf / #016c81
-  - Goals: #baf7e1 / #085041
-  - Ideas: #fea9e0 / #c4207e
-  - Leads: #ff5d00 / #cc3d00
-  - Content: #0066ff / #0044cc
-  - Calendar: #00c4b4 / #007a70
-  - Winston: #8b00ff / #6200b3
-- CSS tokens: --wisk-ferrari, --wisk-section-* for all sections
-- color-mix() replaced with rgba() throughout (fixes SSR hydration mismatch)
-- Marketing site fully rebranded with new palette
+- New wordmark, colour system, section-specific accents (light/dark variants) — see previous sync for full colour token list, unchanged this pass
 
 ### Overview Redesign
-- Section cards grid with Framer Motion layoutId shared layout animation (card → modal)
-- Cards: Projects, Tasks, Goals, Leads, Ideas, Content, Properties (subscribed), Email (connected)
-- Rich item previews: colour-coded sub-labels, progress %, priority colours, lead status colours
-- Morning briefing card inline with header (right side), expandable modal
-- Winston suggestion pills strip (horizontal scroll)
+- Section cards grid with Framer Motion layoutId shared layout animation
+- Morning briefing card now shows for every user (not Pro-gated), tier-aware content
+- Winston suggestion pills strip
 - While You Were Away section below cards (AI Pro only)
-- Theme-aware section colours via useTheme hook
-- Loading skeletons (loading.tsx) for all major sections
 
 ### UI Refresh — Section Pages
-- Projects: lilac left accent strip, progress bar in tinted container, next action highlighted in lilac, "View details" CTA, section headings with dot + count
-- Tasks: priority-coloured left strip, overdue dates as red pill badges, today as orange pills, grouped section headers with count badges
-- Leads: lead scoring engine (A-F grade, 0-100 score based on stage/value/activity/follow-up/velocity), quick actions (advance stage, follow-up date, note popover), bulk actions (floating bar, change stage, set follow-up, delete), status-specific card borders, stats bar with accent strips
-- Goals: percentage as large hero number (colour-coded red/orange/mint by progress), progress-based top accent strip, deadline urgency colours (overdue/critical/soon/ok), 100% goals get mint glow
-- Ideas: pink accent strip, capture date top-right, 3-line description, items-start grid for natural heights
+- Projects, Tasks, Leads, Goals, Ideas — all previously complete
+- **Content, Calendar, Email — confirmed complete this sync** (previously listed as outstanding)
+
+### Notes — Complete, now with Winston integration
+- Rich text (TipTap) notes section at `/notes`, migration 039
+- Brainstorming with Winston and Find projects & tasks — both shipped this session, see `notes.md`
 
 ### Marketing Site (wiskapp-marketing)
-- Full rebrand matching app colour system
-- Logo in lime via CSS filter
-- New sections: Winston AI showcase, Properties showcase, Pricing overview (4 packages)
-- Hero: "WISK AI + Properties — Now live" badge, updated copy
-- All CTAs point to https://app.wiskapp.com/sign-in
-- App screenshots in public/
+- Full rebrand matching app colour system, unchanged this pass
 
 ---
 
@@ -132,18 +125,22 @@ Note: Create developer accounts on all platforms early to surface surprises
 
 ## Pending / Outstanding
 
-### Immediate priorities:
-1. Mobile QA pass — never done, blocking public launch
-2. Email templates — Supabase auth emails still use default Supabase template
-3. Content page UI refresh
-4. Calendar page UI refresh
-5. Email page UI refresh
-6. Lead automation — auto-draft follow-up emails for stalled leads
-7. Supabase Pro upgrade — fixes realtime messaging, enables task file attachments
-8. Vercel Pro upgrade — enables frequent crons (*/5, */15) for morning briefing and away sync
-9. Google OAuth CASA Tier 2 verification (~£1,500-3,000, fund from revenue)
-10. Companies House registration (£50) + ICO registration (£47/year)
-11. SA105 and legal template professional review
+### Confirmed complete this sync (previously listed here):
+1. ~~Mobile QA pass~~ — done
+2. ~~Content page UI refresh~~ — done
+3. ~~Calendar page UI refresh~~ — done
+4. ~~Email page UI refresh~~ — done
+5. ~~Lead automation~~ — done (Pipeline Health → draft follow-up)
+
+### Still open:
+1. Email templates — Supabase auth emails (confirmation, password reset) still use the default Supabase template, not a branded one. Distinct from the morning-briefing/billing/properties email URL fix done this session — that was about link correctness, this is about template branding.
+2. Supabase Pro upgrade — fixes realtime messaging, enables task file attachments
+3. Vercel Pro upgrade — enables frequent crons (`*/5`, `*/15`). Morning briefing's window-gate logic is already built to use this the moment it's available — flip `MORNING_BRIEFING_FREQUENT_CRON` to `true` once upgraded, don't rebuild the feature.
+4. Google OAuth CASA Tier 2 verification (~£1,500-3,000, fund from revenue)
+5. SA105 and legal template professional review
+
+### Handled directly by Zay, not tracked here:
+- Companies House registration (£50) + ICO registration (£47/year, Tier 1)
 
 ### Phase 4 — Speculative
 - Collaboration & Sharing (item_shares table exists)
@@ -157,11 +154,11 @@ Note: Create developer accounts on all platforms early to surface surprises
 
 ## Known Issues / Tech Debt
 
-- Mobile QA pass never done
 - Gmail OAuth token expires after inactivity — user must reconnect in Settings → Connections
 - Realtime messaging uses 15s polling fallback (fix: Supabase Pro upgrade)
 - Task file attachments deferred (fix: Supabase Pro upgrade)
-- Vercel crons limited to once/day on Hobby — use 0 H * * * format not */N
-- color-mix() in inline style props causes SSR hydration mismatch — use rgba() instead
+- Vercel crons limited to once/day on Hobby — this is now handled correctly (see morning briefing's frequent-cron flag) rather than being a live bug, but still a real constraint until Vercel Pro
+- color-mix() in inline style props causes SSR hydration mismatch — use rgba() instead (status of remaining instances not re-audited this pass)
 - supabase/.temp/ should be added to .gitignore
 - SA105 Box 44 and legal notice wording verified against HMRC/gov.uk sources (May 2026 forms)
+- `property_alert_log` documented in earlier schema notes but not found in live table list — still unverified whether renamed/merged/unshipped

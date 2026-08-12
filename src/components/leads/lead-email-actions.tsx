@@ -45,7 +45,7 @@ function EmailLogPrompt({ onConfirm, onDismiss, isPending }: EmailLogPromptProps
           size="sm"
           onClick={onConfirm}
           disabled={isPending}
-          className="bg-wisk-section-leads text-white hover:opacity-90"
+          className="bg-wisk-section-leads text-wisk-section-leads-fg hover:opacity-90"
         >
           {isPending ? <Loader2 className="size-3.5 animate-spin" /> : null}
           Yes, log it

@@ -18,6 +18,8 @@ import {
   deleteConversation,
   getConversationMessages,
 } from "@/app/(dashboard)/ai-digest/actions";
+import { consumeWinstonChatSse } from "@/lib/ai/consume-chat-stream";
+import { useChatScrollFollow } from "@/lib/ai/use-chat-scroll-follow";
 import type {
   AIConversation,
   ActiveProject,
@@ -184,7 +186,7 @@ function ConversationsSidebar({
             <div className="px-3 pt-3 shrink-0">
               <button
                 onClick={onNewChat}
-                className="flex w-full items-center gap-2 rounded-lg bg-wisk-section-winston px-3 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
+                className="flex w-full items-center gap-2 rounded-lg bg-wisk-section-winston px-3 py-2 text-sm font-medium text-wisk-section-winston-fg transition-opacity hover:opacity-90"
               >
                 <Plus className="size-4 shrink-0" aria-hidden />
                 New chat
@@ -389,7 +391,7 @@ function MessageBubble({
           className={cn(
             "rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
             isUser
-              ? "bg-wisk-section-winston text-wisk-dark"
+              ? "bg-wisk-section-winston text-wisk-section-winston-fg"
               : "border border-border/60 bg-card text-foreground"
           )}
         >
@@ -476,13 +478,11 @@ export function WinstonChatClient({
   const [sendError, setSendError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
-  const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  // ── Auto-scroll to bottom ───────────────────────────────────────────────────
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: reduced ? "auto" : "smooth" });
-  }, [messages, isSending, reduced]);
+  const { scrollRef, scrollToBottom, stickToBottom } = useChatScrollFollow([
+    messages,
+    isSending,
+  ]);
 
   // ── Textarea auto-resize ────────────────────────────────────────────────────
   useEffect(() => {
@@ -504,16 +504,18 @@ export function WinstonChatClient({
 
       const result = await getConversationMessages(conv.id);
       if (result.success && result.data) {
+        stickToBottom();
         setMessages(result.data);
         setCurrentConversationId(conv.id);
       }
       setIsLoadingConversation(false);
     },
-    [currentConversationId]
+    [currentConversationId, stickToBottom]
   );
 
   // ── New chat ────────────────────────────────────────────────────────────────
   function handleNewChat() {
+    stickToBottom();
     setCurrentConversationId(null);
     setMessages([]);
     setSendError(null);
@@ -525,6 +527,7 @@ export function WinstonChatClient({
     // The conversation will be created on first message send with projectId
     // We store it temporarily as a "pending project" and pass it with the request.
     // For simplicity, we trigger a new chat and note the projectId in the request.
+    stickToBottom();
     setCurrentConversationId(null);
     setMessages([]);
     setSendError(null);
@@ -561,6 +564,7 @@ export function WinstonChatClient({
       content: text,
       created_at: new Date().toISOString(),
     };
+    const replyId = `reply-${Date.now()}`;
     setMessages((prev) => [...prev, optimisticMsg]);
     setIsSending(true);
 
@@ -578,16 +582,15 @@ export function WinstonChatClient({
         }),
       });
 
-      const json = (await res.json()) as {
-        reply?: string;
-        error?: string;
-        limitType?: "monthly" | "short_term";
-        usedTokens?: number;
-        conversationId?: string;
-        generatedTitle?: string;
-      };
+      const contentType = res.headers.get("content-type") ?? "";
 
-      if (!res.ok || json.error) {
+      // Auth / rate-limit / validation still return JSON
+      if (!contentType.includes("text/event-stream")) {
+        const json = (await res.json()) as {
+          error?: string;
+          limitType?: "monthly" | "short_term";
+        };
+
         setSendError(json.error ?? "Something went wrong. Please try again.");
         setMessages((prev) => prev.filter((m) => m.id !== optimisticMsg.id));
         if (json.limitType !== "monthly") {
@@ -598,75 +601,145 @@ export function WinstonChatClient({
         return;
       }
 
-      // If this was the first message in a new conversation, update state
-      if (json.conversationId && json.conversationId !== currentConversationId) {
-        const newConvId = json.conversationId;
-        setCurrentConversationId(newConvId);
-
-        const title = json.generatedTitle ?? "New conversation";
-        const newConv: AIConversation = {
-          id: newConvId,
-          user_id: "",
-          title,
-          project_id: projectId ?? null,
-          project_name:
-            projectId
-              ? (activeProjects.find((p) => p.id === projectId)?.project_name ??
-                null)
-              : null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        setConversations((prev) => [newConv, ...prev]);
-      } else if (json.generatedTitle && currentConversationId) {
-        // Update title for existing first-message conversation
-        setConversations((prev) =>
-          prev.map((c) =>
-            c.id === currentConversationId
-              ? { ...c, title: json.generatedTitle! }
-              : c
-          )
-        );
+      if (!res.ok || !res.body) {
+        setSendError("Something went wrong. Please try again.");
+        setMessages((prev) => prev.filter((m) => m.id !== optimisticMsg.id));
+        setInput(text);
+        return;
       }
 
-      // Update updated_at for current conversation
-      if (json.conversationId) {
-        setConversations((prev) =>
-          prev.map((c) =>
-            c.id === json.conversationId
-              ? { ...c, updated_at: new Date().toISOString() }
-              : c
-          )
-        );
-      }
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let streamConversationId: string | null = null;
+      let replyStarted = false;
+      let streamFailed = false;
 
-      const replyMsg: ConversationMessage = {
-        id: `reply-${Date.now()}`,
-        role: "assistant",
-        content: json.reply ?? "",
-        created_at: new Date().toISOString(),
+      const ensureReplyBubble = () => {
+        if (replyStarted) return;
+        replyStarted = true;
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: replyId,
+            role: "assistant",
+            content: "",
+            created_at: new Date().toISOString(),
+          },
+        ]);
       };
-      setMessages((prev) => [...prev, replyMsg]);
 
-      if (json.usedTokens) {
-        setUsage((prev) => {
-          const userInitiatedTokens =
-            prev.userInitiatedTokens + (json.usedTokens ?? 0);
-          const chatTokens = prev.chatTokens + (json.usedTokens ?? 0);
-          const total = userInitiatedTokens;
-          const percentage = Math.min(
-            100,
-            Math.round((total / prev.limit) * 100)
+      const applyConversationMeta = (
+        conversationId: string,
+        generatedTitle?: string
+      ) => {
+        if (conversationId !== currentConversationId) {
+          setCurrentConversationId(conversationId);
+          setConversations((prev) => {
+            if (prev.some((c) => c.id === conversationId)) {
+              return prev.map((c) =>
+                c.id === conversationId
+                  ? {
+                      ...c,
+                      updated_at: new Date().toISOString(),
+                      ...(generatedTitle ? { title: generatedTitle } : {}),
+                    }
+                  : c
+              );
+            }
+            const newConv: AIConversation = {
+              id: conversationId,
+              user_id: "",
+              title: generatedTitle ?? "New conversation",
+              project_id: projectId ?? null,
+              project_name: projectId
+                ? (activeProjects.find((p) => p.id === projectId)
+                    ?.project_name ?? null)
+                : null,
+              note_id: null,
+              scope_key: null,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            };
+            return [newConv, ...prev];
+          });
+        } else {
+          setConversations((prev) =>
+            prev.map((c) =>
+              c.id === conversationId
+                ? {
+                    ...c,
+                    updated_at: new Date().toISOString(),
+                    ...(generatedTitle ? { title: generatedTitle } : {}),
+                  }
+                : c
+            )
           );
-          if (userInitiatedTokens >= prev.limit) setMonthlyLimitHit(true);
-          return {
-            ...prev,
-            chatTokens,
-            userInitiatedTokens,
-            total,
-            percentage,
-          };
-        });
+        }
+      };
+
+      await consumeWinstonChatSse(res.body, {
+        onMeta: (conversationId) => {
+          streamConversationId = conversationId;
+          applyConversationMeta(conversationId);
+        },
+        onDelta: (text) => {
+          ensureReplyBubble();
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === replyId ? { ...m, content: m.content + text } : m
+            )
+          );
+        },
+        onDone: ({ conversationId, usedTokens }) => {
+          streamConversationId = conversationId;
+          applyConversationMeta(conversationId);
+          if (usedTokens) {
+            setUsage((prev) => {
+              const userInitiatedTokens = prev.userInitiatedTokens + usedTokens;
+              const chatTokens = prev.chatTokens + usedTokens;
+              const total = userInitiatedTokens;
+              const percentage = Math.min(
+                100,
+                Math.round((total / prev.limit) * 100)
+              );
+              if (userInitiatedTokens >= prev.limit) setMonthlyLimitHit(true);
+              return {
+                ...prev,
+                chatTokens,
+                userInitiatedTokens,
+                total,
+                percentage,
+              };
+            });
+          }
+          setIsSending(false);
+        },
+        onTitle: (generatedTitle) => {
+          const titleConversationId =
+            streamConversationId ?? currentConversationId;
+          if (titleConversationId) {
+            applyConversationMeta(titleConversationId, generatedTitle);
+          }
+        },
+        onError: (error, limitType) => {
+          streamFailed = true;
+          setSendError(error);
+          setMessages((prev) =>
+            prev.filter((m) => m.id !== optimisticMsg.id && m.id !== replyId)
+          );
+          if (limitType === "monthly") {
+            setMonthlyLimitHit(true);
+          } else {
+            setInput(text);
+          }
+        },
+      });
+
+      if (!replyStarted && !streamFailed) {
+        setSendError("Winston returned an empty reply. Please try again.");
+        setMessages((prev) => prev.filter((m) => m.id !== optimisticMsg.id));
+        setInput(text);
       }
     } catch {
       setSendError("Failed to reach Winston. Please try again.");
@@ -735,7 +808,7 @@ export function WinstonChatClient({
         </div>
 
         {/* Message area */}
-        <div className="flex-1 overflow-y-auto px-4 py-4">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4">
           {isLoadingConversation ? (
             <div className="flex flex-1 items-center justify-center py-16">
               <Loader2 className="size-5 animate-spin text-muted-foreground" />
@@ -753,10 +826,12 @@ export function WinstonChatClient({
                   />
                 ))}
               </AnimatePresence>
-              {isSending ? <TypingIndicator /> : null}
+              {isSending &&
+              messages[messages.length - 1]?.role !== "assistant" ? (
+                <TypingIndicator />
+              ) : null}
             </div>
           )}
-          <div ref={bottomRef} />
         </div>
 
         {/* Error banner */}
@@ -793,7 +868,7 @@ export function WinstonChatClient({
               onClick={() => void handleSend()}
               disabled={isSending || !input.trim() || monthlyLimitHit}
               aria-label="Send message"
-              className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-wisk-section-winston text-wisk-dark transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-wisk-section-winston text-wisk-section-winston-fg transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {isSending ? (
                 <Loader2 className="size-4 animate-spin" aria-hidden />

@@ -2,6 +2,7 @@ export const IDEA_STATUSES = [
   "new",
   "exploring",
   "in-progress",
+  "awaiting-date",
   "parked",
   "dropped",
 ] as const;

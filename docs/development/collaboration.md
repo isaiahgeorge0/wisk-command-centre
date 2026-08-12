@@ -149,6 +149,9 @@ Hard-won notes from building the Properties package and contractor portal. Worth
 ### Vercel crons (Hobby plan)
 - Hobby plan only supports once-per-day crons — expressions like */5 or */15 will fail deployment
 - Use `0 H * * *` format (e.g. `0 7 * * *` for 7am UTC)
+- Morning briefing local-time windows are gated by `MORNING_BRIEFING_FREQUENT_CRON` (default off). Leave unset on Hobby so the once-daily cron processes everyone; set `true` after upgrading to Pro and restoring */5 schedules
+- Morning briefing generate/send refuse to run outside Vercel production unless `ALLOW_LOCAL_MORNING_BRIEFING_CRON=true` — prevents local curls with prod Resend keys from emailing real users
+- Outbound email links use `EMAIL_BASE_URL` / `emailUrl()` (default `https://app.wiskapp.com`), never `NEXT_PUBLIC_SITE_URL`, so localhost in `.env.local` cannot leak into Resend HTML
 - Upgrade to Vercel Pro for per-minute precision needed by morning briefing and away sync
 
 ### Hydration errors from CSS functions

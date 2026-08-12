@@ -22,3 +22,15 @@ export function hexToRgba(hex: string, alpha: number): string {
 
   return `rgba(${r},${g},${b},${alpha})`;
 }
+
+export {
+  getReadableTextColor,
+  hexToRgb,
+  readableTextHex,
+  relativeLuminance,
+  SECTION_ACCENT_HEX,
+  SECTION_ACCENT_KEYS,
+  sectionAccentFgClass,
+  type ReadableTextColor,
+  type SectionAccentKey,
+} from "@/lib/color/readable-text";

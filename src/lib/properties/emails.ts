@@ -1,11 +1,11 @@
 import { Resend } from "resend";
 
+import { assertEmailHtmlSafe, emailUrl } from "@/lib/email/base-url";
 import type {
   CertificateAlertType,
   InsuranceAlertType,
   MortgageAlertType,
 } from "@/lib/properties/types";
-import { portalUrl } from "@/lib/url";
 
 function getResend(): { resend: Resend; from: string } | null {
   const apiKey = process.env.RESEND_API_KEY;
@@ -17,6 +17,27 @@ function getResend(): { resend: Resend; from: string } | null {
     return null;
   }
   return { resend: new Resend(apiKey), from };
+}
+
+async function sendResendEmail(input: {
+  to: string;
+  subject: string;
+  html: string;
+}): Promise<void> {
+  const client = getResend();
+  if (!client) {
+    throw new Error("Resend is not configured");
+  }
+  assertEmailHtmlSafe(input.html);
+  const { error } = await client.resend.emails.send({
+    from: client.from,
+    to: input.to.trim().toLowerCase(),
+    subject: input.subject,
+    html: input.html,
+  });
+  if (error) {
+    throw new Error(error.message);
+  }
 }
 
 function formatExpiryDate(dateStr: string): string {
@@ -82,7 +103,7 @@ function buildCertificateAlertHtml({
       : `The ${certificateType} certificate for <strong style="color:#f4f4f5;">${propertyName}</strong> expires on ${formattedExpiry} — that's ${daysUntilExpiry} day${daysUntilExpiry === 1 ? "" : "s"} away. A timely renewal will keep everything on track.`;
 
   const ctaLabel = isExpired ? "Renew certificate" : "View certificates";
-  const ctaUrl = portalUrl(`/properties/${propertyId}?tab=certificates`);
+  const ctaUrl = emailUrl(`/properties/${propertyId}?tab=certificates`);
 
   const html = `<!DOCTYPE html>
 <html>
@@ -128,9 +149,6 @@ export async function sendCertificateAlertEmail({
   alertType: CertificateAlertType;
   propertyId: string;
 }): Promise<boolean> {
-  const client = getResend();
-  if (!client) return false;
-
   const { subject, html } = buildCertificateAlertHtml({
     displayName,
     propertyName,
@@ -141,19 +159,13 @@ export async function sendCertificateAlertEmail({
     propertyId,
   });
 
-  const { error } = await client.resend.emails.send({
-    from: client.from,
-    to,
-    subject,
-    html,
-  });
-
-  if (error) {
+  try {
+    await sendResendEmail({ to, subject, html });
+    return true;
+  } catch (error) {
     console.error("sendCertificateAlertEmail:", error);
     return false;
   }
-
-  return true;
 }
 
 
@@ -234,9 +246,6 @@ export async function sendMortgageAlertEmail({
   alertType: MortgageAlertType;
   propertyUrl: string;
 }): Promise<boolean> {
-  const client = getResend();
-  if (!client) return false;
-
   const { subject, html } = buildMortgageAlertHtml({
     displayName,
     propertyAddress,
@@ -247,19 +256,13 @@ export async function sendMortgageAlertEmail({
     propertyUrl,
   });
 
-  const { error } = await client.resend.emails.send({
-    from: client.from,
-    to,
-    subject,
-    html,
-  });
-
-  if (error) {
+  try {
+    await sendResendEmail({ to, subject, html });
+    return true;
+  } catch (error) {
     console.error("sendMortgageAlertEmail:", error);
     return false;
   }
-
-  return true;
 }
 
 function buildInsuranceAlertHtml({
@@ -328,9 +331,6 @@ export async function sendInsuranceAlertEmail({
   alertType: InsuranceAlertType;
   propertyUrl: string;
 }): Promise<boolean> {
-  const client = getResend();
-  if (!client) return false;
-
   void alertType;
 
   const { subject, html } = buildInsuranceAlertHtml({
@@ -343,19 +343,14 @@ export async function sendInsuranceAlertEmail({
     propertyUrl,
   });
 
-  const { error } = await client.resend.emails.send({
-    from: client.from,
-    to,
-    subject,
-    html,
-  });
 
-  if (error) {
+  try {
+    await sendResendEmail({ to, subject, html });
+    return true;
+  } catch (error) {
     console.error("sendInsuranceAlertEmail:", error);
     return false;
   }
-
-  return true;
 }
 
 export async function sendTenantPortalInviteEmail({
@@ -371,9 +366,6 @@ export async function sendTenantPortalInviteEmail({
   landlordName: string;
   setupUrl: string;
 }): Promise<boolean> {
-  const client = getResend();
-  if (!client) return false;
-
   const greeting = tenantName.trim() || "there";
   const landlord = landlordName.trim() || "your landlord";
   const subject = "You've been invited to manage your tenancy online";
@@ -397,19 +389,14 @@ export async function sendTenantPortalInviteEmail({
 </body>
 </html>`;
 
-  const { error } = await client.resend.emails.send({
-    from: client.from,
-    to,
-    subject,
-    html,
-  });
 
-  if (error) {
+  try {
+    await sendResendEmail({ to, subject, html });
+    return true;
+  } catch (error) {
     console.error("sendTenantPortalInviteEmail:", error);
     return false;
   }
-
-  return true;
 }
 
 export async function sendMaintenanceRequestEmail({
@@ -435,9 +422,6 @@ export async function sendMaintenanceRequestEmail({
   winstonSteps: string[] | null;
   propertyUrl: string;
 }): Promise<boolean> {
-  const client = getResend();
-  if (!client) return false;
-
   const greeting = landlordName.trim() || "there";
   const subject = `Maintenance request: ${issueTitle} — ${propertyAddress}`;
 
@@ -473,19 +457,14 @@ export async function sendMaintenanceRequestEmail({
 </body>
 </html>`;
 
-  const { error } = await client.resend.emails.send({
-    from: client.from,
-    to,
-    subject,
-    html,
-  });
 
-  if (error) {
+  try {
+    await sendResendEmail({ to, subject, html });
+    return true;
+  } catch (error) {
     console.error("sendMaintenanceRequestEmail:", error);
     return false;
   }
-
-  return true;
 }
 
 function formatRentDueDate(dateStr: string): string {
@@ -515,9 +494,6 @@ export async function sendRentReminderEmail({
   daysOverdue: number;
   propertyUrl: string;
 }): Promise<boolean> {
-  const client = getResend();
-  if (!client) return false;
-
   const greeting = displayName.trim() || "there";
   const formattedDue = formatRentDueDate(dueDate);
   const formattedAmount = new Intl.NumberFormat("en-GB", {
@@ -569,19 +545,14 @@ export async function sendRentReminderEmail({
 </body>
 </html>`;
 
-  const { error } = await client.resend.emails.send({
-    from: client.from,
-    to,
-    subject,
-    html,
-  });
 
-  if (error) {
+  try {
+    await sendResendEmail({ to, subject, html });
+    return true;
+  } catch (error) {
     console.error("sendRentReminderEmail:", error);
     return false;
   }
-
-  return true;
 }
 
 export async function sendJobSheetEmail({
@@ -597,14 +568,8 @@ export async function sendJobSheetEmail({
   propertyAddress: string;
   jobSheetUrl: string;
 }): Promise<boolean> {
-  const client = getResend();
-  if (!client) return false;
-
-  const { error } = await client.resend.emails.send({
-    from: client.from,
-    to,
-    subject: `Job sheet: ${jobTitle} — ${propertyAddress}`,
-    html: `
+  const subject = `Job sheet: ${jobTitle} — ${propertyAddress}`;
+  const html = `
       <p>Hi ${contractorName},</p>
       <p>You have been assigned a maintenance job at ${propertyAddress}.</p>
       <p><strong>Job:</strong> ${jobTitle}</p>
@@ -618,15 +583,15 @@ export async function sendJobSheetEmail({
         <li>Upload quotes and invoices (coming soon)</li>
       </ul>
       <p>Thanks</p>
-    `,
-  });
+    `;
 
-  if (error) {
+  try {
+    await sendResendEmail({ to, subject, html });
+    return true;
+  } catch (error) {
     console.error("sendJobSheetEmail:", error);
     return false;
   }
-
-  return true;
 }
 
 export async function sendContractorAccessRequestEmail({
@@ -651,24 +616,22 @@ export async function sendContractorAccessRequestEmail({
 
   const timeStr = requestedTime ? ` at ${requestedTime}` : "";
 
-  const { error } = await client.resend.emails.send({
-    from: client.from,
-    to,
-    subject: `Access request from contractor — ${jobTitle}`,
-    html: `
+
+  const subject = `Access request from contractor — ${jobTitle}`;
+  const html = `
       <p>Hi ${tenantName},</p>
       <p>${contractorName} has requested access to your property for maintenance work.</p>
       <p><strong>Job:</strong> ${jobTitle}</p>
       <p><strong>Requested date:</strong> ${requestedDate}${timeStr}</p>
       <p>Please log in to your portal to approve or decline this request:</p>
       <p><a href="${portalUrl}">View request in portal</a></p>
-    `,
-  });
+    `;
 
-  if (error) {
+  try {
+    await sendResendEmail({ to, subject, html });
+    return true;
+  } catch (error) {
     console.error("sendContractorAccessRequestEmail:", error);
     return false;
   }
-
-  return true;
 }

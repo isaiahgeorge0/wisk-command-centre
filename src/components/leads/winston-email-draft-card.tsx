@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2, Mail, Sparkles } from "lucide-react";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 
 import { addLeadActivity } from "@/app/(dashboard)/leads/actions";
 import { LeadSelector } from "@/components/leads/lead-selector";
@@ -13,24 +13,62 @@ import {
 import type { Lead } from "@/lib/leads/types";
 import { cn } from "@/lib/utils";
 
+export type PipelineDraftContext = {
+  issue: string;
+  suggestedAction: string;
+};
+
+export type WinstonEmailDraftSeed = {
+  leadId: string;
+  pipelineContext: PipelineDraftContext;
+};
+
 type WinstonEmailDraftCardProps = {
   leads: Lead[];
+  /** When set, select the lead and auto-draft with pipeline health context. */
+  seed?: WinstonEmailDraftSeed | null;
+  onSeedConsumed?: () => void;
 };
 
 export function WinstonEmailDraftCard({
   leads,
+  seed = null,
+  onSeedConsumed,
 }: WinstonEmailDraftCardProps) {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
+  const [pipelineContext, setPipelineContext] =
+    useState<PipelineDraftContext | null>(null);
   const [drafting, setDrafting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [logActivity, setLogActivity] = useState(true);
   const [isLogging, startLogTransition] = useTransition();
+  const cardRef = useRef<HTMLDivElement>(null);
+  const autoDraftKeyRef = useRef<string | null>(null);
 
   const selectedLead =
     leads.find((lead) => lead.id === selectedLeadId) ?? null;
   const leadsWithEmail = leads.filter((lead) => lead.email);
+
+  const onSeedConsumedRef = useRef(onSeedConsumed);
+  onSeedConsumedRef.current = onSeedConsumed;
+
+  useEffect(() => {
+    if (!seed) return;
+
+    setSelectedLeadId(seed.leadId);
+    setPipelineContext(seed.pipelineContext);
+    setSubject("");
+    setBody("");
+    setError(null);
+    autoDraftKeyRef.current = null;
+    onSeedConsumedRef.current?.();
+
+    requestAnimationFrame(() => {
+      cardRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+  }, [seed]);
 
   useEffect(() => {
     setSubject("");
@@ -38,9 +76,12 @@ export function WinstonEmailDraftCard({
     setError(null);
   }, [selectedLeadId]);
 
-  const handleDraft = async () => {
+  const handleDraft = async (
+    contextOverride?: PipelineDraftContext | null
+  ) => {
     if (!selectedLead) return;
 
+    const context = contextOverride ?? pipelineContext;
     setDrafting(true);
     setError(null);
 
@@ -48,7 +89,17 @@ export function WinstonEmailDraftCard({
       const response = await fetch("/api/winston/draft-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ leadId: selectedLead.id }),
+        body: JSON.stringify({
+          leadId: selectedLead.id,
+          ...(context
+            ? {
+                pipelineContext: {
+                  issue: context.issue,
+                  suggestedAction: context.suggestedAction,
+                },
+              }
+            : {}),
+        }),
       });
 
       const data = (await response.json()) as {
@@ -73,6 +124,17 @@ export function WinstonEmailDraftCard({
       setDrafting(false);
     }
   };
+
+  useEffect(() => {
+    if (!selectedLead?.email || !pipelineContext) return;
+    if (subject || body || drafting) return;
+
+    const key = `${selectedLead.id}:${pipelineContext.issue}:${pipelineContext.suggestedAction}`;
+    if (autoDraftKeyRef.current === key) return;
+    autoDraftKeyRef.current = key;
+    void handleDraft(pipelineContext);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot auto-draft when seeded
+  }, [selectedLead, pipelineContext, subject, body, drafting]);
 
   const handleOpenMailto = () => {
     if (!selectedLead?.email || !subject.trim() || !body.trim()) return;
@@ -100,7 +162,10 @@ export function WinstonEmailDraftCard({
   };
 
   return (
-    <div className="rounded-xl border border-border/60 bg-card/60 p-4 space-y-3">
+    <div
+      ref={cardRef}
+      className="rounded-xl border border-border/60 bg-card/60 p-4 space-y-3"
+    >
       <div className="flex items-start gap-3">
         <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10">
           <Mail className="size-4 text-indigo-500" aria-hidden />
@@ -111,13 +176,21 @@ export function WinstonEmailDraftCard({
             Select a lead and Winston writes a personalised follow-up email
             based on their stage, history, and your previous interactions.
           </p>
+          {pipelineContext ? (
+            <p className="mt-1.5 text-[11px] leading-relaxed text-wisk-section-leads">
+              Using Pipeline Health context for this draft.
+            </p>
+          ) : null}
         </div>
       </div>
 
       <LeadSelector
         leads={leadsWithEmail}
         value={selectedLeadId}
-        onChange={setSelectedLeadId}
+        onChange={(id) => {
+          setPipelineContext(null);
+          setSelectedLeadId(id);
+        }}
         placeholder="Select a lead..."
       />
 
@@ -133,16 +206,16 @@ export function WinstonEmailDraftCard({
             <Button
               type="button"
               size="sm"
-              onClick={handleDraft}
+              onClick={() => void handleDraft()}
               disabled={drafting}
-              className="w-full gap-1.5 bg-wisk-section-leads text-white hover:opacity-90"
+              className="w-full gap-1.5 bg-wisk-section-leads text-wisk-section-leads-fg hover:opacity-90"
             >
               {drafting ? (
                 <Loader2 className="size-3.5 animate-spin" aria-hidden />
               ) : (
                 <Sparkles className="size-3.5" aria-hidden />
               )}
-              Draft with Winston
+              {drafting ? "Drafting…" : "Draft with Winston"}
             </Button>
           ) : (
             <>
@@ -204,7 +277,7 @@ export function WinstonEmailDraftCard({
               </Button>
               <button
                 type="button"
-                onClick={handleDraft}
+                onClick={() => void handleDraft()}
                 disabled={drafting}
                 className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
               >

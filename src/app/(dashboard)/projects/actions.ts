@@ -19,6 +19,7 @@ const projectFormSchema = z.object({
   notes: z.string().optional(),
   site_url: z.string().optional(),
   github_repo: z.string().optional(),
+  source_note_id: z.string().uuid().optional(),
 });
 
 function toDbPayload(input: ProjectFormInput) {
@@ -33,6 +34,7 @@ function toDbPayload(input: ProjectFormInput) {
     notes: emptyToNull(input.notes),
     site_url: emptyToNull(input.site_url),
     github_repo: emptyToNull(input.github_repo),
+    source_note_id: emptyToNull(input.source_note_id),
   };
 }
 

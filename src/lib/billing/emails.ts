@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 
+import { assertEmailHtmlSafe, emailUrl } from "@/lib/email/base-url";
 import type { WiskPackage } from "@/lib/billing/types";
-import { siteUrl } from "@/lib/url";
 
 // ─── Package display names ─────────────────────────────────────────────────────
 
@@ -58,12 +58,12 @@ const PACKAGE_FEATURES: Record<string, string[]> = {
 
 function getPackageCtaUrl(packageName: string): string {
   const urls: Record<string, string> = {
-    "WISK AI": siteUrl("/ai-digest"),
-    "WISK AI Pro": siteUrl("/ai-digest"),
-    "WISK Properties": siteUrl("/properties"),
-    "WISK Properties Pro": siteUrl("/properties"),
+    "WISK AI": emailUrl("/ai-digest"),
+    "WISK AI Pro": emailUrl("/ai-digest"),
+    "WISK Properties": emailUrl("/properties"),
+    "WISK Properties Pro": emailUrl("/properties"),
   };
-  return urls[packageName] ?? siteUrl();
+  return urls[packageName] ?? emailUrl();
 }
 
 function getPackageCtaLabel(packageName: string): string {
@@ -123,7 +123,7 @@ function htmlFooter(): string {
       </div>
       <div style="margin-top:32px;color:#52525b;font-size:12px;text-align:center;">
         WISK &middot; Built by Isaiah George Creative &middot;
-        <a href="${siteUrl("/upgrade")}" style="color:#52525b;text-decoration:underline;">Manage subscription</a>
+        <a href="${emailUrl("/upgrade")}" style="color:#52525b;text-decoration:underline;">Manage subscription</a>
       </div>
     </div>
   </body>
@@ -183,7 +183,7 @@ function buildSubscriptionConfirmedHtml({
       ${priceSection}
       ${ctaButton(ctaUrl, getPackageCtaLabel(packageName))}
       <p style="margin:0 0 20px;">
-        <a href="${siteUrl("/upgrade")}"
+        <a href="${emailUrl("/upgrade")}"
            style="color:#a855f7;font-size:13px;text-decoration:none;
                   border-bottom:1px solid rgba(168,85,247,0.3);
                   padding-bottom:1px;">
@@ -215,7 +215,7 @@ function buildSubscriptionCancelledHtml({
         <p style="color:#fbbf24;font-size:12px;font-weight:600;margin:0 0 4px;text-transform:uppercase;letter-spacing:0.08em;">Access until</p>
         <p style="color:#f4f4f5;font-size:18px;font-weight:700;margin:0;">${dateStr}</p>
       </div>
-      ${ctaButton(siteUrl("/upgrade"), "Reactivate your plan")}
+      ${ctaButton(emailUrl("/upgrade"), "Reactivate your plan")}
       <p style="color:#71717a;font-size:13px;line-height:1.5;border-top:1px solid rgba(255,255,255,0.07);padding-top:20px;margin:8px 0 0;">Changed your mind? You can reactivate any time before your access expires.</p>
   ${htmlFooter()}`;
 }
@@ -266,8 +266,8 @@ function buildSubscriptionRenewedHtml({
         ${price ? `<p style="color:#a1a1aa;font-size:14px;margin:0 0 8px;">Amount: <span style="color:#f4f4f5;font-weight:600;">${price}</span></p>` : ""}
         <p style="color:#a1a1aa;font-size:14px;margin:0;">Next renewal: <span style="color:#f4f4f5;font-weight:600;">${nextDateStr}</span></p>
       </div>
-      ${ctaButton(siteUrl(), "Go to WISK")}
-      <p style="color:#71717a;font-size:13px;line-height:1.5;border-top:1px solid rgba(255,255,255,0.07);padding-top:20px;margin:8px 0 0;">WISK &middot; <a href="${siteUrl("/upgrade")}" style="color:#71717a;text-decoration:underline;">Manage subscription</a></p>
+      ${ctaButton(emailUrl(), "Go to WISK")}
+      <p style="color:#71717a;font-size:13px;line-height:1.5;border-top:1px solid rgba(255,255,255,0.07);padding-top:20px;margin:8px 0 0;">WISK &middot; <a href="${emailUrl("/upgrade")}" style="color:#71717a;text-decoration:underline;">Manage subscription</a></p>
   ${htmlFooter()}`;
 }
 
@@ -290,11 +290,13 @@ export async function sendSubscriptionConfirmedEmail({
     const client = getResend();
     if (!client) return;
 
+    const html = buildSubscriptionConfirmedHtml({ displayName, packageName, price, periodEnd });
+    assertEmailHtmlSafe(html);
     const { error } = await client.resend.emails.send({
       from: client.from,
       to: to.trim().toLowerCase(),
       subject: `You're in. Welcome to ${packageName}.`,
-      html: buildSubscriptionConfirmedHtml({ displayName, packageName, price, periodEnd }),
+      html,
     });
 
     if (error) {
@@ -320,11 +322,13 @@ export async function sendSubscriptionCancelledEmail({
     const client = getResend();
     if (!client) return;
 
+    const html = buildSubscriptionCancelledHtml({ displayName, packageName, accessUntil });
+    assertEmailHtmlSafe(html);
     const { error } = await client.resend.emails.send({
       from: client.from,
       to: to.trim().toLowerCase(),
       subject: `Your ${packageName} subscription has been cancelled.`,
-      html: buildSubscriptionCancelledHtml({ displayName, packageName, accessUntil }),
+      html,
     });
 
     if (error) {
@@ -350,11 +354,13 @@ export async function sendPaymentFailedEmail({
     const client = getResend();
     if (!client) return;
 
+    const html = buildPaymentFailedHtml({ displayName, packageName, portalUrl });
+    assertEmailHtmlSafe(html);
     const { error } = await client.resend.emails.send({
       from: client.from,
       to: to.trim().toLowerCase(),
       subject: `Action needed — payment failed for ${packageName}.`,
-      html: buildPaymentFailedHtml({ displayName, packageName, portalUrl }),
+      html,
     });
 
     if (error) {
@@ -382,11 +388,13 @@ export async function sendSubscriptionRenewedEmail({
     const client = getResend();
     if (!client) return;
 
+    const html = buildSubscriptionRenewedHtml({ displayName, packageName, price, nextRenewalDate });
+    assertEmailHtmlSafe(html);
     const { error } = await client.resend.emails.send({
       from: client.from,
       to: to.trim().toLowerCase(),
       subject: `Your ${packageName} subscription has renewed.`,
-      html: buildSubscriptionRenewedHtml({ displayName, packageName, price, nextRenewalDate }),
+      html,
     });
 
     if (error) {

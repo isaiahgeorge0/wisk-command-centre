@@ -2,11 +2,14 @@ import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { z } from "zod";
 
+import { ANTHROPIC_TIMEOUT_MS } from "@/lib/ai/constants";
+import { cachedSystemPrompt } from "@/lib/ai/anthropic";
 import { logUsage } from "@/lib/ai/usage-logger";
 import { hasAIAccess } from "@/lib/billing/access";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { LEAD_STATUS_LABELS } from "@/lib/leads/constants";
 import { getDefaultEmailSubject } from "@/lib/leads/email";
+import { formatLeadValue } from "@/lib/leads/format";
 import type { Lead } from "@/lib/leads/types";
 import { LEAD_STATUSES } from "@/lib/leads/types";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -20,9 +23,15 @@ type AnthropicResponse = {
 
 const bodySchema = z.object({
   leadId: z.string().uuid(),
+  pipelineContext: z
+    .object({
+      issue: z.string().trim().min(1).max(1000),
+      suggestedAction: z.string().trim().min(1).max(1000),
+    })
+    .optional(),
 });
 
-const SYSTEM_PROMPT = `You are Winston, WISK's AI business assistant. Draft a short, professional follow-up email for a business lead. Keep it concise (3-4 sentences max), warm but professional. Return only the email body text — no subject line, no greeting salutation, no sign-off. Just the body paragraphs.`;
+const SYSTEM_PROMPT = `You are Winston, WISK's AI business assistant. Draft a short, professional follow-up email for a business lead. Keep it concise (3-4 sentences max), warm but professional. Return only the email body text — no subject line, no greeting salutation, no sign-off. Just the body paragraphs. When pipeline health context is provided, ground the email in that specific situation — do not write a generic nudge.`;
 
 export async function POST(request: Request) {
   try {
@@ -62,11 +71,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const { leadId } = parsed.data;
+    const { leadId, pipelineContext } = parsed.data;
 
     const { data: lead, error: leadError } = await supabase
       .from("leads")
-      .select("id, name, status, service_interest, value, email")
+      .select("id, name, status, service_interest, value, value_type, email")
       .eq("id", leadId)
       .eq("user_id", userId)
       .maybeSingle();
@@ -117,13 +126,26 @@ export async function POST(request: Request) {
           : "new"
       ];
 
+    const pipelineBlock = pipelineContext
+      ? `
+Pipeline health context (why this lead needs a follow-up right now):
+- Issue: ${pipelineContext.issue}
+- Suggested action: ${pipelineContext.suggestedAction}
+Reference this specific situation in the email — e.g. time since last contact, proposal stage, overdue follow-up — without inventing details not listed here.
+`
+      : "";
+
     const userPrompt = `Lead name: ${lead.name}
 Stage: ${stageLabel} (${lead.status})
 Service interest: ${lead.service_interest}
-Value: ${lead.value ?? "Not set"}
+Value: ${
+  lead.value != null
+    ? formatLeadValue(lead.value, lead.value_type)
+    : "Not set"
+}
 Recent activities:
 ${activitiesText}
-
+${pipelineBlock}
 Draft a follow-up email body for this lead.`;
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -141,9 +163,10 @@ Draft a follow-up email body for this lead.`;
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 300,
-        system: SYSTEM_PROMPT,
+        system: cachedSystemPrompt(SYSTEM_PROMPT),
         messages: [{ role: "user", content: userPrompt }],
       }),
+      signal: AbortSignal.timeout(ANTHROPIC_TIMEOUT_MS),
     });
 
     if (!claudeResponse.ok) {

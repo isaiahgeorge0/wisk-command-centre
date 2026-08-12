@@ -207,7 +207,7 @@ export function LeadCard({
         </p>
         <div className="flex items-center justify-between gap-2 text-xs">
           <span className="font-medium tabular-nums text-foreground">
-            {formatLeadValue(lead.value)}
+            {formatLeadValue(lead.value, lead.value_type)}
           </span>
           <span className="text-muted-foreground">
             {daysSinceCreated(lead.created_at)}

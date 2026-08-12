@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { z } from "zod";
 
+import { ANTHROPIC_TIMEOUT_MS } from "@/lib/ai/constants";
+import { cachedSystemPrompt } from "@/lib/ai/anthropic";
 import { logUsage } from "@/lib/ai/usage-logger";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -116,7 +118,7 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 500,
-        system: TRIAGE_SYSTEM_PROMPT,
+        system: cachedSystemPrompt(TRIAGE_SYSTEM_PROMPT),
         messages: [
           {
             role: "user",
@@ -124,6 +126,7 @@ export async function POST(request: Request) {
           },
         ],
       }),
+      signal: AbortSignal.timeout(ANTHROPIC_TIMEOUT_MS),
     });
 
     if (!claudeResponse.ok) {

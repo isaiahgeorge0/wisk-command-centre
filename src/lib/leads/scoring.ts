@@ -27,6 +27,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 export function calculateLeadScore(lead: {
   status: string;
   value: number | null;
+  value_type?: string | null;
   contacted_at: string | null;
   follow_up_date: string | null;
   last_activity_at?: string | null;
@@ -35,7 +36,10 @@ export function calculateLeadScore(lead: {
   const now = new Date();
   const stageScore = STAGE_SCORES[lead.status] ?? 5;
 
-  const value = lead.value ?? 0;
+  const value =
+    lead.value_type === "monthly" && lead.value != null
+      ? lead.value * 12
+      : (lead.value ?? 0);
   const valueScore =
     value <= 0
       ? 0

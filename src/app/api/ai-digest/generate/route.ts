@@ -16,37 +16,61 @@ export async function POST(request: Request) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
 
-  // ── Fetch all user IDs ────────────────────────────────────────────────────
+  // ── Entitled user IDs only (active AI packages + admin ai_access override) ─
   const supabase = createAdminClient();
 
-  const { data: users, error: usersError } = await supabase
-    .from("users")
-    .select("id");
+  const [{ data: subscriptions, error: subscriptionsError }, { data: overrides }] =
+    await Promise.all([
+      supabase
+        .from("user_subscriptions")
+        .select("user_id")
+        .in("package", ["ai", "ai_pro", "max"])
+        .in("status", ["active", "trialing"]),
+      supabase
+        .from("user_preferences")
+        .select("user_id")
+        .eq("ai_access", true),
+    ]);
 
-  if (usersError || !users) {
-    console.error("ai-digest/generate: failed to fetch users:", usersError);
+  if (subscriptionsError) {
+    console.error(
+      "ai-digest/generate: failed to fetch subscriptions:",
+      subscriptionsError
+    );
     return NextResponse.json(
-      { success: false, error: "Failed to fetch users" },
+      { success: false, error: "Failed to fetch entitled users" },
       { status: 500 }
     );
   }
 
-  // ── Generate per user ────────────────────────────────────────────────────
+  const userIds = [
+    ...new Set([
+      ...(subscriptions ?? []).map((row) => row.user_id),
+      ...(overrides ?? []).map((row) => row.user_id),
+    ]),
+  ];
+
+  if (userIds.length === 0) {
+    return NextResponse.json({ success: true, generated: 0, failed: 0, skipped: 0 });
+  }
+
+  // ── Generate per entitled user ───────────────────────────────────────────
   let generated = 0;
   let failed = 0;
 
-  for (const user of users) {
+  for (const userId of userIds) {
     try {
-      const context = await buildUserContext(user.id, supabase);
-      const { digest, inputTokens, outputTokens } = await generateWeeklyDigest(context);
-      await storeDigest(user.id, digest);
-      await logUsage(user.id, "digest", inputTokens, outputTokens);
-      console.log(`ai-digest/generate: ✓ user ${user.id}`);
+      const context = await buildUserContext(userId, supabase);
+      const { digest, inputTokens, outputTokens } =
+        await generateWeeklyDigest(context);
+      await storeDigest(userId, digest);
+      await logUsage(userId, "digest", inputTokens, outputTokens);
+      console.log(`ai-digest/generate: ✓ user ${userId}`);
       generated++;
     } catch (err) {
       Sentry.captureException(err);
       console.error(
-        `ai-digest/generate: ✗ user ${user.id}:`,
+        `ai-digest/generate: ✗ user ${userId}:`,
         err instanceof Error ? err.message : String(err)
       );
       failed++;

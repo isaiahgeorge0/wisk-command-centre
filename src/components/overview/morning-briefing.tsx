@@ -2,11 +2,13 @@
 
 import { motion } from "framer-motion";
 
-import type { MorningBriefingContent } from "@/lib/morning/briefing-generator";
+import {
+  getBriefingCardTeaser,
+  type MorningBriefingContent,
+} from "@/lib/morning/briefing-generator";
 
 type MorningBriefingProps = {
   briefing: MorningBriefingContent;
-  canAccess: boolean;
   cardId: string;
   onExpand: () => void;
   isExpanded?: boolean;
@@ -14,15 +16,11 @@ type MorningBriefingProps = {
 
 export function MorningBriefing({
   briefing,
-  canAccess,
   cardId,
   onExpand,
   isExpanded = false,
 }: MorningBriefingProps) {
-  if (!canAccess) return null;
-
-  const teaser =
-    briefing.teaser?.trim() || briefing.headline?.trim() || briefing.greeting;
+  const teaser = getBriefingCardTeaser(briefing);
 
   return (
     <motion.div

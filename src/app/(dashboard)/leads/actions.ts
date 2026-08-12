@@ -20,6 +20,7 @@ import {
   LEAD_ACTIVITY_TYPES,
   LEAD_SOURCES,
   LEAD_STATUSES,
+  LEAD_VALUE_TYPES,
   type LeadStatus,
 } from "@/lib/leads/types";
 
@@ -31,6 +32,7 @@ const leadFormSchema = z.object({
   service_interest: z.string().trim().min(1, "Service interest is required"),
   status: z.enum(LEAD_STATUSES),
   value: z.string().optional(),
+  value_type: z.enum(LEAD_VALUE_TYPES).optional(),
   notes: z.string().optional(),
 });
 
@@ -48,6 +50,7 @@ function toDbPayload(input: LeadFormInput) {
     service_interest: input.service_interest.trim(),
     status: input.status,
     value: parseLeadValue(input.value),
+    value_type: input.value_type === "monthly" ? "monthly" : "one_time",
     notes: emptyToNull(input.notes),
   };
 }
@@ -290,8 +293,17 @@ export async function convertLeadToProject(
   }
 
   const deadline = emptyToNull(parsed.data.deadline);
+  // Projects store a single one-time value. Monthly lead values are annualized
+  // (×12) at conversion unless the user overrode the amount in the modal.
+  const typedLead = lead as Lead;
+  const explicitValue = parseLeadValue(parsed.data.value);
   const value =
-    parseLeadValue(parsed.data.value) ?? lead.value ?? null;
+    explicitValue ??
+    (typedLead.value != null
+      ? typedLead.value_type === "monthly"
+        ? typedLead.value * 12
+        : typedLead.value
+      : null);
   const firstTask = emptyToNull(parsed.data.first_task);
 
   const { data: project, error: projectError } = await supabase

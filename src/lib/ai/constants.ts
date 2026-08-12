@@ -1,3 +1,12 @@
+/** Default deadline for Anthropic Messages API calls (one-shot cards, digests). */
+export const ANTHROPIC_TIMEOUT_MS = 30_000;
+
+/** Streaming chat — wall clock for the full token stream, not just TTFB. */
+export const ANTHROPIC_STREAM_TIMEOUT_MS = 60_000;
+
+/** Longer deadline for valuation — uses web_search tool rounds. */
+export const ANTHROPIC_VALUATION_TIMEOUT_MS = 90_000;
+
 /** Token-based monthly budget (input + output combined). */
 export const WINSTON_MONTHLY_TOKEN_LIMIT = 100_000;
 

@@ -1,4 +1,4 @@
-import type { LeadSource } from "@/lib/leads/types";
+import type { LeadSource, LeadValueType, PipelineValueSplit } from "@/lib/leads/types";
 import { addDaysToISO, toDateISO } from "@/lib/overview/date";
 
 export function emptyToNull(value: string | undefined): string | null {
@@ -12,13 +12,69 @@ export function parseLeadValue(value: string | undefined): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-export function formatLeadValue(value: number | null | undefined): string {
+export function normalizeLeadValueType(
+  valueType: string | null | undefined
+): LeadValueType {
+  return valueType === "monthly" ? "monthly" : "one_time";
+}
+
+/** Format a single lead value with explicit unit (£2,000 vs £450/mo). */
+export function formatLeadValue(
+  value: number | null | undefined,
+  valueType: LeadValueType | string | null | undefined = "one_time"
+): string {
   if (value == null) return "—";
-  return new Intl.NumberFormat("en-GB", {
+  const formatted = new Intl.NumberFormat("en-GB", {
     style: "currency",
     currency: "GBP",
     maximumFractionDigits: 0,
   }).format(value);
+  return normalizeLeadValueType(valueType) === "monthly"
+    ? `${formatted}/mo`
+    : formatted;
+}
+
+/** Two-figure total — never silently blend one-time and monthly. */
+export function formatPipelineValueSplit(
+  split: PipelineValueSplit | { oneTime: number; monthly: number }
+): string {
+  const parts: string[] = [];
+  if (split.oneTime > 0) {
+    parts.push(`Upfront: ${formatLeadValue(split.oneTime, "one_time")}`);
+  }
+  if (split.monthly > 0) {
+    parts.push(`Recurring: ${formatLeadValue(split.monthly, "monthly")}`);
+  }
+  return parts.length > 0 ? parts.join(" · ") : "—";
+}
+
+export function annualizeLeadValue(
+  value: number | null | undefined,
+  valueType: LeadValueType | string | null | undefined = "one_time"
+): number {
+  if (value == null || !Number.isFinite(value)) return 0;
+  return normalizeLeadValueType(valueType) === "monthly" ? value * 12 : value;
+}
+
+export function sumLeadValuesByType(
+  leads: Array<{
+    value: number | null;
+    value_type?: LeadValueType | string | null;
+  }>
+): PipelineValueSplit {
+  return leads.reduce(
+    (acc, lead) => {
+      const amount = lead.value ?? 0;
+      if (amount <= 0) return acc;
+      if (normalizeLeadValueType(lead.value_type) === "monthly") {
+        acc.monthly += amount;
+      } else {
+        acc.oneTime += amount;
+      }
+      return acc;
+    },
+    { oneTime: 0, monthly: 0 }
+  );
 }
 
 export function formatLeadSource(source: string): string {

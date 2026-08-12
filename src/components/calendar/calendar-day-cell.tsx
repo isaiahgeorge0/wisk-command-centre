@@ -72,7 +72,7 @@ export function CalendarDayCell({
         <span
           className={cn(
             "inline-flex size-6 items-center justify-center rounded-full text-xs font-medium",
-            day.isToday && "bg-wisk-section-calendar text-white",
+            day.isToday && "bg-wisk-section-calendar text-wisk-section-calendar-fg",
             !day.isToday && day.isCurrentMonth && "text-foreground",
             !day.isCurrentMonth && "text-muted-foreground/60"
           )}

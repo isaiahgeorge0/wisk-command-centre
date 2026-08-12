@@ -108,6 +108,7 @@ export async function generateNotifications(): Promise<void> {
 
   const validKeys = new Set(candidates.map(candidateKey));
   const staleIds = (existingRes.data ?? [])
+    .filter((row) => row.type !== "awaiting_date")
     .filter((row) => !validKeys.has(`${row.type}:${row.reference_id}`))
     .map((row) => row.id);
 
@@ -133,6 +134,33 @@ export async function generateNotifications(): Promise<void> {
     );
     if (error) throw new Error(error.message);
   }
+}
+
+export async function createAwaitingDateNotification(input: {
+  referenceId: string;
+  title: string;
+  linkTo: string;
+}): Promise<void> {
+  const { supabase, userId } = await getScopedSupabase();
+
+  const { error } = await supabase.from("notifications").upsert(
+    {
+      user_id: userId,
+      type: "awaiting_date",
+      reference_id: input.referenceId,
+      title: "This idea needs a date",
+      message: `“${input.title}” — set one when you're ready.`,
+      link_to: input.linkTo,
+    },
+    { onConflict: "user_id,type,reference_id", ignoreDuplicates: true }
+  );
+
+  if (error) {
+    console.error("createAwaitingDateNotification:", error);
+    return;
+  }
+
+  revalidatePath("/", "layout");
 }
 
 export async function getNotifications(): Promise<NotificationsSnapshot> {

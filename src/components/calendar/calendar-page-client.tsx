@@ -1,6 +1,7 @@
 "use client";
 
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { CalendarDayDetailPanel } from "@/components/calendar/calendar-day-detail-panel";
@@ -15,6 +16,8 @@ import { CalendarViewToolbar } from "@/components/calendar/calendar-view-toolbar
 import { CalendarWeekGrid } from "@/components/calendar/calendar-week-grid";
 import { PageHeader } from "@/components/layout/page-header";
 import { PageTransition } from "@/components/layout/page-transition";
+import { WinstonBrainstormPanel } from "@/components/winston/winston-brainstorm-panel";
+import { WinstonProposalSuccessToast } from "@/components/winston/proposal-success-toast";
 import { useQuickAdd } from "@/components/quick-add/quick-add-context";
 import { DEFAULT_CALENDAR_FILTERS } from "@/lib/calendar/constants";
 import {
@@ -49,6 +52,8 @@ import { getRecentProjectTypes } from "@/lib/projects/recent-project-types";
 import type { ProjectMilestone } from "@/lib/projects/milestones/types";
 import type { Project } from "@/lib/projects/types";
 import type { TaskWithProject } from "@/lib/tasks/types";
+import type { WinstonProposalCommitResult } from "@/lib/winston/proposal";
+import { cn } from "@/lib/utils";
 
 type CalendarPageClientProps = {
   projects: Project[];
@@ -58,6 +63,7 @@ type CalendarPageClientProps = {
   contentPosts: ContentPost[];
   standaloneEvents: StandaloneCalendarEvent[];
   contentGoals: Pick<Goal, "id" | "title">[];
+  canAccessWinston: boolean;
 };
 
 function createTodayDate(): Date {
@@ -74,7 +80,9 @@ export function CalendarPageClient({
   contentPosts,
   standaloneEvents,
   contentGoals,
+  canAccessWinston,
 }: CalendarPageClientProps) {
+  const router = useRouter();
   const todayISO = getTodayISO();
   const todayDate = useMemo(() => createTodayDate(), []);
 
@@ -96,6 +104,9 @@ export function CalendarPageClient({
     date: string | null;
     eventType: "lifestyle" | "other" | null;
   }>({ open: false, date: null, eventType: null });
+  const [brainstormOpen, setBrainstormOpen] = useState(false);
+  const [proposalToast, setProposalToast] =
+    useState<WinstonProposalCommitResult | null>(null);
 
   const { openTaskAdd, openContentAdd } = useQuickAdd();
 
@@ -282,12 +293,38 @@ export function CalendarPageClient({
 
   return (
     <PageTransition>
-      <PageHeader
-        title="Calendar"
-        subtitle="Deadlines, due dates, and milestones across your business."
-        icon={<CalendarDays className="size-6 text-wisk-section-calendar" />}
-        accent="calendar"
-      />
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <PageHeader
+          className="mb-0"
+          title="Calendar"
+          subtitle="Deadlines, due dates, and milestones across your business."
+          icon={<CalendarDays className="size-6 text-wisk-section-calendar" />}
+          accent="calendar"
+        />
+        <button
+          type="button"
+          onClick={() => setBrainstormOpen((open) => !open)}
+          aria-pressed={brainstormOpen}
+          className={cn(
+            "flex shrink-0 items-center gap-1.5 self-end rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors sm:self-auto",
+            brainstormOpen
+              ? "border-wisk-section-winston/50 bg-wisk-section-winston/15 text-foreground"
+              : "border-wisk-section-winston/30 bg-gradient-to-r from-wisk-section-winston/10 to-wisk-section-winston/10 text-foreground hover:border-wisk-section-winston/50"
+          )}
+        >
+          <Sparkles className="size-4 text-wisk-section-winston" aria-hidden />
+          <span className="hidden sm:inline">Brainstorm with Winston</span>
+          <span className="sm:hidden">Winston</span>
+        </button>
+      </div>
+
+      <div
+        className={cn(
+          "flex min-h-0 flex-col",
+          brainstormOpen ? "lg:flex-row lg:items-start lg:gap-4" : ""
+        )}
+      >
+        <div className={cn("min-w-0 flex-1", brainstormOpen ? "hidden md:block" : "")}>
 
       <div className="mb-4">
         <CalendarFilterBar filters={filters} onToggle={handleToggleFilter} />
@@ -433,6 +470,27 @@ export function CalendarPageClient({
         }}
         prefillDate={standaloneDialog.date}
         prefillEventType={standaloneDialog.eventType}
+      />
+        </div>
+        {brainstormOpen ? (
+          <div className="mt-4 min-h-[28rem] lg:mt-0 lg:h-[calc(100dvh-12rem)]">
+            <WinstonBrainstormPanel
+              open={brainstormOpen}
+              surface="calendar"
+              canAccessWinston={canAccessWinston}
+              onClose={() => setBrainstormOpen(false)}
+              onCommitted={(result) => {
+                setProposalToast(result);
+                setBrainstormOpen(false);
+                router.refresh();
+              }}
+            />
+          </div>
+        ) : null}
+      </div>
+      <WinstonProposalSuccessToast
+        result={proposalToast}
+        onDismiss={() => setProposalToast(null)}
       />
     </PageTransition>
   );

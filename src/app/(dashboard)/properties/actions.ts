@@ -13,7 +13,7 @@ import {
 } from "@/lib/properties/emails";
 import { formatPropertyAddress } from "@/lib/properties/format";
 import { getTenantFullName } from "@/lib/properties/tenant-form";
-import { portalUrl, contractorUrl } from "@/lib/url";
+import { emailUrl } from "@/lib/email/base-url";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   buildFinancialSummary,
@@ -1945,7 +1945,7 @@ export async function inviteTenantToPortal(
     ? formatPropertyAddress(property)
     : "your property";
 
-  const setupUrl = portalUrl(`/portal/setup?token=${token}`);
+  const setupUrl = emailUrl(`/portal/setup?token=${token}`);
 
   const sent = await sendTenantPortalInviteEmail({
     to: tenant.email.trim(),
@@ -2765,7 +2765,7 @@ export async function sendJobSheetEmail(
     contractorName: contractor.name,
     jobTitle: ticket?.title ?? "Maintenance job",
     propertyAddress: property ? formatPropertyAddress(property) : "Property",
-    jobSheetUrl: contractorUrl(jobSheet.token),
+    jobSheetUrl: emailUrl(`/contractor/${jobSheet.token}`),
   });
 
   if (!sent) {

@@ -299,7 +299,7 @@ export function LeadCallNotes({
             type="button"
             onClick={handleAnalyse}
             disabled={notes.trim().length < MIN_NOTES_LENGTH}
-            className="flex items-center gap-1.5 rounded-lg bg-wisk-section-leads px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-lg bg-wisk-section-leads px-3 py-1.5 text-xs font-medium text-wisk-section-leads-fg transition-opacity hover:opacity-90 disabled:opacity-50"
           >
             <Sparkles className="size-3" aria-hidden />
             Analyse with Winston
@@ -473,7 +473,7 @@ export function LeadCallNotes({
           type="button"
           onClick={handleApply}
           disabled={isPending}
-          className="flex items-center gap-1.5 rounded-lg bg-wisk-section-leads px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="flex items-center gap-1.5 rounded-lg bg-wisk-section-leads px-3 py-1.5 text-xs font-medium text-wisk-section-leads-fg transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {isPending ? <Loader2 className="size-3 animate-spin" /> : null}
           Apply selected

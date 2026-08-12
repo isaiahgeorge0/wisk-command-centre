@@ -5,6 +5,49 @@ import {
 } from "@/lib/morning/timezone";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+const LOCAL_ORIGIN_RE =
+  /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])(:\d+)?/i;
+
+/**
+ * Rewrite absolute loopback origins in stored briefing JSON to relative paths
+ * (or strip the origin) so in-app cards never point at localhost.
+ */
+export function sanitizeBriefingContent(
+  content: MorningBriefingContent
+): MorningBriefingContent {
+  const scrub = (value: string): string => {
+    if (!LOCAL_ORIGIN_RE.test(value) && !/localhost|127\.0\.0\.1/i.test(value)) {
+      return value;
+    }
+    try {
+      if (/^https?:\/\//i.test(value)) {
+        const url = new URL(value);
+        return `${url.pathname}${url.search}${url.hash}` || "/";
+      }
+    } catch {
+      // fall through
+    }
+    return value.replace(LOCAL_ORIGIN_RE, "");
+  };
+
+  return {
+    ...content,
+    greeting: scrub(content.greeting),
+    date: scrub(content.date),
+    teaser: content.teaser != null ? scrub(content.teaser) : content.teaser,
+    insight: content.insight != null ? scrub(content.insight) : content.insight,
+    headline: scrub(content.headline),
+    summary: content.summary != null ? scrub(content.summary) : content.summary,
+    encouragement: scrub(content.encouragement ?? ""),
+    focuses: (content.focuses ?? []).map((focus) => ({
+      ...focus,
+      item: scrub(focus.item),
+      href: scrub(focus.href) || "/",
+      category: focus.category,
+    })),
+  };
+}
+
 async function resolveTimezone(
   userId: string,
   suppliedTimezone?: string
@@ -30,11 +73,12 @@ export async function storeMorningBriefing(
   const supabase = createAdminClient();
   const userTimezone = await resolveTimezone(userId, timezone);
   const briefingDate = getLocalDateKey(userTimezone, now);
+  const safeContent = sanitizeBriefingContent(content);
   const { error } = await supabase.from("morning_briefings").upsert(
     {
       user_id: userId,
-      content: content as unknown as Record<string, unknown>,
-      generated_at: content.generatedAt,
+      content: safeContent as unknown as Record<string, unknown>,
+      generated_at: safeContent.generatedAt,
       briefing_date: briefingDate,
     },
     { onConflict: "user_id,briefing_date" }
@@ -66,7 +110,7 @@ export async function getTodaysBriefing(
   }
 
   return data
-    ? (data.content as unknown as MorningBriefingContent)
+    ? sanitizeBriefingContent(data.content as unknown as MorningBriefingContent)
     : null;
 }
 

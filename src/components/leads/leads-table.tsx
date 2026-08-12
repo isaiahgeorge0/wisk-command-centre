@@ -290,7 +290,7 @@ export function LeadsTable({
                         />
                       </td>
                       <td className="px-4 py-3 align-top tabular-nums text-foreground">
-                        {formatLeadValue(lead.value)}
+                        {formatLeadValue(lead.value, lead.value_type)}
                       </td>
                       <td className="hidden px-4 py-3 align-top lg:table-cell">
                         <LeadSourceBadge source={lead.source} />
@@ -401,7 +401,7 @@ export function LeadsTable({
                 </div>
                 <div className="mt-2 flex items-center justify-between gap-2 text-xs">
                   <span className="font-medium tabular-nums text-foreground">
-                    {formatLeadValue(lead.value)}
+                    {formatLeadValue(lead.value, lead.value_type)}
                   </span>
                   {followUp ? (
                     <span

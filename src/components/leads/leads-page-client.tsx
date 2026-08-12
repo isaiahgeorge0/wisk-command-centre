@@ -239,6 +239,17 @@ export function LeadsPageClient({
     );
   }, []);
 
+  const handleFocusLead = useCallback((leadId: string) => {
+    const targetLead = leads.find((lead) => lead.id === leadId);
+    if (!targetLead) return;
+
+    setFilters({
+      search: targetLead.name,
+      stage: "all",
+    });
+    setWinstonOpen(false);
+  }, [leads]);
+
   const handleBulkLeadDelete = useCallback((lead: Lead) => {
     setLeads((previous) => previous.filter((item) => item.id !== lead.id));
   }, []);
@@ -308,7 +319,7 @@ export function LeadsPageClient({
               className={cn(
                 "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
                 view === "pipeline"
-                  ? "bg-wisk-section-leads text-white"
+                  ? "bg-wisk-section-leads text-wisk-section-leads-fg"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -323,7 +334,7 @@ export function LeadsPageClient({
               className={cn(
                 "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
                 view === "table"
-                  ? "bg-wisk-section-leads text-white"
+                  ? "bg-wisk-section-leads text-wisk-section-leads-fg"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -436,6 +447,7 @@ export function LeadsPageClient({
             canAccessWinston={canAccessWinston}
             leads={leads}
             onLeadUpdate={handleLeadUpdate}
+            onFocusLead={handleFocusLead}
           />
         </div>
       )}

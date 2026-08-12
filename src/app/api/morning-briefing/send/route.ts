@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 
 import { sendMorningBriefingEmail } from "@/lib/morning/briefing-email";
 import type { MorningBriefingContent } from "@/lib/morning/briefing-generator";
+import { isMorningBriefingFrequentCronEnabled } from "@/lib/morning/cron";
 import { markBriefingSent } from "@/lib/morning/briefing-store";
+import { assertMorningBriefingCronAllowed } from "@/lib/morning/runtime-guard";
 import {
   getLocalDateKey,
   getLocalTime,
@@ -22,49 +24,53 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
   }
 
+  try {
+    assertMorningBriefingCronAllowed("send");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Forbidden";
+    console.error("[morning-briefing/send]", message);
+    return NextResponse.json({ error: message }, { status: 403 });
+  }
+
   const supabase = createAdminClient();
   const now = new Date();
-  const { data: subscriptions, error: subscriptionError } = await supabase
-    .from("user_subscriptions")
-    .select("user_id")
-    .in("package", ["ai_pro", "max"])
-    .in("status", ["active", "trialing"]);
-
-  if (subscriptionError) {
-    return NextResponse.json(
-      { error: "Could not load subscribers" },
-      { status: 500 }
-    );
-  }
-
-  const userIds = [
-    ...new Set((subscriptions ?? []).map((subscription) => subscription.user_id)),
-  ];
-  if (userIds.length === 0) {
-    return NextResponse.json({ sent: 0, skipped: 0 });
-  }
+  const frequentCron = isMorningBriefingFrequentCronEnabled();
 
   const recentCutoff = new Date(now.getTime() - 36 * 60 * 60 * 1000);
   const { data: briefings, error: briefingError } = await supabase
     .from("morning_briefings")
     .select("user_id, content, briefing_date")
-    .in("user_id", userIds)
     .is("sent_at", null)
     .gte("generated_at", recentCutoff.toISOString());
 
   if (briefingError) {
+    console.error("[morning-briefing/send] briefing query failed:", {
+      message: briefingError.message,
+    });
     return NextResponse.json(
       { error: "Could not load briefings" },
       { status: 500 }
     );
   }
 
+  const eligible = (briefings ?? []).length;
+  if (eligible === 0) {
+    const summary = {
+      eligible: 0,
+      sent: 0,
+      skipped: 0,
+      failed: 0,
+      frequentCron,
+    };
+    console.info(
+      `[morning-briefing/send] run complete eligible=0 sent=0 skipped=0 failed=0 frequentCron=${frequentCron}`
+    );
+    return NextResponse.json(summary);
+  }
+
   const briefingUserIds = [
     ...new Set((briefings ?? []).map((briefing) => briefing.user_id)),
   ];
-  if (briefingUserIds.length === 0) {
-    return NextResponse.json({ sent: 0, skipped: 0 });
-  }
 
   const [{ data: preferences }, { data: users }] = await Promise.all([
     supabase
@@ -90,10 +96,16 @@ export async function GET(request: Request) {
       const preference = preferencesByUser.get(briefing.user_id);
       const user = usersById.get(briefing.user_id);
       const timezone = normaliseTimezone(preference?.timezone);
-      const { hour, minute } = getLocalTime(timezone, now);
-      const isSendWindow = hour === 7 && minute >= 30 && minute <= 40;
       const isTodaysBriefing =
         briefing.briefing_date === getLocalDateKey(timezone, now);
+
+      // Pro */5 cadence: only send inside each user's local send window.
+      // Hobby once-daily: cron fire is the trigger — skip the window check.
+      let isSendWindow = true;
+      if (frequentCron) {
+        const { hour, minute } = getLocalTime(timezone, now);
+        isSendWindow = hour === 7 && minute >= 30 && minute <= 40;
+      }
 
       if (!user?.email || !isSendWindow || !isTodaysBriefing) {
         skipped += 1;
@@ -112,11 +124,15 @@ export async function GET(request: Request) {
     } catch (error) {
       failed += 1;
       console.error(
-        `morning-briefing/send: failed for ${briefing.user_id}`,
+        `[morning-briefing/send] failed for ${briefing.user_id}`,
         error
       );
     }
   }
 
-  return NextResponse.json({ sent, skipped, failed });
+  const summary = { eligible, sent, skipped, failed, frequentCron };
+  console.info(
+    `[morning-briefing/send] run complete eligible=${eligible} sent=${sent} skipped=${skipped} failed=${failed} frequentCron=${frequentCron}`
+  );
+  return NextResponse.json(summary);
 }

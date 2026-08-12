@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { ANTHROPIC_VALUATION_TIMEOUT_MS } from "@/lib/ai/constants";
 import { getPropertyTypeDisplayName } from "@/lib/properties/display-names";
 import { formatPropertyAddress } from "@/lib/properties/format";
 import type {
@@ -250,6 +251,7 @@ ${formatComparables(comparables)}`;
         ],
         messages: [{ role: "user", content: userPrompt }],
       }),
+      signal: AbortSignal.timeout(ANTHROPIC_VALUATION_TIMEOUT_MS),
     });
 
     if (!response.ok) {

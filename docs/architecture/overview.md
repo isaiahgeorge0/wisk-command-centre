@@ -315,6 +315,9 @@ Database migrations are applied separately via Supabase CLI against the linked p
 | `INTEGRATIONS_ENCRYPTION_KEY` | Yes | 32-byte base64 key for token encryption |
 | `ANTHROPIC_API_KEY` | Yes (Winston) | Claude API key for digest and chat |
 | `AI_DIGEST_SECRET` | Yes (Winston) | Bearer token for scheduled digest API routes |
+| `MORNING_BRIEFING_FREQUENT_CRON` | No | Set `true` only with Vercel Pro */5 crons to enforce local 7am windows; leave unset on Hobby |
+| `ALLOW_LOCAL_MORNING_BRIEFING_CRON` | No | Danger: allows local generate/send to hit live DB/Resend. Never set in production. |
+| `EMAIL_BASE_URL` | No | Absolute origin for links in Resend emails (defaults to `https://app.wiskapp.com`; must not be localhost) |
 | `PROPERTY_ALERTS_SECRET` | Yes (Properties) | Bearer token for `/api/properties/check-certificate-alerts` cron |
 | `RESEND_API_KEY` | Yes (email) | Resend API key for transactional emails |
 | `RESEND_FROM_EMAIL` | Yes (email) | From address for Resend emails |

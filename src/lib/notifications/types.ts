@@ -10,6 +10,7 @@ export const NOTIFICATION_TYPES = [
   "suggestion_goal_no_progress",
   "suggestion_content_streak",
   "suggestion_overdue_followup",
+  "awaiting_date",
 ] as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];

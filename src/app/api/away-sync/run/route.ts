@@ -37,12 +37,19 @@ async function runAwaySync(request: Request) {
   const userIds = [
     ...new Set((subscriptions ?? []).map((subscription) => subscription.user_id)),
   ];
-  if (userIds.length === 0) {
-    return NextResponse.json({ synced: 0, skipped: 0 });
+  const eligible = userIds.length;
+
+  if (eligible === 0) {
+    const summary = { eligible: 0, synced: 0, skipped: 0, failed: 0 };
+    console.info(
+      "[away-sync] run complete eligible=0 synced=0 skipped=0 failed=0"
+    );
+    return NextResponse.json(summary);
   }
 
   let synced = 0;
   let skipped = 0;
+  let failed = 0;
 
   for (const userId of userIds) {
     try {
@@ -73,11 +80,16 @@ async function runAwaySync(request: Request) {
       await storeAwaySummary(userId, summary);
       synced += 1;
     } catch (syncError) {
-      console.error(`away-sync: failed for ${userId}`, syncError);
+      failed += 1;
+      console.error(`[away-sync] failed for ${userId}`, syncError);
     }
   }
 
-  return NextResponse.json({ synced, skipped });
+  const summary = { eligible, synced, skipped, failed };
+  console.info(
+    `[away-sync] run complete eligible=${eligible} synced=${synced} skipped=${skipped} failed=${failed}`
+  );
+  return NextResponse.json(summary);
 }
 
 export async function GET(request: Request) {

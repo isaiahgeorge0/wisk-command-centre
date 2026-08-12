@@ -150,7 +150,11 @@ export function ContentPostCard({
             <span className="text-xs text-muted-foreground">
               {formatContentDate(post.scheduled_date)}
             </span>
-          ) : null}
+          ) : (
+            <span className="rounded-full border border-wisk-section-content/30 bg-wisk-section-content/10 px-2 py-0.5 text-[10px] font-medium text-wisk-section-content">
+              Awaiting a date
+            </span>
+          )}
         </div>
 
         {hookPreview ? (

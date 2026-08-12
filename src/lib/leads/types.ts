@@ -21,6 +21,10 @@ export const LEAD_SOURCES = [
 
 export type LeadSource = (typeof LEAD_SOURCES)[number];
 
+export const LEAD_VALUE_TYPES = ["one_time", "monthly"] as const;
+
+export type LeadValueType = (typeof LEAD_VALUE_TYPES)[number];
+
 export type Lead = {
   id: string;
   user_id: string;
@@ -31,6 +35,8 @@ export type Lead = {
   service_interest: string;
   status: LeadStatus | string;
   value: number | null;
+  /** Defaults to one_time when absent (pre-migration rows). */
+  value_type?: LeadValueType;
   notes: string | null;
   contacted_at: string | null;
   follow_up_date: string | null;
@@ -46,6 +52,7 @@ export type LeadFormInput = {
   service_interest: string;
   status: LeadStatus;
   value?: string;
+  value_type?: LeadValueType;
   notes?: string;
 };
 
@@ -128,4 +135,28 @@ export type CallNotesActions = {
   updateValue: boolean;
   setFollowUp: boolean;
   createTasks: string[];
+};
+
+export type PipelineHealthFocus = {
+  leadId: string;
+  leadName: string;
+  /** Raw lead value from source data — never from Winston prose. */
+  value: number | null;
+  valueType: LeadValueType;
+  issue: string;
+  suggestedAction: string;
+  urgency: "high" | "medium" | "low";
+};
+
+export type PipelineValueSplit = {
+  oneTime: number;
+  monthly: number;
+};
+
+export type PipelineHealthResult = {
+  summary: string;
+  focuses: PipelineHealthFocus[];
+  /** Precomputed from lead records; UI formats — do not parse from summary. */
+  valueAtRisk: PipelineValueSplit;
+  generatedAt: string;
 };

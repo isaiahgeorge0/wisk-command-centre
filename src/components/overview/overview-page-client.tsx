@@ -32,6 +32,7 @@ import { WhileYouWereAway } from "@/components/overview/while-you-were-away";
 import type { AwaySummary } from "@/lib/away/build-away-summary";
 import type { Goal } from "@/lib/goals/types";
 import type { Idea } from "@/lib/ideas/types";
+import { formatLeadValue } from "@/lib/leads/format";
 import type { Lead } from "@/lib/leads/types";
 import type { MorningBriefingContent } from "@/lib/morning/briefing-generator";
 import type { OverviewSnapshot } from "@/lib/overview/selectors";
@@ -307,7 +308,7 @@ export function OverviewPageClient({
   const leadItems = snapshot.recentLeads.slice(0, 3).map((lead) => ({
     label: lead.name,
     sub: lead.value
-      ? `£${Number(lead.value).toLocaleString("en-GB")} · ${lead.status}`
+      ? `${formatLeadValue(lead.value, lead.value_type)} · ${lead.status}`
       : (lead.status ?? undefined),
     subColour: lead.status
       ? LEAD_STATUS_COLOURS[lead.status]
@@ -317,7 +318,10 @@ export function OverviewPageClient({
   const expandedLeadItems = leads.slice(0, 10).map((lead) => ({
     label: lead.name,
     sub:
-      [lead.status, lead.value ? `£${Number(lead.value).toLocaleString("en-GB")}` : null]
+      [
+        lead.status,
+        lead.value ? formatLeadValue(lead.value, lead.value_type) : null,
+      ]
         .filter(Boolean)
         .join(" · ") || undefined,
     subColour: lead.status
@@ -661,11 +665,10 @@ export function OverviewPageClient({
                 <OverviewHeader header={snapshot.header} />
               </div>
 
-              {canAccessWhileAway && morningBriefing ? (
+              {morningBriefing ? (
                 <div className="hidden w-72 shrink-0 md:block">
                   <MorningBriefing
                     briefing={morningBriefing}
-                    canAccess={canAccessWhileAway}
                     cardId="morning"
                     onExpand={() => setExpandedCard("morning")}
                     isExpanded={expandedCard === "morning"}

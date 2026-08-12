@@ -12,6 +12,7 @@ export const NOTIFICATION_ACCENT_CLASS: Record<NotificationType, string> = {
   suggestion_goal_no_progress: "border-l-blue-400/80 bg-blue-500/[0.04]",
   suggestion_content_streak: "border-l-wisk-coral/80 bg-wisk-coral/[0.06]",
   suggestion_overdue_followup: "border-l-wisk-coral/80 bg-wisk-coral/[0.06]",
+  awaiting_date: "border-l-wisk-section-calendar/80 bg-wisk-section-calendar/[0.06]",
 };
 
 export const NOTIFICATION_DOT_CLASS: Record<NotificationType, string> = {
@@ -26,6 +27,7 @@ export const NOTIFICATION_DOT_CLASS: Record<NotificationType, string> = {
   suggestion_goal_no_progress: "bg-blue-400",
   suggestion_content_streak: "bg-wisk-coral",
   suggestion_overdue_followup: "bg-wisk-coral",
+  awaiting_date: "bg-wisk-section-calendar",
 };
 
 const SUGGESTION_NOTIFICATION_PREFIX = "suggestion_";

@@ -21,6 +21,7 @@ export type Project = {
   notes: string | null;
   site_url: string | null;
   github_repo: string | null;
+  source_note_id: string | null;
   vercel_project_id: string | null;
   created_at: string;
   updated_at: string;
@@ -38,6 +39,7 @@ export type ProjectFormInput = {
   notes?: string;
   site_url?: string;
   github_repo?: string;
+  source_note_id?: string;
 };
 
 export type ActionResult<T = void> =

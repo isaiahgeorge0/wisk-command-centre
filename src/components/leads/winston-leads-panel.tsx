@@ -2,7 +2,6 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  BarChart2,
   Lock,
   Phone,
   Sparkles,
@@ -13,8 +12,12 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useIsMobilePanel } from "@/components/calendar/use-is-mobile-panel";
 import { LeadCallNotes } from "@/components/leads/lead-call-notes";
+import { PipelineHealthCard } from "@/components/leads/pipeline-health-card";
 import { LeadSelector } from "@/components/leads/lead-selector";
-import { WinstonEmailDraftCard } from "@/components/leads/winston-email-draft-card";
+import {
+  WinstonEmailDraftCard,
+  type WinstonEmailDraftSeed,
+} from "@/components/leads/winston-email-draft-card";
 import { Button } from "@/components/ui/button";
 import { MOTION_DURATION, MOTION_EASE } from "@/lib/motion/config";
 import { useMotionSafe } from "@/lib/motion/use-motion-safe";
@@ -27,17 +30,18 @@ type WinstonLeadsPanelProps = {
   canAccessWinston: boolean;
   leads: Lead[];
   onLeadUpdate: (lead: Lead) => void;
+  onFocusLead: (leadId: string) => void;
 };
 
 function WinstonGradientIcon({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "flex size-9 shrink-0 items-center justify-center rounded-lg bg-wisk-section-leads",
+        "flex size-9 shrink-0 items-center justify-center rounded-lg bg-wisk-section-leads text-wisk-section-leads-fg",
         className
       )}
     >
-      <Sparkles className="size-4 text-white" aria-hidden />
+      <Sparkles className="size-4" aria-hidden />
     </div>
   );
 }
@@ -131,7 +135,7 @@ function TeaserContent({ onClose }: { onClose: () => void }) {
         <Link href="/upgrade" className="block">
           <Button
             type="button"
-            className="w-full bg-wisk-section-leads text-white hover:opacity-90"
+            className="w-full bg-wisk-section-leads text-wisk-section-leads-fg hover:opacity-90"
           >
             Upgrade to WISK AI
           </Button>
@@ -193,41 +197,23 @@ function CallNotesCard({
   );
 }
 
-function PipelineHealthCard() {
-  return (
-    <div className="rounded-xl border border-border/40 bg-muted/10 p-4 opacity-70">
-      <div className="flex items-start gap-3">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-wisk-section-leads/10">
-          <BarChart2 className="size-4 text-wisk-section-leads" aria-hidden />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-foreground">
-              Pipeline health
-            </h3>
-            <span className="rounded-full border border-border/60 bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-              Coming soon
-            </span>
-          </div>
-          <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-            Winston will analyse your full pipeline and surface patterns, risks,
-            and opportunities.
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function AccessContent({
   leads,
   onLeadUpdate,
   onClose,
+  panelOpen,
+  onFocusLead,
 }: {
   leads: Lead[];
   onLeadUpdate: (lead: Lead) => void;
   onClose: () => void;
+  panelOpen: boolean;
+  onFocusLead: (leadId: string) => void;
 }) {
+  const [draftSeed, setDraftSeed] = useState<WinstonEmailDraftSeed | null>(
+    null
+  );
+
   return (
     <>
       <PanelHeader
@@ -237,8 +223,17 @@ function AccessContent({
       />
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 space-y-4">
         <CallNotesCard leads={leads} onLeadUpdate={onLeadUpdate} />
-        <WinstonEmailDraftCard leads={leads} />
-        <PipelineHealthCard />
+        <WinstonEmailDraftCard
+          leads={leads}
+          seed={draftSeed}
+          onSeedConsumed={() => setDraftSeed(null)}
+        />
+        <PipelineHealthCard
+          open={panelOpen}
+          leads={leads}
+          onFocusLead={onFocusLead}
+          onDraftFollowUp={setDraftSeed}
+        />
       </div>
     </>
   );
@@ -308,6 +303,7 @@ export function WinstonLeadsPanel({
   canAccessWinston,
   leads,
   onLeadUpdate,
+  onFocusLead,
 }: WinstonLeadsPanelProps) {
   const isMobile = useIsMobilePanel();
 
@@ -343,6 +339,8 @@ export function WinstonLeadsPanel({
                 leads={leads}
                 onLeadUpdate={onLeadUpdate}
                 onClose={onClose}
+                panelOpen={open}
+                onFocusLead={onFocusLead}
               />
             ) : (
               <TeaserContent onClose={onClose} />

@@ -155,7 +155,7 @@ export function LeadQuickActions({
               type="button"
               onClick={handleAddNote}
               disabled={isPending || !note.trim()}
-              className="mt-1 w-full rounded-md bg-wisk-section-leads px-2 py-1 text-[10px] font-semibold text-white disabled:opacity-50"
+              className="mt-1 w-full rounded-md bg-wisk-section-leads px-2 py-1 text-[10px] font-semibold text-wisk-section-leads-fg disabled:opacity-50"
             >
               Save note
             </button>

@@ -1,6 +1,8 @@
 import * as Sentry from "@sentry/nextjs";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { ANTHROPIC_TIMEOUT_MS } from "@/lib/ai/constants";
+import { cachedSystemParts } from "@/lib/ai/anthropic";
 import { logUsage } from "@/lib/ai/usage-logger";
 import type { UsageFeature } from "@/lib/ai/usage-logger";
 import { buildReplySubject } from "@/lib/email/compose-urls";
@@ -27,20 +29,7 @@ const TONE_GUIDANCE: Record<DraftTone, string> = {
     "Casual: relaxed, personal, natural. Write like a human not a business.",
 };
 
-function buildSystemPrompt(options: {
-  displayName: string;
-  tone: DraftTone;
-  accountLabel: string | null;
-  leadContext: string | null;
-}): string {
-  const accountLabel = options.accountLabel?.trim() || "business";
-
-  return `You are Winston, an AI business assistant for WISK. You are drafting an email response on behalf of ${options.displayName}.
-
-Tone: ${TONE_GUIDANCE[options.tone]}
-
-Account context: This is their ${accountLabel} email account.
-${options.leadContext ? `\n${options.leadContext}` : ""}
+const EMAIL_DRAFT_RULES = `You are Winston, an AI business assistant for WISK drafting an email response.
 
 Begin your response with a personalised greeting using the sender's first name.
 Extract the first name from the sender's display name or email address.
@@ -62,6 +51,34 @@ When you do draft, be concise — most business emails need 3-5 sentences, not p
 If you determine this email does not need a reply, respond with exactly: NO_REPLY_NEEDED: [brief reason]
 
 Otherwise, return ONLY the email body — include the greeting and message content, but no subject line or sign-off/signature.`;
+
+function buildSystemPrompt(options: {
+  displayName: string;
+  tone: DraftTone;
+  accountLabel: string | null;
+  leadContext: string | null;
+}) {
+  const accountLabel = options.accountLabel?.trim() || "business";
+  const dynamic = [
+    `You are drafting on behalf of ${options.displayName}.`,
+    `Tone: ${TONE_GUIDANCE[options.tone]}`,
+    `Account context: This is their ${accountLabel} email account.`,
+    options.leadContext ?? "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  return cachedSystemParts([
+    { text: EMAIL_DRAFT_RULES, cache: true },
+    { text: dynamic },
+  ]);
+}
+
+const MAX_EMAIL_BODY_CHARS = 8_000;
+
+function truncateEmailBody(body: string): string {
+  if (body.length <= MAX_EMAIL_BODY_CHARS) return body;
+  return `${body.slice(0, MAX_EMAIL_BODY_CHARS)}\n\n[Email body truncated for length]`;
 }
 
 export type GenerateEmailDraftInput = {
@@ -159,7 +176,7 @@ export async function generateEmailDraft(
 From: ${email.from.name} <${email.from.email}>
 Date: ${email.date}
 
-${email.body}`;
+${truncateEmailBody(email.body)}`;
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -177,11 +194,12 @@ ${email.body}`;
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 600,
         system: systemPrompt,
         messages: [{ role: "user", content: userPrompt }],
       }),
+      signal: AbortSignal.timeout(ANTHROPIC_TIMEOUT_MS),
     });
 
     if (!claudeResponse.ok) {

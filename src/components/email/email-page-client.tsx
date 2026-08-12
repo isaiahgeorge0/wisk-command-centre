@@ -1,7 +1,7 @@
 "use client";
 
 import { Mail } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { PageTransition } from "@/components/layout/page-transition";
@@ -16,6 +16,7 @@ import {
   emailMatchesRule,
 } from "@/lib/email/categoriser";
 import type { EmailCategory } from "@/lib/email/categoriser";
+import { fingerprintActionItemEmails } from "@/lib/email/action-items-fingerprint";
 import type {
   CustomInbox,
   Email,
@@ -52,6 +53,8 @@ function emailKey(email: EmailThread): string {
   return `${email.integrationId}:${email.id}`;
 }
 
+const ACTION_ITEMS_DEBOUNCE_MS = 400;
+
 export function EmailPageClient({
   connectedProviders,
   connectedAccountCount,
@@ -85,6 +88,13 @@ export function EmailPageClient({
     null
   );
   const [isLoadingPicks, setIsLoadingPicks] = useState(false);
+
+  const actionItemsFingerprintRef = useRef<string | null>(null);
+  const actionItemsInFlightRef = useRef<string | null>(null);
+  const actionItemsAbortRef = useRef<AbortController | null>(null);
+  const actionItemsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
 
   const displayEmails = useMemo(() => {
     return emails.map((email) => {
@@ -162,6 +172,81 @@ export function EmailPageClient({
     [activeProvider, searchQuery]
   );
 
+  const requestActionItems = useCallback((inboxEmails: EmailThread[]) => {
+    const unreadRecent = inboxEmails
+      .filter((email) => !email.isRead)
+      .slice(0, 10);
+
+    if (actionItemsDebounceRef.current) {
+      clearTimeout(actionItemsDebounceRef.current);
+      actionItemsDebounceRef.current = null;
+    }
+
+    if (unreadRecent.length === 0) {
+      actionItemsAbortRef.current?.abort();
+      actionItemsAbortRef.current = null;
+      actionItemsInFlightRef.current = null;
+      actionItemsFingerprintRef.current = "";
+      setActionItems([]);
+      return;
+    }
+
+    const fingerprint = fingerprintActionItemEmails(unreadRecent);
+
+    // Same unread set already loaded or currently fetching — skip.
+    if (
+      fingerprint === actionItemsFingerprintRef.current ||
+      fingerprint === actionItemsInFlightRef.current
+    ) {
+      return;
+    }
+
+    actionItemsDebounceRef.current = setTimeout(() => {
+      actionItemsDebounceRef.current = null;
+
+      // Re-check after debounce in case a newer request superseded this one.
+      if (
+        fingerprint === actionItemsFingerprintRef.current ||
+        fingerprint === actionItemsInFlightRef.current
+      ) {
+        return;
+      }
+
+      actionItemsAbortRef.current?.abort();
+      const controller = new AbortController();
+      actionItemsAbortRef.current = controller;
+      actionItemsInFlightRef.current = fingerprint;
+
+      void fetch("/api/email/action-items", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emails: unreadRecent }),
+        signal: controller.signal,
+      })
+        .then(async (response) => {
+          const payload = (await response.json()) as {
+            actionItems?: EmailActionItem[];
+          };
+          if (!response.ok) {
+            throw new Error("action-items request failed");
+          }
+          if (controller.signal.aborted) return;
+          actionItemsFingerprintRef.current = fingerprint;
+          setActionItems(payload.actionItems ?? []);
+        })
+        .catch((err: unknown) => {
+          if (controller.signal.aborted) return;
+          if (err instanceof DOMException && err.name === "AbortError") return;
+          setActionItems([]);
+        })
+        .finally(() => {
+          if (actionItemsInFlightRef.current === fingerprint) {
+            actionItemsInFlightRef.current = null;
+          }
+        });
+    }, ACTION_ITEMS_DEBOUNCE_MS);
+  }, []);
+
   const loadInbox = useCallback(
     async (provider: ProviderFilter, search: string) => {
       setIsLoading(true);
@@ -184,30 +269,7 @@ export function EmailPageClient({
         setSelectedEmailFull(null);
         setMobileShowReader(false);
 
-        const unreadRecent = data.emails
-          .filter((email) => !email.isRead)
-          .slice(0, 10);
-
-        if (unreadRecent.length > 0) {
-          void fetch("/api/email/action-items", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ emails: unreadRecent }),
-          })
-            .then(async (response) => {
-              const payload = (await response.json()) as {
-                actionItems?: EmailActionItem[];
-              };
-              if (response.ok && payload.actionItems) {
-                setActionItems(payload.actionItems);
-              }
-            })
-            .catch(() => {
-              setActionItems([]);
-            });
-        } else {
-          setActionItems([]);
-        }
+        requestActionItems(data.emails);
       } catch (loadError) {
         setError(
           loadError instanceof Error
@@ -219,7 +281,7 @@ export function EmailPageClient({
         setIsLoading(false);
       }
     },
-    [fetchInbox]
+    [fetchInbox, requestActionItems]
   );
 
   useEffect(() => {
@@ -236,6 +298,15 @@ export function EmailPageClient({
 
     void loadInbox(activeProvider, searchQuery);
   }, [activeProvider, connectedProviders.length, loadInbox, searchQuery]);
+
+  useEffect(() => {
+    return () => {
+      if (actionItemsDebounceRef.current) {
+        clearTimeout(actionItemsDebounceRef.current);
+      }
+      actionItemsAbortRef.current?.abort();
+    };
+  }, []);
 
   const fetchWinstonPicks = useCallback(async (regenerate = false) => {
     setIsLoadingPicks(true);

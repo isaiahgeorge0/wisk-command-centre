@@ -1,3 +1,5 @@
+import { ANTHROPIC_TIMEOUT_MS } from "@/lib/ai/constants";
+import { cachedSystemParts } from "@/lib/ai/anthropic";
 import { logUsage } from "@/lib/ai/usage-logger";
 import {
   buildDeadlineTeaser,
@@ -7,11 +9,17 @@ import {
 } from "@/lib/morning/greeting";
 import { formatLocalDate, getLocalTime } from "@/lib/morning/timezone";
 
+export type MorningBriefingTier = "free" | "paid";
+
 export type MorningBriefingContent = {
+  /** Missing on pre-tier rows — treat as paid. */
+  tier?: MorningBriefingTier;
   greeting: string;
   date: string;
   /** Collapsed-card teaser. Missing on pre-066 rows — fall back to headline. */
   teaser?: string;
+  /** Free tier: the single Winston insight. */
+  insight?: string;
   headline: string;
   /** Expanded modal prose. Missing on pre-066 rows — fall back to headline. */
   summary?: string;
@@ -60,6 +68,9 @@ const CATEGORY_HREFS: Record<string, string> = {
 
 const URGENCIES = new Set(["high", "medium", "low"]);
 
+const FREE_MODEL = "claude-haiku-4-5-20251001";
+const PAID_MODEL = "claude-sonnet-4-6";
+
 export type GenerateBriefingOptions = {
   userId: string;
   displayName: string;
@@ -67,63 +78,34 @@ export type GenerateBriefingOptions = {
   greetingTerm?: string | null;
   context: BriefingContext;
   timezone: string;
+  /** Defaults to paid (full briefing). */
+  tier?: MorningBriefingTier;
 };
 
-export async function generateMorningBriefing(
-  options: GenerateBriefingOptions
-): Promise<MorningBriefingContent> {
-  const {
-    userId,
-    displayName,
-    gender,
-    greetingTerm,
-    context,
-    timezone,
-  } = options;
-
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    throw new Error("ANTHROPIC_API_KEY is not configured");
-  }
-
-  const now = new Date();
-  const dateLabel = formatLocalDate(timezone, now);
-  const { hour } = getLocalTime(timezone, now);
-  const term = resolveGreetingTerm(gender, greetingTerm);
-  const greeting = buildGreetingLine(hour, term);
-  const teaser = buildDeadlineTeaser(
-    greeting,
-    context.projectsApproachingDeadline.length,
-    context.projectsPastDeadline.length
-  );
-
-  const systemPrompt = `You are Winston, WISK's AI business assistant. You are generating a morning briefing for someone you address as "${term}" (display name on file: ${displayName}). Be confident, direct, and premium — warm without being corporate or cheesy. Never use filler phrases like "Certainly!" or "Great question!".
-
-Return ONLY valid JSON matching this exact shape:
-{
-  "headline": "one sentence, Winston's read on today",
-  "summary": "a flowing natural-language paragraph covering what matters today",
-  "focuses": [
-    {
-      "category": "Tasks|Projects|Leads|Goals|Content|Properties",
-      "item": "specific actionable item",
-      "urgency": "high|medium|low"
-    }
-  ],
-  "encouragement": "one closing sentence, genuine not cheesy"
+export function isFreeBriefing(
+  content: MorningBriefingContent | null | undefined
+): boolean {
+  return content?.tier === "free";
 }
 
-Rules:
-- summary: target 150–200 words when there is enough to say. Shorter is fine if the day is light. Only go longer when there is genuinely a lot that needs attention. Cover key tasks, projects, goals, and other time-sensitive items. Do not invent urgency — if nothing is urgent, say the day looks manageable and point to useful focus areas.
-- focuses: 3-5 items maximum, most urgent first. Only include items that genuinely need attention today.
-- If something is overdue, say so directly.
-- encouragement: one sentence, no exclamation marks.
-- headline: under 15 words, specific to their situation.
-- Do not include a greeting or teaser in the JSON — those are built separately.`;
+export function getBriefingCardTeaser(content: MorningBriefingContent): string {
+  if (isFreeBriefing(content)) {
+    return (
+      content.insight?.trim() ||
+      content.teaser?.trim() ||
+      content.headline?.trim() ||
+      content.greeting
+    );
+  }
+  return (
+    content.teaser?.trim() ||
+    content.headline?.trim() ||
+    content.greeting
+  );
+}
 
-  const userPrompt = `Today is ${dateLabel}.
-
-Business context:
+function buildContextBlock(context: BriefingContext): string {
+  return `Business context:
 ${
   context.projectsPastDeadline.length > 0
     ? `PROJECTS PAST DEADLINE (${context.projectsPastDeadline.length}): ${context.projectsPastDeadline
@@ -188,36 +170,184 @@ ${
   context.rentDueCount > 0
     ? `RENT DUE: ${context.rentDueCount} tenant(s)`
     : ""
+}`;
 }
 
-Generate the morning briefing JSON.`;
-
+async function callAnthropic(input: {
+  apiKey: string;
+  model: string;
+  maxTokens: number;
+  system: ReturnType<typeof cachedSystemParts>;
+  userPrompt: string;
+}): Promise<AnthropicResponse> {
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-api-key": apiKey,
+      "x-api-key": input.apiKey,
       "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1200,
-      system: systemPrompt,
-      messages: [{ role: "user", content: userPrompt }],
+      model: input.model,
+      max_tokens: input.maxTokens,
+      system: input.system,
+      messages: [{ role: "user", content: input.userPrompt }],
     }),
+    signal: AbortSignal.timeout(ANTHROPIC_TIMEOUT_MS),
   });
 
   const data = (await response.json()) as AnthropicResponse;
   if (!response.ok) {
     throw new Error(data.error?.message ?? "Anthropic briefing request failed");
   }
+  return data;
+}
 
-  const text = (data.content ?? [])
+function extractText(data: AnthropicResponse): string {
+  return (data.content ?? [])
     .filter((block) => block.type === "text")
     .map((block) => block.text ?? "")
-    .join("");
-  const clean = text.replace(/```json/g, "").replace(/```/g, "").trim();
-  const parsed = JSON.parse(clean) as {
+    .join("")
+    .replace(/```json/g, "")
+    .replace(/```/g, "")
+    .trim();
+}
+
+async function generateFreeBriefing(
+  options: GenerateBriefingOptions & {
+    apiKey: string;
+    greeting: string;
+    dateLabel: string;
+    teaser: string;
+    term: string;
+    now: Date;
+  }
+): Promise<MorningBriefingContent> {
+  const { userId, displayName, context, apiKey, greeting, dateLabel, teaser, term, now } =
+    options;
+
+  const briefingRules = `You are Winston, WISK's AI business assistant. Write one short morning insight for a free user — a taster of what full Winston briefings offer.
+
+Return ONLY valid JSON matching this exact shape:
+{
+  "insight": "one or two sentences — the single most useful thing to know today"
+}
+
+Rules:
+- Pick the single most pressing item (most overdue task/project, stalled work, or similar).
+- If nothing is urgent, say so plainly and offer a calm, useful focus — do not invent urgency.
+- No greeting, no lists, no encouragement closer.
+- Keep it under 40 words.
+- Be confident, direct, and premium — warm without being corporate.`;
+
+  const systemPrompt = cachedSystemParts([
+    { text: briefingRules, cache: true },
+    {
+      text: `Address this person as "${term}" (display name on file: ${displayName}).`,
+    },
+  ]);
+
+  const userPrompt = `Today is ${dateLabel}.
+
+${buildContextBlock(context)}
+
+Generate the single-insight JSON.`;
+
+  const data = await callAnthropic({
+    apiKey,
+    model: FREE_MODEL,
+    maxTokens: 180,
+    system: systemPrompt,
+    userPrompt,
+  });
+
+  const parsed = JSON.parse(extractText(data)) as { insight?: unknown };
+  if (typeof parsed.insight !== "string" || !parsed.insight.trim()) {
+    throw new Error("Anthropic returned an invalid free morning briefing");
+  }
+
+  const insight = parsed.insight.trim();
+
+  await logUsage(
+    userId,
+    "morning_briefing",
+    data.usage?.input_tokens ?? 0,
+    data.usage?.output_tokens ?? 0
+  );
+
+  return {
+    tier: "free",
+    greeting,
+    date: dateLabel,
+    teaser: teaser || insight,
+    insight,
+    headline: insight,
+    summary: insight,
+    focuses: [],
+    encouragement: "",
+    generatedAt: now.toISOString(),
+  };
+}
+
+async function generatePaidBriefing(
+  options: GenerateBriefingOptions & {
+    apiKey: string;
+    greeting: string;
+    dateLabel: string;
+    teaser: string;
+    term: string;
+    now: Date;
+  }
+): Promise<MorningBriefingContent> {
+  const { userId, displayName, context, apiKey, greeting, dateLabel, teaser, term, now } =
+    options;
+
+  const briefingRules = `You are Winston, WISK's AI business assistant generating a morning briefing. Be confident, direct, and premium — warm without being corporate or cheesy. Never use filler phrases like "Certainly!" or "Great question!".
+
+Return ONLY valid JSON matching this exact shape:
+{
+  "headline": "one sentence, Winston's read on today",
+  "summary": "a flowing natural-language paragraph covering what matters today",
+  "focuses": [
+    {
+      "category": "Tasks|Projects|Leads|Goals|Content|Properties",
+      "item": "specific actionable item",
+      "urgency": "high|medium|low"
+    }
+  ],
+  "encouragement": "one closing sentence, genuine not cheesy"
+}
+
+Rules:
+- summary: target 150–200 words when there is enough to say. Shorter is fine if the day is light. Only go longer when there is genuinely a lot that needs attention. Cover key tasks, projects, goals, and other time-sensitive items. Do not invent urgency — if nothing is urgent, say the day looks manageable and point to useful focus areas.
+- focuses: 3-5 items maximum, most urgent first. Only include items that genuinely need attention today.
+- If something is overdue, say so directly.
+- encouragement: one sentence, no exclamation marks.
+- headline: under 15 words, specific to their situation.
+- Do not include a greeting or teaser in the JSON — those are built separately.`;
+
+  const systemPrompt = cachedSystemParts([
+    { text: briefingRules, cache: true },
+    {
+      text: `Address this person as "${term}" (display name on file: ${displayName}).`,
+    },
+  ]);
+
+  const userPrompt = `Today is ${dateLabel}.
+
+${buildContextBlock(context)}
+
+Generate the morning briefing JSON.`;
+
+  const data = await callAnthropic({
+    apiKey,
+    model: PAID_MODEL,
+    maxTokens: 1200,
+    system: systemPrompt,
+    userPrompt,
+  });
+
+  const parsed = JSON.parse(extractText(data)) as {
     headline?: unknown;
     summary?: unknown;
     focuses?: unknown;
@@ -260,6 +390,7 @@ Generate the morning briefing JSON.`;
   );
 
   return {
+    tier: "paid",
     greeting,
     date: dateLabel,
     teaser,
@@ -269,4 +400,49 @@ Generate the morning briefing JSON.`;
     encouragement: parsed.encouragement,
     generatedAt: now.toISOString(),
   };
+}
+
+export async function generateMorningBriefing(
+  options: GenerateBriefingOptions
+): Promise<MorningBriefingContent> {
+  const {
+    displayName,
+    gender,
+    greetingTerm,
+    context,
+    timezone,
+    tier = "paid",
+  } = options;
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error("ANTHROPIC_API_KEY is not configured");
+  }
+
+  const now = new Date();
+  const dateLabel = formatLocalDate(timezone, now);
+  const { hour } = getLocalTime(timezone, now);
+  const term = resolveGreetingTerm(gender, greetingTerm);
+  const greeting = buildGreetingLine(hour, term);
+  const teaser = buildDeadlineTeaser(
+    greeting,
+    context.projectsApproachingDeadline.length,
+    context.projectsPastDeadline.length
+  );
+
+  const shared = {
+    ...options,
+    apiKey,
+    greeting,
+    dateLabel,
+    teaser,
+    term,
+    now,
+  };
+
+  if (tier === "free") {
+    return generateFreeBriefing(shared);
+  }
+
+  return generatePaidBriefing(shared);
 }

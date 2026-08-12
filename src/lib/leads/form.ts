@@ -9,6 +9,7 @@ export const EMPTY_LEAD_FORM: LeadFormInput = {
   service_interest: "",
   status: "new",
   value: "",
+  value_type: "one_time",
   notes: "",
 };
 
@@ -21,6 +22,7 @@ export function leadToFormInput(lead: Lead): LeadFormInput {
     service_interest: lead.service_interest,
     status: isLeadStatus(lead.status) ? lead.status : "new",
     value: lead.value != null ? String(lead.value) : "",
+    value_type: lead.value_type === "monthly" ? "monthly" : "one_time",
     notes: lead.notes ?? "",
   };
 }

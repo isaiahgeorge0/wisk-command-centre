@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { formatLeadValue } from "@/lib/leads/format";
 import type { Lead } from "@/lib/leads/types";
 
 type ConvertLeadDialogProps = {
@@ -23,8 +24,11 @@ type ConvertLeadDialogProps = {
   onConverted: (leadId: string, projectId: string) => void;
 };
 
-function leadValueToInput(value: number | null): string {
-  return value != null ? String(value) : "";
+/** Projects store one-time value — annualize monthly leads for the default. */
+function defaultProjectValue(lead: Lead): string {
+  if (lead.value == null) return "";
+  if (lead.value_type === "monthly") return String(lead.value * 12);
+  return String(lead.value);
 }
 
 export function ConvertLeadDialog({
@@ -45,7 +49,7 @@ export function ConvertLeadDialog({
     setName(lead.name);
     setDeadline("");
     setFirstTask("");
-    setValue(leadValueToInput(lead.value));
+    setValue(defaultProjectValue(lead));
     setError(null);
   }, [open, lead]);
 
@@ -66,7 +70,7 @@ export function ConvertLeadDialog({
         name: name.trim(),
         ...(skipExtras
           ? {
-              value: lead.value != null ? String(lead.value) : undefined,
+              value: defaultProjectValue(lead) || undefined,
             }
           : {
               deadline: deadline || undefined,
@@ -84,6 +88,11 @@ export function ConvertLeadDialog({
       handleOpenChange(false);
     });
   };
+
+  const monthlySource =
+    lead.value != null && lead.value_type === "monthly"
+      ? formatLeadValue(lead.value, "monthly")
+      : null;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -140,6 +149,12 @@ export function ConvertLeadDialog({
               onChange={(e) => setValue(e.target.value)}
               disabled={isPending}
             />
+            {monthlySource ? (
+              <p className="text-xs text-muted-foreground">
+                Pre-filled as {monthlySource} × 12 (annualized). Projects store a
+                one-time value — edit if needed.
+              </p>
+            ) : null}
           </div>
 
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
@@ -158,7 +173,7 @@ export function ConvertLeadDialog({
             type="button"
             disabled={isPending || !name.trim()}
             onClick={() => handleConvert(false)}
-            className="bg-wisk-section-leads text-white hover:opacity-90"
+            className="bg-wisk-section-leads text-wisk-section-leads-fg hover:opacity-90"
           >
             {isPending ? "Converting…" : "Convert"}
           </Button>

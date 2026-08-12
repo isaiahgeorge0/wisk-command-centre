@@ -45,7 +45,7 @@ export function OverviewWeekStrip({ snapshot }: OverviewWeekStripProps) {
               className={cn(
                 "mt-1 flex size-7 items-center justify-center rounded-full text-sm font-semibold tabular-nums",
                 day.isToday
-                  ? "bg-wisk-section-winston text-wisk-dark"
+                  ? "bg-wisk-section-winston text-wisk-section-winston-fg"
                   : "text-foreground"
               )}
             >

@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { cachedSystemPrompt } from "@/lib/ai/anthropic";
+import { ANTHROPIC_TIMEOUT_MS } from "@/lib/ai/constants";
 import { buildFinancialSummary } from "@/lib/properties/financial-summary";
 import { getCertificateTypeDisplayName } from "@/lib/properties/display-names";
 import { daysUntilDate } from "@/lib/properties/format";
@@ -149,7 +151,10 @@ export async function buildPropertyPortfolioContext(
     certificatesResult,
   ] = await Promise.all([
     supabase.from("users").select("name, email").eq("id", userId).single(),
-    supabase.from("properties").select("*").eq("user_id", userId),
+    supabase
+      .from("properties")
+      .select("name, status, property_type, monthly_rent")
+      .eq("user_id", userId),
     supabase
       .from("tenants")
       .select("first_name, last_name, status, rent_amount, properties(name)")
@@ -255,6 +260,11 @@ export async function buildProPropertyPortfolioContext(
 ): Promise<ProPropertyPortfolioContext> {
   const base = await buildPropertyPortfolioContext(userId, supabase);
 
+  const now = new Date();
+  const paymentSince = new Date(now);
+  paymentSince.setMonth(paymentSince.getMonth() - 24);
+  const paymentSinceIso = paymentSince.toISOString().slice(0, 10);
+
   const [
     propertiesResult,
     paymentsResult,
@@ -263,15 +273,40 @@ export async function buildProPropertyPortfolioContext(
     insuranceResult,
     ticketsResult,
   ] = await Promise.all([
-    supabase.from("properties").select("*").eq("user_id", userId),
-    supabase.from("rent_payments").select("*").eq("user_id", userId),
+    supabase
+      .from("properties")
+      .select(
+        "id, name, monthly_rent, current_value, purchase_price, created_at, status, property_type"
+      )
+      .eq("user_id", userId),
+    supabase
+      .from("rent_payments")
+      .select(
+        "id, property_id, tenant_id, amount, due_date, paid_date, status"
+      )
+      .eq("user_id", userId)
+      .gte("due_date", paymentSinceIso),
     supabase
       .from("tenants")
       .select("id, first_name, last_name, property_id, properties(name)")
       .eq("user_id", userId),
-    supabase.from("property_mortgages").select("*").eq("user_id", userId),
-    supabase.from("property_insurance").select("*").eq("user_id", userId),
-    supabase.from("maintenance_tickets").select("*").eq("user_id", userId),
+    supabase
+      .from("property_mortgages")
+      .select(
+        "id, property_id, lender, monthly_payment, fixed_rate_end_date"
+      )
+      .eq("user_id", userId),
+    supabase
+      .from("property_insurance")
+      .select("id, property_id, insurer, annual_premium, renewal_date")
+      .eq("user_id", userId),
+    supabase
+      .from("maintenance_tickets")
+      .select(
+        "id, property_id, status, actual_cost, resolved_date, reported_date"
+      )
+      .eq("user_id", userId)
+      .gte("reported_date", paymentSinceIso),
   ]);
 
   const properties = (propertiesResult.data ?? []) as Property[];
@@ -459,25 +494,34 @@ function buildBaseUserPrompt(ctx: PropertyPortfolioContext): string {
   lines.push("");
 
   lines.push("## PROPERTIES");
-  for (const p of ctx.properties) {
+  for (const p of ctx.properties.slice(0, 25)) {
     lines.push(
       `- ${p.name} (${p.type}, ${p.status})${p.monthlyRent != null ? `, rent £${p.monthlyRent}/mo` : ""}`
     );
   }
+  if (ctx.properties.length > 25) {
+    lines.push(`- …and ${ctx.properties.length - 25} more`);
+  }
   lines.push("");
 
   lines.push("## TENANTS");
-  for (const t of ctx.tenants) {
+  for (const t of ctx.tenants.slice(0, 20)) {
     lines.push(`- ${t.name} at ${t.propertyName} (${t.status}), £${t.rentAmount}`);
+  }
+  if (ctx.tenants.length > 20) {
+    lines.push(`- …and ${ctx.tenants.length - 20} more`);
   }
   if (ctx.tenants.length === 0) lines.push("- No tenants");
   lines.push("");
 
   lines.push("## OPEN MAINTENANCE");
-  for (const m of ctx.openMaintenance) {
+  for (const m of ctx.openMaintenance.slice(0, 15)) {
     lines.push(
       `- [${m.priority}] ${m.title} at ${m.propertyName} (${m.status}${m.category ? `, ${m.category}` : ""})`
     );
+  }
+  if (ctx.openMaintenance.length > 15) {
+    lines.push(`- …and ${ctx.openMaintenance.length - 15} more`);
   }
   if (ctx.openMaintenance.length === 0) lines.push("- No open tickets");
   lines.push("");
@@ -510,17 +554,35 @@ function buildProUserPrompt(ctx: ProPropertyPortfolioContext): string {
     `Portfolio net yield: ${ctx.portfolioNetYield != null ? `${ctx.portfolioNetYield.toFixed(1)}%` : "n/a"}`
   );
   lines.push("Per property:");
-  for (const property of ctx.propertyYields) {
+  for (const property of ctx.propertyYields.slice(0, 25)) {
     lines.push(
       `- ${property.name}: gross ${property.grossYield != null ? `${property.grossYield.toFixed(1)}%` : "n/a"}, net ${property.netYield != null ? `${property.netYield.toFixed(1)}%` : "n/a"}, ROI ${property.roi != null ? `${property.roi.toFixed(1)}%` : "n/a"}, net income £${property.netIncome}/yr`
     );
   }
+  if (ctx.propertyYields.length > 25) {
+    lines.push(`- …and ${ctx.propertyYields.length - 25} more`);
+  }
   lines.push("");
 
   lines.push("## TENANT RELIABILITY");
-  for (const tenant of ctx.tenantReliabilityScores) {
+  const reliabilitySorted = [...ctx.tenantReliabilityScores].sort((a, b) => {
+    const gradeWeight: Record<string, number> = {
+      F: 0,
+      D: 1,
+      C: 2,
+      B: 3,
+      A: 4,
+    };
+    return (gradeWeight[a.grade] ?? 5) - (gradeWeight[b.grade] ?? 5);
+  });
+  for (const tenant of reliabilitySorted.slice(0, 20)) {
     lines.push(
       `${tenant.tenantName} at ${tenant.propertyName}: Grade ${tenant.grade} (${tenant.score}/100) — ${tenant.label}. Missed: ${tenant.missedCount}, Late: ${tenant.lateCount}.`
+    );
+  }
+  if (ctx.tenantReliabilityScores.length > 20) {
+    lines.push(
+      `…and ${ctx.tenantReliabilityScores.length - 20} more tenants`
     );
   }
   if (ctx.tenantReliabilityScores.length === 0) {
@@ -530,6 +592,7 @@ function buildProUserPrompt(ctx: ProPropertyPortfolioContext): string {
     `At-risk tenants (D/F): ${
       ctx.atRiskTenants.length > 0
         ? ctx.atRiskTenants
+            .slice(0, 15)
             .map((tenant) => `${tenant.name} at ${tenant.propertyName} (${tenant.grade})`)
             .join(", ")
         : "none"
@@ -662,9 +725,10 @@ export async function generatePropertyInsights(
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
       max_tokens: isProPlan ? 2500 : 1500,
-      system: getSystemPrompt(isProPlan),
+      system: cachedSystemPrompt(getSystemPrompt(isProPlan)),
       messages: [{ role: "user", content: buildUserPrompt(context) }],
     }),
+    signal: AbortSignal.timeout(ANTHROPIC_TIMEOUT_MS),
   });
 
   if (!response.ok) {

@@ -93,13 +93,16 @@ export function IdeasList({
     }
   }, [autoExpandParked]);
 
-  const { newAndExploring, inProgress, parkedDropped } = useMemo(() => {
+  const { newAndExploring, inProgress, awaitingDate, parkedDropped } = useMemo(() => {
     const newAndExploringIdeas: Idea[] = [];
     const inProgressIdeas: Idea[] = [];
+    const awaitingDateIdeas: Idea[] = [];
     const parkedDroppedIdeas: Idea[] = [];
 
     for (const idea of ideas) {
-      if (isStatus(idea, "new") || isStatus(idea, "exploring")) {
+      if (isStatus(idea, "awaiting-date")) {
+        awaitingDateIdeas.push(idea);
+      } else if (isStatus(idea, "new") || isStatus(idea, "exploring")) {
         newAndExploringIdeas.push(idea);
       } else if (isStatus(idea, "in-progress")) {
         inProgressIdeas.push(idea);
@@ -113,6 +116,7 @@ export function IdeasList({
     return {
       newAndExploring: newAndExploringIdeas,
       inProgress: inProgressIdeas,
+      awaitingDate: awaitingDateIdeas,
       parkedDropped: parkedDroppedIdeas,
     };
   }, [ideas]);
@@ -127,6 +131,8 @@ export function IdeasList({
     );
   }
 
+  const showAwaitingSection =
+    statusFilter === "all" || statusFilter === "awaiting-date";
   const showNewSection =
     statusFilter === "all" ||
     statusFilter === "new" ||
@@ -140,6 +146,27 @@ export function IdeasList({
 
   return (
     <div className="space-y-8">
+      {showAwaitingSection && awaitingDate.length > 0 ? (
+        <section>
+          <SectionHeading
+            label="Awaiting a date"
+            count={awaitingDate.length}
+          />
+          <IdeaGrid
+            ideas={awaitingDate}
+            onIdeaDelete={onIdeaDelete}
+            stagger={newStagger}
+          />
+        </section>
+      ) : showAwaitingSection && statusFilter === "awaiting-date" && showEmptyGroupMessages ? (
+        <section>
+          <SectionHeading label="Awaiting a date" count={0} />
+          <p className="text-sm text-muted-foreground">
+            Nothing waiting on a date right now.
+          </p>
+        </section>
+      ) : null}
+
       {showNewSection && newAndExploring.length > 0 ? (
         <section>
           <SectionHeading

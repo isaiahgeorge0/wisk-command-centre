@@ -2,6 +2,7 @@ import type { IdeaFilters, IdeaStatus, IdeaStatusFilter } from "@/lib/ideas/type
 import { IDEA_STATUSES } from "@/lib/ideas/types";
 
 export const IDEA_CATEGORY_SUGGESTIONS = [
+  "Calendar",
   "Content",
   "Product",
   "Business",
@@ -12,6 +13,7 @@ export const IDEA_STATUS_LABELS: Record<IdeaStatus, string> = {
   new: "New",
   exploring: "Exploring",
   "in-progress": "In progress",
+  "awaiting-date": "Awaiting a date",
   parked: "Parked",
   dropped: "Dropped",
 };
@@ -20,6 +22,7 @@ export const IDEA_STATUS_BADGE_CLASS: Record<IdeaStatus, string> = {
   new: "border-wisk-teal/30 bg-wisk-teal/15 text-wisk-teal",
   exploring: "border-wisk-purple/30 bg-wisk-purple/15 text-wisk-purple",
   "in-progress": "border-amber-500/30 bg-amber-500/15 text-amber-400",
+  "awaiting-date": "border-wisk-section-calendar/30 bg-wisk-section-calendar/15 text-wisk-section-calendar",
   parked: "border-border bg-muted text-muted-foreground",
   dropped: "border-red-500/20 bg-red-500/10 text-muted-foreground",
 };

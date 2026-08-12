@@ -6,6 +6,7 @@ export type UsageFeature =
   | "email_draft"
   | "property_insights"
   | "email_picks_draft"
+  | "pipeline_health"
   | "portal_triage"
   | "property_valuation"
   | "morning_briefing";

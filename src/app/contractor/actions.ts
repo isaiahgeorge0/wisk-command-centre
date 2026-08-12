@@ -11,7 +11,7 @@ import type {
   JobSheetWithDetails,
 } from "@/lib/properties/types";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { portalUrl } from "@/lib/url";
+import { emailUrl } from "@/lib/email/base-url";
 
 const jobSheetTokenSchema = z.string().min(64).max(64);
 
@@ -264,7 +264,7 @@ export async function requestTenantAccess(
           )?.title ?? "Maintenance job",
         requestedDate: formatPropertyDate(parsed.data.requestedDate),
         requestedTime: parsed.data.requestedTime ?? null,
-        portalUrl: portalUrl("/portal/maintenance"),
+        portalUrl: emailUrl("/portal/maintenance"),
       });
     }
   }

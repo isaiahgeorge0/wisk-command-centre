@@ -228,8 +228,8 @@ export function WinstonDigestPageClient({
           {/* 6 — Recommendation (most prominent) */}
           <div className="sm:col-span-2 xl:col-span-3 rounded-xl border border-wisk-section-winston/30 bg-gradient-to-br from-wisk-section-winston/[0.06] to-wisk-section-winston/[0.06] p-5 shadow-sm">
             <div className="mb-3 flex items-center gap-2.5">
-              <div className="flex size-7 items-center justify-center rounded-lg bg-wisk-section-winston">
-                <ArrowRight className="size-4 text-white" />
+              <div className="flex size-7 items-center justify-center rounded-lg bg-wisk-section-winston text-wisk-section-winston-fg">
+                <ArrowRight className="size-4" />
               </div>
               <h2 className="text-sm font-semibold text-foreground">
                 Winston&apos;s recommendation

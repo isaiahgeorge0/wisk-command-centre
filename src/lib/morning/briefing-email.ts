@@ -1,6 +1,13 @@
 import { Resend } from "resend";
 
-import type { MorningBriefingContent } from "@/lib/morning/briefing-generator";
+import {
+  assertEmailHtmlSafe,
+  emailUrl,
+} from "@/lib/email/base-url";
+import {
+  isFreeBriefing,
+  type MorningBriefingContent,
+} from "@/lib/morning/briefing-generator";
 
 const URGENCY_COLOURS = {
   high: "#e8001d",
@@ -25,20 +32,8 @@ function escapeHtml(value: string): string {
     .replaceAll("'", "&#039;");
 }
 
-export async function sendMorningBriefingEmail({
-  to,
-  displayName,
-  content,
-}: {
-  to: string;
-  displayName: string;
-  content: MorningBriefingContent;
-}): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) throw new Error("RESEND_API_KEY is not configured");
-
-  const resend = new Resend(apiKey);
-  const focusesHtml = content.focuses
+function buildPaidEmailHtml(content: MorningBriefingContent): string {
+  const focusesHtml = (content.focuses ?? [])
     .map((focus) => {
       const colour = URGENCY_COLOURS[focus.urgency] ?? URGENCY_COLOURS.low;
       return `
@@ -64,8 +59,8 @@ export async function sendMorningBriefingEmail({
     })
     .join("");
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://app.wiskapp.com";
-  const html = `
+  const siteUrl = emailUrl();
+  return `
 <!DOCTYPE html>
 <html>
 <head>
@@ -160,11 +155,125 @@ export async function sendMorningBriefingEmail({
   </table>
 </body>
 </html>`;
+}
+
+function buildFreeEmailHtml(content: MorningBriefingContent): string {
+  const siteUrl = emailUrl();
+  const insight =
+    content.insight?.trim() ||
+    content.headline?.trim() ||
+    content.summary?.trim() ||
+    "";
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Your WISK Morning Insight</title>
+</head>
+<body style="margin:0;padding:0;background-color:#141b27;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#141b27;">
+    <tr>
+      <td align="center" style="padding:40px 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
+          <tr>
+            <td style="padding-bottom:32px;text-align:center;">
+              <img src="${siteUrl}/wisk-logo-white.png" alt="WISK" height="28"
+                style="filter:brightness(0) saturate(100%) invert(93%) sepia(55%) saturate(900%) hue-rotate(33deg) brightness(105%);">
+            </td>
+          </tr>
+          <tr>
+            <td style="padding-bottom:8px;text-align:center;">
+              <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.12em;color:rgba(255,255,255,0.4);">
+                ${escapeHtml(content.date)}
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding-bottom:8px;text-align:center;">
+              <h1 style="margin:0;font-size:28px;font-weight:700;color:#ffffff;letter-spacing:-0.5px;">
+                ${escapeHtml(content.greeting)}
+              </h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding-bottom:28px;">
+              <table width="100%" cellpadding="0" cellspacing="0"
+                style="overflow:hidden;background:#1a2235;border:1px solid rgba(255,255,255,0.08);border-radius:16px;">
+                <tr>
+                  <td style="height:3px;background:linear-gradient(to right,#c3ff32,#016c81);"></td>
+                </tr>
+                <tr>
+                  <td style="padding:24px;">
+                    <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#c3ff32;">
+                      Today&apos;s insight
+                    </span>
+                    <p style="margin:12px 0 0;font-size:16px;color:#ffffff;font-weight:500;line-height:1.55;">
+                      ${escapeHtml(insight)}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding-bottom:24px;text-align:center;">
+              <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.4);line-height:1.5;">
+                Want the full morning briefing every day? Unlock Winston with WISK AI.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding-bottom:32px;text-align:center;">
+              <a href="${siteUrl}/upgrade" style="display:inline-block;padding:12px 28px;background:#c3ff32;border-radius:10px;color:#141b27;font-size:13px;font-weight:700;letter-spacing:0.02em;text-decoration:none;">
+                See plans
+              </a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding-top:24px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
+              <p style="margin:0;font-size:11px;color:rgba(255,255,255,0.25);line-height:1.6;">
+                A daily taster from Winston.<br>
+                <a href="${siteUrl}/settings" style="color:rgba(255,255,255,0.35);text-decoration:underline;">
+                  Manage email preferences
+                </a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+export async function sendMorningBriefingEmail({
+  to,
+  displayName,
+  content,
+}: {
+  to: string;
+  displayName: string;
+  content: MorningBriefingContent;
+}): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) throw new Error("RESEND_API_KEY is not configured");
+
+  const resend = new Resend(apiKey);
+  const free = isFreeBriefing(content);
+  const html = free ? buildFreeEmailHtml(content) : buildPaidEmailHtml(content);
+
+  assertEmailHtmlSafe(html);
 
   const { error } = await resend.emails.send({
     from: process.env.RESEND_FROM_EMAIL ?? "WISK <hello@wiskapp.com>",
     to: to.trim().toLowerCase(),
-    subject: `Good morning, ${displayName} — your WISK briefing`,
+    subject: free
+      ? `Good morning, ${displayName} — a note from Winston`
+      : `Good morning, ${displayName} — your WISK briefing`,
     html,
   });
 

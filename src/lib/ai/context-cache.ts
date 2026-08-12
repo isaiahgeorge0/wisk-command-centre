@@ -1,12 +1,19 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { buildUserContext, type UserContext } from "@/lib/ai/context-builder";
+import { EMAIL_ACTION_ITEMS_CACHE_KEY } from "@/lib/email/action-items-cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 const EMAIL_SUGGESTIONS_KEY = "email_suggestions";
 
-function preserveEmailSuggestions(
+/** Nested keys stored alongside UserContext in ai_context_cache.context. */
+const PRESERVED_CONTEXT_KEYS = [
+  EMAIL_SUGGESTIONS_KEY,
+  EMAIL_ACTION_ITEMS_CACHE_KEY,
+] as const;
+
+function preserveNestedCaches(
   existingContext: unknown
 ): Record<string, unknown> | null {
   if (
@@ -17,11 +24,15 @@ function preserveEmailSuggestions(
     return null;
   }
 
-  const emailSuggestions = (existingContext as Record<string, unknown>)[
-    EMAIL_SUGGESTIONS_KEY
-  ];
+  const source = existingContext as Record<string, unknown>;
+  const preserved: Record<string, unknown> = {};
+  for (const key of PRESERVED_CONTEXT_KEYS) {
+    if (source[key] != null) {
+      preserved[key] = source[key];
+    }
+  }
 
-  return emailSuggestions ? { [EMAIL_SUGGESTIONS_KEY]: emailSuggestions } : null;
+  return Object.keys(preserved).length > 0 ? preserved : null;
 }
 
 export async function getCachedContext(
@@ -43,7 +54,7 @@ export async function getCachedContext(
   }
 
   const context = await buildUserContext(userId, supabase);
-  const preserved = preserveEmailSuggestions(data?.context);
+  const preserved = preserveNestedCaches(data?.context);
 
   const admin = createAdminClient();
   await admin.from("ai_context_cache").upsert({
