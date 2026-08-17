@@ -42,4 +42,9 @@ next-env.d.ts
 
 # Sentry Config File
 .env.sentry-build-plugin
+
+# Supabase CLI local state
 supabase/.temp/
+
+# Ad-hoc audit/sync reports generated during dev sessions
+*_REPORT.md
