@@ -45,7 +45,7 @@ export default function GlobalError({
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="mt-8 rounded-lg bg-wisk-lime px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              className="mt-8 rounded-lg bg-wisk-lime px-6 py-2.5 text-sm font-semibold text-wisk-dark transition-opacity hover:opacity-90"
             >
               Refresh page
             </button>

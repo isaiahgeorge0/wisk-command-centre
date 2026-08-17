@@ -9,6 +9,7 @@ import { OnboardingOverlay } from "@/components/onboarding/onboarding-overlay";
 import { UsernamePromptModal } from "@/components/username/username-prompt-modal";
 import { OnboardingProvider } from "@/components/onboarding/onboarding-context";
 import { BottomNav } from "@/components/layout/bottom-nav";
+import { MobileComposeFocusProvider } from "@/components/layout/mobile-compose-focus-context";
 import { NavModeProvider } from "@/components/layout/nav-mode-context";
 import { WinstonFab } from "@/components/layout/winston-fab";
 import { WinstonSidebar } from "@/components/winston/winston-sidebar";
@@ -120,6 +121,7 @@ export function AppShell({
       <PreferencesProvider value={{ fieldVisibility, serviceTypes }}>
         <QuickAddProvider>
           <WinstonSidebarProvider canAccessWinston={canAccessWinston}>
+          <MobileComposeFocusProvider>
           <NavModeProvider>
             <SpotlightTourProvider
               hasProjects={hasProjects}
@@ -163,6 +165,7 @@ export function AppShell({
             </div>
           </SpotlightTourProvider>
           </NavModeProvider>
+          </MobileComposeFocusProvider>
           </WinstonSidebarProvider>
         </QuickAddProvider>
       </PreferencesProvider>

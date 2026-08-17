@@ -11,6 +11,7 @@ import {
 } from "@/components/auth/sign-in-entrance";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { authEmailRedirectUrl } from "@/lib/auth/safe-redirect-origin";
 
 export function ForgotPasswordClient() {
   const [email, setEmail] = useState("");
@@ -28,12 +29,11 @@ export function ForgotPasswordClient() {
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         { auth: { flowType: "implicit" } }
       );
-      const origin =
-        process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
-
       const { error: resetError } =
         await resetClient.auth.resetPasswordForEmail(email.trim(), {
-          redirectTo: `${origin}/auth/callback-client?next=/auth/reset-password`,
+          redirectTo: authEmailRedirectUrl(
+            "/auth/callback-client?next=/auth/reset-password"
+          ),
         });
 
       if (resetError) {
@@ -142,7 +142,7 @@ export function ForgotPasswordClient() {
           <button
             type="submit"
             disabled={isPending}
-            className="mt-6 w-full rounded-lg bg-wisk-lime px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-6 w-full rounded-lg bg-wisk-lime px-4 py-2.5 text-sm font-semibold text-wisk-dark transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isPending ? "Sending…" : "Send reset link"}
           </button>

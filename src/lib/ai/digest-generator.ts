@@ -5,6 +5,30 @@ import { cachedSystemPrompt } from "@/lib/ai/anthropic";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export type DigestLeadIntelligenceFigures = {
+  pipelineValue: { oneTime: number; monthly: number };
+  conversionRate: number;
+  avgResponseTimeDays: number | null;
+  activeLeadCount: number;
+  overdueFollowUpCount: number;
+  wonThisWeek: Array<{
+    name: string;
+    value: number | null;
+    valueType: "one_time" | "monthly";
+  }>;
+};
+
+export type DigestContentStrategyFigures = {
+  publishingStreak: number;
+  avgPostsPerWeek: number;
+};
+
+export type DigestGoalVelocityFigure = {
+  title: string;
+  percentComplete: number;
+  projectedCompletion: string | null;
+};
+
 export type DigestContent = {
   weekSummary: string;
   wins: string[];
@@ -16,8 +40,12 @@ export type DigestContent = {
   // Pro-only (undefined for base AI)
   crossSectionInsights?: string[];
   leadIntelligence?: string;
+  /** Precomputed from lead records; UI formats — do not parse from prose. */
+  leadIntelligenceFigures?: DigestLeadIntelligenceFigures;
   contentStrategy?: string;
+  contentStrategyFigures?: DigestContentStrategyFigures;
   goalVelocityInsight?: string;
+  goalVelocityFigures?: DigestGoalVelocityFigure[];
   proRecommendations?: string[];
 };
 
@@ -43,9 +71,9 @@ export type DigestResult = {
 
 // ─── Prompt builders ──────────────────────────────────────────────────────────
 
-const BASE_SYSTEM_PROMPT = `You are Winston, the AI business assistant for WISK — a command centre for ambitious entrepreneurs, creators, and business owners. Your role is to provide a weekly business digest that feels like a trusted advisor — constructive, insightful, warm but direct. You notice patterns, celebrate wins, flag risks early, and always give one clear recommendation for the week ahead. You never lecture or over-criticise. You are on the user's side.`;
+const BASE_SYSTEM_PROMPT = `You are Winston, the AI business assistant for WISK — a command centre for ambitious entrepreneurs, creators, and business owners. Your role is to provide a weekly business digest that feels like a trusted advisor — constructive, insightful, warm but direct. You notice patterns, celebrate wins, flag risks early, and always give one clear recommendation for the week ahead. You never lecture or over-criticise. You are on the user's side. Refer to people and records by name — never restate currency amounts, values, £ figures, percentages, or "k" shorthand. Do not invent, round, abbreviate, convert, or recalculate any figure. Exact amounts are attached by the application from source data and shown in the UI.`;
 
-const PRO_SYSTEM_APPENDIX = ` As an AI Pro subscriber, you have access to deeper analytics. Provide richer, more specific insights backed by actual metrics. Reference specific numbers, percentages, and trends. Your recommendations should be actionable within 48 hours.`;
+const PRO_SYSTEM_APPENDIX = ` As an AI Pro subscriber, you have access to deeper analytics. Provide richer, more specific qualitative insights. Your recommendations should be actionable within 48 hours. Never restate currency amounts, values, £ figures, percentages, or "k" shorthand. Do not invent, round, abbreviate, convert, or recalculate any figure. Exact amounts are attached by the application from source data and shown in the UI.`;
 
 function isProTier(ctx: UserContext): boolean {
   return ctx.subscriptionTier === "ai_pro" || ctx.subscriptionTier === "max";
@@ -99,14 +127,24 @@ function buildUserPrompt(ctx: UserContext): string {
   );
   if (isPro) {
     lines.push(
-      `  "crossSectionInsights": string[], // 2-3 patterns noticed across sections`
+      `  "crossSectionInsights": string[], // 2-3 qualitative patterns across sections`
     );
-    lines.push(`  "leadIntelligence": string,       // deeper lead insight`);
-    lines.push(`  "contentStrategy": string,        // content recommendation`);
-    lines.push(`  "goalVelocityInsight": string,    // goal trajectory`);
+    lines.push(
+      `  "leadIntelligence": string,       // qualitative lead insight — no currency, values, or %`
+    );
+    lines.push(
+      `  "contentStrategy": string,        // qualitative content recommendation — no counts or rates`
+    );
+    lines.push(
+      `  "goalVelocityInsight": string,    // qualitative goal trajectory — no percentages`
+    );
     lines.push(`  "proRecommendations": string[]    // 3 specific actions`);
   }
   lines.push(`}`);
+  lines.push("");
+  lines.push(
+    "Figures in the context above are context only — do not copy currency amounts, values, £ figures, percentages, or \"k\" shorthand into any JSON field. Exact amounts are attached by the application from source data and shown in the UI."
+  );
 
   return lines.join("\n");
 }
@@ -137,6 +175,38 @@ function validateDigestShape(
   ) {
     throw new Error("Claude response did not match AI Pro DigestContent shape");
   }
+}
+
+function attachSourceValues(
+  digest: DigestContent,
+  ctx: UserContext
+): DigestContent {
+  if (!isProTier(ctx)) return digest;
+
+  return {
+    ...digest,
+    leadIntelligenceFigures: {
+      pipelineValue: ctx.leads.pipelineValue,
+      conversionRate: ctx.leads.conversionRate,
+      avgResponseTimeDays: ctx.leads.avgResponseTimeDays,
+      activeLeadCount: ctx.leads.activeLeadCount,
+      overdueFollowUpCount: ctx.leads.overdueFollowUps.length,
+      wonThisWeek: ctx.leads.wonThisWeek.map((lead) => ({
+        name: lead.name,
+        value: lead.value,
+        valueType: lead.value_type ?? "one_time",
+      })),
+    },
+    contentStrategyFigures: {
+      publishingStreak: ctx.content.publishingStreak,
+      avgPostsPerWeek: ctx.content.avgPostsPerWeek,
+    },
+    goalVelocityFigures: ctx.goals.velocityByGoal.map((goal) => ({
+      title: goal.title,
+      percentComplete: goal.percentComplete,
+      projectedCompletion: goal.projectedCompletion,
+    })),
+  };
 }
 
 // ─── Main function ─────────────────────────────────────────────────────────────
@@ -214,5 +284,9 @@ export async function generateWeeklyDigest(
   // Always stamp with server-side time
   digest.generatedAt = context.generatedAt;
 
-  return { digest, inputTokens, outputTokens };
+  return {
+    digest: attachSourceValues(digest, context),
+    inputTokens,
+    outputTokens,
+  };
 }

@@ -18,6 +18,7 @@ import {
   deleteConversation,
   getConversationMessages,
 } from "@/app/(dashboard)/ai-digest/actions";
+import { MobileSendCompose } from "@/components/layout/mobile-send-compose";
 import { consumeWinstonChatSse } from "@/lib/ai/consume-chat-stream";
 import { useChatScrollFollow } from "@/lib/ai/use-chat-scroll-follow";
 import type {
@@ -124,7 +125,6 @@ function ConversationsSidebar({
 }: SidebarProps) {
   const reduced = useReducedMotion() ?? false;
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   return (
     <>
@@ -228,21 +228,16 @@ function ConversationsSidebar({
               ) : (
                 conversations.map((conv) => {
                   const isActive = conv.id === currentConversationId;
-                  const isHovered = hoveredId === conv.id;
 
                   return (
-                    <div
-                      key={conv.id}
-                      className="relative"
-                      onMouseEnter={() => setHoveredId(conv.id)}
-                      onMouseLeave={() => setHoveredId(null)}
-                    >
+                    <div key={conv.id} className="relative">
                       {confirmDeleteId === conv.id ? (
                         <div className="flex items-center gap-1 rounded-lg border border-destructive/30 bg-destructive/10 px-2 py-1.5">
                           <span className="flex-1 text-xs text-destructive">
                             Delete?
                           </span>
                           <button
+                            type="button"
                             onClick={() => {
                               onDeleteConversation(conv.id);
                               setConfirmDeleteId(null);
@@ -252,6 +247,7 @@ function ConversationsSidebar({
                             Yes
                           </button>
                           <button
+                            type="button"
                             onClick={() => setConfirmDeleteId(null)}
                             className="rounded px-1.5 py-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
                           >
@@ -259,10 +255,21 @@ function ConversationsSidebar({
                           </button>
                         </div>
                       ) : (
-                        <button
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          aria-current={isActive ? "true" : undefined}
+                          aria-label={conv.title}
                           onClick={() => onSelectConversation(conv)}
+                          onKeyDown={(event) => {
+                            if (event.target !== event.currentTarget) return;
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              onSelectConversation(conv);
+                            }
+                          }}
                           className={cn(
-                            "flex w-full flex-col gap-0.5 rounded-lg px-2 py-2 text-left transition-colors",
+                            "group flex w-full cursor-pointer flex-col gap-0.5 rounded-lg px-2 py-2 text-left transition-colors",
                             isActive
                               ? "border-l-2 border-wisk-section-winston bg-muted/60 pl-[6px]"
                               : "hover:bg-muted/40"
@@ -279,18 +286,17 @@ function ConversationsSidebar({
                             >
                               {conv.title}
                             </span>
-                            {isHovered && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setConfirmDeleteId(conv.id);
-                                }}
-                                aria-label="Delete conversation"
-                                className="shrink-0 rounded p-0.5 text-muted-foreground/50 transition-colors hover:text-destructive"
-                              >
-                                <Trash2 className="size-3" aria-hidden />
-                              </button>
-                            )}
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setConfirmDeleteId(conv.id);
+                              }}
+                              aria-label={`Delete ${conv.title}`}
+                              className="shrink-0 rounded p-0.5 text-muted-foreground/50 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 hover:text-destructive"
+                            >
+                              <Trash2 className="size-3" aria-hidden />
+                            </button>
                           </div>
                           <div className="flex items-center gap-1.5">
                             <span className="text-[10px] text-muted-foreground/60">
@@ -302,7 +308,7 @@ function ConversationsSidebar({
                               </span>
                             )}
                           </div>
-                        </button>
+                        </div>
                       )}
                     </div>
                   );
@@ -845,8 +851,14 @@ export function WinstonChatClient({
           </div>
         ) : null}
 
-        {/* Input area */}
-        <div className="border-t border-border/60 bg-card/50 px-4 py-3 shrink-0">
+        <MobileSendCompose
+          className="shrink-0 border-t border-border/60 bg-card/50 px-4 py-3"
+          footer={
+            <p className="mt-1.5 text-center text-xs text-muted-foreground/60">
+              Enter to send · Shift+Enter for new line
+            </p>
+          }
+        >
           <div className="flex items-end gap-2">
             <textarea
               ref={textareaRef}
@@ -858,7 +870,7 @@ export function WinstonChatClient({
               }
               disabled={isSending || monthlyLimitHit}
               rows={1}
-              className="flex-1 resize-none rounded-xl border border-border/60 bg-background px-4 py-2.5 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-wisk-section-winston/40 disabled:opacity-50"
+              className="flex-1 resize-none rounded-xl border border-border/60 bg-background px-4 py-2.5 text-base leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-wisk-section-winston/40 disabled:opacity-50"
               style={{ maxHeight: "96px", overflowY: "auto" }}
             />
             <button
@@ -874,10 +886,7 @@ export function WinstonChatClient({
               )}
             </button>
           </div>
-          <p className="mt-1.5 text-center text-xs text-muted-foreground/60">
-            Enter to send · Shift+Enter for new line
-          </p>
-        </div>
+        </MobileSendCompose>
       </div>
     </div>
   );

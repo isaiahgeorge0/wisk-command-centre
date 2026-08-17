@@ -8,6 +8,7 @@ import { MOTION_DURATION, MOTION_EASE } from "@/lib/motion/config";
 import { cn } from "@/lib/utils";
 
 export type SectionSubNavItem = {
+  id?: string;
   label: string;
   href: string;
 };
@@ -40,7 +41,7 @@ export function SectionSubNav({ items, desktopHidden = false }: SectionSubNavPro
           const isActive = item.href === activeHref;
           return (
             <Link
-              key={item.href}
+              key={item.id ?? item.href}
               href={item.href}
               className={cn(
                 "relative flex min-h-11 shrink-0 items-center px-4 text-sm font-medium transition-colors duration-200",

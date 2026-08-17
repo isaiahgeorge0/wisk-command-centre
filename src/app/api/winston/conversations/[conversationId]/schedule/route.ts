@@ -3,16 +3,21 @@ import * as Sentry from "@sentry/nextjs";
 import { z } from "zod";
 
 import { cachedSystemPrompt } from "@/lib/ai/anthropic";
-import { ANTHROPIC_TIMEOUT_MS } from "@/lib/ai/constants";
+import { ANTHROPIC_STREAM_TIMEOUT_MS } from "@/lib/ai/constants";
 import { logUsage } from "@/lib/ai/usage-logger";
 import { getAuthContext } from "@/lib/auth/get-auth-context";
 import { createClient } from "@/lib/supabase/server";
+import { getLocalDateKey, formatLocalDate } from "@/lib/morning/timezone";
 import {
   createProposalTempId,
+  normalizeGeneratedProposalItems,
   type WinstonProposal,
-  type WinstonProposalEntityType,
-  type WinstonProposalItem,
 } from "@/lib/winston/proposal";
+import {
+  MIXED_PROPOSAL_SYSTEM_PROMPT,
+  mixedProposalScopeBias,
+} from "@/lib/winston/proposal-prompt";
+import { BRAINSTORM_SURFACE_SCOPE } from "@/lib/winston/scope";
 
 type AnthropicTextBlock = { type: "text"; text: string };
 type AnthropicContentBlock = AnthropicTextBlock | { type: string };
@@ -43,41 +48,11 @@ const mixedItemSchema = z.object({
   selected: z.boolean().optional(),
 });
 
-const MIXED_SYSTEM_PROMPT = `You are Winston, WISK's AI business assistant.
-Turn a conversation into a structured creation proposal.
-
-Return ONLY valid JSON:
-{
-  "summary": "optional short sentence",
-  "foundActionableItems": true|false,
-  "noActionableReason": "required when foundActionableItems is false",
-  "items": [
-    {
-      "tempId": "tmp-any-string",
-      "entityType": "project" | "task" | "calendar_event" | "content_post" | "idea",
-      "fields": { ... },
-      "reasoning": "specific signal from the conversation",
-      "selected": true
-    }
-  ]
-}
-
-Rules:
-- If the conversation does not yet describe something worth creating, set foundActionableItems=false and explain what is still missing. Do not invent filler items.
-- Choose entityType from what was actually discussed. A mix is allowed (e.g. a project plus a task plus a calendar event).
-- Never invent a date. If a date is needed and wasn't established, prefer an idea (status awaiting-date) or a content_post with status "idea" and no scheduled_date.
-- project fields: project_name, service_type, status ("active"), optional deadline (YYYY-MM-DD), client_name, notes.
-- task fields: title, priority ("low"|"medium"|"high"), optional due_date, optional projectId, raw_content.
-- calendar_event fields: title, date (YYYY-MM-DD), event_type ("lifestyle"|"other"), optional end_date, notes.
-- content_post fields: title, platforms (array), content_type, status ("idea"|"planned"|"scheduled"), optional scheduled_date, description.
-- idea fields: title, optional description, category, status ("awaiting-date" when no date).
-- Every item needs specific reasoning. JSON only.`;
-
 const modelResponseSchema = z.object({
   summary: z.string().trim().min(1).optional(),
   foundActionableItems: z.boolean(),
   noActionableReason: z.string().trim().optional(),
-  items: z.array(z.unknown()).max(20).optional(),
+  items: z.array(z.unknown()).max(40).optional(),
 });
 
 function cleanJson(text: string): string {
@@ -86,24 +61,6 @@ function cleanJson(text: string): string {
     .replace(/^```\s*/i, "")
     .replace(/\s*```$/i, "")
     .trim();
-}
-
-function normalizeItems(
-  rawItems: Array<{
-    tempId?: string;
-    entityType: WinstonProposalEntityType;
-    fields: Record<string, unknown>;
-    reasoning: string;
-    selected?: boolean;
-  }>
-): WinstonProposalItem[] {
-  return rawItems.map((item) => ({
-    tempId: item.tempId?.trim() || createProposalTempId(),
-    entityType: item.entityType,
-    fields: { ...item.fields },
-    reasoning: item.reasoning.trim(),
-    selected: item.selected ?? true,
-  }));
 }
 
 export async function POST(
@@ -139,7 +96,7 @@ export async function POST(
 
     const { data: conversation } = await supabase
       .from("ai_conversations")
-      .select("id")
+      .select("id, scope_key")
       .eq("id", conversationId)
       .eq("user_id", userId)
       .maybeSingle();
@@ -150,6 +107,19 @@ export async function POST(
         { status: 404 }
       );
     }
+
+    const scopeKey =
+      (typeof conversation.scope_key === "string" && conversation.scope_key) ||
+      (surface ? BRAINSTORM_SURFACE_SCOPE[surface] : null);
+
+    const { data: prefs } = await supabase
+      .from("user_preferences")
+      .select("timezone")
+      .eq("user_id", userId)
+      .maybeSingle();
+    const timezone = prefs?.timezone ?? "Europe/London";
+    const todayISO = getLocalDateKey(timezone);
+    const todayLabel = formatLocalDate(timezone);
 
     const { data: history, error: historyError } = await supabase
       .from("ai_conversation_messages")
@@ -183,6 +153,7 @@ export async function POST(
 
     Sentry.setUser({ id: userId });
 
+    const scopeBias = mixedProposalScopeBias(scopeKey);
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -192,22 +163,16 @@ export async function POST(
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
-        max_tokens: 1200,
-        system: cachedSystemPrompt(MIXED_SYSTEM_PROMPT),
+        max_tokens: 4096,
+        system: cachedSystemPrompt(MIXED_PROPOSAL_SYSTEM_PROMPT),
         messages: [
           {
             role: "user",
-            content: `${
-              surface === "calendar"
-                ? "The user was on Calendar — prefer calendar_event or idea if that fits, but do not refuse other types.\n\n"
-                : surface === "content"
-                  ? "The user was on Content — prefer content_post if that fits, but do not refuse other types.\n\n"
-                  : ""
-            }Conversation transcript:\n${transcript}`,
+            content: `${scopeBias ? `${scopeBias}\n\n` : ""}Today is ${todayLabel} (${todayISO}). Resolve relative weekdays against this date.\n\nConversation transcript:\n${transcript}`,
           },
         ],
       }),
-      signal: AbortSignal.timeout(ANTHROPIC_TIMEOUT_MS),
+      signal: AbortSignal.timeout(ANTHROPIC_STREAM_TIMEOUT_MS),
     });
 
     if (!response.ok) {
@@ -224,9 +189,17 @@ export async function POST(
       throw new Error("No text content in Claude response");
     }
 
-    const parsed = modelResponseSchema.safeParse(
-      JSON.parse(cleanJson(replyBlock.text))
-    );
+    let parsedJson: unknown;
+    try {
+      parsedJson = JSON.parse(cleanJson(replyBlock.text));
+    } catch {
+      return NextResponse.json(
+        { error: "Winston returned an invalid proposal format" },
+        { status: 502 }
+      );
+    }
+
+    const parsed = modelResponseSchema.safeParse(parsedJson);
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Winston returned an invalid proposal format" },
@@ -250,22 +223,14 @@ export async function POST(
       });
     }
 
-    const items: WinstonProposalItem[] = [];
+    const accepted = [];
     for (const raw of parsed.data.items ?? []) {
       const parsedItem = mixedItemSchema.safeParse(raw);
       if (!parsedItem.success) continue;
-      items.push(
-        ...normalizeItems([
-          parsedItem.data as {
-            tempId?: string;
-            entityType: WinstonProposalEntityType;
-            fields: Record<string, unknown>;
-            reasoning: string;
-            selected?: boolean;
-          },
-        ])
-      );
+      accepted.push(parsedItem.data);
     }
+
+    const items = normalizeGeneratedProposalItems(accepted);
 
     if (items.length === 0) {
       return NextResponse.json({

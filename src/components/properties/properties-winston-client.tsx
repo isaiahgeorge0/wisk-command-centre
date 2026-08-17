@@ -27,9 +27,14 @@ import type {
   PropertyComparable,
   PropertyInsight,
   PropertyInsightContent,
+  PropertyInsightSourceFigures,
   PropertyValuation,
   PropertyWithStats,
 } from "@/lib/properties/types";
+import {
+  formatPropertyCurrency,
+  formatYieldPercent,
+} from "@/lib/properties/format";
 import { cn } from "@/lib/utils";
 
 type PropertiesWinstonClientProps = {
@@ -91,6 +96,58 @@ function InsightCard({
   );
 }
 
+function SourceFiguresLine({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="mb-2 text-[11px] font-medium tabular-nums text-foreground/80">
+      {children}
+    </p>
+  );
+}
+
+function formatRentThisMonth(figures: PropertyInsightSourceFigures): string {
+  return `Paid ${formatPropertyCurrency(figures.rentPaidThisMonth)} · Outstanding ${formatPropertyCurrency(figures.rentOutstandingThisMonth)} · Due ${formatPropertyCurrency(figures.rentTotalDueThisMonth)}`;
+}
+
+function formatPortfolioFinancials(
+  figures: PropertyInsightSourceFigures
+): string | null {
+  const parts: string[] = [];
+  if (
+    figures.portfolioGrossYield != null ||
+    figures.portfolioNetYield != null
+  ) {
+    parts.push(
+      `${formatYieldPercent(figures.portfolioGrossYield ?? null)} gross · ${formatYieldPercent(figures.portfolioNetYield ?? null)} net`
+    );
+  }
+  if (figures.totalNetIncomeAnnual != null) {
+    parts.push(
+      `Net income ${formatPropertyCurrency(figures.totalNetIncomeAnnual)}/yr`
+    );
+  }
+  if (figures.totalMortgageCostAnnual != null) {
+    parts.push(
+      `Mortgage ${formatPropertyCurrency(figures.totalMortgageCostAnnual)}/yr`
+    );
+  }
+  if (figures.totalInsuranceCostAnnual != null) {
+    parts.push(
+      `Insurance ${formatPropertyCurrency(figures.totalInsuranceCostAnnual)}/yr`
+    );
+  }
+  if (figures.totalMaintenanceCostAnnual != null) {
+    parts.push(
+      `Maintenance ${formatPropertyCurrency(figures.totalMaintenanceCostAnnual)}/yr`
+    );
+  }
+  if (figures.totalVacancyLoss != null && figures.totalVacancyLoss > 0) {
+    parts.push(
+      `Vacancy ${formatPropertyCurrency(figures.totalVacancyLoss)}/yr`
+    );
+  }
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
 function ProBadge() {
   return (
     <span className="rounded-full border border-wisk-ferrari/20 bg-wisk-ferrari/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-wisk-ferrari">
@@ -143,6 +200,9 @@ export function PropertiesWinstonClient({
       content?.tenant_risk_summary ||
       content?.financial_health
     );
+  const portfolioFinancials = content?.sourceFigures
+    ? formatPortfolioFinancials(content.sourceFigures)
+    : null;
 
   const isOnCooldown = useMemo(() => {
     if (!insight?.generated_at) return false;
@@ -297,6 +357,18 @@ export function PropertiesWinstonClient({
                   title="Financial health"
                   className="sm:col-span-2 xl:col-span-2"
                 >
+                  {content.sourceFigures ? (
+                    <>
+                      {portfolioFinancials ? (
+                        <SourceFiguresLine>
+                          {portfolioFinancials}
+                        </SourceFiguresLine>
+                      ) : null}
+                      <SourceFiguresLine>
+                        {formatRentThisMonth(content.sourceFigures)}
+                      </SourceFiguresLine>
+                    </>
+                  ) : null}
                   <p className="text-sm leading-relaxed text-foreground">
                     {content.financial_health ?? content.financial_snapshot}
                   </p>
@@ -321,6 +393,17 @@ export function PropertiesWinstonClient({
                     title="Yield analysis"
                     badge={<ProBadge />}
                   >
+                    {content.sourceFigures &&
+                    (content.sourceFigures.portfolioGrossYield != null ||
+                      content.sourceFigures.portfolioNetYield != null) ? (
+                      <SourceFiguresLine>
+                        {`${formatYieldPercent(
+                          content.sourceFigures.portfolioGrossYield ?? null
+                        )} gross · ${formatYieldPercent(
+                          content.sourceFigures.portfolioNetYield ?? null
+                        )} net`}
+                      </SourceFiguresLine>
+                    ) : null}
                     <p className="text-sm leading-relaxed text-foreground">
                       {content.yield_analysis}
                     </p>
@@ -334,6 +417,17 @@ export function PropertiesWinstonClient({
                     title="Tenant risk summary"
                     badge={<ProBadge />}
                   >
+                    {content.sourceFigures?.atRiskTenants &&
+                    content.sourceFigures.atRiskTenants.length > 0 ? (
+                      <SourceFiguresLine>
+                        {content.sourceFigures.atRiskTenants
+                          .map(
+                            (tenant) =>
+                              `${tenant.name} at ${tenant.propertyName} (${tenant.grade})`
+                          )
+                          .join(" · ")}
+                      </SourceFiguresLine>
+                    ) : null}
                     <p className="text-sm leading-relaxed text-foreground">
                       {content.tenant_risk_summary}
                     </p>
@@ -348,6 +442,18 @@ export function PropertiesWinstonClient({
                     badge={<ProBadge />}
                     className="sm:col-span-2 xl:col-span-3"
                   >
+                    {content.sourceFigures?.upcomingMortgageRenewals &&
+                    content.sourceFigures.upcomingMortgageRenewals.length >
+                      0 ? (
+                      <SourceFiguresLine>
+                        {content.sourceFigures.upcomingMortgageRenewals
+                          .map(
+                            (renewal) =>
+                              `${renewal.lender} at ${renewal.propertyName}: ${formatPropertyCurrency(renewal.monthlyPayment)}/mo`
+                          )
+                          .join(" · ")}
+                      </SourceFiguresLine>
+                    ) : null}
                     <BulletList
                       items={content.risk_alerts}
                       dotClass="bg-rose-400"
@@ -370,9 +476,26 @@ export function PropertiesWinstonClient({
                           key={item.propertyName}
                           className="rounded-lg border border-border/60 bg-card/60 p-4"
                         >
-                          <h3 className="text-sm font-semibold text-foreground">
-                            {item.propertyName}
-                          </h3>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="text-sm font-semibold text-foreground">
+                              {item.propertyName}
+                            </h3>
+                            {item.netYield != null ||
+                            item.netIncome != null ? (
+                              <span className="shrink-0 text-[10px] font-medium tabular-nums text-muted-foreground">
+                                {item.netYield != null
+                                  ? `${formatYieldPercent(item.netYield)} net`
+                                  : null}
+                                {item.netYield != null &&
+                                item.netIncome != null
+                                  ? " · "
+                                  : null}
+                                {item.netIncome != null
+                                  ? `${formatPropertyCurrency(item.netIncome)}/yr`
+                                  : null}
+                              </span>
+                            ) : null}
+                          </div>
                           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                             {item.insight}
                           </p>
@@ -416,6 +539,11 @@ export function PropertiesWinstonClient({
                   iconClass="text-wisk-ferrari"
                   title="Financial snapshot"
                 >
+                  {content.sourceFigures ? (
+                    <SourceFiguresLine>
+                      {formatRentThisMonth(content.sourceFigures)}
+                    </SourceFiguresLine>
+                  ) : null}
                   <p className="text-sm leading-relaxed text-foreground">
                     {content.financial_snapshot}
                   </p>

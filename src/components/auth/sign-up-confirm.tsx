@@ -5,6 +5,7 @@ import { CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 
+import { authEmailRedirectUrl } from "@/lib/auth/safe-redirect-origin";
 import { createClient } from "@/lib/supabase/client";
 
 const LIME_FILTER =
@@ -25,13 +26,12 @@ export function SignUpConfirm({ email }: SignUpConfirmProps) {
     setResendError(null);
     startTransition(async () => {
       const supabase = createClient();
-      const origin =
-        process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
-
       const { error } = await supabase.auth.resend({
         type: "signup",
         email,
-        options: { emailRedirectTo: `${origin}/auth/callback` },
+        options: {
+          emailRedirectTo: authEmailRedirectUrl("/auth/callback"),
+        },
       });
 
       if (error) {

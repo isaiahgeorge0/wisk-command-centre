@@ -18,6 +18,9 @@ import type { ActionResult } from "@/lib/tasks/types";
 import {
   asString,
   asStringArray,
+  countCreatedProposalItems,
+  isProposalUuid,
+  normalizeProposalTaskLinks,
   type WinstonProposal,
   type WinstonProposalCommitResult,
   type WinstonProposalItem,
@@ -44,10 +47,6 @@ function isTaskPriority(value: string): value is TaskPriority {
   return (TASK_PRIORITIES as readonly string[]).includes(value);
 }
 
-function isContentPlatform(value: string): value is ContentPlatform {
-  return (CONTENT_PLATFORMS as readonly string[]).includes(value);
-}
-
 function isContentType(value: string): value is ContentType {
   return (CONTENT_TYPES as readonly string[]).includes(value);
 }
@@ -64,6 +63,48 @@ function isIdeaStatus(value: string): value is IdeaStatus {
   return (IDEA_STATUSES as readonly string[]).includes(value);
 }
 
+function creationErrorMessage(
+  result: ActionResult<unknown>,
+  fallback: string
+): string {
+  if (result.success !== false) return fallback;
+  const err = result.error;
+  if (
+    /invalid input syntax for type uuid/i.test(err) ||
+    /foreign key/i.test(err) ||
+    /violates/i.test(err)
+  ) {
+    return fallback;
+  }
+  return err;
+}
+
+function asDateOnly(value: string): string {
+  const match = value.trim().match(/^(\d{4}-\d{2}-\d{2})/);
+  return match?.[1] ?? value.trim();
+}
+
+function coerceContentPlatforms(value: unknown): ContentPlatform[] {
+  const tokens = asStringArray(value).flatMap((entry) => {
+    const pieces = entry.split(/,|&| and /i).map((part) => part.trim()).filter(Boolean);
+    return pieces.flatMap((piece) => {
+      const exact = CONTENT_PLATFORMS.find(
+        (platform) => platform.toLowerCase() === piece.toLowerCase()
+      );
+      if (exact) return [exact];
+      return piece.split("/").map((part) => part.trim()).filter(Boolean);
+    });
+  });
+  const matched: ContentPlatform[] = [];
+  for (const token of tokens) {
+    const found = CONTENT_PLATFORMS.find(
+      (platform) => platform.toLowerCase() === token.toLowerCase()
+    );
+    if (found && !matched.includes(found)) matched.push(found);
+  }
+  return matched;
+}
+
 /**
  * Commits selected proposal items via existing entity creation actions.
  * Projects are created first so tasks can resolve `projectRef` tempIds.
@@ -73,7 +114,9 @@ export async function commitWinstonProposal(
   items: WinstonProposalItem[],
   options?: { source?: Pick<WinstonProposal, "sourceType" | "sourceId"> }
 ): Promise<ActionResult<WinstonProposalCommitResult>> {
-  const selected = items.filter((item) => item.selected);
+  const selected = normalizeProposalTaskLinks(items).filter(
+    (item) => item.selected
+  );
   if (selected.length === 0) {
     return { success: false, error: "Select at least one item to create" };
   }
@@ -116,9 +159,10 @@ export async function commitWinstonProposal(
 
     if (!created.success || !created.data) {
       result.errors.push(
-        created.success === false
-          ? created.error
-          : `Could not create project “${project_name}”`
+        creationErrorMessage(
+          created,
+          `Could not create project “${project_name}”`
+        )
       );
       continue;
     }
@@ -128,6 +172,7 @@ export async function commitWinstonProposal(
       id: created.data.id,
       label: created.data.project_name,
       href: "/projects",
+      tempId: item.tempId,
     });
   }
 
@@ -148,16 +193,26 @@ export async function commitWinstonProposal(
 
     let project_id: string | undefined;
     if (projectRef) {
-      const resolved = projectIdByTempId.get(projectRef);
-      if (!resolved) {
+      const fromRef = projectIdByTempId.get(projectRef);
+      if (!fromRef) {
         result.errors.push(
           `Task “${title}” linked to a project that wasn’t created — create the project or clear the link`
         );
         continue;
       }
-      project_id = resolved;
+      project_id = fromRef;
     } else if (existingProjectId) {
-      project_id = existingProjectId;
+      const linkedNew = projectIdByTempId.get(existingProjectId);
+      if (linkedNew) {
+        project_id = linkedNew;
+      } else if (!isProposalUuid(existingProjectId)) {
+        result.errors.push(
+          `Task “${title}” has an invalid project link — create the project in this proposal or pick an existing one`
+        );
+        continue;
+      } else {
+        project_id = existingProjectId;
+      }
     }
 
     const created = await createTask({
@@ -170,9 +225,7 @@ export async function commitWinstonProposal(
 
     if (!created.success || !created.data) {
       result.errors.push(
-        created.success === false
-          ? created.error
-          : `Could not create task “${title}”`
+        creationErrorMessage(created, `Could not create task “${title}”`)
       );
       continue;
     }
@@ -181,6 +234,7 @@ export async function commitWinstonProposal(
       id: created.data.id,
       label: created.data.title,
       href: "/tasks",
+      tempId: item.tempId,
     });
   }
 
@@ -209,9 +263,10 @@ export async function commitWinstonProposal(
 
     if (!created.success || !created.data) {
       result.errors.push(
-        created.success === false
-          ? created.error
-          : `Could not create calendar event “${title}”`
+        creationErrorMessage(
+          created,
+          `Could not create calendar event “${title}”`
+        )
       );
       continue;
     }
@@ -220,6 +275,7 @@ export async function commitWinstonProposal(
       id: created.data.id,
       label: created.data.title,
       href: "/calendar",
+      tempId: item.tempId,
     });
   }
 
@@ -230,15 +286,18 @@ export async function commitWinstonProposal(
       continue;
     }
 
-    const platformsRaw = asStringArray(item.fields.platforms);
-    const platforms = platformsRaw.filter(isContentPlatform);
+    const platformsRaw = coerceContentPlatforms(item.fields.platforms);
     const safePlatforms: ContentPlatform[] =
-      platforms.length > 0 ? platforms : ["TikTok"];
+      platformsRaw.length > 0 ? platformsRaw : ["TikTok"];
 
     const typeRaw = asString(item.fields.content_type, "Video");
     const content_type = isContentType(typeRaw) ? typeRaw : "Video";
 
-    const statusRaw = asString(item.fields.status, "idea");
+    const scheduledDate = asDateOnly(asString(item.fields.scheduled_date));
+    const statusRaw = asString(
+      item.fields.status,
+      scheduledDate ? "scheduled" : "idea"
+    );
     const status = isContentStatus(statusRaw) ? statusRaw : "idea";
 
     const created = await createContentPost({
@@ -246,16 +305,17 @@ export async function commitWinstonProposal(
       platforms: safePlatforms,
       content_type,
       status,
-      scheduled_date: asString(item.fields.scheduled_date) || undefined,
+      scheduled_date: scheduledDate || undefined,
       description: asString(item.fields.description) || undefined,
       hook: asString(item.fields.hook) || undefined,
     });
 
     if (!created.success || !created.data) {
       result.errors.push(
-        created.success === false
-          ? created.error
-          : `Could not create content post “${title}”`
+        creationErrorMessage(
+          created,
+          `Could not create content post “${title}”`
+        )
       );
       continue;
     }
@@ -264,9 +324,10 @@ export async function commitWinstonProposal(
       id: created.data.id,
       label: created.data.title,
       href: "/content",
+      tempId: item.tempId,
     });
 
-    if (!asString(item.fields.scheduled_date).trim()) {
+    if (!scheduledDate) {
       await createAwaitingDateNotification({
         referenceId: created.data.id,
         title: created.data.title,
@@ -294,9 +355,7 @@ export async function commitWinstonProposal(
 
     if (!created.success || !created.data) {
       result.errors.push(
-        created.success === false
-          ? created.error
-          : `Could not create idea “${title}”`
+        creationErrorMessage(created, `Could not create idea “${title}”`)
       );
       continue;
     }
@@ -305,6 +364,7 @@ export async function commitWinstonProposal(
       id: created.data.id,
       label: created.data.title,
       href: "/ideas",
+      tempId: item.tempId,
     });
 
     await createAwaitingDateNotification({
@@ -314,12 +374,7 @@ export async function commitWinstonProposal(
     });
   }
 
-  const totalCreated =
-    result.created.projects.length +
-    result.created.tasks.length +
-    result.created.calendar_events.length +
-    result.created.content_posts.length +
-    result.created.ideas.length;
+  const totalCreated = countCreatedProposalItems(result);
 
   if (totalCreated === 0) {
     return {

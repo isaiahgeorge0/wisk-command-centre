@@ -1,3 +1,4 @@
+import { WINSTON_CHAT_CREATION_PROMPT } from "@/lib/winston/proposal-prompt";
 import {
   getScopeKeyTitle,
   isWinstonPageScopeKey,
@@ -44,9 +45,9 @@ const SECTION_PROMPTS: Record<WinstonPageSection, string> = {
   properties:
     "The user is working in Properties. Help with portfolio, tenancy, and maintenance thinking. Propose whatever structured items the conversation actually supports.",
   projects:
-    "The user is working in Projects. Help clarify client work, next actions, and deadlines. Propose a mix of projects, tasks, and calendar items when that's what they described.",
+    "The user is working in Projects. Help clarify client work, next actions, and deadlines. When they want a project and tasks, list the project and each task as separate items so Create this can attach tasks with projectRef.",
   tasks:
-    "The user is working in Tasks. Help break work down and get it scheduled. Propose tasks, projects, or calendar events when the conversation warrants it.",
+    "The user is working in Tasks. Help break work down and get it scheduled. Propose tasks, projects, or calendar events when the conversation warrants it. Tasks that belong to a new project must be sibling items with projectRef.",
   goals:
     "The user is working in Goals. Help them clarify outcomes and the work that would move them. You may propose projects, tasks, calendar events, or ideas when that's what they described.",
   ideas:
@@ -54,15 +55,21 @@ const SECTION_PROMPTS: Record<WinstonPageSection, string> = {
   calendar:
     "The user is working in Calendar. Help them clarify what belongs on the calendar and whether a date is known. Do not invent a date. If a date is clear, a calendar_event is natural; if not, an idea is fine. Other types are allowed if they ask.",
   "content-calendar":
-    "The user is working in Content. Help them shape a post, platform, and whether there's a date. Do not invent a date. Other types are allowed if they ask.",
+    "The user is working in Content. Help them shape posts — title, platforms, and whether there's a date. Prefer content_post when they want calendar entries, including several from one instruction. Do not invent a date they didn't give or imply (named weekdays count). Other types are allowed if they ask.",
 };
 
 const GLOBAL_SYSTEM_PROMPT = `You are Winston, WISK's AI business assistant. The user opened you from the global button — there is no page or record context. Help with whatever they need. Be conversational but concise. You may propose a mix of projects, tasks, calendar events, content posts, and ideas when the conversation supports creating something. You are on the user's side — constructive, direct, warm. Never lecture or over-explain.`;
 
 const NOTE_RECORD_SYSTEM_PROMPT = `You are Winston, WISK's AI business assistant. The user is brainstorming on a specific note. Help them develop ideas, clarify thinking, and expand on what's written. Be conversational but concise. Ground every response in the note content provided — do not invent unrelated business context from outside this note. If the note is empty or thin, help them get started. You may still propose projects, tasks, or other items when the note supports it. You are on the user's side — constructive, direct, warm. Never lecture or over-explain.`;
 
+function withCreationCapability(prompt: string): string {
+  return `${prompt}\n\n${WINSTON_CHAT_CREATION_PROMPT}`;
+}
+
 function sectionSystemPrompt(section: WinstonPageSection): string {
-  return `You are Winston, WISK's AI business assistant. ${SECTION_PROMPTS[section]} Be conversational but concise. You are on the user's side — constructive, direct, warm. Never lecture or over-explain.`;
+  return withCreationCapability(
+    `You are Winston, WISK's AI business assistant. ${SECTION_PROMPTS[section]} Be conversational but concise. You are on the user's side — constructive, direct, warm. Never lecture or over-explain.`
+  );
 }
 
 function recordSystemPrompt(
@@ -86,7 +93,7 @@ export function resolveWinstonContext(
       placeholder: "Tell Winston what you need…",
       empty: "No page context — same Winston wherever you open this.",
       showQuickAdd: true,
-      systemPrompt: GLOBAL_SYSTEM_PROMPT,
+      systemPrompt: withCreationCapability(GLOBAL_SYSTEM_PROMPT),
     };
   }
 
@@ -116,7 +123,7 @@ export function resolveWinstonContext(
       placeholder: "Brainstorm on this note…",
       empty: "Grounded in this note. Insert a reply, or create items when they're ready.",
       showQuickAdd: false,
-      systemPrompt: NOTE_RECORD_SYSTEM_PROMPT,
+      systemPrompt: withCreationCapability(NOTE_RECORD_SYSTEM_PROMPT),
     };
   }
 
@@ -131,7 +138,9 @@ export function resolveWinstonContext(
     placeholder: "What do you want to do with this?",
     empty: "This thread is only about this record.",
     showQuickAdd: false,
-    systemPrompt: recordSystemPrompt(trigger.entity, label),
+    systemPrompt: withCreationCapability(
+      recordSystemPrompt(trigger.entity, label)
+    ),
   };
 }
 
@@ -141,8 +150,8 @@ export function systemPromptForScope(
   scopeKey: string | null,
   hasNote: boolean
 ): string {
-  if (hasNote) return NOTE_RECORD_SYSTEM_PROMPT;
-  if (!scopeKey) return UNSCOPED_CHAT_SYSTEM_PROMPT;
+  if (hasNote) return withCreationCapability(NOTE_RECORD_SYSTEM_PROMPT);
+  if (!scopeKey) return withCreationCapability(UNSCOPED_CHAT_SYSTEM_PROMPT);
   if (scopeKey === "global") {
     return resolveWinstonContext({ tier: "global" }).systemPrompt;
   }
@@ -158,5 +167,5 @@ export function systemPromptForScope(
       recordId: parsed.recordId,
     }).systemPrompt;
   }
-  return UNSCOPED_CHAT_SYSTEM_PROMPT;
+  return withCreationCapability(UNSCOPED_CHAT_SYSTEM_PROMPT);
 }

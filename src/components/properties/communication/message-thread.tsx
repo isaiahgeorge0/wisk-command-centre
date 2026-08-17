@@ -3,6 +3,7 @@
 import { Loader2, Send } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 
+import { MobileSendCompose } from "@/components/layout/mobile-send-compose";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { formatMessageTimestamp } from "@/lib/properties/format";
@@ -158,7 +159,7 @@ export function MessageThread({
         </div>
       </div>
 
-      <div className="shrink-0 border-t border-border/60 bg-card/80 p-4">
+      <MobileSendCompose className="shrink-0 border-t border-border/60 bg-card/80 p-4">
         <div className="flex gap-2">
           <Textarea
             ref={textareaRef}
@@ -168,7 +169,7 @@ export function MessageThread({
             placeholder="Write a message…"
             rows={2}
             disabled={isPending}
-            className="min-h-11 resize-none"
+            className="min-h-11 resize-none text-base"
           />
           <Button
             type="button"
@@ -184,7 +185,7 @@ export function MessageThread({
             Send
           </Button>
         </div>
-      </div>
+      </MobileSendCompose>
     </div>
   );
 }

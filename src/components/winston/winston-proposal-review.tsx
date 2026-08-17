@@ -18,6 +18,8 @@ import { TASK_PRIORITIES } from "@/lib/tasks/types";
 import {
   asString,
   asStringArray,
+  countCreatedProposalItems,
+  createdTempIdsFromResult,
   createManualProposalItem,
   summarizeSelectedItems,
   WINSTON_PROPOSAL_ENTITY_LABELS,
@@ -32,8 +34,9 @@ import { cn } from "@/lib/utils";
 type WinstonProposalReviewProps = {
   proposal: WinstonProposal;
   /**
-   * Types the user can add manually. Defaults to every type already present
-   * in the proposal, or all four if the proposal is empty.
+   * Types the user can add manually. Defaults to every proposal type so a
+   * mixed conversation can add a missing task/post without being locked to
+   * whatever Winston happened to emit first.
    */
   allowedEntityTypes?: WinstonProposalEntityType[];
   title?: string;
@@ -443,7 +446,7 @@ export function WinstonProposalReview({
       fields: { ...item.fields },
     }))
   );
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<string[]>([]);
   const [addType, setAddType] = useState<WinstonProposalEntityType | null>(
     null
   );
@@ -456,7 +459,7 @@ export function WinstonProposalReview({
         fields: { ...item.fields },
       }))
     );
-    setError(null);
+    setErrors([]);
     // Reset only when a new proposal is handed in — not on every items identity change.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- proposalId is the stable key
   }, [proposal.proposalId]);
@@ -465,12 +468,8 @@ export function WinstonProposalReview({
     if (allowedEntityTypes && allowedEntityTypes.length > 0) {
       return allowedEntityTypes;
     }
-    const present = new Set(items.map((i) => i.entityType));
-    if (present.size === 0) {
-      return [...WINSTON_PROPOSAL_ENTITY_TYPES];
-    }
-    return WINSTON_PROPOSAL_ENTITY_TYPES.filter((t) => present.has(t));
-  }, [allowedEntityTypes, items]);
+    return [...WINSTON_PROPOSAL_ENTITY_TYPES];
+  }, [allowedEntityTypes]);
 
   useEffect(() => {
     if (!addType || addableTypes.includes(addType)) return;
@@ -498,28 +497,31 @@ export function WinstonProposalReview({
   }
 
   function handleCommit() {
-    setError(null);
+    setErrors([]);
     startTransition(async () => {
       const result = await commitWinstonProposal(items, {
         source: { sourceType: proposal.sourceType, sourceId: proposal.sourceId },
       });
       if (!result.success) {
-        setError(result.error);
+        setErrors([result.error]);
         return;
       }
       if (!result.data) {
-        setError("Nothing was created");
+        setErrors(["Nothing was created"]);
         return;
       }
-      if (result.data.errors.length > 0 && 
-          result.data.created.projects.length +
-            result.data.created.tasks.length +
-            result.data.created.calendar_events.length +
-            result.data.created.content_posts.length +
-            result.data.created.ideas.length === 0) {
-        setError(result.data.errors[0] ?? "Nothing was created");
-        return;
+
+      const createdCount = countCreatedProposalItems(result.data);
+      const createdTempIds = createdTempIdsFromResult(result.data);
+      if (createdTempIds.size > 0) {
+        setItems((prev) => prev.filter((item) => !createdTempIds.has(item.tempId)));
       }
+
+      if (result.data.errors.length > 0) {
+        setErrors(result.data.errors);
+        if (createdCount === 0) return;
+      }
+
       onCommitted(result.data);
     });
   }
@@ -597,8 +599,12 @@ export function WinstonProposalReview({
           </div>
         ) : null}
 
-        {error ? (
-          <p className="text-xs text-destructive">{error}</p>
+        {errors.length > 0 ? (
+          <ul className="space-y-1 text-xs text-destructive">
+            {errors.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
         ) : null}
 
         <div className="flex flex-wrap items-center justify-end gap-2">

@@ -51,7 +51,11 @@ What is built and working today.
   due to Supabase free tier `realtime_rls` limitation
 - **Winston:** portfolio insights; rental/sale valuations
   via Claude web search; manual comparables; 3-month
-  regeneration cooldown; dev-only valuation reset
+  regeneration cooldown; dev-only valuation reset.
+  Insight cards follow the Pipeline Health number
+  rule — rent, yield, and cost figures are attached
+  from source data after generation and rendered by
+  the UI; Winston's prose is qualitative only.
 - **Certificate alerts:** 90/30/7-day pre-expiry,
   on expiry, and post-expiry overdue emails
 - **Mortgage & insurance alerts:** renewal reminders

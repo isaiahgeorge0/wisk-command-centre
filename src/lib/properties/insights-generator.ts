@@ -104,6 +104,9 @@ export type ProPropertyPortfolioContext = PropertyPortfolioContext & {
   }>;
 };
 
+const FIGURES_CONTEXT_NOTE =
+  "Figures above are context only — do not copy currency amounts, values, £ figures, percentages, scores, or \"k\" shorthand into any JSON field. Exact amounts are attached by the application from source data and shown in the UI.";
+
 const BASE_SYSTEM_PROMPT = `You are Winston, an AI property management assistant for WISK. Analyse this landlord's portfolio and provide a structured digest.
 
 Return a JSON object with these sections:
@@ -116,9 +119,15 @@ Return a JSON object with these sections:
   maintenance_summary: string
 }
 
+Rules:
+- Refer to properties and tenants by name — never restate currency amounts, values, £ figures, percentages, scores, or "k" shorthand in any field
+- Do not invent, round, abbreviate, convert, or recalculate any figure. Exact amounts are attached by the application from source data and shown in the UI
+- Do not mention rent totals, yields, or cost totals in prose — those are rendered separately from source data
+- Keep the tone direct, premium, and practical
+
 Return ONLY valid JSON. No markdown, no explanation.`;
 
-const PRO_SYSTEM_APPENDIX = ` This landlord is on Properties Pro. You have access to yield analytics, tenant reliability scores, and detailed financial data. Provide specific, data-backed insights. Reference actual percentages, scores, and monetary figures. Identify patterns and risks the landlord might not have noticed. Your insights should be worth £32/month.`;
+const PRO_SYSTEM_APPENDIX = ` This landlord is on Properties Pro. You have access to yield analytics, tenant reliability scores, and detailed financial data. Provide specific, data-backed qualitative insights. Identify patterns and risks the landlord might not have noticed. Refer to properties and tenants by name — never restate currency amounts, values, £ figures, percentages, scores, or "k" shorthand. Do not invent, round, abbreviate, convert, or recalculate any figure. Exact amounts are attached by the application from source data and shown in the UI.`;
 
 export function getSystemPrompt(isProPlan: boolean): string {
   if (!isProPlan) return BASE_SYSTEM_PROMPT;
@@ -526,7 +535,7 @@ function buildBaseUserPrompt(ctx: PropertyPortfolioContext): string {
   if (ctx.openMaintenance.length === 0) lines.push("- No open tickets");
   lines.push("");
 
-  lines.push("## RENT THIS MONTH");
+  lines.push("## RENT THIS MONTH (context only — do not restate these £ figures in output)");
   lines.push(`Paid: £${ctx.rentPayments.paidThisMonth}`);
   lines.push(`Outstanding: £${ctx.rentPayments.outstandingThisMonth}`);
   lines.push(`Total due: £${ctx.rentPayments.totalDueThisMonth}`);
@@ -546,7 +555,7 @@ function buildBaseUserPrompt(ctx: PropertyPortfolioContext): string {
 function buildProUserPrompt(ctx: ProPropertyPortfolioContext): string {
   const lines = [buildBaseUserPrompt(ctx), ""];
 
-  lines.push("## YIELD ANALYTICS");
+  lines.push("## YIELD ANALYTICS (context only — do not restate these % figures in output)");
   lines.push(
     `Portfolio gross yield: ${ctx.portfolioGrossYield != null ? `${ctx.portfolioGrossYield.toFixed(1)}%` : "n/a"}`
   );
@@ -564,7 +573,7 @@ function buildProUserPrompt(ctx: ProPropertyPortfolioContext): string {
   }
   lines.push("");
 
-  lines.push("## TENANT RELIABILITY");
+  lines.push("## TENANT RELIABILITY (context only — grades and scores are attached in code)");
   const reliabilitySorted = [...ctx.tenantReliabilityScores].sort((a, b) => {
     const gradeWeight: Record<string, number> = {
       F: 0,
@@ -600,7 +609,7 @@ function buildProUserPrompt(ctx: ProPropertyPortfolioContext): string {
   );
   lines.push("");
 
-  lines.push("## FINANCIAL OVERVIEW");
+  lines.push("## FINANCIAL OVERVIEW (context only — do not restate these £ figures in output)");
   lines.push(`Annual net income: £${ctx.totalNetIncomeAnnual}`);
   lines.push(`Mortgage costs: £${ctx.totalMortgageCostAnnual}/yr`);
   lines.push(`Insurance costs: £${ctx.totalInsuranceCostAnnual}/yr`);
@@ -633,7 +642,7 @@ function buildProUserPrompt(ctx: ProPropertyPortfolioContext): string {
 
   lines.push("---");
   lines.push(
-    "Respond ONLY with valid JSON. Include the base fields plus these Pro fields:"
+    "Respond ONLY with valid JSON. Include the base fields plus these Pro fields. All strings are qualitative reasoning only — no currency, percentages, or scores:"
   );
   lines.push(`{`);
   lines.push(`  "portfolio_health": string,`);
@@ -656,10 +665,11 @@ function buildProUserPrompt(ctx: ProPropertyPortfolioContext): string {
 function buildUserPrompt(
   context: PropertyPortfolioContext | ProPropertyPortfolioContext
 ): string {
-  if ("isProPlan" in context && context.isProPlan) {
-    return buildProUserPrompt(context);
-  }
-  return buildBaseUserPrompt(context);
+  const body =
+    "isProPlan" in context && context.isProPlan
+      ? buildProUserPrompt(context)
+      : buildBaseUserPrompt(context);
+  return `${body}\n\n${FIGURES_CONTEXT_NOTE}`;
 }
 
 function isProContext(
@@ -697,6 +707,60 @@ function validateInsightShape(
       "Claude response did not match Properties Pro insight shape"
     );
   }
+}
+
+function attachSourceValues(
+  parsed: PropertyInsightContent,
+  context: PropertyPortfolioContext | ProPropertyPortfolioContext
+): PropertyInsightContent {
+  const sourceFigures: PropertyInsightContent["sourceFigures"] = {
+    rentPaidThisMonth: context.rentPayments.paidThisMonth,
+    rentOutstandingThisMonth: context.rentPayments.outstandingThisMonth,
+    rentTotalDueThisMonth: context.rentPayments.totalDueThisMonth,
+  };
+
+  if (!isProContext(context)) {
+    return { ...parsed, sourceFigures };
+  }
+
+  sourceFigures.portfolioGrossYield = context.portfolioGrossYield;
+  sourceFigures.portfolioNetYield = context.portfolioNetYield;
+  sourceFigures.totalNetIncomeAnnual = context.totalNetIncomeAnnual;
+  sourceFigures.totalMortgageCostAnnual = context.totalMortgageCostAnnual;
+  sourceFigures.totalInsuranceCostAnnual = context.totalInsuranceCostAnnual;
+  sourceFigures.totalMaintenanceCostAnnual = context.totalMaintenanceCostAnnual;
+  sourceFigures.totalVacancyLoss = context.totalVacancyLoss;
+  sourceFigures.atRiskTenants = context.atRiskTenants;
+  sourceFigures.upcomingMortgageRenewals = context.upcomingMortgageRenewals;
+  sourceFigures.upcomingInsuranceRenewals = context.upcomingInsuranceRenewals;
+
+  const byName = new Map(
+    context.propertyYields.map((property) => [
+      property.name.toLowerCase(),
+      property,
+    ])
+  );
+  const allowedNames = new Set(byName.keys());
+
+  const property_deep_dives = (parsed.property_deep_dives ?? [])
+    .filter((dive) => allowedNames.has(dive.propertyName.toLowerCase()))
+    .map((dive) => {
+      const source = byName.get(dive.propertyName.toLowerCase());
+      return {
+        propertyName: source?.name ?? dive.propertyName,
+        insight: dive.insight,
+        monthlyRent: source?.monthlyRent ?? null,
+        netIncome: source?.netIncome,
+        grossYield: source?.grossYield ?? null,
+        netYield: source?.netYield ?? null,
+      };
+    });
+
+  return {
+    ...parsed,
+    sourceFigures,
+    property_deep_dives,
+  };
 }
 
 export type PropertyInsightResult = {
@@ -751,7 +815,7 @@ export async function generatePropertyInsights(
   validateInsightShape(parsed, isProPlan);
 
   return {
-    content: parsed,
+    content: attachSourceValues(parsed, context),
     inputTokens: json.usage?.input_tokens ?? 0,
     outputTokens: json.usage?.output_tokens ?? 0,
   };

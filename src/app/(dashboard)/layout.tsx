@@ -71,7 +71,7 @@ export default async function DashboardLayout({
     getNotifications(),
     getProjects(),
     getGoals(),
-    getActiveAnnouncements(user.id),
+    getActiveAnnouncements(),
     getPublishedChangelog(10),
     getUnreadChangelogCount(),
     hasPackageAccess(user.id, "properties", supabase),

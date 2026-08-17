@@ -372,8 +372,12 @@ export async function disconnectGmail(
         `https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(accessToken)}`,
         { method: "POST" }
       );
-    } catch {
+    } catch (error) {
       // Revocation failures are non-fatal — still remove the local record.
+      console.error("disconnectGmail: token revocation failed", {
+        integrationId,
+        error,
+      });
     }
   }
 

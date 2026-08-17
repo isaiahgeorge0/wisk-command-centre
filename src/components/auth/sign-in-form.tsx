@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { SignInBridgeOverlay } from "@/components/auth/sign-in-bridge-overlay";
+import { authEmailRedirectUrl } from "@/lib/auth/safe-redirect-origin";
 import { MOTION_DURATION } from "@/lib/motion/config";
 import { createClient } from "@/lib/supabase/client";
 import { lookupEmailByUsername } from "@/app/sign-in/actions";
@@ -113,10 +114,11 @@ export function SignInForm() {
     }
 
     const supabase = createClient();
-    const origin = process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
     const { error: otpError } = await supabase.auth.signInWithOtp({
       email: resolvedEmail,
-      options: { emailRedirectTo: `${origin}/auth/callback` },
+      options: {
+        emailRedirectTo: authEmailRedirectUrl("/auth/callback"),
+      },
     });
 
     setMagicLoading(false);

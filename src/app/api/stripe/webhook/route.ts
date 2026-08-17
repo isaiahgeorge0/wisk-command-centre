@@ -182,13 +182,23 @@ async function getUserInfo(
 
     const { data: authData, error } =
       await admin.auth.admin.getUserById(userId);
-    if (error || !authData.user?.email) return null;
+    if (error || !authData.user?.email) {
+      console.error("getUserInfo: auth lookup failed", { userId, error });
+      return null;
+    }
 
-    const { data: prefs } = await admin
+    const { data: prefs, error: prefsError } = await admin
       .from("user_preferences")
       .select("display_name")
       .eq("user_id", userId)
       .maybeSingle();
+
+    if (prefsError) {
+      console.error("getUserInfo: display name lookup failed", {
+        userId,
+        error: prefsError,
+      });
+    }
 
     return {
       email: authData.user.email,
@@ -196,7 +206,8 @@ async function getUserInfo(
         (prefs as { display_name: string | null } | null)?.display_name ??
         "there",
     };
-  } catch {
+  } catch (error) {
+    console.error("getUserInfo: user lookup failed", { userId, error });
     return null;
   }
 }

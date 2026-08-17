@@ -4,6 +4,19 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@layer base {
+  /* Prevent iOS/Android auto-zoom on focus (requires >= 16px). */
+  @media (max-width: 767px) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
+        [type="file"]
+      ):not([type="hidden"]):not([type="color"]),
+    textarea,
+    select {
+      font-size: 16px;
+    }
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -141,6 +154,7 @@
   --chart-4: oklch(0.52 0.14 280);
   --chart-5: oklch(0.62 0.14 25);
   --radius: 0.625rem;
+  --wisk-mobile-nav-clearance: calc(3.25rem + env(safe-area-inset-bottom));
   --sidebar: oklch(0.96 0.008 260);
   --sidebar-foreground: oklch(0.18 0.02 260);
   --sidebar-primary: oklch(0.52 0.19 300);

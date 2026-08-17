@@ -79,35 +79,49 @@ export function PageHeader({
 }: PageHeaderProps) {
   const accentClasses = accent ? SECTION_ACCENT_CLASSES[accent] : null;
 
+  const tokenVar =
+    accent && accent !== "properties" ? `var(--wisk-section-${accent})` : null;
+
   const iconContainerStyle =
-    gradient && gradientFrom && gradientTo
+    gradient && tokenVar
       ? {
-          backgroundImage: `linear-gradient(to bottom right, ${hexToRgba(gradientFrom, 0.3)}, ${hexToRgba(gradientTo, 0.3)})`,
+          backgroundImage: `linear-gradient(to bottom right, color-mix(in srgb, ${tokenVar} 30%, transparent), color-mix(in srgb, ${tokenVar} 30%, transparent))`,
         }
-      : !accentClasses && accentColour
+      : gradient && gradientFrom && gradientTo
         ? {
-            backgroundColor: hexToRgba(accentColour, 0.15),
+            backgroundImage: `linear-gradient(to bottom right, ${hexToRgba(gradientFrom, 0.3)}, ${hexToRgba(gradientTo, 0.3)})`,
           }
-        : undefined;
+        : !accentClasses && accentColour
+          ? {
+              backgroundColor: hexToRgba(accentColour, 0.15),
+            }
+          : undefined;
 
   const titleStyle =
-    gradient && gradientFrom && gradientTo
+    gradient && tokenVar
       ? {
-          backgroundImage: `linear-gradient(to right, ${gradientFrom}, ${gradientTo})`,
+          backgroundImage: `linear-gradient(to right, ${tokenVar}, ${tokenVar})`,
           WebkitBackgroundClip: "text",
           backgroundClip: "text",
           color: "transparent",
         }
-      : !accentClasses && accentColour
-        ? { color: accentColour }
-        : undefined;
+      : gradient && gradientFrom && gradientTo
+        ? {
+            backgroundImage: `linear-gradient(to right, ${gradientFrom}, ${gradientTo})`,
+            WebkitBackgroundClip: "text",
+            backgroundClip: "text",
+            color: "transparent",
+          }
+        : !accentClasses && accentColour
+          ? { color: accentColour }
+          : undefined;
 
   return (
     <header className={cn("mb-6 flex items-center gap-4", className)}>
       <div
         className={cn(
           "flex size-10 shrink-0 items-center justify-center rounded-2xl shadow-sm md:size-12",
-          accentClasses?.iconBg
+          accentClasses?.iconBg && !iconContainerStyle
         )}
         style={iconContainerStyle}
       >
@@ -117,7 +131,7 @@ export function PageHeader({
         <h1
           className={cn(
             "text-xl font-semibold tracking-tight md:text-3xl",
-            accentClasses?.title
+            !titleStyle && accentClasses?.title
           )}
           style={titleStyle}
         >

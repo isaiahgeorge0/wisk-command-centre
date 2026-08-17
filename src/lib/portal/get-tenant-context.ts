@@ -21,7 +21,12 @@ export async function getTenantContext(): Promise<TenantContext | null> {
       .eq("portal_enabled", true)
       .maybeSingle();
 
-    if (tenantError || !tenant) {
+    if (tenantError) {
+      console.error("getTenantContext: tenant lookup failed", tenantError);
+      return null;
+    }
+
+    if (!tenant) {
       return null;
     }
 
@@ -31,7 +36,15 @@ export async function getTenantContext(): Promise<TenantContext | null> {
       .eq("id", tenant.property_id)
       .maybeSingle();
 
-    if (propertyError || !property) {
+    if (propertyError) {
+      console.error("getTenantContext: property lookup failed", {
+        propertyId: tenant.property_id,
+        error: propertyError,
+      });
+      return null;
+    }
+
+    if (!property) {
       return null;
     }
 
@@ -39,7 +52,8 @@ export async function getTenantContext(): Promise<TenantContext | null> {
       tenant: tenant as Tenant,
       property: property as Property,
     };
-  } catch {
+  } catch (error) {
+    console.error("getTenantContext: unexpected error", error);
     return null;
   }
 }

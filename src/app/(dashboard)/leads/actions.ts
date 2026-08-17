@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
+import { toSafeActionError } from "@/lib/errors/to-safe-action-error";
 import { emptyToNull, parseLeadValue } from "@/lib/leads/format";
 import type {
   ActionResult,
@@ -140,8 +141,10 @@ export async function createLead(
     .single();
 
   if (error) {
-    console.error("createLead:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, "Could not save this lead."),
+    };
   }
 
   revalidateLeadPaths();
@@ -189,8 +192,10 @@ export async function updateLead(
     .single();
 
   if (error) {
-    console.error("updateLead:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, "Could not update this lead."),
+    };
   }
 
   revalidateLeadPaths();
@@ -233,8 +238,10 @@ export async function updateLeadStatus(
     .single();
 
   if (error) {
-    console.error("updateLeadStatus:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, "Could not update this lead's status."),
+    };
   }
 
   revalidateLeadPaths();
@@ -251,8 +258,10 @@ export async function deleteLead(id: string): Promise<ActionResult> {
     .eq("user_id", userId);
 
   if (error) {
-    console.error("deleteLead:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, "Could not delete this lead."),
+    };
   }
 
   revalidateLeadPaths();
@@ -375,8 +384,10 @@ export async function getLeadActivities(
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("getLeadActivities:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, "Could not load activities for this lead."),
+    };
   }
 
   return { success: true, data: (data ?? []) as LeadActivity[] };
@@ -415,8 +426,10 @@ export async function addLeadActivity(
     .single();
 
   if (error) {
-    console.error("addLeadActivity:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, "Could not save this activity."),
+    };
   }
 
   revalidatePath("/leads");
@@ -435,8 +448,10 @@ export async function deleteLeadActivity(
     .eq("user_id", userId);
 
   if (error) {
-    console.error("deleteLeadActivity:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, "Could not delete this activity."),
+    };
   }
 
   revalidatePath("/leads");
@@ -456,8 +471,10 @@ export async function setLeadFollowUp(
     .eq("user_id", userId);
 
   if (error) {
-    console.error("setLeadFollowUp:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, "Could not set the follow-up date."),
+    };
   }
 
   if (date) {
@@ -548,8 +565,13 @@ export async function applyCallNotesResult(
       .eq("user_id", userId);
 
     if (updateError) {
-      console.error("applyCallNotesResult update lead:", updateError);
-      return { success: false, error: updateError.message };
+      return {
+        success: false,
+        error: toSafeActionError(
+          updateError,
+          "Could not save call notes to this lead."
+        ),
+      };
     }
   }
 
@@ -562,8 +584,13 @@ export async function applyCallNotesResult(
       .eq("user_id", userId);
 
     if (followUpError) {
-      console.error("applyCallNotesResult follow-up:", followUpError);
-      return { success: false, error: followUpError.message };
+      return {
+        success: false,
+        error: toSafeActionError(
+          followUpError,
+          "Could not set the follow-up date."
+        ),
+      };
     }
 
     await supabase.from("lead_activities").insert({
@@ -593,8 +620,13 @@ export async function applyCallNotesResult(
     );
 
     if (taskError) {
-      console.error("applyCallNotesResult create tasks:", taskError);
-      return { success: false, error: taskError.message };
+      return {
+        success: false,
+        error: toSafeActionError(
+          taskError,
+          "Could not create tasks from these call notes."
+        ),
+      };
     }
 
     tasksCreated = true;
@@ -615,8 +647,13 @@ export async function applyCallNotesResult(
   });
 
   if (activityError) {
-    console.error("applyCallNotesResult activity:", activityError);
-    return { success: false, error: activityError.message };
+    return {
+      success: false,
+      error: toSafeActionError(
+        activityError,
+        "Could not save the call notes activity."
+      ),
+    };
   }
 
   const { data: updatedLead, error: fetchError } = await supabase

@@ -116,7 +116,9 @@ Any important technical context, constraints, or decisions relevant to this sect
 - Email draft: `/api/winston/draft-email`
   generates mailto body via Winston (Haiku), now
   also called automatically from Pipeline Health
-  with extra context
+  with extra context. Lead `value` is passed in
+  pre-formatted with an explicit "restate this exact
+  figure" instruction — never "k" shorthand.
 - Pipeline Health: `/api/winston/pipeline-health`
   (Sonnet) — see `winston.md` for the full model/
   currency-safety writeup

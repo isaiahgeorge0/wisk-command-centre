@@ -30,9 +30,11 @@ import {
 } from "@/lib/admin/platform";
 import { sendApprovalNotification } from "@/lib/email/resend";
 import { getAuthContext } from "@/lib/auth/get-auth-context";
+import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { authEmailRedirectUrl } from "@/lib/auth/safe-redirect-origin";
 import { siteUrl } from "@/lib/url";
 
 const uuidParamSchema = z.string().uuid();
@@ -254,7 +256,7 @@ export async function approveRequest(
         name: parsed.data.name.trim(),
         welcome_message: parsed.data.welcomeMessage?.trim() || undefined,
       },
-      redirectTo: siteUrl("/auth/callback"),
+      redirectTo: authEmailRedirectUrl("/auth/callback"),
     }
   );
 
@@ -463,10 +465,8 @@ export async function deleteAnnouncement(id: string): Promise<ActionResult> {
   return { success: true };
 }
 
-export async function getActiveAnnouncements(
-  userId: string
-): Promise<ActiveAnnouncement[]> {
-  const supabase = await createClient();
+export async function getActiveAnnouncements(): Promise<ActiveAnnouncement[]> {
+  const { supabase, userId } = await getScopedSupabase();
   const now = new Date().toISOString();
 
   const [{ data: announcements, error: announcementsError }, { data: dismissals, error: dismissalsError }] =
@@ -1053,7 +1053,7 @@ export async function createUserManually(
     parsed.data.email.trim().toLowerCase(),
     {
       data: { name: parsed.data.name.trim() },
-      redirectTo: siteUrl("/auth/callback"),
+      redirectTo: authEmailRedirectUrl("/auth/callback"),
     }
   );
 

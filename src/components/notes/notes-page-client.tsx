@@ -216,7 +216,9 @@ export function NotesPageClient({
                   onClose={() => setProposalOpen(false)}
                   onCommitted={(result) => {
                     setProposalToast(result);
-                    setProposalOpen(false);
+                    if (result.errors.length === 0) {
+                      setProposalOpen(false);
+                    }
                   }}
                 />
               </div>

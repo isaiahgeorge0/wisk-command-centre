@@ -14,6 +14,59 @@ import { formatUsername, validateUsername } from "@/lib/users/username";
 
 const MIN_PASSWORD_LENGTH = 8;
 
+const profileNameSchema = z.string().trim().min(1, "Name is required");
+const displayNameSchema = z
+  .string()
+  .trim()
+  .min(1, "Display name is required");
+const themePreferenceSchema = z.enum(["dark", "light"]);
+const fieldVisibilityPartialSchema = z.object({
+  projects: z
+    .object({
+      serviceType: z.boolean().optional(),
+      deadline: z.boolean().optional(),
+      value: z.boolean().optional(),
+      nextAction: z.boolean().optional(),
+      siteUrl: z.boolean().optional(),
+      notes: z.boolean().optional(),
+    })
+    .optional(),
+  tasks: z
+    .object({
+      priorityBadge: z.boolean().optional(),
+      projectTag: z.boolean().optional(),
+      dueDate: z.boolean().optional(),
+    })
+    .optional(),
+  goals: z
+    .object({
+      categoryTag: z.boolean().optional(),
+      deadline: z.boolean().optional(),
+      quickControls: z.boolean().optional(),
+    })
+    .optional(),
+  ideas: z
+    .object({
+      categoryTag: z.boolean().optional(),
+      statusBadge: z.boolean().optional(),
+    })
+    .optional(),
+});
+const serviceTypesSchema = z.array(z.string());
+const serviceTypeNameSchema = z
+  .string()
+  .trim()
+  .min(1, "Enter a project type name");
+const reorderServiceTypeSchema = z.object({
+  serviceType: z.string().trim().min(1, "Project type is required"),
+  direction: z.enum(["up", "down"]),
+});
+const usernameInputSchema = z.string().trim().min(1, "Username is required");
+const winstonFeatureToggleSchema = z.object({
+  feature: z.literal("email_picks"),
+  enabled: z.boolean(),
+});
+
 const SECTION_PATHS = [
   "/",
   "/projects",
@@ -36,11 +89,15 @@ export type SettingsActionResult<T = void> =
 export async function updateProfileName(
   name: string
 ): Promise<SettingsActionResult> {
-  const trimmed = name.trim();
-  if (!trimmed) {
-    return { success: false, error: "Name is required" };
+  const parsed = profileNameSchema.safeParse(name);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Name is required",
+    };
   }
 
+  const trimmed = parsed.data;
   const { supabase, userId } = await getScopedSupabase();
 
   const { error: profileError } = await supabase
@@ -67,11 +124,15 @@ export async function updateProfileName(
 export async function updateDisplayName(
   displayName: string
 ): Promise<SettingsActionResult> {
-  const trimmed = displayName.trim();
-  if (!trimmed) {
-    return { success: false, error: "Display name is required" };
+  const parsed = displayNameSchema.safeParse(displayName);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Display name is required",
+    };
   }
 
+  const trimmed = parsed.data;
   const { supabase, userId } = await getScopedSupabase();
 
   const { error } = await supabase
@@ -138,7 +199,8 @@ export async function updateLandlordContactDetails(input: {
 export async function updateThemePreference(
   theme: ThemePreference
 ): Promise<SettingsActionResult> {
-  if (theme !== "dark" && theme !== "light") {
+  const parsed = themePreferenceSchema.safeParse(theme);
+  if (!parsed.success) {
     return { success: false, error: "Invalid theme preference" };
   }
 
@@ -148,7 +210,7 @@ export async function updateThemePreference(
   const { error } = await supabase
     .from("user_preferences")
     .update({
-      theme_preference: theme,
+      theme_preference: parsed.data,
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", userId);
@@ -208,12 +270,20 @@ export async function changePassword(
 export async function updateFieldVisibility(
   partial: Partial<FieldVisibility>
 ): Promise<SettingsActionResult> {
+  const parsed = fieldVisibilityPartialSchema.safeParse(partial);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid field visibility",
+    };
+  }
+
   const prefs = await getOrCreateUserPreferences();
   const merged: FieldVisibility = {
-    projects: { ...prefs.fieldVisibility.projects, ...partial.projects },
-    tasks: { ...prefs.fieldVisibility.tasks, ...partial.tasks },
-    goals: { ...prefs.fieldVisibility.goals, ...partial.goals },
-    ideas: { ...prefs.fieldVisibility.ideas, ...partial.ideas },
+    projects: { ...prefs.fieldVisibility.projects, ...parsed.data.projects },
+    tasks: { ...prefs.fieldVisibility.tasks, ...parsed.data.tasks },
+    goals: { ...prefs.fieldVisibility.goals, ...parsed.data.goals },
+    ideas: { ...prefs.fieldVisibility.ideas, ...parsed.data.ideas },
   };
 
   const { supabase, userId } = await getScopedSupabase();
@@ -237,7 +307,15 @@ export async function updateFieldVisibility(
 export async function updateServiceTypes(
   types: string[]
 ): Promise<SettingsActionResult> {
-  const normalized = normalizeServiceTypes(types);
+  const parsed = serviceTypesSchema.safeParse(types);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid project types",
+    };
+  }
+
+  const normalized = normalizeServiceTypes(parsed.data);
   if (normalized.length === 0) {
     return { success: false, error: "Keep at least one project type" };
   }
@@ -291,8 +369,16 @@ export async function getProjectsUsingServiceType(
 export async function removeServiceType(
   serviceType: string
 ): Promise<SettingsActionResult> {
+  const parsed = serviceTypeNameSchema.safeParse(serviceType);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Project type is required",
+    };
+  }
+
   const prefs = await getOrCreateUserPreferences();
-  const trimmed = serviceType.trim();
+  const trimmed = parsed.data;
 
   const affected = await getProjectsUsingServiceType(trimmed);
   if (affected.length > 0) {
@@ -317,11 +403,15 @@ export async function removeServiceType(
 export async function addServiceType(
   serviceType: string
 ): Promise<SettingsActionResult> {
-  const trimmed = serviceType.trim();
-  if (!trimmed) {
-    return { success: false, error: "Enter a project type name" };
+  const parsed = serviceTypeNameSchema.safeParse(serviceType);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Enter a project type name",
+    };
   }
 
+  const trimmed = parsed.data;
   const prefs = await getOrCreateUserPreferences();
   const exists = prefs.serviceTypes.some(
     (t) => t.toLowerCase() === trimmed.toLowerCase()
@@ -337,16 +427,24 @@ export async function reorderServiceType(
   serviceType: string,
   direction: "up" | "down"
 ): Promise<SettingsActionResult> {
+  const parsed = reorderServiceTypeSchema.safeParse({ serviceType, direction });
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid project type order",
+    };
+  }
+
   const prefs = await getOrCreateUserPreferences();
   const index = prefs.serviceTypes.findIndex(
-    (t) => t.toLowerCase() === serviceType.trim().toLowerCase()
+    (t) => t.toLowerCase() === parsed.data.serviceType.toLowerCase()
   );
 
   if (index < 0) {
     return { success: false, error: "Project type not found" };
   }
 
-  const nextIndex = direction === "up" ? index - 1 : index + 1;
+  const nextIndex = parsed.data.direction === "up" ? index - 1 : index + 1;
   if (nextIndex < 0 || nextIndex >= prefs.serviceTypes.length) {
     return { success: true };
   }
@@ -385,12 +483,20 @@ export async function checkUsernameAvailable(
 export async function setUsername(
   username: string
 ): Promise<SettingsActionResult> {
-  const validation = validateUsername(username);
+  const parsed = usernameInputSchema.safeParse(username);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Username is required",
+    };
+  }
+
+  const validation = validateUsername(parsed.data);
   if (!validation.valid) {
     return { success: false, error: validation.error ?? "Invalid username" };
   }
 
-  const lower = formatUsername(username);
+  const lower = formatUsername(parsed.data);
   const { supabase, userId } = await getScopedSupabase();
 
   const { data: existing } = await supabase
@@ -432,7 +538,8 @@ export async function updateWinstonFeatureToggle(
   feature: "email_picks",
   enabled: boolean
 ): Promise<SettingsActionResult> {
-  if (feature !== "email_picks") {
+  const parsed = winstonFeatureToggleSchema.safeParse({ feature, enabled });
+  if (!parsed.success) {
     return { success: false, error: "Invalid feature" };
   }
 
@@ -441,7 +548,7 @@ export async function updateWinstonFeatureToggle(
   const { error } = await supabase
     .from("user_preferences")
     .update({
-      winston_email_picks_enabled: enabled,
+      winston_email_picks_enabled: parsed.data.enabled,
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", userId);

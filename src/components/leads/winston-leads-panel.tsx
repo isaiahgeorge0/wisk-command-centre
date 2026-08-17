@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { useIsMobilePanel } from "@/components/calendar/use-is-mobile-panel";
+import { MobileSheetShell } from "@/components/layout/mobile-sheet-shell";
 import { LeadCallNotes } from "@/components/leads/lead-call-notes";
 import { PipelineHealthCard } from "@/components/leads/pipeline-health-card";
 import { LeadSelector } from "@/components/leads/lead-selector";
@@ -252,31 +253,9 @@ function PanelShell({
 
   if (isMobile) {
     return (
-      <>
-        <motion.button
-          type="button"
-          aria-label="Close Winston panel"
-          className="fixed inset-0 z-40 bg-black/50 md:hidden"
-          initial={reduced ? false : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={reduced ? undefined : { opacity: 0 }}
-          transition={{ duration: reduced ? 0 : 0.2 }}
-          onClick={onClose}
-        />
-        <motion.aside
-          className="fixed inset-y-0 right-0 z-50 flex w-full max-w-sm flex-col border-l border-border/60 bg-card shadow-2xl md:hidden"
-          initial={reduced ? false : { x: "100%" }}
-          animate={{ x: 0 }}
-          exit={reduced ? undefined : { x: "100%" }}
-          transition={
-            reduced
-              ? { duration: 0 }
-              : { duration: MOTION_DURATION.normal, ease: MOTION_EASE.smooth }
-          }
-        >
-          {children}
-        </motion.aside>
-      </>
+      <MobileSheetShell onClose={onClose} closeLabel="Close Winston panel">
+        {children}
+      </MobileSheetShell>
     );
   }
 
@@ -333,7 +312,7 @@ export function WinstonLeadsPanel({
     <AnimatePresence mode="wait">
       {open ? (
         <PanelShell key="winston-panel" onClose={onClose} isMobile={isMobile}>
-          <div className="flex h-full min-h-0 flex-col">
+          <div className="flex min-h-0 flex-1 flex-col">
             {canAccessWinston ? (
               <AccessContent
                 leads={leads}

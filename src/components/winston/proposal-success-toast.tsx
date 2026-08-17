@@ -66,6 +66,7 @@ export function WinstonProposalSuccessToast({
 }: WinstonProposalSuccessToastProps) {
   useEffect(() => {
     if (!result) return;
+    if (result.errors.length > 0) return;
     const timer = window.setTimeout(onDismiss, 6000);
     return () => window.clearTimeout(timer);
   }, [result, onDismiss]);
@@ -103,10 +104,20 @@ export function WinstonProposalSuccessToast({
         ) : null}
       </p>
       {result.errors.length > 0 ? (
-        <p className="mt-1 text-xs text-muted-foreground">
-          {result.errors.length} item
-          {result.errors.length === 1 ? "" : "s"} skipped.
-        </p>
+        <ul className="mt-2 space-y-1 text-xs text-destructive">
+          {result.errors.map((line) => (
+            <li key={line}>{line}</li>
+          ))}
+        </ul>
+      ) : null}
+      {result.errors.length > 0 ? (
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="mt-2 text-xs font-medium text-muted-foreground hover:text-foreground"
+        >
+          Dismiss
+        </button>
       ) : null}
     </div>
   );

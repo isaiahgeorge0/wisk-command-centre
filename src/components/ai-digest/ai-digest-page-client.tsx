@@ -16,6 +16,10 @@ import {
 
 import { PageTransition } from "@/components/layout/page-transition";
 import type { DigestContent } from "@/lib/ai/digest-generator";
+import {
+  formatLeadValue,
+  formatPipelineValueSplit,
+} from "@/lib/leads/format";
 import { cn } from "@/lib/utils";
 
 type WinstonDigestPageClientProps = {
@@ -38,6 +42,31 @@ function formatWeekRange(generatedAt: string): string {
   const endFormatted = fmt.format(weekEnd);
   // "Week of 9–15 June 2026"
   return `Week of ${startDay}–${endFormatted}`;
+}
+
+function SourceFiguresLine({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="mb-2 text-[11px] font-medium tabular-nums text-foreground/80">
+      {children}
+    </p>
+  );
+}
+
+function formatLeadIntelligenceFigures(
+  figures: NonNullable<DigestContent["leadIntelligenceFigures"]>
+): string {
+  const parts = [
+    formatPipelineValueSplit(figures.pipelineValue),
+    `${figures.activeLeadCount} active`,
+    `${figures.conversionRate}% conversion`,
+  ];
+  if (figures.avgResponseTimeDays != null) {
+    parts.push(`${figures.avgResponseTimeDays}d avg response`);
+  }
+  if (figures.overdueFollowUpCount > 0) {
+    parts.push(`${figures.overdueFollowUpCount} overdue follow-up${figures.overdueFollowUpCount === 1 ? "" : "s"}`);
+  }
+  return parts.filter((part) => part !== "—").join(" · ");
 }
 
 function formatTimestamp(iso: string): string {
@@ -246,6 +275,29 @@ export function WinstonDigestPageClient({
               iconClass="text-wisk-section-winston"
               title="Lead intelligence"
             >
+              {digest.leadIntelligenceFigures ? (
+                <>
+                  <SourceFiguresLine>
+                    {formatLeadIntelligenceFigures(
+                      digest.leadIntelligenceFigures
+                    )}
+                  </SourceFiguresLine>
+                  {digest.leadIntelligenceFigures.wonThisWeek.some(
+                    (lead) => lead.value != null
+                  ) ? (
+                    <SourceFiguresLine>
+                      Won:{" "}
+                      {digest.leadIntelligenceFigures.wonThisWeek
+                        .map((lead) =>
+                          lead.value != null
+                            ? `${lead.name} ${formatLeadValue(lead.value, lead.valueType)}`
+                            : lead.name
+                        )
+                        .join(" · ")}
+                    </SourceFiguresLine>
+                  ) : null}
+                </>
+              ) : null}
               <p className="text-sm leading-relaxed text-foreground">
                 {digest.leadIntelligence}
               </p>
@@ -258,6 +310,11 @@ export function WinstonDigestPageClient({
               iconClass="text-wisk-section-winston"
               title="Content strategy"
             >
+              {digest.contentStrategyFigures ? (
+                <SourceFiguresLine>
+                  {`${digest.contentStrategyFigures.publishingStreak}-week streak · ${digest.contentStrategyFigures.avgPostsPerWeek} posts/week avg`}
+                </SourceFiguresLine>
+              ) : null}
               <p className="text-sm leading-relaxed text-foreground">
                 {digest.contentStrategy}
               </p>
@@ -270,6 +327,14 @@ export function WinstonDigestPageClient({
               iconClass="text-amber-500"
               title="Goal trajectory"
             >
+              {digest.goalVelocityFigures &&
+              digest.goalVelocityFigures.length > 0 ? (
+                <SourceFiguresLine>
+                  {digest.goalVelocityFigures
+                    .map((goal) => `${goal.title} ${goal.percentComplete}%`)
+                    .join(" · ")}
+                </SourceFiguresLine>
+              ) : null}
               <p className="text-sm leading-relaxed text-foreground">
                 {digest.goalVelocityInsight}
               </p>

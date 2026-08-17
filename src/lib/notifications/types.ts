@@ -1,3 +1,7 @@
+export type ActionResult<T = void> =
+  | { success: true; data?: T }
+  | { success: false; error: string };
+
 export const NOTIFICATION_TYPES = [
   "overdue_task",
   "deadline_approaching",

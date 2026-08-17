@@ -46,6 +46,8 @@ export type WinstonProposalCreatedRef = {
   id: string;
   label: string;
   href: string;
+  /** Proposal item tempId — drop succeeded items on partial commit. */
+  tempId?: string;
 };
 
 export type WinstonProposalCommitResult = {
@@ -148,6 +150,168 @@ export function asString(value: unknown, fallback = ""): string {
     return String(value);
   }
   return fallback;
+}
+
+const PROPOSAL_UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isProposalUuid(value: string): boolean {
+  return PROPOSAL_UUID_RE.test(value);
+}
+
+type GeneratedProposalItemInput = {
+  tempId?: string;
+  entityType: WinstonProposalEntityType;
+  fields: Record<string, unknown>;
+  reasoning: string;
+  selected?: boolean;
+};
+
+function nestedTaskList(fields: Record<string, unknown>): unknown[] {
+  for (const key of ["tasks", "suggested_tasks", "suggestedTasks", "task_list"]) {
+    const value = fields[key];
+    if (Array.isArray(value) && value.length > 0) return value;
+  }
+  return [];
+}
+
+/**
+ * Lift tasks the model nested under a project into sibling items with projectRef.
+ */
+export function expandNestedProposalTasks(
+  items: WinstonProposalItem[]
+): WinstonProposalItem[] {
+  const extra: WinstonProposalItem[] = [];
+  const next = items.map((item) => {
+    if (item.entityType !== "project") return item;
+    const nested = nestedTaskList(item.fields);
+    if (nested.length === 0) return item;
+
+    for (const raw of nested) {
+      if (!raw || typeof raw !== "object") continue;
+      const rec = raw as Record<string, unknown>;
+      const title = asString(rec.title || rec.name).trim();
+      if (!title) continue;
+      extra.push({
+        tempId: createProposalTempId(),
+        entityType: "task",
+        fields: {
+          title,
+          priority: asString(rec.priority, "medium"),
+          due_date: asString(rec.due_date),
+          projectRef: item.tempId,
+          raw_content: asString(
+            rec.raw_content || rec.description || rec.notes
+          ),
+        },
+        reasoning:
+          asString(rec.reasoning).trim() ||
+          `Task for ${asString(item.fields.project_name) || "the new project"}`,
+        selected: true,
+      });
+    }
+
+    const fields = { ...item.fields };
+    delete fields.tasks;
+    delete fields.suggested_tasks;
+    delete fields.suggestedTasks;
+    delete fields.task_list;
+    return { ...item, fields };
+  });
+
+  return extra.length > 0 ? [...next, ...extra] : next;
+}
+
+/**
+ * Point tasks at new projects via projectRef (tempId), not a fake UUID.
+ * Invalid refs are cleared so commit still creates the task instead of skipping it.
+ */
+export function normalizeProposalTaskLinks(
+  items: WinstonProposalItem[]
+): WinstonProposalItem[] {
+  const projectTempIds = new Set<string>();
+  const nameToTempId = new Map<string, string>();
+  for (const item of items) {
+    if (item.entityType !== "project") continue;
+    projectTempIds.add(item.tempId);
+    const name = asString(item.fields.project_name).trim().toLowerCase();
+    if (name) nameToTempId.set(name, item.tempId);
+  }
+
+  return items.map((item) => {
+    if (item.entityType !== "task") return item;
+
+    let projectRef = asString(item.fields.projectRef).trim();
+    let projectId = asString(
+      item.fields.projectId ?? item.fields.project_id
+    ).trim();
+
+    if (projectId && projectTempIds.has(projectId)) {
+      projectRef = projectId;
+      projectId = "";
+    }
+
+    if (projectRef && !projectTempIds.has(projectRef)) {
+      const byName = nameToTempId.get(projectRef.toLowerCase());
+      if (byName) {
+        projectRef = byName;
+      } else if (isProposalUuid(projectRef) && !projectId) {
+        projectId = projectRef;
+        projectRef = "";
+      } else {
+        projectRef = "";
+      }
+    }
+
+    if (projectRef) projectId = "";
+
+    return {
+      ...item,
+      fields: {
+        ...item.fields,
+        projectRef,
+        projectId,
+      },
+    };
+  });
+}
+
+/** Model output → review items. Always selected; tasks are siblings with projectRef. */
+export function normalizeGeneratedProposalItems(
+  rawItems: GeneratedProposalItemInput[]
+): WinstonProposalItem[] {
+  const mapped = rawItems.map((item) => ({
+    tempId: item.tempId?.trim() || createProposalTempId(),
+    entityType: item.entityType,
+    fields: { ...item.fields },
+    reasoning: item.reasoning.trim(),
+    selected: true,
+  }));
+  return normalizeProposalTaskLinks(expandNestedProposalTasks(mapped));
+}
+
+export function createdTempIdsFromResult(
+  result: WinstonProposalCommitResult
+): Set<string> {
+  const ids = new Set<string>();
+  for (const group of Object.values(result.created)) {
+    for (const ref of group) {
+      if (ref.tempId) ids.add(ref.tempId);
+    }
+  }
+  return ids;
+}
+
+export function countCreatedProposalItems(
+  result: WinstonProposalCommitResult
+): number {
+  return (
+    result.created.projects.length +
+    result.created.tasks.length +
+    result.created.calendar_events.length +
+    result.created.content_posts.length +
+    result.created.ideas.length
+  );
 }
 
 export function asStringArray(value: unknown): string[] {

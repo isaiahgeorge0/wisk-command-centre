@@ -90,7 +90,11 @@ async function refreshGmailToken(row: IntegrationRow): Promise<string | null> {
   let refreshToken: string;
   try {
     refreshToken = decryptIntegrationToken(row.refresh_token);
-  } catch {
+  } catch (error) {
+    console.error("refreshGmailToken: failed to decrypt refresh token", {
+      integrationId: row.id,
+      error,
+    });
     return null;
   }
 

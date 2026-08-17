@@ -336,9 +336,9 @@ export function EmailPageClient({
   }, []);
 
   useEffect(() => {
-    if (isLoading || connectedProviders.length === 0) return;
+    if (connectedProviders.length === 0) return;
     void fetchWinstonPicks();
-  }, [connectedProviders.length, fetchWinstonPicks, isLoading]);
+  }, [connectedProviders.length, fetchWinstonPicks]);
 
   const handleSelectEmail = useCallback(async (email: EmailThread) => {
     setSelectedEmail(email);

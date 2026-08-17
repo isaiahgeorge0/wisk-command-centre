@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import type { PublicUserProfile, UserConnection } from "@/lib/collaboration/types";
@@ -9,6 +10,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export type ConnectionActionResult<T = void> =
   | { success: true; data?: T }
   | { success: false; error: string };
+
+const uuidParamSchema = z.string().uuid("Invalid id");
 
 export async function searchUsers(
   query: string
@@ -78,9 +81,17 @@ export async function searchUsers(
 export async function sendConnectionRequest(
   recipientId: string
 ): Promise<ConnectionActionResult> {
+  const parsed = uuidParamSchema.safeParse(recipientId);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid id",
+    };
+  }
+
   const { supabase, userId } = await getScopedSupabase();
 
-  if (recipientId === userId) {
+  if (parsed.data === userId) {
     return { success: false, error: "Cannot connect with yourself" };
   }
 
@@ -89,7 +100,7 @@ export async function sendConnectionRequest(
     .from("user_connections")
     .select("id")
     .or(
-      `and(requester_id.eq.${userId},recipient_id.eq.${recipientId}),and(requester_id.eq.${recipientId},recipient_id.eq.${userId})`
+      `and(requester_id.eq.${userId},recipient_id.eq.${parsed.data}),and(requester_id.eq.${parsed.data},recipient_id.eq.${userId})`
     )
     .maybeSingle();
 
@@ -99,7 +110,7 @@ export async function sendConnectionRequest(
 
   const { error } = await supabase.from("user_connections").insert({
     requester_id: userId,
-    recipient_id: recipientId,
+    recipient_id: parsed.data,
     status: "pending",
   });
 
@@ -114,12 +125,20 @@ export async function sendConnectionRequest(
 export async function acceptConnection(
   connectionId: string
 ): Promise<ConnectionActionResult> {
+  const parsed = uuidParamSchema.safeParse(connectionId);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid id",
+    };
+  }
+
   const { supabase, userId } = await getScopedSupabase();
 
   const { error } = await supabase
     .from("user_connections")
     .update({ status: "accepted" })
-    .eq("id", connectionId)
+    .eq("id", parsed.data)
     .eq("recipient_id", userId);
 
   if (error) {
@@ -133,12 +152,20 @@ export async function acceptConnection(
 export async function declineConnection(
   connectionId: string
 ): Promise<ConnectionActionResult> {
+  const parsed = uuidParamSchema.safeParse(connectionId);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid id",
+    };
+  }
+
   const { supabase, userId } = await getScopedSupabase();
 
   const { error } = await supabase
     .from("user_connections")
     .update({ status: "declined" })
-    .eq("id", connectionId)
+    .eq("id", parsed.data)
     .eq("recipient_id", userId);
 
   if (error) {
@@ -152,12 +179,20 @@ export async function declineConnection(
 export async function removeConnection(
   connectionId: string
 ): Promise<ConnectionActionResult> {
+  const parsed = uuidParamSchema.safeParse(connectionId);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid id",
+    };
+  }
+
   const { supabase, userId } = await getScopedSupabase();
 
   const { error } = await supabase
     .from("user_connections")
     .delete()
-    .eq("id", connectionId)
+    .eq("id", parsed.data)
     .or(`requester_id.eq.${userId},recipient_id.eq.${userId}`);
 
   if (error) {

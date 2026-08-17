@@ -333,7 +333,7 @@ export function SetPasswordClient({
                 <button
                   type="submit"
                   disabled={isPending || !agreedToTerms || !usernameAvailable}
-                  className="w-full rounded-lg bg-wisk-lime px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="w-full rounded-lg bg-wisk-lime px-4 py-2.5 text-sm font-semibold text-wisk-dark transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isPending
                     ? "Setting up…"

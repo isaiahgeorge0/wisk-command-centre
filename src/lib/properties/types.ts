@@ -408,6 +408,46 @@ export type TenantMessage = {
 
 export type PropertyInsightType = "weekly_digest" | "monthly_digest" | "inline";
 
+/** Attached from source data after generation — never from Winston prose. */
+export type PropertyInsightSourceFigures = {
+  rentPaidThisMonth: number;
+  rentOutstandingThisMonth: number;
+  rentTotalDueThisMonth: number;
+  portfolioGrossYield?: number | null;
+  portfolioNetYield?: number | null;
+  totalNetIncomeAnnual?: number;
+  totalMortgageCostAnnual?: number;
+  totalInsuranceCostAnnual?: number;
+  totalMaintenanceCostAnnual?: number;
+  totalVacancyLoss?: number;
+  atRiskTenants?: Array<{
+    name: string;
+    propertyName: string;
+    grade: string;
+  }>;
+  upcomingMortgageRenewals?: Array<{
+    propertyName: string;
+    lender: string;
+    daysUntil: number;
+    monthlyPayment: number;
+  }>;
+  upcomingInsuranceRenewals?: Array<{
+    propertyName: string;
+    insurer: string;
+    daysUntil: number;
+  }>;
+};
+
+export type PropertyInsightDeepDive = {
+  propertyName: string;
+  insight: string;
+  /** Raw figures from source data — never from Winston prose. */
+  monthlyRent?: number | null;
+  netIncome?: number;
+  grossYield?: number | null;
+  netYield?: number | null;
+};
+
 export type PropertyInsightContent = {
   portfolio_health: string;
   wins: string[];
@@ -415,15 +455,14 @@ export type PropertyInsightContent = {
   financial_snapshot: string;
   winstons_insight: string;
   maintenance_summary: string;
+  /** Precomputed from property records; UI formats — do not parse from prose. */
+  sourceFigures?: PropertyInsightSourceFigures;
   // Pro-only
   yield_analysis?: string;
   tenant_risk_summary?: string;
   financial_health?: string;
   risk_alerts?: string[];
-  property_deep_dives?: Array<{
-    propertyName: string;
-    insight: string;
-  }>;
+  property_deep_dives?: PropertyInsightDeepDive[];
   pro_recommendations?: string[];
 };
 

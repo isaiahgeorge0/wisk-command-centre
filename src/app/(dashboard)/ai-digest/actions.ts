@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { WINSTON_FREE_DAILY_MESSAGE_CAP, WINSTON_MONTHLY_TOKEN_LIMIT } from "@/lib/ai/constants";
@@ -202,6 +203,15 @@ export async function createConversation(
 
 const CONVERSATION_ROW_SELECT =
   "id, user_id, title, project_id, note_id, scope_key, created_at, updated_at";
+
+const conversationIdSchema = z.string().uuid("Invalid conversation id");
+const updateConversationTitleSchema = z.object({
+  id: conversationIdSchema,
+  title: z.string().trim().min(1, "Title is required"),
+});
+const clearConversationSchema = z.object({
+  conversationId: conversationIdSchema.optional(),
+});
 
 function toAIConversation(
   row: {
@@ -416,12 +426,20 @@ export async function updateConversationTitle(
   id: string,
   title: string
 ): Promise<ActionResult> {
+  const parsed = updateConversationTitleSchema.safeParse({ id, title });
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+
   const { supabase, userId } = await getScopedSupabase();
 
   const { error } = await supabase
     .from("ai_conversations")
-    .update({ title })
-    .eq("id", id)
+    .update({ title: parsed.data.title })
+    .eq("id", parsed.data.id)
     .eq("user_id", userId);
 
   if (error) {
@@ -433,12 +451,20 @@ export async function updateConversationTitle(
 }
 
 export async function deleteConversation(id: string): Promise<ActionResult> {
+  const parsed = conversationIdSchema.safeParse(id);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid conversation id",
+    };
+  }
+
   const { supabase, userId } = await getScopedSupabase();
 
   const { error } = await supabase
     .from("ai_conversations")
     .delete()
-    .eq("id", id)
+    .eq("id", parsed.data)
     .eq("user_id", userId);
 
   if (error) {
@@ -474,14 +500,22 @@ export async function getConversationMessages(
 export async function clearConversation(
   conversationId?: string
 ): Promise<ActionResult> {
+  const parsed = clearConversationSchema.safeParse({ conversationId });
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid conversation id",
+    };
+  }
+
   const { supabase, userId } = await getScopedSupabase();
 
-  if (conversationId) {
+  if (parsed.data.conversationId) {
     // Delete the conversation itself (messages cascade)
     const { error } = await supabase
       .from("ai_conversations")
       .delete()
-      .eq("id", conversationId)
+      .eq("id", parsed.data.conversationId)
       .eq("user_id", userId);
 
     if (error) {

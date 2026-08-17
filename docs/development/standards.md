@@ -101,6 +101,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
+import { toSafeActionError } from "@/lib/errors/to-safe-action-error";
 import type { ActionResult, ExampleFormInput, ExampleRow } from "@/lib/example/types";
 
 const exampleFormSchema = z.object({
@@ -135,8 +136,10 @@ export async function createExample(
     .single();
 
   if (error) {
-    console.error("createExample:", error);
-    return { success: false, error: "Could not save. Please try again." };
+    return {
+      success: false,
+      error: toSafeActionError(error, "Could not save. Please try again."),
+    };
   }
 
   revalidateExamplePaths();
@@ -159,7 +162,7 @@ export type ActionResult<T = void> =
 
 ### Rules
 
-- Log raw errors with `console.error` — never return Postgres messages to the user.
+- Log raw errors with `toSafeActionError` (`src/lib/errors/to-safe-action-error.ts`) — never return Postgres/PostgREST `error.message` to the user. Zod validation messages stay as-is.
 - Scope every query with `.eq("user_id", userId)` (or equivalent RLS-safe filter).
 - Admin actions use `createAdminClient()` from `lib/supabase/admin.ts` + `requireAdmin()`.
 
@@ -361,13 +364,17 @@ Theme uses CSS variables (`--background`, `--foreground`, WISK accent tokens). `
 
 - Short, actionable messages: *"Title is required."*, *"Could not save. Please try again."*
 - **Never** expose raw Supabase/Postgres errors, stack traces, or constraint names.
+- For database failures, use **`toSafeActionError(error, fallback)`** from `src/lib/errors/to-safe-action-error.ts`. It logs the real error server-side and returns the fallback (or a short safe message for unique-violation `23505`). Do not pass Zod `parsed.error` through it — those messages are already meant for the user.
+- Remaining `actions.ts` files still returning `error.message` should be converted the next time that file is touched — do not leave new sites.
 
 ### Server-side logging
 
 ```typescript
 if (error) {
-  console.error("updateProject:", error);
-  return { success: false, error: "Could not update project. Please try again." };
+  return {
+    success: false,
+    error: toSafeActionError(error, "Could not update project. Please try again."),
+  };
 }
 ```
 
@@ -406,6 +413,7 @@ Do not show a blank screen or bare "No items" text.
 | Validate all action input | Zod schema on every Server Action |
 | Never trust client `user_id` | Always derive from `getScopedSupabase()` / session |
 | Scope all queries | `.eq("user_id", userId)` even with RLS — defence in depth |
+| Never return raw DB errors | `toSafeActionError(error, fallback)` — see §8 |
 | Encrypt integration tokens | Use `lib/integrations/crypto.ts` before persisting |
 | Admin gates | Middleware + `requireAdmin()` on every admin action |
 
@@ -460,7 +468,7 @@ Before opening a PR:
 - [ ] Zod validation on Server Actions
 - [ ] `user_id` from session, not client
 - [ ] `revalidatePath` after mutations
-- [ ] Human-readable errors; raw errors logged only
+- [ ] Human-readable errors (`toSafeActionError` for DB failures; Zod as-is); raw errors logged only
 - [ ] Empty state for new lists
 - [ ] Mobile touch targets and responsive layout
 - [ ] `"use client"` only where needed

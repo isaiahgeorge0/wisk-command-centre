@@ -1,14 +1,16 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { hasAIAccess } from "@/lib/billing/access";
+import { toSafeActionError } from "@/lib/errors/to-safe-action-error";
 import {
   buildNotificationCandidates,
   candidateKey,
 } from "@/lib/notifications/rules";
-import type { Notification } from "@/lib/notifications/types";
+import type { ActionResult, Notification } from "@/lib/notifications/types";
 import {
   buildSuggestions,
   mergeNotificationCandidates,
@@ -21,7 +23,19 @@ export type NotificationsSnapshot = {
   unreadCount: number;
 };
 
-export async function generateNotifications(): Promise<void> {
+const uuidParamSchema = z.string().uuid("Invalid notification id");
+
+const awaitingDateNotificationSchema = z.object({
+  referenceId: z.string().uuid("Invalid reference id"),
+  title: z.string().trim().min(1, "Title is required"),
+  linkTo: z.string().trim().min(1, "Link is required"),
+});
+
+function revalidateNotificationPaths() {
+  revalidatePath("/", "layout");
+}
+
+export async function generateNotifications(): Promise<ActionResult> {
   const { supabase, userId } = await getScopedSupabase();
 
   const [tasksRes, projectsRes, goalsRes, leadsRes, existingRes, pendingConnectionsRes, prefsRes] =
@@ -58,10 +72,24 @@ export async function generateNotifications(): Promise<void> {
         .maybeSingle(),
     ]);
 
-  if (tasksRes.error) throw new Error(tasksRes.error.message);
-  if (projectsRes.error) throw new Error(projectsRes.error.message);
-  if (goalsRes.error) throw new Error(goalsRes.error.message);
-  if (existingRes.error) throw new Error(existingRes.error.message);
+  const fetchError =
+    tasksRes.error ??
+    projectsRes.error ??
+    goalsRes.error ??
+    leadsRes.error ??
+    existingRes.error ??
+    pendingConnectionsRes.error ??
+    prefsRes.error;
+
+  if (fetchError) {
+    return {
+      success: false,
+      error: toSafeActionError(
+        fetchError,
+        "Could not generate notifications. Please try again."
+      ),
+    };
+  }
 
   // Fetch requester usernames for connection request notifications
   const pendingConnections = pendingConnectionsRes.data ?? [];
@@ -117,7 +145,15 @@ export async function generateNotifications(): Promise<void> {
       .from("notifications")
       .delete()
       .in("id", staleIds);
-    if (error) throw new Error(error.message);
+    if (error) {
+      return {
+        success: false,
+        error: toSafeActionError(
+          error,
+          "Could not generate notifications. Please try again."
+        ),
+      };
+    }
   }
 
   if (candidates.length > 0) {
@@ -132,35 +168,59 @@ export async function generateNotifications(): Promise<void> {
       })),
       { onConflict: "user_id,type,reference_id", ignoreDuplicates: true }
     );
-    if (error) throw new Error(error.message);
+    if (error) {
+      return {
+        success: false,
+        error: toSafeActionError(
+          error,
+          "Could not generate notifications. Please try again."
+        ),
+      };
+    }
   }
+
+  return { success: true };
 }
 
 export async function createAwaitingDateNotification(input: {
   referenceId: string;
   title: string;
   linkTo: string;
-}): Promise<void> {
+}): Promise<ActionResult> {
+  const parsed = awaitingDateNotificationSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+
   const { supabase, userId } = await getScopedSupabase();
 
   const { error } = await supabase.from("notifications").upsert(
     {
       user_id: userId,
       type: "awaiting_date",
-      reference_id: input.referenceId,
+      reference_id: parsed.data.referenceId,
       title: "This idea needs a date",
-      message: `“${input.title}” — set one when you're ready.`,
-      link_to: input.linkTo,
+      message: `“${parsed.data.title}” — set one when you're ready.`,
+      link_to: parsed.data.linkTo,
     },
     { onConflict: "user_id,type,reference_id", ignoreDuplicates: true }
   );
 
   if (error) {
-    console.error("createAwaitingDateNotification:", error);
-    return;
+    return {
+      success: false,
+      error: toSafeActionError(
+        error,
+        "Could not create notification. Please try again."
+      ),
+    };
   }
 
-  revalidatePath("/", "layout");
+  revalidateNotificationPaths();
+  return { success: true };
 }
 
 export async function getNotifications(): Promise<NotificationsSnapshot> {
@@ -191,20 +251,38 @@ export async function getNotifications(): Promise<NotificationsSnapshot> {
 
 export async function markNotificationRead(
   notificationId: string
-): Promise<void> {
+): Promise<ActionResult> {
+  const parsed = uuidParamSchema.safeParse(notificationId);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid notification id",
+    };
+  }
+
   const { supabase, userId } = await getScopedSupabase();
 
   const { error } = await supabase
     .from("notifications")
     .update({ read: true })
-    .eq("id", notificationId)
+    .eq("id", parsed.data)
     .eq("user_id", userId);
 
-  if (error) throw new Error(error.message);
-  revalidatePath("/", "layout");
+  if (error) {
+    return {
+      success: false,
+      error: toSafeActionError(
+        error,
+        "Could not mark notification as read. Please try again."
+      ),
+    };
+  }
+
+  revalidateNotificationPaths();
+  return { success: true };
 }
 
-export async function markAllNotificationsRead(): Promise<void> {
+export async function markAllNotificationsRead(): Promise<ActionResult> {
   const { supabase, userId } = await getScopedSupabase();
 
   const { error } = await supabase
@@ -213,11 +291,21 @@ export async function markAllNotificationsRead(): Promise<void> {
     .eq("user_id", userId)
     .eq("read", false);
 
-  if (error) throw new Error(error.message);
-  revalidatePath("/", "layout");
+  if (error) {
+    return {
+      success: false,
+      error: toSafeActionError(
+        error,
+        "Could not mark notifications as read. Please try again."
+      ),
+    };
+  }
+
+  revalidateNotificationPaths();
+  return { success: true };
 }
 
-export async function clearAllReadNotifications(): Promise<void> {
+export async function clearAllReadNotifications(): Promise<ActionResult> {
   const { supabase, userId } = await getScopedSupabase();
 
   const { error } = await supabase
@@ -226,6 +314,16 @@ export async function clearAllReadNotifications(): Promise<void> {
     .eq("user_id", userId)
     .eq("read", true);
 
-  if (error) throw new Error(error.message);
-  revalidatePath("/", "layout");
+  if (error) {
+    return {
+      success: false,
+      error: toSafeActionError(
+        error,
+        "Could not clear notifications. Please try again."
+      ),
+    };
+  }
+
+  revalidateNotificationPaths();
+  return { success: true };
 }

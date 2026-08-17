@@ -3,7 +3,7 @@ import * as Sentry from "@sentry/nextjs";
 import { z } from "zod";
 
 import { cachedSystemPrompt } from "@/lib/ai/anthropic";
-import { ANTHROPIC_TIMEOUT_MS } from "@/lib/ai/constants";
+import { ANTHROPIC_STREAM_TIMEOUT_MS } from "@/lib/ai/constants";
 import { logUsage } from "@/lib/ai/usage-logger";
 import { getAuthContext } from "@/lib/auth/get-auth-context";
 import { hasAIAccess } from "@/lib/billing/access";
@@ -12,8 +12,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import {
   createProposalTempId,
+  normalizeGeneratedProposalItems,
   type WinstonProposal,
-  type WinstonProposalItem,
 } from "@/lib/winston/proposal";
 
 type AnthropicTextBlock = { type: "text"; text: string };
@@ -69,6 +69,7 @@ Rules:
 - Task items can either:
   1) belong to a new project proposal by setting fields.projectRef to that project's tempId
   2) belong to an existing active project by setting fields.projectId to a real project id from context
+- Tasks are sibling items in "items", never nested inside a project's fields.
 - Prefer existing projects when the note clearly references ongoing work.
 - Required fields:
   - project: fields.project_name (string), fields.service_type (string), fields.status ("active" unless clearly otherwise)
@@ -104,46 +105,6 @@ ${args.notePlain || "(empty note)"}
 
 Existing active projects (use these ids when relevant):
 ${activeProjectsText}`;
-}
-
-function normalizeItems(rawItems: z.infer<typeof modelItemSchema>[]): WinstonProposalItem[] {
-  const projectIds = new Set<string>();
-  const mapped = rawItems.map((item) => {
-    const tempId = item.tempId?.trim() || createProposalTempId();
-    if (item.entityType === "project") {
-      projectIds.add(tempId);
-    }
-    return {
-      tempId,
-      entityType: item.entityType,
-      fields: { ...item.fields },
-      reasoning: item.reasoning.trim(),
-      selected: item.selected ?? true,
-    } satisfies WinstonProposalItem;
-  });
-
-  return mapped.map((item) => {
-    if (item.entityType !== "task") return item;
-    const projectRef =
-      typeof item.fields.projectRef === "string" ? item.fields.projectRef.trim() : "";
-    const projectId =
-      typeof item.fields.projectId === "string"
-        ? item.fields.projectId.trim()
-        : typeof item.fields.project_id === "string"
-          ? item.fields.project_id.trim()
-          : "";
-    if (projectRef && !projectIds.has(projectRef)) {
-      return {
-        ...item,
-        fields: {
-          ...item.fields,
-          projectRef: "",
-          projectId: projectId || "",
-        },
-      };
-    }
-    return item;
-  });
 }
 
 export async function POST(
@@ -230,7 +191,7 @@ export async function POST(
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
-        max_tokens: 1400,
+        max_tokens: 4096,
         system: cachedSystemPrompt(SYSTEM_PROMPT),
         messages: [
           {
@@ -246,7 +207,7 @@ export async function POST(
           },
         ],
       }),
-      signal: AbortSignal.timeout(ANTHROPIC_TIMEOUT_MS),
+      signal: AbortSignal.timeout(ANTHROPIC_STREAM_TIMEOUT_MS),
     });
 
     if (!response.ok) {
@@ -293,7 +254,7 @@ export async function POST(
       proposalId: createProposalTempId(),
       sourceType: "note",
       sourceId: noteId,
-      items: normalizeItems(parsed.data.items ?? []),
+      items: normalizeGeneratedProposalItems(parsed.data.items ?? []),
     };
 
     return NextResponse.json({

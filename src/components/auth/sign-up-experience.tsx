@@ -14,6 +14,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { authEmailRedirectUrl } from "@/lib/auth/safe-redirect-origin";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -430,8 +431,6 @@ function FormSection({ reduced }: { reduced: boolean }) {
     setLoading(true);
 
     const supabase = createClient();
-    const origin =
-      process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     const { error: signUpError } = await supabase.auth.signUp({
@@ -444,7 +443,7 @@ function FormSection({ reduced }: { reduced: boolean }) {
           password_set: true,
           timezone,
         },
-        emailRedirectTo: `${origin}/auth/callback`,
+        emailRedirectTo: authEmailRedirectUrl("/auth/callback"),
       },
     });
 

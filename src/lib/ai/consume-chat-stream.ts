@@ -50,9 +50,14 @@ export async function consumeWinstonChatSse(
       if (!line) continue;
 
       let event: StreamEvent;
+      const payload = line.slice(5).trim();
       try {
-        event = JSON.parse(line.slice(5).trim()) as StreamEvent;
-      } catch {
+        event = JSON.parse(payload) as StreamEvent;
+      } catch (error) {
+        console.error("consumeWinstonChatSse: malformed SSE chunk", {
+          preview: payload.slice(0, 200),
+          error,
+        });
         continue;
       }
 

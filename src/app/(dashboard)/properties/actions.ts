@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { isAdminEmail } from "@/lib/auth/is-admin";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
+import { toSafeActionError } from "@/lib/errors/to-safe-action-error";
 import { hasPackageAccess } from "@/lib/billing/access";
 import { logUsage } from "@/lib/ai/usage-logger";
 import {
@@ -250,8 +251,10 @@ export async function createProperty(
     .single();
 
   if (error) {
-    console.error("createProperty:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not save this property.'),
+    };
   }
 
   revalidatePropertyPaths();
@@ -281,8 +284,10 @@ export async function updateProperty(
     .single();
 
   if (error) {
-    console.error("updateProperty:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not update this property.'),
+    };
   }
 
   revalidatePropertyPaths(id);
@@ -304,8 +309,10 @@ export async function deleteProperty(id: string): Promise<ActionResult> {
     .eq("user_id", userId);
 
   if (error) {
-    console.error("deleteProperty:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not delete this property.'),
+    };
   }
 
   revalidatePropertyPaths();
@@ -416,8 +423,10 @@ export async function createTenant(
     .select()
     .single();
   if (error) {
-    console.error("createTenant:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not save this tenant.'),
+    };
   }
   revalidatePropertyPaths(payload.property_id);
   return { success: true, data: data as Tenant };
@@ -444,8 +453,10 @@ export async function updateTenant(
     .select()
     .single();
   if (error) {
-    console.error("updateTenant:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not update this tenant.'),
+    };
   }
   revalidatePropertyPaths(payload.property_id);
   return { success: true, data: data as Tenant };
@@ -470,8 +481,10 @@ export async function deleteTenant(id: string): Promise<ActionResult> {
     .eq("id", idParsed.data)
     .eq("user_id", userId);
   if (error) {
-    console.error("deleteTenant:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not delete this tenant.'),
+    };
   }
   revalidatePropertyPaths(existing?.property_id);
   return { success: true };
@@ -521,8 +534,10 @@ export async function updateTenantRentSettings(
     .eq("user_id", userId);
 
   if (error) {
-    console.error("updateTenantRentSettings:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not update rent settings.'),
+    };
   }
 
   revalidatePropertyPaths(existing.property_id);
@@ -814,8 +829,10 @@ export async function createMaintenanceTicket(
     .select()
     .single();
   if (error) {
-    console.error("createMaintenanceTicket:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not save this maintenance ticket.'),
+    };
   }
   revalidatePropertyPaths(payload.property_id);
   return { success: true, data: data as MaintenanceTicket };
@@ -847,8 +864,10 @@ export async function updateMaintenanceTicket(
     .select()
     .single();
   if (error) {
-    console.error("updateMaintenanceTicket:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not update this maintenance ticket.'),
+    };
   }
   revalidatePropertyPaths(payload.property_id);
   return { success: true, data: data as MaintenanceTicket };
@@ -873,8 +892,10 @@ export async function deleteMaintenanceTicket(id: string): Promise<ActionResult>
     .eq("id", idParsed.data)
     .eq("user_id", userId);
   if (error) {
-    console.error("deleteMaintenanceTicket:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not delete this maintenance ticket.'),
+    };
   }
   revalidatePropertyPaths(existing?.property_id);
   return { success: true };
@@ -977,8 +998,10 @@ export async function createRentPayment(
     .select()
     .single();
   if (error) {
-    console.error("createRentPayment:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not save this rent payment.'),
+    };
   }
   revalidatePropertyPaths(payload.property_id);
   return { success: true, data: data as RentPayment };
@@ -1017,8 +1040,10 @@ export async function updateRentPayment(
     .select()
     .single();
   if (error) {
-    console.error("updateRentPayment:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not update this rent payment.'),
+    };
   }
   revalidatePropertyPaths((row as RentPayment).property_id);
   return { success: true, data: row as RentPayment };
@@ -1038,8 +1063,10 @@ export async function deleteRentPayment(id: string): Promise<ActionResult> {
     .eq("id", id)
     .eq("user_id", userId);
   if (error) {
-    console.error("deleteRentPayment:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not delete this rent payment.'),
+    };
   }
   revalidatePropertyPaths(existing?.property_id);
   return { success: true };
@@ -1126,8 +1153,10 @@ export async function createMortgage(
     .select()
     .single();
   if (error) {
-    console.error("createMortgage:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not save this mortgage.'),
+    };
   }
   revalidatePropertyPaths(payload.property_id);
   return { success: true, data: data as PropertyMortgage };
@@ -1154,8 +1183,10 @@ export async function updateMortgage(
     .select()
     .single();
   if (error) {
-    console.error("updateMortgage:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not update this mortgage.'),
+    };
   }
   revalidatePropertyPaths(payload.property_id);
   return { success: true, data: data as PropertyMortgage };
@@ -1175,8 +1206,10 @@ export async function deleteMortgage(id: string): Promise<ActionResult> {
     .eq("id", id)
     .eq("user_id", userId);
   if (error) {
-    console.error("deleteMortgage:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not delete this mortgage.'),
+    };
   }
   revalidatePropertyPaths(existing?.property_id);
   return { success: true };
@@ -1197,8 +1230,10 @@ export async function acknowledgeMortgageAlert(
     .select("property_id")
     .single();
   if (error) {
-    console.error("acknowledgeMortgageAlert:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not acknowledge this mortgage alert.'),
+    };
   }
   revalidatePropertyPaths(data?.property_id as string);
   return { success: true };
@@ -1217,8 +1252,10 @@ export async function toggleMortgageAlerts(
     .select("property_id")
     .single();
   if (error) {
-    console.error("toggleMortgageAlerts:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not update mortgage alerts.'),
+    };
   }
   revalidatePropertyPaths(data?.property_id as string);
   return { success: true };
@@ -1307,8 +1344,10 @@ export async function createInsurance(
     .select()
     .single();
   if (error) {
-    console.error("createInsurance:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not save this insurance policy.'),
+    };
   }
   revalidatePropertyPaths(payload.property_id);
   return { success: true, data: data as PropertyInsurance };
@@ -1335,8 +1374,10 @@ export async function updateInsurance(
     .select()
     .single();
   if (error) {
-    console.error("updateInsurance:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not update this insurance policy.'),
+    };
   }
   revalidatePropertyPaths(payload.property_id);
   return { success: true, data: data as PropertyInsurance };
@@ -1356,8 +1397,10 @@ export async function deleteInsurance(id: string): Promise<ActionResult> {
     .eq("id", id)
     .eq("user_id", userId);
   if (error) {
-    console.error("deleteInsurance:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not delete this insurance policy.'),
+    };
   }
   revalidatePropertyPaths(existing?.property_id);
   return { success: true };
@@ -1378,8 +1421,10 @@ export async function acknowledgeInsuranceAlert(
     .select("property_id")
     .single();
   if (error) {
-    console.error("acknowledgeInsuranceAlert:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not acknowledge this insurance alert.'),
+    };
   }
   revalidatePropertyPaths(data?.property_id as string);
   return { success: true };
@@ -1398,8 +1443,10 @@ export async function toggleInsuranceAlerts(
     .select("property_id")
     .single();
   if (error) {
-    console.error("toggleInsuranceAlerts:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not update insurance alerts.'),
+    };
   }
   revalidatePropertyPaths(data?.property_id as string);
   return { success: true };
@@ -1468,8 +1515,10 @@ export async function createCertificate(
     .select()
     .single();
   if (error) {
-    console.error("createCertificate:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not save this certificate.'),
+    };
   }
 
   const certificate = data as PropertyCertificate;
@@ -1510,8 +1559,10 @@ export async function updateCertificate(
     .select()
     .single();
   if (error) {
-    console.error("updateCertificate:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not update this certificate.'),
+    };
   }
 
   if (documentId) {
@@ -1526,8 +1577,10 @@ export async function updateCertificate(
       .eq("certificate_id", id)
       .eq("user_id", userId);
     if (unlinkError) {
-      console.error("updateCertificate unlink:", unlinkError);
-      return { success: false, error: unlinkError.message };
+      return {
+        success: false,
+        error: toSafeActionError(unlinkError, 'Could not unlink this document from the certificate.'),
+      };
     }
   }
 
@@ -1549,8 +1602,10 @@ export async function deleteCertificate(id: string): Promise<ActionResult> {
     .eq("id", id)
     .eq("user_id", userId);
   if (error) {
-    console.error("deleteCertificate:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not delete this certificate.'),
+    };
   }
   revalidatePropertyPaths(existing?.property_id);
   return { success: true };
@@ -1569,8 +1624,10 @@ export async function togglePropertyAlerts(
     .eq("id", propertyId)
     .eq("user_id", userId);
   if (error) {
-    console.error("togglePropertyAlerts:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not update property alerts.'),
+    };
   }
   revalidatePropertyPaths(propertyId);
   return { success: true };
@@ -1591,8 +1648,10 @@ export async function acknowledgeCertificateAlert(
     .select("property_id")
     .single();
   if (error) {
-    console.error("acknowledgeCertificateAlert:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not acknowledge this certificate alert.'),
+    };
   }
   revalidatePropertyPaths(data?.property_id as string);
   return { success: true };
@@ -1706,8 +1765,10 @@ export async function linkDocumentToCertificate(
     .eq("user_id", userId);
 
   if (error) {
-    console.error("linkDocumentToCertificate:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not link this document to the certificate.'),
+    };
   }
 
   revalidatePropertyPaths(document.property_id as string);
@@ -1747,8 +1808,10 @@ export async function uploadPropertyDocument(
     .upload(filePath, file, { contentType: file.type, upsert: false });
 
   if (uploadError) {
-    console.error("uploadPropertyDocument:", uploadError);
-    return { success: false, error: uploadError.message };
+    return {
+      success: false,
+      error: toSafeActionError(uploadError, 'Could not upload this document.'),
+    };
   }
 
   const { data, error } = await supabase
@@ -1769,9 +1832,11 @@ export async function uploadPropertyDocument(
     .single();
 
   if (error) {
-    console.error("uploadPropertyDocument insert:", error);
     await supabase.storage.from("property-documents").remove([filePath]);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, "Could not upload this document."),
+    };
   }
 
   const { property_certificates, ...document } = data as PropertyDocument & {
@@ -1835,8 +1900,10 @@ export async function deletePropertyDocument(
     .eq("user_id", userId);
 
   if (error) {
-    console.error("deletePropertyDocument:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not delete this document.'),
+    };
   }
 
   revalidatePropertyPaths(existing.property_id as string);
@@ -1860,7 +1927,9 @@ export async function toggleDocumentTenantSharing(
   if (error || !data) {
     return {
       success: false,
-      error: error?.message ?? "Document not found",
+      error: error
+        ? toSafeActionError(error, "Could not update document sharing.")
+        : "Document not found",
     };
   }
 
@@ -1915,7 +1984,10 @@ export async function inviteTenantToPortal(
     .eq("user_id", userId);
 
   if (updateError) {
-    return { success: false, error: updateError.message };
+    return {
+      success: false,
+      error: toSafeActionError(updateError, 'Could not invite this tenant to the portal.'),
+    };
   }
 
   const property = tenant.properties as {
@@ -2005,7 +2077,10 @@ export async function revokeTenantPortalAccess(
     .eq("user_id", userId);
 
   if (updateError) {
-    return { success: false, error: updateError.message };
+    return {
+      success: false,
+      error: toSafeActionError(updateError, 'Could not revoke portal access.'),
+    };
   }
 
   revalidatePropertyPaths(tenant.property_id as string);
@@ -2075,8 +2150,10 @@ export async function createComparable(
     .select()
     .single();
   if (error) {
-    console.error("createComparable:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not save this comparable.'),
+    };
   }
   revalidatePropertyPaths(payload.property_id);
   revalidatePath("/properties/winston");
@@ -2104,8 +2181,10 @@ export async function updateComparable(
     .select()
     .single();
   if (error) {
-    console.error("updateComparable:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not update this comparable.'),
+    };
   }
   revalidatePropertyPaths(payload.property_id);
   revalidatePath("/properties/winston");
@@ -2126,8 +2205,10 @@ export async function deleteComparable(id: string): Promise<ActionResult> {
     .eq("id", id)
     .eq("user_id", userId);
   if (error) {
-    console.error("deleteComparable:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not delete this comparable.'),
+    };
   }
   revalidatePropertyPaths(existing?.property_id);
   revalidatePath("/properties/winston");
@@ -2182,8 +2263,10 @@ export async function deleteValuationForProperty(
     .eq("user_id", userId);
 
   if (error) {
-    console.error("deleteValuationForProperty:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not delete this valuation.'),
+    };
   }
 
   revalidatePath("/properties/winston");
@@ -2343,7 +2426,10 @@ export async function triggerPropertyInsightsGeneration(): Promise<ActionResult>
     });
 
     if (error) {
-      return { success: false, error: error.message };
+      return {
+        success: false,
+        error: toSafeActionError(error, 'Could not generate property insights.'),
+      };
     }
 
     await logUsage(userId, "property_insights", inputTokens, outputTokens);
@@ -2351,10 +2437,9 @@ export async function triggerPropertyInsightsGeneration(): Promise<ActionResult>
     revalidatePath("/properties/dashboard");
     return { success: true };
   } catch (err) {
-    console.error("triggerPropertyInsightsGeneration:", err);
     return {
       success: false,
-      error: err instanceof Error ? err.message : "Generation failed",
+      error: toSafeActionError(err, "Could not generate property insights."),
     };
   }
 }
@@ -2504,8 +2589,10 @@ export async function sendLandlordMessage(
     .single();
 
   if (error) {
-    console.error("sendLandlordMessage:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not send this message.'),
+    };
   }
 
   return { success: true, data: data as TenantMessage };
@@ -2525,8 +2612,10 @@ export async function markMessagesAsRead(
     .eq("read", false);
 
   if (error) {
-    console.error("markMessagesAsRead:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: toSafeActionError(error, 'Could not mark messages as read.'),
+    };
   }
 
   revalidatePath("/properties", "layout");

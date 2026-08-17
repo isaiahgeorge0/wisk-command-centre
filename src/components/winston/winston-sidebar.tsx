@@ -20,6 +20,8 @@ import {
   getOrCreateScopedConversation,
 } from "@/app/(dashboard)/ai-digest/actions";
 import { useIsMobilePanel } from "@/components/calendar/use-is-mobile-panel";
+import { MobileSendCompose } from "@/components/layout/mobile-send-compose";
+import { MobileSheetShell } from "@/components/layout/mobile-sheet-shell";
 import { Button } from "@/components/ui/button";
 import { WinstonProposalReview } from "@/components/winston/winston-proposal-review";
 import { WinstonProposalSuccessToast } from "@/components/winston/proposal-success-toast";
@@ -30,9 +32,10 @@ import { useChatScrollFollow } from "@/lib/ai/use-chat-scroll-follow";
 import type { ConversationMessage } from "@/lib/ai/types";
 import { MOTION_DURATION, MOTION_EASE } from "@/lib/motion/config";
 import { useMotionSafe } from "@/lib/motion/use-motion-safe";
-import type {
-  WinstonProposal,
-  WinstonProposalCommitResult,
+import {
+  WINSTON_PROPOSAL_ENTITY_TYPES,
+  type WinstonProposal,
+  type WinstonProposalCommitResult,
 } from "@/lib/winston/proposal";
 import {
   resolveWinstonContext,
@@ -368,6 +371,7 @@ function ChatPane({
           ) : null}
           <WinstonProposalReview
             proposal={proposal}
+            allowedEntityTypes={[...WINSTON_PROPOSAL_ENTITY_TYPES]}
             title="Review Winston’s proposals"
             commitLabel="Create selected"
             onCancel={() => {
@@ -375,10 +379,12 @@ function ChatPane({
               setProposalSummary(null);
             }}
             onCommitted={(result) => {
-              setProposal(null);
-              setProposalSummary(null);
               setProposalToast(result);
               router.refresh();
+              if (result.errors.length === 0) {
+                setProposal(null);
+                setProposalSummary(null);
+              }
             }}
           />
         </div>
@@ -553,7 +559,7 @@ function ChatPane({
         </div>
       ) : null}
 
-      <div className="shrink-0 border-t border-border/60 px-3 py-3">
+      <MobileSendCompose className="shrink-0 border-t border-border/60 px-3 py-3">
         {!canAccessWinston && dailyLimit != null && dailyUsed != null && !limitHit ? (
           <p className="mb-2 text-center text-[11px] text-muted-foreground">
             {Math.max(0, dailyLimit - dailyUsed)} of {dailyLimit} free messages left today
@@ -579,7 +585,7 @@ function ChatPane({
             }
             disabled={isSending || composerLocked}
             rows={1}
-            className="flex-1 resize-none rounded-xl border border-border/60 bg-background px-3 py-2 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-wisk-section-winston/40 disabled:opacity-50"
+            className="flex-1 resize-none rounded-xl border border-border/60 bg-background px-3 py-2 text-base leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-wisk-section-winston/40 disabled:opacity-50"
             style={{ maxHeight: "96px", overflowY: "auto" }}
           />
           <button
@@ -596,7 +602,7 @@ function ChatPane({
             )}
           </button>
         </div>
-      </div>
+      </MobileSendCompose>
       <WinstonProposalSuccessToast
         result={proposalToast}
         onDismiss={() => setProposalToast(null)}
@@ -618,31 +624,9 @@ function PanelShell({
 
   if (isMobile) {
     return (
-      <>
-        <motion.button
-          type="button"
-          aria-label="Close Winston"
-          className="fixed inset-0 z-40 bg-black/50 md:hidden"
-          initial={reduced ? false : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={reduced ? undefined : { opacity: 0 }}
-          transition={{ duration: reduced ? 0 : 0.2 }}
-          onClick={onClose}
-        />
-        <motion.aside
-          className="fixed inset-y-0 right-0 z-50 flex w-full max-w-sm flex-col border-l border-border/60 bg-card shadow-2xl md:hidden"
-          initial={reduced ? false : { x: "100%" }}
-          animate={{ x: 0 }}
-          exit={reduced ? undefined : { x: "100%" }}
-          transition={
-            reduced
-              ? { duration: 0 }
-              : { duration: MOTION_DURATION.normal, ease: MOTION_EASE.smooth }
-          }
-        >
-          {children}
-        </motion.aside>
-      </>
+      <MobileSheetShell onClose={onClose} closeLabel="Close Winston">
+        {children}
+      </MobileSheetShell>
     );
   }
 
@@ -701,7 +685,7 @@ export function WinstonSidebar() {
     <AnimatePresence>
       {open && trigger && resolved ? (
         <PanelShell key="winston-sidebar" isMobile={isMobile} onClose={closeSidebar}>
-          <div className="flex h-full min-h-0 flex-col">
+          <div className="flex min-h-0 flex-1 flex-col">
             {showTeaser ? (
               <Teaser title={resolved.title} onClose={closeSidebar} />
             ) : (

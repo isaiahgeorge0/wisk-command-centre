@@ -1,14 +1,11 @@
-"use client";
-
 import { Sparkles } from "lucide-react";
-import { useTheme } from "next-themes";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionSubNav } from "@/components/layout/section-sub-nav";
 
-const SUB_NAV_ITEMS = [
-  { label: "Digest", href: "/ai-digest" },
-  { label: "Chat", href: "/ai-digest/chat" },
+const SUB_NAV_ITEMS: { id: string; label: string; href: string }[] = [
+  { id: "digest", label: "Digest", href: "/ai-digest" },
+  { id: "chat", label: "Chat", href: "/ai-digest/chat" },
 ];
 
 export default function AiDigestLayout({
@@ -16,22 +13,14 @@ export default function AiDigestLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { resolvedTheme } = useTheme();
-
   return (
     <div>
       <PageHeader
         title="Winston"
         subtitle="Your AI business assistant."
-        icon={
-          <Sparkles
-            className="size-6 text-white"
-            style={{ color: resolvedTheme === "dark" ? "#8b00ff" : "#6200b3" }}
-          />
-        }
+        icon={<Sparkles className="size-6 text-wisk-section-winston" />}
+        accent="winston"
         gradient
-        gradientFrom={resolvedTheme === "dark" ? "#8b00ff" : "#6200b3"}
-        gradientTo={resolvedTheme === "dark" ? "#aca0ff" : "#4a3db0"}
       />
 
       <SectionSubNav items={SUB_NAV_ITEMS} />
