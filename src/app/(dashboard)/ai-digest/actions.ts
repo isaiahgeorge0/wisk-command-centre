@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
-import { WINSTON_MONTHLY_TOKEN_LIMIT } from "@/lib/ai/constants";
+import { WINSTON_FREE_DAILY_MESSAGE_CAP, WINSTON_MONTHLY_TOKEN_LIMIT } from "@/lib/ai/constants";
+import { countChatExchangesOnLocalDay } from "@/lib/ai/free-chat-cap";
 import type { ActionResult } from "@/lib/tasks/types";
 import type {
   AIConversation,
@@ -12,9 +13,8 @@ import type {
   MonthlyUsage,
 } from "@/lib/ai/types";
 import {
+  getScopeKeyTitle,
   isWinstonScopeKey,
-  SCOPE_KEY_TITLES,
-  type WinstonScopeKey,
 } from "@/lib/winston/scope";
 
 // ─── Legacy: single-conversation history ─────────────────────────────────────
@@ -331,7 +331,7 @@ export async function getOrCreateNoteConversation(
  * Isolated from note_id / project_id / other scope_key threads.
  */
 export async function getOrCreateScopedConversation(
-  scopeKey: WinstonScopeKey | string
+  scopeKey: string
 ): Promise<
   ActionResult<{
     conversation: AIConversation;
@@ -363,7 +363,7 @@ export async function getOrCreateScopedConversation(
       .from("ai_conversations")
       .insert({
         user_id: userId,
-        title: SCOPE_KEY_TITLES[scopeKey],
+        title: getScopeKeyTitle(scopeKey),
         scope_key: scopeKey,
       })
       .select(CONVERSATION_ROW_SELECT)
@@ -530,5 +530,25 @@ export async function getActiveProjects(): Promise<
       id: p.id,
       project_name: p.project_name ?? "Untitled project",
     })),
+  };
+}
+
+export async function getFreeDailyChatUsage(): Promise<
+  ActionResult<{ used: number; limit: number }>
+> {
+  const { supabase, userId } = await getScopedSupabase();
+  const { data: prefs } = await supabase
+    .from("user_preferences")
+    .select("timezone")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  const used = await countChatExchangesOnLocalDay(
+    userId,
+    prefs?.timezone as string | null
+  );
+  return {
+    success: true,
+    data: { used, limit: WINSTON_FREE_DAILY_MESSAGE_CAP },
   };
 }

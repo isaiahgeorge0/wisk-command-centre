@@ -12,6 +12,7 @@ import { GoalsEmptyState } from "@/components/goals/goals-empty-state";
 import { GoalsList } from "@/components/goals/goals-list";
 import { useQuickAdd } from "@/components/quick-add/quick-add-context";
 import { Button } from "@/components/ui/button";
+import { WinstonSectionEntry } from "@/components/winston/winston-entry-button";
 import type { Goal } from "@/lib/goals/types";
 
 type GoalsPageClientProps = {
@@ -61,10 +62,13 @@ export function GoalsPageClient({
           icon={<Target className="size-6 text-wisk-section-goals" />}
           accent="goals"
         />
-        <Button className="shrink-0 gap-2" onClick={openGoalAdd}>
-          <Plus className="size-4" />
-          Add goal
-        </Button>
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          <WinstonSectionEntry section="goals" />
+          <Button className="shrink-0 gap-2" onClick={openGoalAdd}>
+            <Plus className="size-4" />
+            Add goal
+          </Button>
+        </div>
       </div>
 
       {goals.length === 0 ? (

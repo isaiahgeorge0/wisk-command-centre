@@ -6,8 +6,6 @@ import { cachedSystemPrompt } from "@/lib/ai/anthropic";
 import { ANTHROPIC_TIMEOUT_MS } from "@/lib/ai/constants";
 import { logUsage } from "@/lib/ai/usage-logger";
 import { getAuthContext } from "@/lib/auth/get-auth-context";
-import { hasAIAccess } from "@/lib/billing/access";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import {
   createProposalTempId,
@@ -28,24 +26,52 @@ const paramsSchema = z.object({
 });
 
 const bodySchema = z.object({
-  surface: z.enum(["calendar", "content"]),
+  surface: z.enum(["calendar", "content"]).optional(),
 });
 
-const calendarItemSchema = z.object({
+const mixedItemSchema = z.object({
   tempId: z.string().min(1).optional(),
-  entityType: z.enum(["calendar_event", "idea"]),
+  entityType: z.enum([
+    "project",
+    "task",
+    "calendar_event",
+    "content_post",
+    "idea",
+  ]),
   fields: z.record(z.string(), z.unknown()),
   reasoning: z.string().trim().min(1),
   selected: z.boolean().optional(),
 });
 
-const contentItemSchema = z.object({
-  tempId: z.string().min(1).optional(),
-  entityType: z.literal("content_post"),
-  fields: z.record(z.string(), z.unknown()),
-  reasoning: z.string().trim().min(1),
-  selected: z.boolean().optional(),
-});
+const MIXED_SYSTEM_PROMPT = `You are Winston, WISK's AI business assistant.
+Turn a conversation into a structured creation proposal.
+
+Return ONLY valid JSON:
+{
+  "summary": "optional short sentence",
+  "foundActionableItems": true|false,
+  "noActionableReason": "required when foundActionableItems is false",
+  "items": [
+    {
+      "tempId": "tmp-any-string",
+      "entityType": "project" | "task" | "calendar_event" | "content_post" | "idea",
+      "fields": { ... },
+      "reasoning": "specific signal from the conversation",
+      "selected": true
+    }
+  ]
+}
+
+Rules:
+- If the conversation does not yet describe something worth creating, set foundActionableItems=false and explain what is still missing. Do not invent filler items.
+- Choose entityType from what was actually discussed. A mix is allowed (e.g. a project plus a task plus a calendar event).
+- Never invent a date. If a date is needed and wasn't established, prefer an idea (status awaiting-date) or a content_post with status "idea" and no scheduled_date.
+- project fields: project_name, service_type, status ("active"), optional deadline (YYYY-MM-DD), client_name, notes.
+- task fields: title, priority ("low"|"medium"|"high"), optional due_date, optional projectId, raw_content.
+- calendar_event fields: title, date (YYYY-MM-DD), event_type ("lifestyle"|"other"), optional end_date, notes.
+- content_post fields: title, platforms (array), content_type, status ("idea"|"planned"|"scheduled"), optional scheduled_date, description.
+- idea fields: title, optional description, category, status ("awaiting-date" when no date).
+- Every item needs specific reasoning. JSON only.`;
 
 const modelResponseSchema = z.object({
   summary: z.string().trim().min(1).optional(),
@@ -53,57 +79,6 @@ const modelResponseSchema = z.object({
   noActionableReason: z.string().trim().optional(),
   items: z.array(z.unknown()).max(20).optional(),
 });
-
-const CALENDAR_SYSTEM_PROMPT = `You are Winston, WISK's AI business assistant.
-Turn a calendar brainstorm conversation into a structured proposal.
-
-Return ONLY valid JSON:
-{
-  "summary": "optional short sentence",
-  "foundActionableItems": true|false,
-  "noActionableReason": "required when foundActionableItems is false",
-  "items": [
-    {
-      "tempId": "tmp-any-string",
-      "entityType": "calendar_event" | "idea",
-      "fields": { ... },
-      "reasoning": "specific signal from the conversation",
-      "selected": true
-    }
-  ]
-}
-
-Rules:
-- If the conversation does not yet describe something schedulable, set foundActionableItems=false and explain what is still missing. Do not invent filler items.
-- If a confident date (YYYY-MM-DD) was established, emit a calendar_event with fields.title, fields.date, fields.event_type ("lifestyle" or "other"). Optional: end_date, notes.
-- If no confident date was established, emit an idea with fields.title, fields.status "awaiting-date", fields.category "Calendar". Reasoning MUST explicitly say a date was not determined, citing the conversation.
-- Never invent a date. Never emit both a calendar_event and an idea for the same thing unless they are genuinely separate items.
-- Every item needs specific reasoning. JSON only.`;
-
-const CONTENT_SYSTEM_PROMPT = `You are Winston, WISK's AI business assistant.
-Turn a content brainstorm conversation into a structured proposal.
-
-Return ONLY valid JSON:
-{
-  "summary": "optional short sentence",
-  "foundActionableItems": true|false,
-  "noActionableReason": "required when foundActionableItems is false",
-  "items": [
-    {
-      "tempId": "tmp-any-string",
-      "entityType": "content_post",
-      "fields": { ... },
-      "reasoning": "specific signal from the conversation",
-      "selected": true
-    }
-  ]
-}
-
-Rules:
-- If the conversation does not yet describe a content post, set foundActionableItems=false and explain what is still missing. Do not invent filler items.
-- Always emit content_post items (never ideas). Required: fields.title, fields.platforms (array of platform names), fields.content_type, fields.status.
-- If a date was established, set fields.scheduled_date (YYYY-MM-DD) and status "planned" or "scheduled". If no date, omit scheduled_date (or empty string) and set status "idea". Reasoning must say so.
-- Never invent a date. Every item needs specific reasoning. JSON only.`;
 
 function cleanJson(text: string): string {
   return text
@@ -162,25 +137,6 @@ export async function POST(
     const { user } = await getAuthContext();
     const userId = user.id;
 
-    const { data: prefs } = await supabase
-      .from("user_preferences")
-      .select("ai_access")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    const canAccessWinston = await hasAIAccess(
-      userId,
-      createAdminClient(),
-      prefs?.ai_access ?? false
-    );
-
-    if (!canAccessWinston) {
-      return NextResponse.json(
-        { error: "Winston access not enabled" },
-        { status: 403 }
-      );
-    }
-
     const { data: conversation } = await supabase
       .from("ai_conversations")
       .select("id")
@@ -237,13 +193,17 @@ export async function POST(
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
         max_tokens: 1200,
-        system: cachedSystemPrompt(
-          surface === "calendar" ? CALENDAR_SYSTEM_PROMPT : CONTENT_SYSTEM_PROMPT
-        ),
+        system: cachedSystemPrompt(MIXED_SYSTEM_PROMPT),
         messages: [
           {
             role: "user",
-            content: `Conversation transcript:\n${transcript}`,
+            content: `${
+              surface === "calendar"
+                ? "The user was on Calendar — prefer calendar_event or idea if that fits, but do not refuse other types.\n\n"
+                : surface === "content"
+                  ? "The user was on Content — prefer content_post if that fits, but do not refuse other types.\n\n"
+                  : ""
+            }Conversation transcript:\n${transcript}`,
           },
         ],
       }),
@@ -290,11 +250,9 @@ export async function POST(
       });
     }
 
-    const itemSchema =
-      surface === "calendar" ? calendarItemSchema : contentItemSchema;
     const items: WinstonProposalItem[] = [];
     for (const raw of parsed.data.items ?? []) {
-      const parsedItem = itemSchema.safeParse(raw);
+      const parsedItem = mixedItemSchema.safeParse(raw);
       if (!parsedItem.success) continue;
       items.push(
         ...normalizeItems([

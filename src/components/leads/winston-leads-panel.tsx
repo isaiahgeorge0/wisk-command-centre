@@ -37,7 +37,7 @@ function WinstonGradientIcon({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "flex size-9 shrink-0 items-center justify-center rounded-lg bg-wisk-section-leads text-wisk-section-leads-fg",
+        "flex size-9 shrink-0 items-center justify-center rounded-lg bg-wisk-section-winston text-wisk-section-winston-fg",
         className
       )}
     >
@@ -135,7 +135,7 @@ function TeaserContent({ onClose }: { onClose: () => void }) {
         <Link href="/upgrade" className="block">
           <Button
             type="button"
-            className="w-full bg-wisk-section-leads text-wisk-section-leads-fg hover:opacity-90"
+            className="w-full bg-wisk-section-winston text-wisk-section-winston-fg hover:opacity-90"
           >
             Upgrade to WISK AI
           </Button>

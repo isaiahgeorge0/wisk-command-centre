@@ -9,8 +9,8 @@ What is built and working today.
 - Filter toggles
 - Day detail panel
 - Upcoming 30/60/90 day panel
-- Global task quick-add FAB
-- **Brainstorm with Winston** — Sparkles entry opens a side panel with durable `ai_conversations.scope_key = 'calendar'` (migration 072, unique per user). Reopening resumes the same thread with full message history. Per-message "Schedule this" generates a reviewable Winston proposal (shared pattern, see `winston.md`): a confident date becomes a real `calendar_event`; if no confident date emerges, it becomes an `idea` instead (category "Calendar"), with reasoning explaining why no date was set. Nothing is created until the user commits. Isolated from Content Calendar (`content-calendar`) and Notes (`note_id`) — never shares message history across scopes.
+- Global Winston FAB (quick-add tab still creates a task without a chat round-trip)
+- **Brainstorm with Winston** — section entry opens the shared Winston sidebar with durable `ai_conversations.scope_key = 'calendar'`. Reopening resumes the same thread. Per-message "Create this" generates a reviewable mixed-type Winston proposal (see `winston.md`); a confident date often becomes a `calendar_event`, otherwise an `idea` (category "Calendar") is natural — other types are allowed if the conversation warrants them. Isolated from other section/record/global threads.
 
 ## Gaps and Missing Features
 

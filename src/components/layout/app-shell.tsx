@@ -10,7 +10,9 @@ import { UsernamePromptModal } from "@/components/username/username-prompt-modal
 import { OnboardingProvider } from "@/components/onboarding/onboarding-context";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { NavModeProvider } from "@/components/layout/nav-mode-context";
-import { QuickAddFab } from "@/components/layout/quick-add-fab";
+import { WinstonFab } from "@/components/layout/winston-fab";
+import { WinstonSidebar } from "@/components/winston/winston-sidebar";
+import { WinstonSidebarProvider } from "@/components/winston/winston-sidebar-context";
 import { TopNav } from "@/components/layout/top-nav";
 import { LandlordPresenceTracker } from "@/components/presence/landlord-presence-tracker";
 import { PreferencesProvider } from "@/components/preferences/preferences-context";
@@ -47,6 +49,7 @@ type AppShellProps = {
   contentGoals: Pick<Goal, "id" | "title">[];
   usernameSet: boolean;
   hasProperties: boolean;
+  canAccessWinston: boolean;
 };
 
 function GlobalTaskFormDialog({
@@ -101,6 +104,7 @@ export function AppShell({
   contentGoals,
   usernameSet,
   hasProperties,
+  canAccessWinston,
 }: AppShellProps) {
   const [showUsernamePrompt, setShowUsernamePrompt] = React.useState(
     !usernameSet
@@ -115,6 +119,7 @@ export function AppShell({
     <OnboardingProvider initialOpen={!onboardingCompleted}>
       <PreferencesProvider value={{ fieldVisibility, serviceTypes }}>
         <QuickAddProvider>
+          <WinstonSidebarProvider canAccessWinston={canAccessWinston}>
           <NavModeProvider>
             <SpotlightTourProvider
               hasProjects={hasProjects}
@@ -135,7 +140,8 @@ export function AppShell({
                 <AnnouncementBanner announcements={announcements} />
                 {children}
               </main>
-              <QuickAddFab />
+              <WinstonFab />
+              <WinstonSidebar />
               <GlobalTaskFormDialog projects={projectOptions} />
               <GlobalContentFormDialog contentGoals={contentGoals} />
               <BottomNav />
@@ -157,6 +163,7 @@ export function AppShell({
             </div>
           </SpotlightTourProvider>
           </NavModeProvider>
+          </WinstonSidebarProvider>
         </QuickAddProvider>
       </PreferencesProvider>
     </OnboardingProvider>

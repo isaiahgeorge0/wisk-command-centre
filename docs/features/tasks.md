@@ -11,7 +11,7 @@ What is built and working today.
 - Project tag
 - Checkbox toggle
 - Inline edit
-- Quick-add modal (global FAB on overview and calendar)
+- Quick-add modal (Winston FAB Quick add tab, plus Add task on the page)
 - Filtering by priority, status, project, and due date
 - Sorting by due date, priority, project, and title
 - Search by title and project name

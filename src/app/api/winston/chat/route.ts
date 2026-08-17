@@ -8,11 +8,15 @@ import { formatBusinessContext } from "@/lib/ai/format-user-context";
 import {
   ANTHROPIC_STREAM_TIMEOUT_MS,
   ANTHROPIC_TIMEOUT_MS,
+  WINSTON_FREE_CHAT_MODEL,
+  WINSTON_FREE_DAILY_MESSAGE_CAP,
   WINSTON_MONTHLY_TOKEN_LIMIT,
+  WINSTON_PAID_CHAT_MODEL,
   WINSTON_SHORT_TERM_LIMIT,
   WINSTON_SHORT_TERM_WINDOW_MS,
   WINSTON_USER_INITIATED_FEATURES,
 } from "@/lib/ai/constants";
+import { countChatExchangesOnLocalDay } from "@/lib/ai/free-chat-cap";
 import { logUsage } from "@/lib/ai/usage-logger";
 import { hasAIAccess } from "@/lib/billing/access";
 import { getAuthContext } from "@/lib/auth/get-auth-context";
@@ -21,10 +25,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import {
   BRAINSTORM_SURFACE_SCOPE,
+  getScopeKeyTitle,
   isWinstonScopeKey,
-  SCOPE_KEY_TITLES,
-  type WinstonScopeKey,
 } from "@/lib/winston/scope";
+import { systemPromptForScope } from "@/lib/winston/context-resolver";
 
 export const runtime = "nodejs";
 
@@ -51,7 +55,7 @@ type StreamEvent =
   | {
       type: "error";
       error: string;
-      limitType?: "monthly" | "short_term";
+      limitType?: "monthly" | "short_term" | "daily";
     };
 
 // ─── Validation ───────────────────────────────────────────────────────────────
@@ -61,20 +65,10 @@ const bodySchema = z.object({
   conversationId: z.string().uuid().optional(),
   noteId: z.string().uuid().optional(),
   surface: z.enum(["calendar", "content"]).optional(),
-  scopeKey: z.string().trim().min(1).max(64).optional(),
+  scopeKey: z.string().trim().min(1).max(80).optional(),
 });
 
 const NOTE_CONTENT_MAX_CHARS = 8_000;
-
-// ─── System prompt ────────────────────────────────────────────────────────────
-
-const CHAT_SYSTEM_PROMPT = `You are Winston, WISK's AI business assistant. The user is asking you questions directly about their business. Use the context provided to give specific, helpful answers. Be conversational but concise — this is a chat, not a report. If you don't have enough information to answer something, say so honestly rather than guessing. You are on the user's side — constructive, direct, warm. Never lecture or over-explain.`;
-
-const NOTE_BRAINSTORM_SYSTEM_PROMPT = `You are Winston, WISK's AI business assistant. The user is brainstorming on a specific note. Help them develop ideas, clarify thinking, and expand on what's written. Be conversational but concise. Ground every response in the note content provided — do not invent unrelated business context from outside this note. If the note is empty or thin, help them get started. You are on the user's side — constructive, direct, warm. Never lecture or over-explain.`;
-
-const CALENDAR_BRAINSTORM_SYSTEM_PROMPT = `You are Winston, WISK's AI business assistant. The user is brainstorming something to put on their calendar. Help them clarify what it is and whether a date is known. Be conversational but concise. Do not invent a date if they haven't given one. You are on the user's side — constructive, direct, warm. Never lecture or over-explain.`;
-
-const CONTENT_BRAINSTORM_SYSTEM_PROMPT = `You are Winston, WISK's AI business assistant. The user is brainstorming a content post. Help them clarify the idea, platform, and whether there's a date to schedule. Be conversational but concise. Do not invent a date if they haven't given one. You are on the user's side — constructive, direct, warm. Never lecture or over-explain.`;
 
 function formatNoteContext(title: string, plainText: string): string {
   const clipped =
@@ -142,7 +136,7 @@ export async function POST(request: Request) {
     // ── Access check ─────────────────────────────────────────────────────────
     const { data: prefs } = await supabase
       .from("user_preferences")
-      .select("ai_access")
+      .select("ai_access, timezone")
       .eq("user_id", userId)
       .maybeSingle();
 
@@ -151,13 +145,6 @@ export async function POST(request: Request) {
       createAdminClient(),
       prefs?.ai_access ?? false
     );
-
-    if (!canAccessWinston) {
-      return NextResponse.json(
-        { error: "Winston access not enabled" },
-        { status: 403 }
-      );
-    }
 
     // ── Parse body ────────────────────────────────────────────────────────────
     let body: unknown;
@@ -187,7 +174,7 @@ export async function POST(request: Request) {
 
     // Resolve page-level scope (Calendar / Content). Never invent from surface alone
     // when a conversationId is already known — verify instead.
-    let scopeKey: WinstonScopeKey | null = null;
+    let scopeKey: string | null = null;
     if (incomingScopeKey) {
       if (!isWinstonScopeKey(incomingScopeKey)) {
         return NextResponse.json(
@@ -209,6 +196,23 @@ export async function POST(request: Request) {
 
     // ── Rate limiting (admin client for cross-instance reliability) ───────────
     const admin = createAdminClient();
+
+    if (!canAccessWinston) {
+      const usedToday = await countChatExchangesOnLocalDay(
+        userId,
+        prefs?.timezone as string | null
+      );
+      if (usedToday >= WINSTON_FREE_DAILY_MESSAGE_CAP) {
+        return NextResponse.json(
+          {
+            error:
+              "That’s today’s free Winston messages. Upgrade to WISK AI for full conversations.",
+            limitType: "daily",
+          },
+          { status: 429 }
+        );
+      }
+    } else {
 
     // Monthly token budget
     const monthStart = new Date();
@@ -264,6 +268,7 @@ export async function POST(request: Request) {
         { status: 429 }
       );
     }
+    }
 
     // ── Resolve note scope (optional) ─────────────────────────────────────────
     let noteId = incomingNoteId ?? null;
@@ -304,6 +309,13 @@ export async function POST(request: Request) {
 
       noteTitle = note.title ?? "";
       notePlainText = extractPlainTextFromNoteContent(note.content);
+    }
+
+    if (!canAccessWinston && (noteId || scopeKey !== "global")) {
+      return NextResponse.json(
+        { error: "Winston access not enabled" },
+        { status: 403 }
+      );
     }
 
     // ── Resolve or create conversation ────────────────────────────────────────
@@ -411,7 +423,7 @@ export async function POST(request: Request) {
           .from("ai_conversations")
           .insert({
             user_id: userId,
-            title: SCOPE_KEY_TITLES[scopeKey],
+            title: getScopeKeyTitle(scopeKey),
             scope_key: scopeKey,
           })
           .select("id")
@@ -511,18 +523,12 @@ export async function POST(request: Request) {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not set");
 
-    const surfacePrompt =
-      surface === "calendar"
-        ? CALENDAR_BRAINSTORM_SYSTEM_PROMPT
-        : surface === "content"
-          ? CONTENT_BRAINSTORM_SYSTEM_PROMPT
-          : CHAT_SYSTEM_PROMPT;
+    const chatSystemPrompt = systemPromptForScope(scopeKey, Boolean(noteId));
 
     // Note-scoped chats stay grounded in the note only — no business digest.
-    // Page-scoped calendar/content brainstorms use a surface-specific prompt + business context.
     const system = noteId
       ? cachedSystemParts([
-          { text: NOTE_BRAINSTORM_SYSTEM_PROMPT },
+          { text: chatSystemPrompt },
           {
             text: formatNoteContext(noteTitle, notePlainText),
             cache: true,
@@ -530,7 +536,7 @@ export async function POST(request: Request) {
           },
         ])
       : cachedSystemParts([
-          { text: surfacePrompt },
+          { text: chatSystemPrompt },
           {
             text: `Here is the user's current business context:\n${formatBusinessContext(
               await getCachedContext(userId, supabase)
@@ -569,7 +575,9 @@ export async function POST(request: Request) {
                 "anthropic-version": "2023-06-01",
               },
               body: JSON.stringify({
-                model: "claude-sonnet-4-6",
+                model: canAccessWinston
+                  ? WINSTON_PAID_CHAT_MODEL
+                  : WINSTON_FREE_CHAT_MODEL,
                 max_tokens: 1024,
                 stream: true,
                 system,
@@ -686,7 +694,7 @@ export async function POST(request: Request) {
             usedTokens: inputTokens + outputTokens,
           });
 
-          if (isFirstMessage) {
+          if (isFirstMessage && !scopeKey && !noteId) {
             try {
               const generatedTitle = await generateConversationTitle(
                 apiKey,

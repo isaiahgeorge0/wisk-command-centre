@@ -10,6 +10,7 @@ What is built and working today.
 - Quick +/- controls
 - Progress popover
 - Content goal linking with published post count
+- **Brainstorm with Winston** — section sidebar (`scope_key: 'goals'`), see `winston.md`
 
 ## Gaps and Missing Features
 

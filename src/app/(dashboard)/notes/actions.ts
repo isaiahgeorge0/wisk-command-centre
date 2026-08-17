@@ -5,8 +5,23 @@ import { z } from "zod";
 
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import type { ActionResult, Note } from "@/lib/notes/types";
+import { plainTextToNoteContent } from "@/lib/notes/utils";
 
 const titleSchema = z.string().trim().min(1, "Title is required");
+
+const createNoteSchema = z
+  .object({
+    title: z.string().optional(),
+    body: z.string().optional(),
+  })
+  .refine((data) => Boolean(data.title?.trim() || data.body?.trim()), {
+    message: "Add a title or some text",
+  });
+
+export type CreateNoteInput = {
+  title?: string;
+  body?: string;
+};
 
 export async function getNotes(): Promise<Note[]> {
   const { supabase, userId } = await getScopedSupabase();
@@ -25,15 +40,33 @@ export async function getNotes(): Promise<Note[]> {
   return (data ?? []) as Note[];
 }
 
-export async function createNote(): Promise<ActionResult<Note>> {
+export async function createNote(
+  input?: CreateNoteInput
+): Promise<ActionResult<Note>> {
+  let title = "Untitled";
+  let content: string | null = null;
+
+  if (input !== undefined) {
+    const parsed = createNoteSchema.safeParse(input);
+    if (!parsed.success) {
+      return {
+        success: false,
+        error: parsed.error.issues[0]?.message ?? "Invalid input",
+      };
+    }
+    title = parsed.data.title?.trim() || "Untitled";
+    const body = parsed.data.body?.trim() ?? "";
+    content = body ? plainTextToNoteContent(body) : null;
+  }
+
   const { supabase, userId } = await getScopedSupabase();
 
   const { data, error } = await supabase
     .from("notes")
     .insert({
       user_id: userId,
-      title: "Untitled",
-      content: null,
+      title,
+      content,
     })
     .select()
     .single();

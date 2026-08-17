@@ -15,6 +15,7 @@ import type { ProjectCardTab } from "@/components/projects/project-card-tabs";
 import { useQuickAdd } from "@/components/quick-add/quick-add-context";
 import { useSpotlightTour } from "@/components/spotlight-tour/spotlight-tour-context";
 import { Button } from "@/components/ui/button";
+import { WinstonSectionEntry } from "@/components/winston/winston-entry-button";
 import { DEFAULT_PROJECT_FILTERS } from "@/lib/projects/constants";
 import { getProjectDisplayName } from "@/lib/projects/display";
 import { getRecentProjectTypes } from "@/lib/projects/recent-project-types";
@@ -167,10 +168,13 @@ export function ProjectsPageClient({
           icon={<FolderKanban className="size-6 text-wisk-section-projects" />}
           accent="projects"
         />
-        <Button className="shrink-0 gap-2" onClick={openProjectAdd} data-tour="add-project">
-          <Plus className="size-4" />
-          Add project
-        </Button>
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          <WinstonSectionEntry section="projects" />
+          <Button className="shrink-0 gap-2" onClick={openProjectAdd} data-tour="add-project">
+            <Plus className="size-4" />
+            Add project
+          </Button>
+        </div>
       </div>
 
       {projects.length === 0 ? (

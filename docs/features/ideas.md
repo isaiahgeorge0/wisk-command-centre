@@ -9,6 +9,7 @@ What is built and working today.
 - Click to expand
 - Inline edit
 - Quick-add
+- **Brainstorm with Winston** — section sidebar (`scope_key: 'ideas'`), see `winston.md`
 - Convert idea to project (one click) — LIVE
 - Convert idea to content post (one click) — LIVE
 - **Winston-sourced ideas** — `idea` is one of five `entityType`s on the shared Winston proposal contract (see `winston.md`). Most notably, a Calendar brainstorm with Winston that can't establish a confident date lands here as an idea (category "Calendar") rather than as a partial calendar event, since `calendar_events.date` is `NOT NULL`. Created through the same `createIdea` action as manual ideas — no separate creation path.

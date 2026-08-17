@@ -12,7 +12,7 @@ What is built and working today.
 - Board drag and drop
 - Recurring content (daily, weekly, monthly, yearly)
 - Per-occurrence notes via occurrence panel
-- **Brainstorm with Winston** — durable `scope_key: 'content-calendar'` (migration 072), same chat/"Schedule this" mechanic as Calendar (see `calendar.md`, `winston.md`). Always produces a `content_post` proposal — dated if the conversation established one, otherwise `status: 'idea'` with a null `scheduled_date`. Isolated thread from Calendar and Notes.
+- **Brainstorm with Winston** — durable `scope_key: 'content-calendar'`, same shared sidebar / "Create this" mechanic as other sections (see `winston.md`). Content is the likely proposal type (dated, or `status: 'idea'` + null `scheduled_date`) but mixed types are allowed. Isolated thread from Calendar, Notes, and global.
 - **Awaiting a date filter + badge** — undated content posts created via Winston (or otherwise sitting without a `scheduled_date`) get a persistent filter in the board view plus a badge on the card, rather than a recurring nag. A one-shot `awaiting_date` notification fires when one is created via Winston commit.
 
 ## Gaps and Missing Features

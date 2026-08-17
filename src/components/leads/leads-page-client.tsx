@@ -28,6 +28,8 @@ import { LeadsTable } from "@/components/leads/leads-table";
 import { WinstonLeadsPanel } from "@/components/leads/winston-leads-panel";
 import { useQuickAdd } from "@/components/quick-add/quick-add-context";
 import { Button } from "@/components/ui/button";
+import { WinstonSectionEntry } from "@/components/winston/winston-entry-button";
+import { useWinstonSidebar } from "@/components/winston/winston-sidebar-context";
 import {
   DEFAULT_LEADS_SORT,
   DEFAULT_LEADS_SORT_DIRECTION,
@@ -152,6 +154,7 @@ export function LeadsPageClient({
 }: LeadsPageClientProps) {
   const router = useRouter();
   const { leadAddOpen, setLeadAddOpen, openLeadAdd } = useQuickAdd();
+  const { open: winstonSidebarOpen, closeSidebar } = useWinstonSidebar();
   const [leads, setLeads] = useState<LeadWithActivity[]>(initialLeads);
   const [view, setView] = useState<LeadsView>("pipeline");
   const [filters, setFilters] = useState<LeadsFilterState>({
@@ -175,6 +178,10 @@ export function LeadsPageClient({
   useEffect(() => {
     setLeads(initialLeads);
   }, [initialLeads]);
+
+  useEffect(() => {
+    if (winstonSidebarOpen) setWinstonOpen(false);
+  }, [winstonSidebarOpen]);
 
   useEffect(() => {
     const stored = localStorage.getItem(LEADS_VIEW_STORAGE_KEY);
@@ -302,12 +309,17 @@ export function LeadsPageClient({
           accent="leads"
         />
         <div className="flex items-center gap-2 self-end sm:self-auto">
+          <WinstonSectionEntry section="leads" />
           <button
             type="button"
-            onClick={() => setWinstonOpen(true)}
-            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-wisk-section-leads/30 bg-gradient-to-r from-wisk-section-leads/10 to-wisk-section-leads/10 px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-wisk-section-leads/50 hover:from-wisk-section-leads/15 hover:to-wisk-section-leads/15"
+            onClick={() => {
+              closeSidebar();
+              setWinstonOpen(true);
+            }}
+            aria-label="Winston tools"
+            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-wisk-section-winston/30 bg-wisk-section-winston/10 px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-wisk-section-winston/50"
           >
-            <Sparkles className="size-4 text-wisk-section-leads" aria-hidden />
+            <Sparkles className="size-4 text-wisk-section-winston" aria-hidden />
             <span className="hidden sm:inline">Winston</span>
           </button>
           <div className="flex items-center rounded-lg border border-border/60 p-0.5">

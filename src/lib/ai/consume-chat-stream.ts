@@ -3,7 +3,7 @@
  * Used by the full chat page and note-scoped brainstorm panel.
  */
 
-export type WinstonChatLimitType = "monthly" | "short_term";
+export type WinstonChatLimitType = "monthly" | "short_term" | "daily";
 
 export type WinstonChatStreamHandlers = {
   onMeta?: (conversationId: string) => void;

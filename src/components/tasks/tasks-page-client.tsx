@@ -12,6 +12,7 @@ import { TasksEmptyState } from "@/components/tasks/tasks-empty-state";
 import { TasksList } from "@/components/tasks/tasks-list";
 import { useQuickAdd } from "@/components/quick-add/quick-add-context";
 import { Button } from "@/components/ui/button";
+import { WinstonSectionEntry } from "@/components/winston/winston-entry-button";
 import { DEFAULT_TASK_FILTERS } from "@/lib/tasks/constants";
 import { applyTaskFilters } from "@/lib/tasks/selectors";
 import type { ProjectOption, TaskFilters, TaskWithProject } from "@/lib/tasks/types";
@@ -83,10 +84,13 @@ export function TasksPageClient({
           icon={<CheckSquare className="size-6 text-wisk-section-tasks" />}
           accent="tasks"
         />
-        <Button className="shrink-0 gap-2" onClick={() => openTaskAdd()}>
-          <Plus className="size-4" />
-          Add task
-        </Button>
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          <WinstonSectionEntry section="tasks" />
+          <Button className="shrink-0 gap-2" onClick={() => openTaskAdd()}>
+            <Plus className="size-4" />
+            Add task
+          </Button>
+        </div>
       </div>
 
       {initialTasks.length === 0 ? (

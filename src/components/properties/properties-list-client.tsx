@@ -10,6 +10,7 @@ import { DeletePropertyDialog } from "@/components/properties/delete-property-di
 import { PropertyCard } from "@/components/properties/property-card";
 import { PropertyFormDialog } from "@/components/properties/property-form-dialog";
 import { Button } from "@/components/ui/button";
+import { WinstonSectionEntry } from "@/components/winston/winston-entry-button";
 import { PROPERTIES_ACCENT } from "@/lib/properties/constants";
 import type { Property, PropertyWithStats } from "@/lib/properties/types";
 
@@ -69,13 +70,16 @@ export function PropertiesListClient({
             <Building2 className="size-6" style={{ color: PROPERTIES_ACCENT }} />
           }
         />
-        <Button
-          onClick={handleAdd}
-          className="min-h-11 gap-2 bg-wisk-ferrari text-white hover:bg-wisk-ferrari/90"
-        >
-          <Plus className="size-4" />
-          Add property
-        </Button>
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          <WinstonSectionEntry section="properties" />
+          <Button
+            onClick={handleAdd}
+            className="min-h-11 gap-2 bg-wisk-ferrari text-white hover:bg-wisk-ferrari/90"
+          >
+            <Plus className="size-4" />
+            Add property
+          </Button>
+        </div>
       </div>
 
       {properties.length === 0 ? (

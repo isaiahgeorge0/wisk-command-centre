@@ -30,6 +30,7 @@ import { PropertyFormDialog } from "@/components/properties/property-form-dialog
 import { PropertyStatusBadge } from "@/components/properties/property-status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { WinstonSectionEntry } from "@/components/winston/winston-entry-button";
 import { PROPERTIES_ACCENT } from "@/lib/properties/constants";
 import { formatContractorDisplayName } from "@/lib/properties/contractor-display";
 import {
@@ -164,13 +165,16 @@ export function PropertiesDashboardClient({
             />
           }
         />
-        <Button
-          onClick={handleAdd}
-          className="min-h-11 gap-2 bg-wisk-ferrari text-white hover:bg-wisk-ferrari/90"
-        >
-          <Plus className="size-4" />
-          Add property
-        </Button>
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          <WinstonSectionEntry section="properties" />
+          <Button
+            onClick={handleAdd}
+            className="min-h-11 gap-2 bg-wisk-ferrari text-white hover:bg-wisk-ferrari/90"
+          >
+            <Plus className="size-4" />
+            Add property
+          </Button>
+        </div>
       </div>
 
       {properties.length === 0 ? (

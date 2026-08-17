@@ -1,3 +1,21 @@
+/** TipTap JSON the note editor already understands. */
+export function plainTextToNoteContent(text: string): string {
+  const paragraphs = text
+    .split(/\n+/)
+    .map((line) => line.trimEnd())
+    .filter((line) => line.length > 0);
+
+  const content =
+    paragraphs.length === 0
+      ? [{ type: "paragraph" as const }]
+      : paragraphs.map((line) => ({
+          type: "paragraph" as const,
+          content: [{ type: "text" as const, text: line }],
+        }));
+
+  return JSON.stringify({ type: "doc", content });
+}
+
 export function extractPlainTextFromNoteContent(content: string | null): string {
   if (!content?.trim()) return "";
 

@@ -109,6 +109,7 @@ See Sync Notes above and `winston.md` for full detail. No longer `ai_pro`/`max`-
 ### Notes — Complete, now with Winston integration
 - Rich text (TipTap) notes section at `/notes`, migration 039
 - Brainstorming with Winston and Find projects & tasks — both shipped this session, see `notes.md`
+- **Three-tier Winston sidebar** — global FAB (quick-add + capped free chat), per-section “Brainstorm with Winston”, record-level Notes “Winston”. See `winston.md`.
 
 ### Marketing Site (wiskapp-marketing)
 - Full rebrand matching app colour system, unchanged this pass

@@ -10,9 +10,10 @@ What is built and working today.
 - Create, edit, delete (with confirmation dialog)
 - Client-side search across title and a plain-text-extracted preview
 - List view, sorted by most recently updated
-- **Brainstorm with Winston** — Sparkles entry in the note editor opens a side panel scoped to that note (`ai_conversations.note_id`, migration 069, unique per user/note — reopening resumes the same thread). Reuses the same SSE streaming chat path as Winston Chat. Context is just the note's title + plain text, not broader business context. Each Winston reply has an "Insert into note" action — cursor insert or append, immediate save, always a single explicit click, never automatic.
+- **Brainstorm with Winston** (section) — header button, `scope_key: 'notes'`. No specific note in context. Isolated from record-level and global threads.
+- **Winston** (record) — in the note editor, opens the shared sidebar scoped to that note (`ai_conversations.note_id`, migration 069). Context is the note's title + plain text. Each reply has "Insert into note" — cursor insert or append, immediate save, one explicit click, never automatic.
 - **Find projects & tasks** — separate entry point from brainstorming (one-shot generation, not a conversation). Reads the note plus a lightweight list of the user's existing active projects, so it can attach a task to something that already exists rather than always proposing something new. Produces a reviewable proposal (shared Winston proposal pattern — see `winston.md`) of `project`/`task` items, each with a stated reason. Committing sets `projects.source_note_id` (migration 070) so created projects trace back to the note they came from. Returns a clear "nothing actionable found" state when appropriate rather than forcing output.
-- Both Winston features gated behind `ai_access`, with a teaser shown to non-access users — same pattern as the Leads Winston panel.
+- Section and record Winston are gated behind `ai_access` (upgrade teaser otherwise). The global FAB still offers a capped free conversation — see `winston.md`.
 
 ## Gaps and Missing Features
 

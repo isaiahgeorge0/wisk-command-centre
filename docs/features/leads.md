@@ -21,7 +21,8 @@
   figures now shown as two lines ("Upfront: £X ·
   Recurring: £Y/mo"), never blended into one total
 - Inline edit, delete with confirmation
-- Quick-add modal via FAB and Add button, with an
+- **Brainstorm with Winston** — section sidebar (`scope_key: 'leads'`), plus the existing Winston tools panel (call notes / drafts / Pipeline Health)
+- Quick-add modal via Winston FAB Quick add tab and Add button, with an
   Upfront/Monthly toggle next to the value field
 - Recent leads on Overview page
 - Convert lead to project with foundation modal:

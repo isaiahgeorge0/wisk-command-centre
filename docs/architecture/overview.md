@@ -93,7 +93,7 @@ src/
 │   └── layout.tsx
 ├── components/
 │   ├── [section]/            # Feature UI (projects/, tasks/, content/, …)
-│   ├── layout/               # AppShell, TopNav, FAB
+│   ├── layout/               # AppShell, TopNav, Winston FAB
 │   ├── ui/                   # shadcn primitives
 │   └── ...
 ├── lib/
@@ -147,7 +147,7 @@ Never expose the service role key to the browser.
 
 ### Quick-add context
 
-`QuickAddProvider` coordinates the global FAB: which modal is open (project, task, goal, idea, lead, content) based on current route.
+`QuickAddProvider` coordinates structured create dialogs (project, task, goal, idea, lead, content). The sitewide FAB is Winston: default tab is this fast path; chat is `scope_key: 'global'`.
 
 ---
 

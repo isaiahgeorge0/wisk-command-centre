@@ -13,6 +13,7 @@ import { IdeasEmptyState } from "@/components/ideas/ideas-empty-state";
 import { IdeasList } from "@/components/ideas/ideas-list";
 import { useQuickAdd } from "@/components/quick-add/quick-add-context";
 import { Button } from "@/components/ui/button";
+import { WinstonSectionEntry } from "@/components/winston/winston-entry-button";
 import { DEFAULT_IDEA_FILTERS } from "@/lib/ideas/constants";
 import {
   applyIdeaFilters,
@@ -76,10 +77,13 @@ export function IdeasPageClient({ initialIdeas }: IdeasPageClientProps) {
           icon={<Lightbulb className="size-6 text-wisk-section-ideas" />}
           accent="ideas"
         />
-        <Button className="shrink-0 gap-2" onClick={openIdeaAdd}>
-          <Plus className="size-4" />
-          Add idea
-        </Button>
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          <WinstonSectionEntry section="ideas" />
+          <Button className="shrink-0 gap-2" onClick={openIdeaAdd}>
+            <Plus className="size-4" />
+            Add idea
+          </Button>
+        </div>
       </div>
 
       {ideas.length === 0 ? (

@@ -14,6 +14,7 @@ What is built and working today.
   open maintenance with job sheet detail (contractor,
   visit date, latest update), unread messages,
   expiring certificates
+- **Brainstorm with Winston** — section sidebar on dashboard and list (`scope_key: 'properties'`), see `winston.md`
 - **Overview Properties tab:** portfolio summary
   stats, needs attention, next 30 days timeline,
   open maintenance with job sheet detail, unread

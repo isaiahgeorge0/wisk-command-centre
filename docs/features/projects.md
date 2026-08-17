@@ -16,6 +16,7 @@ What is built and working today.
 - Sorting by name, deadline, value, and date created
 - Status grouping: Active, Paused, Completed & Archived
 - Search by project name, client name, and service type
+- **Brainstorm with Winston** — section sidebar (`scope_key: 'projects'`), see `winston.md`
 
 ## Gaps and Missing Features
 

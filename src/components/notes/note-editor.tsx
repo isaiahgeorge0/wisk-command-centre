@@ -15,7 +15,6 @@ import {
   List,
   ListChecks,
   ListOrdered,
-  Sparkles,
 } from "lucide-react";
 import {
   forwardRef,
@@ -32,6 +31,7 @@ import {
   updateNoteTitle,
 } from "@/app/(dashboard)/notes/actions";
 import { Button } from "@/components/ui/button";
+import { WinstonEntryButton } from "@/components/winston/winston-entry-button";
 import type { Note } from "@/lib/notes/types";
 import { cn } from "@/lib/utils";
 
@@ -340,25 +340,11 @@ export const NoteEditor = forwardRef<NoteEditorHandle, NoteEditorProps>(
             </Button>
           ) : null}
           {onToggleBrainstorm ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
+            <WinstonEntryButton
+              variant="record"
+              pressed={brainstormOpen}
               onClick={onToggleBrainstorm}
-              aria-pressed={brainstormOpen}
-              aria-label="Brainstorm with Winston"
-              className={cn(
-                "gap-1.5 text-xs",
-                brainstormOpen
-                  ? "bg-wisk-section-winston/15 text-wisk-section-winston"
-                  : "text-muted-foreground hover:text-foreground",
-                !canAccessWinston && "opacity-90"
-              )}
-            >
-              <Sparkles className="size-3.5" aria-hidden />
-              <span className="hidden sm:inline">Brainstorm with Winston</span>
-              <span className="sm:hidden">Winston</span>
-            </Button>
+            />
           ) : null}
         </div>
 

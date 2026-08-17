@@ -17,7 +17,7 @@ import { ThemePreferenceSync } from "@/components/theme/theme-preference-sync";
 import { getAuthContext } from "@/lib/auth/get-auth-context";
 import { resolveDisplayName } from "@/lib/auth/resolve-display-name";
 import { getUserProfile } from "@/lib/auth/get-user-profile";
-import { hasPackageAccess } from "@/lib/billing/access";
+import { hasAIAccess, hasPackageAccess } from "@/lib/billing/access";
 import { getOrCreateUserPreferences } from "@/lib/preferences/get-user-preferences";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -64,6 +64,7 @@ export default async function DashboardLayout({
     changelogEntries,
     unreadChangelogCount,
     hasProperties,
+    aiPrefs,
   ] = await Promise.all([
     getUserProfile(),
     getOrCreateUserPreferences(),
@@ -74,7 +75,18 @@ export default async function DashboardLayout({
     getPublishedChangelog(10),
     getUnreadChangelogCount(),
     hasPackageAccess(user.id, "properties", supabase),
+    supabase
+      .from("user_preferences")
+      .select("ai_access")
+      .eq("user_id", user.id)
+      .maybeSingle(),
   ]);
+
+  const canAccessWinston = await hasAIAccess(
+    user.id,
+    supabase,
+    aiPrefs.data?.ai_access ?? false
+  );
 
   const displayName = resolveDisplayName({
     displayName: preferences.displayName,
@@ -114,6 +126,7 @@ export default async function DashboardLayout({
           title: goal.title,
         }))}
         hasProperties={hasProperties}
+        canAccessWinston={canAccessWinston}
       >
         {children}
       </AppShell>

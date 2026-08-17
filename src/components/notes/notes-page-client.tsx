@@ -11,8 +11,9 @@ import {
 } from "@/components/notes/note-editor";
 import { NoteProjectProposalPanel } from "@/components/notes/note-project-proposal-panel";
 import { NotesList } from "@/components/notes/notes-list";
-import { NoteWinstonPanel } from "@/components/notes/note-winston-panel";
+import { WinstonSectionEntry } from "@/components/winston/winston-entry-button";
 import { WinstonProposalSuccessToast } from "@/components/winston/proposal-success-toast";
+import { useWinstonSidebar } from "@/components/winston/winston-sidebar-context";
 import type { Note } from "@/lib/notes/types";
 import type { WinstonProposalCommitResult } from "@/lib/winston/proposal";
 import { cn } from "@/lib/utils";
@@ -29,20 +30,43 @@ export function NotesPageClient({
   const [notes, setNotes] = useState(initialNotes);
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [mobileShowEditor, setMobileShowEditor] = useState(false);
-  const [brainstormOpen, setBrainstormOpen] = useState(false);
   const [proposalOpen, setProposalOpen] = useState(false);
   const [proposalToast, setProposalToast] =
     useState<WinstonProposalCommitResult | null>(null);
   const editorRef = useRef<NoteEditorHandle>(null);
+  const { open: winstonOpen, trigger, toggleSidebar, closeSidebar } =
+    useWinstonSidebar();
+  const triggerRef = useRef(trigger);
+  triggerRef.current = trigger;
+  const recordWinstonOpen =
+    winstonOpen &&
+    trigger?.tier === "record" &&
+    trigger.entity === "note" &&
+    trigger.noteId === selectedNoteId;
 
   useEffect(() => {
     setNotes(initialNotes);
   }, [initialNotes]);
 
   useEffect(() => {
-    setBrainstormOpen(false);
     setProposalOpen(false);
   }, [selectedNoteId]);
+
+  useEffect(() => {
+    if (trigger?.tier !== "record" || trigger.entity !== "note") return;
+    if (trigger.noteId !== selectedNoteId) {
+      closeSidebar();
+    }
+  }, [selectedNoteId, trigger, closeSidebar]);
+
+  useEffect(() => {
+    return () => {
+      const current = triggerRef.current;
+      if (current?.tier === "record" && current.entity === "note") {
+        closeSidebar();
+      }
+    };
+  }, [closeSidebar]);
 
   const sortedNotes = useMemo(
     () =>
@@ -86,13 +110,11 @@ export function NotesPageClient({
     });
     setSelectedNoteId((current) => (current === id ? null : current));
     setMobileShowEditor(false);
-    setBrainstormOpen(false);
     setProposalOpen(false);
   }, []);
 
   const handleMobileBack = useCallback(() => {
     setMobileShowEditor(false);
-    setBrainstormOpen(false);
     setProposalOpen(false);
   }, []);
 
@@ -102,13 +124,17 @@ export function NotesPageClient({
 
   return (
     <PageTransition>
-      <div className="mb-4 md:mb-6">
+      <div className="mb-4 flex flex-col gap-4 md:mb-6 sm:flex-row sm:items-center sm:justify-between">
         <PageHeader
           className="mb-0"
           title="Notes"
           subtitle="Capture thoughts, plans, and ideas in one place."
           icon={<NotebookPen className="size-6 text-wisk-section-notes" />}
           accent="notes"
+        />
+        <WinstonSectionEntry
+          section="notes"
+          className="self-end sm:self-auto"
         />
       </div>
 
@@ -139,15 +165,13 @@ export function NotesPageClient({
           <div
             className={cn(
               "flex min-h-0 flex-1 flex-col",
-              (brainstormOpen || proposalOpen) && selectedNote ? "md:flex-row" : ""
+              proposalOpen && selectedNote ? "md:flex-row" : ""
             )}
           >
             <div
               className={cn(
                 "min-h-0 flex-1",
-                (brainstormOpen || proposalOpen) && selectedNote
-                  ? "hidden md:block"
-                  : ""
+                proposalOpen && selectedNote ? "hidden md:block" : ""
               )}
             >
               <NoteEditor
@@ -157,56 +181,44 @@ export function NotesPageClient({
                 onBack={handleMobileBack}
                 showBackButton={mobileShowEditor}
                 canAccessWinston={canAccessWinston}
-                brainstormOpen={brainstormOpen}
+                brainstormOpen={recordWinstonOpen}
                 proposalOpen={proposalOpen}
                 onToggleBrainstorm={
                   selectedNote
                     ? () => {
                         setProposalOpen(false);
-                        setBrainstormOpen((open) => !open);
+                        toggleSidebar({
+                          tier: "record",
+                          entity: "note",
+                          noteId: selectedNote.id,
+                          noteTitle: selectedNote.title,
+                          onInsertText: handleInsertIntoNote,
+                        });
                       }
                     : undefined
                 }
                 onToggleProjectProposal={
                   selectedNote
                     ? () => {
-                        setBrainstormOpen(false);
+                        if (recordWinstonOpen) closeSidebar();
                         setProposalOpen((open) => !open);
                       }
                     : undefined
                 }
               />
             </div>
-            {selectedNote ? (
-              <div
-                className={cn(
-                  "min-h-0",
-                  brainstormOpen || proposalOpen
-                    ? "flex flex-1 flex-col md:flex-none"
-                    : "hidden"
-                )}
-              >
-                {brainstormOpen ? (
-                  <NoteWinstonPanel
-                    note={selectedNote}
-                    open={brainstormOpen}
-                    canAccessWinston={canAccessWinston}
-                    onClose={() => setBrainstormOpen(false)}
-                    onInsertIntoNote={handleInsertIntoNote}
-                  />
-                ) : null}
-                {proposalOpen ? (
-                  <NoteProjectProposalPanel
-                    note={selectedNote}
-                    open={proposalOpen}
-                    canAccessWinston={canAccessWinston}
-                    onClose={() => setProposalOpen(false)}
-                    onCommitted={(result) => {
-                      setProposalToast(result);
-                      setProposalOpen(false);
-                    }}
-                  />
-                ) : null}
+            {selectedNote && proposalOpen ? (
+              <div className="flex min-h-0 flex-1 flex-col md:flex-none">
+                <NoteProjectProposalPanel
+                  note={selectedNote}
+                  open={proposalOpen}
+                  canAccessWinston={canAccessWinston}
+                  onClose={() => setProposalOpen(false)}
+                  onCommitted={(result) => {
+                    setProposalToast(result);
+                    setProposalOpen(false);
+                  }}
+                />
               </div>
             ) : null}
           </div>
