@@ -479,7 +479,7 @@ export function WinstonChatClient({
   const [, startTransition] = useTransition();
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { scrollRef, scrollToBottom, stickToBottom } = useChatScrollFollow([
+  const { scrollRef, stickToBottom } = useChatScrollFollow([
     messages,
     isSending,
   ]);
@@ -608,9 +608,6 @@ export function WinstonChatClient({
         return;
       }
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
       let streamConversationId: string | null = null;
       let replyStarted = false;
       let streamFailed = false;

@@ -406,7 +406,6 @@ export async function generateMorningBriefing(
   options: GenerateBriefingOptions
 ): Promise<MorningBriefingContent> {
   const {
-    displayName,
     gender,
     greetingTerm,
     context,
