@@ -7,6 +7,7 @@ import {
   HelpCircle,
   Loader2,
   PanelLeft,
+  Pencil,
   Plus,
   Send,
   Sparkles,
@@ -20,9 +21,11 @@ import { useState, useEffect, useRef, useTransition, useCallback } from "react";
 import {
   deleteConversation,
   getConversationMessages,
+  updateConversationTitle,
 } from "@/app/(dashboard)/ai-digest/actions";
 import { MobileSendCompose } from "@/components/layout/mobile-send-compose";
 import { useMobileSheetBottom } from "@/components/layout/use-mobile-sheet-inset";
+import { Input } from "@/components/ui/input";
 import { WinstonProposalReview } from "@/components/winston/winston-proposal-review";
 import { WinstonProposalSuccessToast } from "@/components/winston/proposal-success-toast";
 import { consumeWinstonChatSse } from "@/lib/ai/consume-chat-stream";
@@ -122,6 +125,7 @@ type SidebarProps = {
   onNewChat: () => void;
   onStartProjectChat: (projectId: string) => void;
   onDeleteConversation: (id: string) => void;
+  onRenameConversation: (id: string, title: string) => Promise<boolean>;
 };
 
 function ConversationsSidebar({
@@ -134,9 +138,23 @@ function ConversationsSidebar({
   onNewChat,
   onStartProjectChat,
   onDeleteConversation,
+  onRenameConversation,
 }: SidebarProps) {
   const reduced = useReducedMotion() ?? false;
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draftTitle, setDraftTitle] = useState("");
+  const [isRenaming, setIsRenaming] = useState(false);
+
+  async function submitRename() {
+    if (!editingId) return;
+    setIsRenaming(true);
+    const ok = await onRenameConversation(editingId, draftTitle);
+    setIsRenaming(false);
+    if (!ok) return;
+    setEditingId(null);
+    setDraftTitle("");
+  }
 
   return (
     <>
@@ -243,6 +261,47 @@ function ConversationsSidebar({
 
                   return (
                     <div key={conv.id} className="relative">
+                      {editingId === conv.id ? (
+                        <div className="space-y-2 rounded-lg border border-border/60 bg-card/80 p-2">
+                          <Input
+                            value={draftTitle}
+                            onChange={(event) => setDraftTitle(event.target.value)}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") {
+                                event.preventDefault();
+                                void submitRename();
+                              } else if (event.key === "Escape") {
+                                setEditingId(null);
+                                setDraftTitle("");
+                              }
+                            }}
+                            placeholder="Conversation title"
+                            disabled={isRenaming}
+                            autoFocus
+                            className="h-9 text-sm"
+                          />
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingId(null);
+                                setDraftTitle("");
+                              }}
+                              className="rounded px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void submitRename()}
+                              disabled={isRenaming || !draftTitle.trim()}
+                              className="rounded bg-wisk-section-winston px-2 py-1 text-xs font-medium text-wisk-section-winston-fg transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {isRenaming ? "Saving…" : "Save"}
+                            </button>
+                          </div>
+                        </div>
+                      ) : null}
                       {confirmDeleteId === conv.id ? (
                         <div className="flex items-center gap-1 rounded-lg border border-destructive/30 bg-destructive/10 px-2 py-1.5">
                           <span className="flex-1 text-xs text-destructive">
@@ -266,7 +325,7 @@ function ConversationsSidebar({
                             No
                           </button>
                         </div>
-                      ) : (
+                      ) : editingId === conv.id ? null : (
                         <div
                           role="button"
                           tabIndex={0}
@@ -298,17 +357,34 @@ function ConversationsSidebar({
                             >
                               {conv.title}
                             </span>
-                            <button
-                              type="button"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                setConfirmDeleteId(conv.id);
-                              }}
-                              aria-label={`Delete ${conv.title}`}
-                              className="shrink-0 rounded p-0.5 text-muted-foreground/50 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 hover:text-destructive"
-                            >
-                              <Trash2 className="size-3" aria-hidden />
-                            </button>
+                            <div className="flex shrink-0 items-center gap-0.5">
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  setConfirmDeleteId(null);
+                                  setEditingId(conv.id);
+                                  setDraftTitle(conv.title);
+                                }}
+                                aria-label={`Rename ${conv.title}`}
+                                className="rounded p-0.5 text-muted-foreground/70 opacity-100 transition-colors hover:bg-muted/60 hover:text-foreground md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+                              >
+                                <Pencil className="size-3" aria-hidden />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  setEditingId(null);
+                                  setDraftTitle("");
+                                  setConfirmDeleteId(conv.id);
+                                }}
+                                aria-label={`Delete ${conv.title}`}
+                                className="rounded p-0.5 text-muted-foreground/70 opacity-100 transition-colors hover:bg-muted/60 hover:text-destructive md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+                              >
+                                <Trash2 className="size-3" aria-hidden />
+                              </button>
+                            </div>
                           </div>
                           <div className="flex items-center gap-1.5">
                             <span className="text-[10px] text-muted-foreground/60">
@@ -574,7 +650,11 @@ export function WinstonChatClient({
   // ── Delete a conversation ───────────────────────────────────────────────────
   function handleDeleteConversation(id: string) {
     startTransition(async () => {
-      await deleteConversation(id);
+      const result = await deleteConversation(id);
+      if (!result.success) {
+        setSendError(result.error);
+        return;
+      }
       setConversations((prev) => prev.filter((c) => c.id !== id));
       if (currentConversationId === id) {
         setCurrentConversationId(null);
@@ -584,6 +664,23 @@ export function WinstonChatClient({
         setProposalSummary(null);
       }
     });
+  }
+
+  async function handleRenameConversation(id: string, title: string) {
+    const result = await updateConversationTitle(id, title);
+    if (!result.success) {
+      setSendError(result.error);
+      return false;
+    }
+
+    setConversations((prev) =>
+      prev.map((conversation) =>
+        conversation.id === id
+          ? { ...conversation, title: title.trim() }
+          : conversation
+      )
+    );
+    return true;
   }
 
   async function handleSchedule(message: ConversationMessage) {
@@ -869,6 +966,7 @@ export function WinstonChatClient({
         onNewChat={handleNewChat}
         onStartProjectChat={handleStartProjectChat}
         onDeleteConversation={handleDeleteConversation}
+        onRenameConversation={handleRenameConversation}
       />
 
       {/* ── Main chat area ───────────────────────────────────────────────────── */}

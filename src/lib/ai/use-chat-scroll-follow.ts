@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef } from "react";
 
 const NEAR_BOTTOM_PX = 100;
+const SMOOTH_SCROLL_EPSILON = 1;
+const SMOOTH_SCROLL_FACTOR = 0.35;
 
 /**
  * Chat panel scroll follow: scroll the overflow container itself (never
@@ -13,6 +15,14 @@ export function useChatScrollFollow(followDeps: unknown[]) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const nearBottomRef = useRef(true);
   const rafRef = useRef<number | null>(null);
+  const targetScrollTopRef = useRef<number | null>(null);
+
+  const stopAnimation = useCallback(() => {
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+  }, []);
 
   const measureNearBottom = useCallback(() => {
     const el = scrollRef.current;
@@ -31,18 +41,31 @@ export function useChatScrollFollow(followDeps: unknown[]) {
     const el = scrollRef.current;
     if (!el) return;
 
-    if (rafRef.current !== null) {
-      cancelAnimationFrame(rafRef.current);
-    }
+    targetScrollTopRef.current = Math.max(0, el.scrollHeight - el.clientHeight);
+    if (rafRef.current !== null) return;
 
-    rafRef.current = requestAnimationFrame(() => {
-      rafRef.current = null;
+    const animate = () => {
       const target = scrollRef.current;
-      if (!target) return;
-      // Direct assignment — after paint, against the updated scrollHeight.
-      target.scrollTop = target.scrollHeight;
+      const targetScrollTop = targetScrollTopRef.current;
+      if (!target || targetScrollTop == null) {
+        rafRef.current = null;
+        return;
+      }
+
+      const delta = targetScrollTop - target.scrollTop;
+      if (Math.abs(delta) <= SMOOTH_SCROLL_EPSILON) {
+        target.scrollTop = targetScrollTop;
+        nearBottomRef.current = true;
+        rafRef.current = null;
+        return;
+      }
+
+      target.scrollTop += delta * SMOOTH_SCROLL_FACTOR;
       nearBottomRef.current = true;
-    });
+      rafRef.current = requestAnimationFrame(animate);
+    };
+
+    rafRef.current = requestAnimationFrame(animate);
   }, []);
 
   useEffect(() => {
@@ -59,14 +82,13 @@ export function useChatScrollFollow(followDeps: unknown[]) {
   useEffect(() => {
     scrollToBottom();
     return () => {
-      if (rafRef.current !== null) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
-      }
+      stopAnimation();
     };
     // followDeps is intentional — callers pass [messages, isSending, …]
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, followDeps);
+
+  useEffect(() => stopAnimation, [stopAnimation]);
 
   return { scrollRef, scrollToBottom, stickToBottom };
 }

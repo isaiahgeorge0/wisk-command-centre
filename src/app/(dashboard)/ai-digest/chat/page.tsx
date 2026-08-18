@@ -6,6 +6,7 @@ import {
 import { WinstonChatClient } from "@/components/ai-digest/winston-chat-client";
 import { WinstonTeaserPage } from "@/components/ai-digest/winston-teaser-page";
 import { hasAIAccess } from "@/lib/billing/access";
+import { getLocalDateKey } from "@/lib/morning/timezone";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { WINSTON_MONTHLY_TOKEN_LIMIT } from "@/lib/ai/constants";
@@ -16,7 +17,7 @@ export default async function WinstonChatPage() {
 
   const { data: prefs } = await supabase
     .from("user_preferences")
-    .select("ai_access")
+    .select("ai_access, timezone")
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -65,17 +66,26 @@ export default async function WinstonChatPage() {
 
   if (conversations.length > 0) {
     const mostRecent = conversations[0];
-    initialConversationId = mostRecent.id;
+    const timezone = prefs?.timezone ?? "Europe/London";
+    const todayKey = getLocalDateKey(timezone);
+    const mostRecentKey = getLocalDateKey(
+      timezone,
+      new Date(mostRecent.updated_at)
+    );
 
-    const { data: msgs } = await supabase
-      .from("ai_conversation_messages")
-      .select("id, role, content, created_at")
-      .eq("user_id", userId)
-      .eq("conversation_id", mostRecent.id)
-      .order("created_at", { ascending: true })
-      .limit(50);
+    if (mostRecentKey === todayKey) {
+      initialConversationId = mostRecent.id;
 
-    initialMessages = (msgs ?? []) as ConversationMessage[];
+      const { data: msgs } = await supabase
+        .from("ai_conversation_messages")
+        .select("id, role, content, created_at")
+        .eq("user_id", userId)
+        .eq("conversation_id", mostRecent.id)
+        .order("created_at", { ascending: true })
+        .limit(50);
+
+      initialMessages = (msgs ?? []) as ConversationMessage[];
+    }
   }
 
   return (
