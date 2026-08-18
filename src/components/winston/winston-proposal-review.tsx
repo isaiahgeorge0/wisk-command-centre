@@ -79,7 +79,7 @@ function TextField({
       value={value}
       placeholder={placeholder}
       onChange={(e) => onChange(e.target.value)}
-      className="h-8 text-sm"
+      className="h-11 text-base md:h-8 md:text-sm"
     />
   );
 }
@@ -97,7 +97,7 @@ function SelectField({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+      className="h-11 w-full rounded-lg border border-input bg-transparent px-2.5 text-base text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:h-8 md:text-sm"
     >
       {options.map((opt) => (
         <option key={opt.value} value={opt.value}>
@@ -390,7 +390,7 @@ function ProposalItemCard({
   return (
     <div
       className={cn(
-        "rounded-xl border border-border/60 bg-card/60 p-3 space-y-3 transition-opacity",
+        "space-y-3 rounded-xl border border-border/60 bg-card/60 p-3 transition-opacity",
         !item.selected && "opacity-60"
       )}
     >
@@ -539,7 +539,7 @@ export function WinstonProposalReview({
         </p>
       </div>
 
-      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-3 md:px-4 md:py-4">
         {items.length === 0 ? (
           <p className="py-8 text-center text-xs text-muted-foreground">
             No items yet. Add one below.
@@ -563,7 +563,7 @@ export function WinstonProposalReview({
         )}
       </div>
 
-      <div className="shrink-0 space-y-3 border-t border-border/60 px-4 py-3">
+      <div className="shrink-0 space-y-3 border-t border-border/60 px-3 py-3 md:px-4">
         {addableTypes.length > 0 ? (
           <div className="flex flex-wrap items-end gap-2">
             {addableTypes.length > 1 ? (
@@ -607,13 +607,14 @@ export function WinstonProposalReview({
           </ul>
         ) : null}
 
-        <div className="flex flex-wrap items-center justify-end gap-2">
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
           <Button
             type="button"
             variant="ghost"
             size="sm"
             onClick={onCancel}
             disabled={isPending}
+            className="w-full sm:w-auto"
           >
             Cancel
           </Button>
@@ -622,7 +623,7 @@ export function WinstonProposalReview({
             size="sm"
             onClick={handleCommit}
             disabled={isPending || selectedCount === 0}
-            className="gap-1.5 bg-wisk-section-winston text-wisk-section-winston-fg hover:opacity-90"
+            className="w-full gap-1.5 bg-wisk-section-winston text-wisk-section-winston-fg hover:opacity-90 sm:w-auto"
           >
             {isPending ? (
               <Loader2 className="size-3.5 animate-spin" aria-hidden />

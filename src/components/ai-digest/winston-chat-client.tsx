@@ -2,6 +2,8 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
+  ArrowLeft,
+  CalendarPlus,
   HelpCircle,
   Loader2,
   PanelLeft,
@@ -12,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef, useTransition, useCallback } from "react";
 
 import {
@@ -19,6 +22,9 @@ import {
   getConversationMessages,
 } from "@/app/(dashboard)/ai-digest/actions";
 import { MobileSendCompose } from "@/components/layout/mobile-send-compose";
+import { useMobileSheetBottom } from "@/components/layout/use-mobile-sheet-inset";
+import { WinstonProposalReview } from "@/components/winston/winston-proposal-review";
+import { WinstonProposalSuccessToast } from "@/components/winston/proposal-success-toast";
 import { consumeWinstonChatSse } from "@/lib/ai/consume-chat-stream";
 import { useChatScrollFollow } from "@/lib/ai/use-chat-scroll-follow";
 import type {
@@ -27,7 +33,13 @@ import type {
   ConversationMessage,
   MonthlyUsage,
 } from "@/lib/ai/types";
+import { useIsMobile } from "@/lib/layout/use-is-mobile";
 import { MOTION_DURATION, MOTION_EASE } from "@/lib/motion/config";
+import {
+  WINSTON_PROPOSAL_ENTITY_TYPES,
+  type WinstonProposal,
+  type WinstonProposalCommitResult,
+} from "@/lib/winston/proposal";
 import { cn } from "@/lib/utils";
 
 // ─── Usage bar ────────────────────────────────────────────────────────────────
@@ -460,6 +472,9 @@ export function WinstonChatClient({
   activeProjects,
 }: WinstonChatClientProps) {
   const reduced = useReducedMotion() ?? false;
+  const router = useRouter();
+  const isMobile = useIsMobile();
+  const proposalBottom = useMobileSheetBottom(true);
 
   // ── Conversation state ──────────────────────────────────────────────────────
   const [conversations, setConversations] =
@@ -482,6 +497,12 @@ export function WinstonChatClient({
   const [isSending, setIsSending] = useState(false);
   const [isLoadingConversation, setIsLoadingConversation] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [schedulingId, setSchedulingId] = useState<string | null>(null);
+  const [scheduleError, setScheduleError] = useState<string | null>(null);
+  const [proposal, setProposal] = useState<WinstonProposal | null>(null);
+  const [proposalSummary, setProposalSummary] = useState<string | null>(null);
+  const [proposalToast, setProposalToast] =
+    useState<WinstonProposalCommitResult | null>(null);
   const [, startTransition] = useTransition();
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -525,6 +546,9 @@ export function WinstonChatClient({
     setCurrentConversationId(null);
     setMessages([]);
     setSendError(null);
+    setScheduleError(null);
+    setProposal(null);
+    setProposalSummary(null);
     setSidebarOpen(false);
   }
 
@@ -537,6 +561,9 @@ export function WinstonChatClient({
     setCurrentConversationId(null);
     setMessages([]);
     setSendError(null);
+    setScheduleError(null);
+    setProposal(null);
+    setProposalSummary(null);
     setSidebarOpen(false);
     // Store pending projectId for next send
     pendingProjectIdRef.current = projectId;
@@ -552,8 +579,47 @@ export function WinstonChatClient({
       if (currentConversationId === id) {
         setCurrentConversationId(null);
         setMessages([]);
+        setScheduleError(null);
+        setProposal(null);
+        setProposalSummary(null);
       }
     });
+  }
+
+  async function handleSchedule(message: ConversationMessage) {
+    if (!currentConversationId || !message.content.trim() || schedulingId) return;
+    setSchedulingId(message.id);
+    setScheduleError(null);
+    try {
+      const res = await fetch(
+        `/api/winston/conversations/${currentConversationId}/schedule`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        }
+      );
+      const data = (await res.json()) as {
+        found?: boolean;
+        message?: string | null;
+        proposal?: WinstonProposal;
+        error?: string;
+      };
+      if (!res.ok) {
+        setScheduleError(data.error ?? "Could not build a proposal");
+        return;
+      }
+      if (!data.found || !data.proposal) {
+        setScheduleError(data.message ?? "Not enough detail yet — keep chatting.");
+        return;
+      }
+      setProposal(data.proposal);
+      setProposalSummary(data.message ?? null);
+    } catch {
+      setScheduleError("Could not build a proposal");
+    } finally {
+      setSchedulingId(null);
+    }
   }
 
   // ── Send message ────────────────────────────────────────────────────────────
@@ -762,6 +828,34 @@ export function WinstonChatClient({
 
   const isEmptyActive = messages.length === 0;
 
+  const proposalContent = proposal ? (
+    <>
+      {proposalSummary ? (
+        <p className="mb-3 text-xs leading-relaxed text-muted-foreground">
+          {proposalSummary}
+        </p>
+      ) : null}
+      <WinstonProposalReview
+        proposal={proposal}
+        allowedEntityTypes={[...WINSTON_PROPOSAL_ENTITY_TYPES]}
+        title="Review Winston’s proposals"
+        commitLabel="Create selected"
+        onCancel={() => {
+          setProposal(null);
+          setProposalSummary(null);
+        }}
+        onCommitted={(result) => {
+          setProposalToast(result);
+          router.refresh();
+          if (result.errors.length === 0) {
+            setProposal(null);
+            setProposalSummary(null);
+          }
+        }}
+      />
+    </>
+  ) : null;
+
   return (
     <div className="relative flex h-[70vh] min-h-[480px] overflow-hidden rounded-xl border border-border/60 bg-background">
       {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
@@ -821,13 +915,39 @@ export function WinstonChatClient({
           ) : (
             <div className="space-y-4">
               <AnimatePresence initial={false}>
-                {messages.map((msg) => (
-                  <MessageBubble
-                    key={msg.id}
-                    message={msg}
-                    reduced={reduced}
-                  />
-                ))}
+                {messages.map((msg) => {
+                  const isUser = msg.role === "user";
+                  const canAct =
+                    !isUser &&
+                    Boolean(msg.content.trim()) &&
+                    !isSending &&
+                    Boolean(currentConversationId);
+
+                  return (
+                    <div key={msg.id} className="space-y-1.5">
+                      <MessageBubble message={msg} reduced={reduced} />
+                      {canAct ? (
+                        <div className="flex flex-wrap gap-2 pl-1">
+                          <button
+                            type="button"
+                            onClick={() => void handleSchedule(msg)}
+                            disabled={schedulingId === msg.id}
+                            className="inline-flex items-center gap-1 text-[11px] font-medium text-wisk-section-winston hover:underline disabled:opacity-60"
+                          >
+                            {schedulingId === msg.id ? (
+                              <Loader2 className="size-3 animate-spin" aria-hidden />
+                            ) : (
+                              <CalendarPlus className="size-3" aria-hidden />
+                            )}
+                            {schedulingId === msg.id
+                              ? "Building proposal…"
+                              : "Create this"}
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })}
               </AnimatePresence>
               {isSending &&
               messages[messages.length - 1]?.role !== "assistant" ? (
@@ -848,6 +968,12 @@ export function WinstonChatClient({
             >
               <X className="size-4" />
             </button>
+          </div>
+        ) : null}
+
+        {scheduleError ? (
+          <div className="mx-4 mb-2 rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+            {scheduleError}
           </div>
         ) : null}
 
@@ -888,6 +1014,71 @@ export function WinstonChatClient({
           </div>
         </MobileSendCompose>
       </div>
+
+      {proposal && isMobile ? (
+        <div
+          className="fixed inset-x-0 top-0 z-[70] flex flex-col bg-background md:hidden"
+          style={{ bottom: proposalBottom }}
+        >
+          <div className="flex items-center gap-3 border-b border-border/60 px-4 py-3">
+            <button
+              type="button"
+              onClick={() => {
+                setProposal(null);
+                setProposalSummary(null);
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-wisk-section-winston hover:bg-wisk-section-winston/8"
+            >
+              <ArrowLeft className="size-4" aria-hidden />
+              Back to chat
+            </button>
+            <div className="min-w-0">
+              <h2 className="text-sm font-semibold text-foreground">
+                Review Winston’s proposals
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Nothing is created until you confirm
+              </p>
+            </div>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+            {proposalContent}
+          </div>
+        </div>
+      ) : null}
+
+      {proposal && !isMobile ? (
+        <div className="absolute inset-0 z-20 flex flex-col bg-background">
+          <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
+            <div>
+              <h2 className="text-sm font-semibold text-foreground">
+                Review Winston’s proposals
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Nothing is created until you confirm
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setProposal(null);
+                setProposalSummary(null);
+              }}
+              className="rounded-lg px-2 py-1 text-xs text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+            >
+              Back to chat
+            </button>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+            {proposalContent}
+          </div>
+        </div>
+      ) : null}
+
+      <WinstonProposalSuccessToast
+        result={proposalToast}
+        onDismiss={() => setProposalToast(null)}
+      />
     </div>
   );
 }

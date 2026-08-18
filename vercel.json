@@ -2,11 +2,11 @@
   "crons": [
     {
       "path": "/api/morning-briefing/generate",
-      "schedule": "0 7 * * *"
+      "schedule": "45 6 * * *"
     },
     {
       "path": "/api/morning-briefing/send",
-      "schedule": "0 8 * * *"
+      "schedule": "15 7 * * *"
     },
     {
       "path": "/api/away-sync/run",
