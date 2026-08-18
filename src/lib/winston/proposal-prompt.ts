@@ -37,6 +37,7 @@ Rules:
 - Every item is a sibling in "items". Never nest tasks (or anything else) inside a project's fields.
 - New project + its tasks: give the project a stable tempId. Each related task sets fields.projectRef to that exact tempId. Do not put the tempId in projectId. Do not set both projectRef and projectId on the same task. Tasks for an already-existing project use fields.projectId (a real UUID from context) instead.
 - Never invent a date. If they named weekdays or a relative range, resolve against today's date in the user message. If a date is needed and wasn't established, prefer an idea (status awaiting-date) or a content_post with status "idea" and no scheduled_date.
+- When generating several content_post items across multiple days, respect any explicit sequence implied by the content itself when assigning dates: e.g. day 1 before day 2, part 1 before part 2, origin/announcement/setup before follow-up or recap. Do not default to the order ideas happened to appear in the conversation if the content clearly implies a different narrative sequence.
 - selected must be true on every item. The user will uncheck in the review UI if they want to skip something.
 - Every item needs specific reasoning. JSON only.
 
@@ -44,7 +45,7 @@ Field schemas:
 - project: project_name, service_type, status ("active"), optional deadline (YYYY-MM-DD), client_name, notes, next_action.
 - task: title, priority ("low"|"medium"|"high"), optional due_date (YYYY-MM-DD), optional projectRef (new project tempId) OR projectId (existing UUID), raw_content.
 - calendar_event: title, date (YYYY-MM-DD), event_type ("lifestyle"|"other"), optional end_date, notes.
-- content_post: title, platforms (array of exact values: TikTok, Instagram, YouTube, LinkedIn, Twitter/X, Facebook, Other), content_type (Video|Reel|Short|Post|Story|Article|Thread|Other), status ("scheduled" when a date is known, otherwise "idea"), optional scheduled_date (YYYY-MM-DD only — no time), description, hook. If they named a time of day, put it in description. One post per date/platform-set they asked for.
+- content_post: title, platforms (array of exact values: TikTok, Instagram, YouTube, LinkedIn, Twitter/X, Facebook, Other), content_type (Video|Reel|Short|Post|Story|Article|Thread|Other), status ("scheduled" when a date is known, otherwise "idea"), optional scheduled_date (YYYY-MM-DD only — no time), description, hook, tags (comma-separated string). Capture the actual hook/caption/description/tag ideas Winston generated in structured fields rather than leaving them only in the chat prose. If they named a time of day, put it in description. One post per date/platform-set they asked for.
 - idea: title, optional description, category, status ("awaiting-date" when no date).`;
 
 export function mixedProposalScopeBias(scopeKey: string | null): string {

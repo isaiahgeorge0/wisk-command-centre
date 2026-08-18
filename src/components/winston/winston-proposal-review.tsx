@@ -122,6 +122,21 @@ function updateField(
   };
 }
 
+function proposalSortDate(item: WinstonProposalItem): string | null {
+  switch (item.entityType) {
+    case "calendar_event":
+      return asString(item.fields.date).trim() || null;
+    case "content_post":
+      return asString(item.fields.scheduled_date).trim() || null;
+    case "task":
+      return asString(item.fields.due_date).trim() || null;
+    case "project":
+      return asString(item.fields.deadline).trim() || null;
+    default:
+      return null;
+  }
+}
+
 function ItemFields({
   item,
   projectOptions,
@@ -326,6 +341,33 @@ function ItemFields({
               onChange={(v) => set("scheduled_date", v)}
             />
           </FieldRow>
+          <div className="sm:col-span-2">
+            <FieldRow label="Hook">
+              <TextField
+                value={asString(item.fields.hook)}
+                onChange={(v) => set("hook", v)}
+                placeholder="Opening line or hook"
+              />
+            </FieldRow>
+          </div>
+          <div className="sm:col-span-2">
+            <FieldRow label="Description">
+              <TextField
+                value={asString(item.fields.description)}
+                onChange={(v) => set("description", v)}
+                placeholder="Caption, notes, or brief"
+              />
+            </FieldRow>
+          </div>
+          <div className="sm:col-span-2">
+            <FieldRow label="Tags">
+              <TextField
+                value={asString(item.fields.tags)}
+                onChange={(v) => set("tags", v)}
+                placeholder="Comma-separated tags"
+              />
+            </FieldRow>
+          </div>
         </div>
       );
     }
@@ -487,6 +529,25 @@ export function WinstonProposalReview({
     [items]
   );
 
+  const orderedItems = useMemo(
+    () =>
+      items
+        .map((item, index) => ({ item, index, sortDate: proposalSortDate(item) }))
+        .sort((a, b) => {
+          if (a.sortDate && b.sortDate) {
+            const byDate = a.sortDate.localeCompare(b.sortDate);
+            if (byDate !== 0) return byDate;
+          } else if (a.sortDate) {
+            return -1;
+          } else if (b.sortDate) {
+            return 1;
+          }
+          return a.index - b.index;
+        })
+        .map(({ item }) => item),
+    [items]
+  );
+
   const summary = summarizeSelectedItems(items);
   const selectedCount = items.filter((i) => i.selected).length;
 
@@ -545,7 +606,7 @@ export function WinstonProposalReview({
             No items yet. Add one below.
           </p>
         ) : (
-          items.map((item) => (
+          orderedItems.map((item) => (
             <ProposalItemCard
               key={item.tempId}
               item={item}

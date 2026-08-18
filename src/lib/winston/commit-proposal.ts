@@ -308,6 +308,7 @@ export async function commitWinstonProposal(
       scheduled_date: scheduledDate || undefined,
       description: asString(item.fields.description) || undefined,
       hook: asString(item.fields.hook) || undefined,
+      tags: asString(item.fields.tags) || undefined,
     });
 
     if (!created.success || !created.data) {
