@@ -258,18 +258,22 @@ export function contentEntryToCalendarEvent(
   const platforms = getPostPlatforms(entry.post).join(", ");
 
   return {
-    id: `${entry.post.id}-${entry.kind}-${entry.date}`,
+    id: `${entry.post.id}:${entry.kind}:${entry.date}`,
     type: "content",
     date: entry.date,
     title: entry.post.title,
     href: "/content",
-    meta: entry.isRecurring
-      ? {
-          platforms,
-          isRecurring: true,
-          occurrenceDate: entry.occurrenceDate ?? entry.date,
-          post: entry.post,
-        }
-      : platforms,
+    meta: {
+      platforms,
+      postId: entry.post.id,
+      post: entry.post,
+      kind: entry.kind,
+      ...(entry.isRecurring
+        ? {
+            isRecurring: true,
+            occurrenceDate: entry.occurrenceDate ?? entry.date,
+          }
+        : {}),
+    },
   };
 }

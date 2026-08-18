@@ -24,6 +24,8 @@ type ContentFormDialogProps = {
   onOpenChange: (open: boolean) => void;
   contentGoals: Pick<Goal, "id" | "title">[];
   post?: ContentPost | null;
+  onSaved?: (post: ContentPost) => void;
+  onDelete?: (post: ContentPost) => void;
 };
 
 export function ContentFormDialog({
@@ -31,6 +33,8 @@ export function ContentFormDialog({
   onOpenChange,
   contentGoals,
   post = null,
+  onSaved,
+  onDelete,
 }: ContentFormDialogProps) {
   const router = useRouter();
   const { contentPrefillScheduledDate, setContentPrefillScheduledDate } =
@@ -80,6 +84,9 @@ export function ContentFormDialog({
         setError(result.error);
         return;
       }
+      if (result.data) {
+        onSaved?.(result.data);
+      }
       handleOpenChange(false);
       router.refresh();
     });
@@ -111,6 +118,20 @@ export function ContentFormDialog({
         </form>
 
         <DialogFooter>
+          {isEdit && post && onDelete ? (
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => {
+                onDelete(post);
+                handleOpenChange(false);
+              }}
+              disabled={isPending}
+              className="mr-auto"
+            >
+              Delete
+            </Button>
+          ) : null}
           <Button
             type="button"
             variant="outline"

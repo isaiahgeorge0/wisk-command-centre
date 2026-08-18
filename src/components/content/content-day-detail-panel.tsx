@@ -14,12 +14,14 @@ type ContentDayDetailPanelProps = {
   selectedDate: string | null;
   entries: ContentCalendarEntry[];
   onClose: () => void;
+  onSelectEntry?: (entry: ContentCalendarEntry) => void;
 };
 
 export function ContentDayDetailPanel({
   selectedDate,
   entries,
   onClose,
+  onSelectEntry,
 }: ContentDayDetailPanelProps) {
   if (!selectedDate) {
     return (
@@ -60,29 +62,46 @@ export function ContentDayDetailPanel({
           </p>
         ) : (
           <ul className="space-y-3">
-            {entries.map((entry) => (
-              <li
-                key={`${entry.post.id}-${entry.kind}`}
-                className="rounded-lg border border-border/50 bg-card/60 p-3"
-              >
-                <div className="flex flex-wrap items-center gap-2">
-                  <ContentPlatformBadges post={entry.post} />
-                  <ContentTypeBadge contentType={entry.post.content_type} />
-                  <ContentStatusBadge status={entry.post.status} />
-                </div>
-                <p className="mt-2 text-sm font-medium text-foreground">
-                  {entry.post.title}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {entry.kind === "published" ? "Published" : "Scheduled"}
-                  {entry.kind === "published" && entry.post.published_date
-                    ? ` · ${formatContentDate(entry.post.published_date)}`
-                    : entry.post.scheduled_date
-                      ? ` · ${formatContentDate(entry.post.scheduled_date)}`
-                      : ""}
-                </p>
-              </li>
-            ))}
+            {entries.map((entry) => {
+              const item = (
+                <>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <ContentPlatformBadges post={entry.post} />
+                    <ContentTypeBadge contentType={entry.post.content_type} />
+                    <ContentStatusBadge status={entry.post.status} />
+                  </div>
+                  <p className="mt-2 text-sm font-medium text-foreground">
+                    {entry.post.title}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {entry.kind === "published" ? "Published" : "Scheduled"}
+                    {entry.kind === "published" && entry.post.published_date
+                      ? ` · ${formatContentDate(entry.post.published_date)}`
+                      : entry.post.scheduled_date
+                        ? ` · ${formatContentDate(entry.post.scheduled_date)}`
+                        : ""}
+                  </p>
+                </>
+              );
+
+              return (
+                <li key={`${entry.post.id}-${entry.kind}`}>
+                  {onSelectEntry ? (
+                    <button
+                      type="button"
+                      onClick={() => onSelectEntry(entry)}
+                      className="w-full rounded-lg border border-border/50 bg-card/60 p-3 text-left transition-colors hover:border-border hover:bg-card"
+                    >
+                      {item}
+                    </button>
+                  ) : (
+                    <div className="rounded-lg border border-border/50 bg-card/60 p-3">
+                      {item}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

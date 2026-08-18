@@ -1,7 +1,7 @@
 "use client";
 
 import { Clapperboard, Plus } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { updateContentPostStatus } from "@/app/(dashboard)/content/actions";
@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { PageTransition } from "@/components/layout/page-transition";
 import { ContentCalendarTab } from "@/components/content/content-calendar-tab";
 import { ContentEmptyState } from "@/components/content/content-empty-state";
+import { ContentFormDialog } from "@/components/content/content-form-dialog";
 import { ContentPipeline } from "@/components/content/content-pipeline";
 import { ContentStatsBar } from "@/components/content/content-stats-bar";
 import {
@@ -34,15 +35,22 @@ type ContentPageClientProps = {
   contentGoals: Pick<Goal, "id" | "title">[];
 };
 
+function parseContentView(value: string | null): ContentViewTab {
+  return value === "board" ? "board" : "calendar";
+}
+
 export function ContentPageClient({
   initialPosts,
   contentGoals,
 }: ContentPageClientProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { openContentAdd } = useQuickAdd();
   const [posts, setPosts] = useState(initialPosts);
-  const [activeTab, setActiveTab] = useState<ContentViewTab>("calendar");
+  const activeTab = parseContentView(searchParams.get("view"));
   const [awaitingDateOnly, setAwaitingDateOnly] = useState(false);
+  const [editPost, setEditPost] = useState<ContentPost | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{
     id: string;
     title: string;
@@ -51,6 +59,22 @@ export function ContentPageClient({
   useEffect(() => {
     setPosts(initialPosts);
   }, [initialPosts]);
+
+  const setActiveTab = useCallback(
+    (tab: ContentViewTab) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (tab === "calendar") {
+        params.delete("view");
+      } else {
+        params.set("view", tab);
+      }
+      const query = params.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, {
+        scroll: false,
+      });
+    },
+    [pathname, router, searchParams]
+  );
 
   const awaitingDateCount = useMemo(
     () => posts.filter(isContentAwaitingDate).length,
@@ -65,22 +89,22 @@ export function ContentPageClient({
   const grouped = useMemo(() => groupPostsByStatus(boardPosts), [boardPosts]);
   const stats = useMemo(() => buildContentStats(posts), [posts]);
 
-  const handleDeleted = useCallback(
-    (id: string) => {
-      setPosts((prev) => prev.filter((post) => post.id !== id));
-      router.refresh();
-    },
-    [router]
-  );
+  const handleDeleted = useCallback((id: string) => {
+    setPosts((prev) => prev.filter((post) => post.id !== id));
+    setEditPost((current) => (current?.id === id ? null : current));
+  }, []);
 
   const handleDeleteRequest = useCallback((post: ContentPost) => {
     setDeleteTarget({ id: post.id, title: post.title });
   }, []);
 
   const handlePostUpdate = useCallback((updated: ContentPost) => {
-    setPosts((prev) =>
-      prev.map((post) => (post.id === updated.id ? updated : post))
-    );
+    setPosts((prev) => {
+      const exists = prev.some((post) => post.id === updated.id);
+      if (!exists) return [updated, ...prev];
+      return prev.map((post) => (post.id === updated.id ? updated : post));
+    });
+    setEditPost((current) => (current?.id === updated.id ? updated : current));
   }, []);
 
   const handlePostStatusChange = useCallback(
@@ -143,46 +167,60 @@ export function ContentPageClient({
       </div>
 
       {posts.length === 0 ? (
-            <ContentEmptyState onAdd={() => openContentAdd()} />
+        <ContentEmptyState onAdd={() => openContentAdd()} />
+      ) : (
+        <>
+          <ContentStatsBar stats={stats} />
+          <ContentViewTabs activeTab={activeTab} onChange={setActiveTab} />
+          {activeTab === "calendar" ? (
+            <ContentCalendarTab
+              posts={posts}
+              onEditPost={setEditPost}
+            />
           ) : (
             <>
-              <ContentStatsBar stats={stats} />
-              <ContentViewTabs activeTab={activeTab} onChange={setActiveTab} />
-              {activeTab === "calendar" ? (
-                <ContentCalendarTab posts={posts} contentGoals={contentGoals} />
-              ) : (
-                <>
-                  <div className="mb-4 flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      aria-pressed={awaitingDateOnly}
-                      onClick={() => setAwaitingDateOnly((on) => !on)}
-                      className={cn(
-                        "rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
-                        awaitingDateOnly
-                          ? "border-wisk-section-content/40 bg-wisk-section-content/15 text-wisk-section-content"
-                          : "border-border/60 bg-card/40 text-muted-foreground hover:border-border hover:text-foreground"
-                      )}
-                    >
-                      Awaiting a date
-                      {awaitingDateCount > 0 ? (
-                        <span className="ml-1.5 tabular-nums">
-                          {awaitingDateCount}
-                        </span>
-                      ) : null}
-                    </button>
-                  </div>
-                  <ContentPipeline
-                    grouped={grouped}
-                    contentGoals={contentGoals}
-                    onDelete={handleDeleteRequest}
-                    onPostUpdate={handlePostUpdate}
-                    onPostStatusChange={handlePostStatusChange}
-                  />
-                </>
-              )}
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  aria-pressed={awaitingDateOnly}
+                  onClick={() => setAwaitingDateOnly((on) => !on)}
+                  className={cn(
+                    "rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
+                    awaitingDateOnly
+                      ? "border-wisk-section-content/40 bg-wisk-section-content/15 text-wisk-section-content"
+                      : "border-border/60 bg-card/40 text-muted-foreground hover:border-border hover:text-foreground"
+                  )}
+                >
+                  Awaiting a date
+                  {awaitingDateCount > 0 ? (
+                    <span className="ml-1.5 tabular-nums">
+                      {awaitingDateCount}
+                    </span>
+                  ) : null}
+                </button>
+              </div>
+              <ContentPipeline
+                grouped={grouped}
+                contentGoals={contentGoals}
+                onDelete={handleDeleteRequest}
+                onPostUpdate={handlePostUpdate}
+                onPostStatusChange={handlePostStatusChange}
+              />
             </>
           )}
+        </>
+      )}
+
+      <ContentFormDialog
+        open={editPost !== null}
+        onOpenChange={(open) => {
+          if (!open) setEditPost(null);
+        }}
+        contentGoals={contentGoals}
+        post={editPost}
+        onSaved={handlePostUpdate}
+        onDelete={handleDeleteRequest}
+      />
 
       <DeleteContentDialog
         postId={deleteTarget?.id ?? null}

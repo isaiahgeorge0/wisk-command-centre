@@ -52,10 +52,11 @@ function resolveContentPost(
   contentPosts: ContentPost[]
 ): ContentPost | null {
   const meta = typeof event.meta === "object" ? event.meta : null;
-  if (meta?.post) {
+  if (meta?.post && typeof meta.post === "object") {
     return meta.post as ContentPost;
   }
-  const postId = event.id.split("-")[0];
+  const postId = typeof meta?.postId === "string" ? meta.postId : null;
+  if (!postId) return null;
   return contentPosts.find((post) => post.id === postId) ?? null;
 }
 

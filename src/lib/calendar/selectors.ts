@@ -11,9 +11,11 @@ import type { ContentPost } from "@/lib/content/types";
 import type { ProjectMilestone } from "@/lib/projects/milestones/types";
 import type { Project } from "@/lib/projects/types";
 import type { TaskWithProject } from "@/lib/tasks/types";
-import { buildContentCalendarEntries } from "@/lib/content/selectors";
+import {
+  buildContentCalendarEntries,
+  contentEntryToCalendarEvent,
+} from "@/lib/content/selectors";
 import type { DateRange } from "@/lib/calendar/grid";
-import { getPostPlatforms } from "@/lib/content/platforms";
 import {
   addDaysToISO,
   compareDateISO,
@@ -104,22 +106,7 @@ export function buildCalendarEvents(
     contentPosts,
     options?.contentWindow
   )) {
-    const platforms = getPostPlatforms(entry.post).join(", ");
-    events.push({
-      id: `${entry.post.id}-${entry.kind}-${entry.date}`,
-      type: "content",
-      date: entry.date,
-      title: entry.post.title,
-      href: "/content",
-      meta: entry.isRecurring
-        ? {
-            platforms,
-            isRecurring: true,
-            occurrenceDate: entry.occurrenceDate ?? entry.date,
-            post: entry.post,
-          }
-        : platforms,
-    });
+    events.push(contentEntryToCalendarEvent(entry));
   }
 
   for (const event of options?.standaloneEvents ?? []) {
