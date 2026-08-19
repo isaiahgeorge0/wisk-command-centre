@@ -73,6 +73,38 @@ export function PlatformMetricsSection({
           <SectionActivityChart sections={metrics.sectionActivity} />
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Platform-wide table counts</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Exact row counts across the shipped platform tables (admin-service
+            view).
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-left text-muted-foreground">
+                  <th className="pb-2 font-medium">Table</th>
+                  <th className="pb-2 text-right font-medium">Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                {metrics.tableCounts.map((row) => (
+                  <tr key={row.table} className="border-b last:border-0">
+                    <td className="py-2 font-mono text-xs">{row.table}</td>
+                    <td className="py-2 text-right tabular-nums">
+                      {row.count.toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

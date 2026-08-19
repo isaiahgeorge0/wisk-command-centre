@@ -37,6 +37,11 @@ export type PlatformMetrics = {
   totalLeads: number;
   totalContentPosts: number;
   sectionActivity: SectionActivity[];
+  /** Exact row counts across platform-wide tables (admin-service view). */
+  tableCounts: Array<{
+    table: string;
+    count: number;
+  }>;
 };
 
 export type UserActivityStatus = "active" | "inactive" | "dormant";

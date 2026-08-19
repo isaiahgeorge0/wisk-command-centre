@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useOptimistic, useState, useTransition } from "react";
-import { Check, Loader2, Sparkles, X, Zap } from "lucide-react";
+import { Check, ExternalLink, Loader2, Sparkles, X, Zap } from "lucide-react";
+import Link from "next/link";
 
 import { generateUserDigest, toggleAIAccess } from "@/app/(dashboard)/admin/actions";
 import { DeleteUserDialog } from "@/components/admin/delete-user-dialog";
@@ -342,7 +343,13 @@ export function UsersHealthClient({ users, summary }: UsersHealthClientProps) {
               filtered.map((user) => (
                 <tr key={user.id} className="border-b last:border-b-0">
                   <td className="px-4 py-3 font-medium">
-                    {user.name?.trim() || "—"}
+                    <Link
+                      href={`/admin/users/${user.id}`}
+                      className="inline-flex items-center gap-1 hover:text-orange-600 dark:hover:text-orange-300"
+                    >
+                      {user.name?.trim() || "—"}
+                      <ExternalLink className="size-3 text-muted-foreground" aria-hidden />
+                    </Link>
                   </td>
                   <td className="px-4 py-3">
                     {user.username ? (
