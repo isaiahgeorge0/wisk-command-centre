@@ -18,6 +18,7 @@ export type Goal = {
   deadline: string | null;
   status: GoalStatus | string | null;
   created_at: string;
+  updated_at: string;
 };
 
 export type GoalFormInput = {

@@ -2,7 +2,7 @@
 
 Last updated: August 2026 — synced against the full-repo audit's live `information_schema` pull (project `cmwwvepxudrrotoicnbh`), then checked against migrations in this repo. The audit found this doc's Properties package section, and a handful of columns elsewhere, described an earlier schema version than what actually shipped. Corrections below are drawn from that audit; remaining mismatches against migrations (notably `property_insights`, `ai_conversations.scope_key`, and `067`) are called out inline.
 
-Migrations current through: **072**
+Migrations current through: **073**
 
 ---
 
@@ -57,7 +57,7 @@ id, user_id, rule_type, value, target_type, target_id, apply_type, created_at
 
 - **projects** (id, user_id, project_name, client_name, service_type, status, next_action, deadline, value, notes, site_url, github_repo, **source_note_id** migration 070 — nullable FK to `notes`, `on delete set null`, set when a project is created via Winston's notes→projects conversion; indexed. **vercel_project_id** found live, previously undocumented — migration 011.)
 - **tasks** (id, user_id, project_id, title, priority, due_date, completed, updated_at, **raw_content** — no `notes` column; the free-text column is `raw_content`, migration 024)
-- **goals** (id, user_id, title, category, target, current, unit, deadline, status)
+- **goals** (id, user_id, title, category, target, current, unit, deadline, status, created_at, **updated_at** migration 073 — was missing from the original table; Winston digest context selects it for stalled / completed-this-week detection)
 - **ideas** (id, user_id, title, description, category, status, created_at) — now also created via the Winston shared proposal commit path (`idea` is one of five `entityType`s in `WinstonProposal`), e.g. when a Calendar brainstorm can't establish a confident date
 - **notes (migration 039)** — id, user_id, title (default 'Untitled'), content (rich text as TipTap JSON, stored in a `text` column), created_at, updated_at. Index on `(user_id, updated_at desc)`. RLS scoped to own notes.
 - **leads** (id, user_id, name, email, phone, source, service_interest, value, status, follow_up_date, contacted_at, notes, created_at, **value_type** migration 068 — `'one_time' | 'monthly'`, default `'one_time'`)
@@ -154,5 +154,5 @@ These aren't DB changes but materially affect how the AI tables above get used �
 - `EMAIL_BASE_URL`/`emailUrl()` — dedicated production-locked URL source for anything in a real Resend email, separate from `NEXT_PUBLIC_SITE_URL` (which can legitimately be localhost in normal dev). `assertEmailHtmlSafe()` throws if `localhost` reaches a real Resend call. A parallel gap in Supabase's own auth emails (password reset, magic link, signup confirmation, admin invite) — which bypassed this entirely — was found in the same audit and fixed with `getSafeAuthRedirectOrigin()`.
 - `cachedSystemPrompt`/`cachedSystemParts` (`src/lib/ai/anthropic.ts`) — Anthropic prompt caching, applied across most Winston call sites.
 - Morning briefing generate/send now require `VERCEL_ENV=production` (or explicit `ALLOW_LOCAL_MORNING_BRIEFING_CRON=true`) before processing real users — closes the local-dev-hits-prod-data gap that caused the localhost-link incident.
-- `toSafeActionError()` (`src/lib/errors/`) — shared helper for Server Action error messages, replacing raw Postgres/PostgREST errors being shown to users. Applied to `properties/actions.ts` and `leads/actions.ts` so far; the other `actions.ts` files still return raw errors and will convert as they're next touched.
+- `toSafeActionError()` (`src/lib/errors/`) — shared helper for Server Action error messages, replacing raw Postgres/PostgREST errors being shown to users. Applied to `properties/actions.ts`, `leads/actions.ts`, and `notifications/actions.ts` so far; the other `actions.ts` files still return raw errors and will convert as they're next touched.
 - Winston number safety — no Winston-generated prose should contain a figure the model computed itself. Pipeline Health, Properties Pro insights, and AI Digest Pro attach source values in code after generation; draft-email passes a pre-formatted `lead.value` with an explicit "restate this exact figure" instruction.
