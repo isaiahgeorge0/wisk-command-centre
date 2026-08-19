@@ -75,7 +75,7 @@ const FLAG_CLASS: Record<string, string> = {
   expired_token:
     "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300",
   expires_soon:
-    "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+    "border-yellow-500/30 bg-yellow-500/10 text-yellow-700 dark:text-yellow-300",
   missing_refresh_token:
     "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300",
   missing_expires_at:

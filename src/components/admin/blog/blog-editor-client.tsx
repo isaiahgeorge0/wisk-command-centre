@@ -175,7 +175,7 @@ export function BlogEditorClient({
           <Link
             href="/admin/blog"
             onClick={handleNavigate}
-            className="text-sm text-muted-foreground transition-colors hover:text-orange-700 dark:hover:text-orange-300"
+            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             ← Back to blog
           </Link>
@@ -243,7 +243,7 @@ export function BlogEditorClient({
                   className={cn(
                     "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
                     contentTab === "write"
-                      ? "bg-orange-500/15 text-orange-700 dark:text-orange-300"
+                      ? "bg-muted text-foreground"
                       : "text-muted-foreground hover:text-foreground"
                   )}
                   onClick={() => setContentTab("write")}
@@ -255,7 +255,7 @@ export function BlogEditorClient({
                   className={cn(
                     "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
                     contentTab === "preview"
-                      ? "bg-orange-500/15 text-orange-700 dark:text-orange-300"
+                      ? "bg-muted text-foreground"
                       : "text-muted-foreground hover:text-foreground"
                   )}
                   onClick={() => setContentTab("preview")}
@@ -338,7 +338,7 @@ export function BlogEditorClient({
                   className={cn(
                     "flex cursor-pointer items-start gap-3 px-3 py-3 transition-colors",
                     status === option.value
-                      ? "bg-orange-500/10"
+                      ? "bg-muted"
                       : "hover:bg-muted/40",
                     isPending && "cursor-not-allowed opacity-60"
                   )}
@@ -350,7 +350,7 @@ export function BlogEditorClient({
                     checked={status === option.value}
                     onChange={() => setStatus(option.value)}
                     disabled={isPending}
-                    className="mt-0.5 accent-orange-500"
+                    className="mt-0.5 accent-slate-500"
                   />
                   <div>
                     <p className="text-sm font-medium leading-none text-foreground">

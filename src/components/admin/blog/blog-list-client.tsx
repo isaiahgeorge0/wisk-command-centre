@@ -131,7 +131,7 @@ export function BlogListClient({ posts: initialPosts }: BlogListClientProps) {
                   No blog posts yet.{" "}
                   <Link
                     href="/admin/blog/new"
-                    className="text-orange-700 underline-offset-2 hover:underline dark:text-orange-300"
+                    className="text-foreground underline-offset-2 hover:underline"
                   >
                     Create your first post
                   </Link>
@@ -148,7 +148,7 @@ export function BlogListClient({ posts: initialPosts }: BlogListClientProps) {
                     <td className="px-4 py-3">
                       <Link
                         href={`/admin/blog/${post.id}/edit`}
-                        className="font-medium text-foreground hover:text-orange-700 dark:hover:text-orange-300"
+                        className="font-medium text-foreground hover:text-foreground/80"
                       >
                         {post.title}
                       </Link>

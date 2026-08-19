@@ -55,7 +55,7 @@ function StatusBadge({ status }: { status: FeedbackStatus }) {
         status === "new" &&
           "border-red-400/40 bg-red-500/10 text-red-700 dark:text-red-300",
         status === "reviewed" &&
-          "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+          "border-yellow-500/30 bg-yellow-500/10 text-yellow-700 dark:text-yellow-300",
         status === "actioned" &&
           "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
       )}

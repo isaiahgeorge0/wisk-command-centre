@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getFeedbackStats } from "@/app/(dashboard)/admin/actions";
-import { AdminNav } from "@/components/admin/admin-nav";
+import { AdminSidebar } from "@/components/admin/admin-sidebar";
+import { PageTransition } from "@/components/layout/page-transition";
 import { getAuthContext } from "@/lib/auth/get-auth-context";
 import { isAdminEmail } from "@/lib/auth/is-admin";
 
@@ -19,19 +19,13 @@ export default async function AdminLayout({
   const { newCount } = await getFeedbackStats();
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-xl border border-orange-500/25 bg-linear-to-r from-orange-500/8 via-orange-400/5 to-transparent px-4 py-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <AdminNav newFeedbackCount={newCount} />
-          <Link
-            href="/"
-            className="text-sm text-muted-foreground transition-colors hover:text-orange-700 dark:hover:text-orange-300"
-          >
-            ← Back to WISK
-          </Link>
-        </div>
+    <div className="flex min-h-screen">
+      <AdminSidebar newFeedbackCount={newCount} />
+      <div className="min-w-0 flex-1 pt-16 md:pt-0">
+        <PageTransition className="p-6 md:p-8">
+          {children}
+        </PageTransition>
       </div>
-      {children}
     </div>
   );
 }

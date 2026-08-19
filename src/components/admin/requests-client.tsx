@@ -46,7 +46,7 @@ function StatusBadge({ status }: { status: AccessRequestStatus }) {
       variant="outline"
       className={cn(
         status === "pending" &&
-          "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+          "border-yellow-500/30 bg-yellow-500/10 text-yellow-700 dark:text-yellow-300",
         status === "approved" &&
           "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
         status === "declined" && "border-border bg-muted text-muted-foreground"
@@ -203,7 +203,7 @@ export function RequestsClient({ requests }: RequestsClientProps) {
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {request.status === "pending" ? (
-                        <span className="font-medium text-amber-700 dark:text-amber-300">
+                        <span className="font-medium text-yellow-700 dark:text-yellow-300">
                           {waitingDays}d
                         </span>
                       ) : (

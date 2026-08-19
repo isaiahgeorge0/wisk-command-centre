@@ -37,9 +37,9 @@ function FlagBadge({ flag }: { flag: EmailIntegrationsHealthReportRow["flag"] })
         flag === "expired_token" &&
           "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300",
         flag === "expires_soon" &&
-          "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+          "border-yellow-500/30 bg-yellow-500/10 text-yellow-700 dark:text-yellow-300",
         flag === "missing_refresh_token" &&
-          "border-orange-500/30 bg-orange-500/10 text-orange-700 dark:text-orange-300",
+          "border-slate-500/30 bg-slate-500/10 text-slate-700 dark:text-slate-300",
         flag === "missing_expires_at" &&
           "border-border bg-muted/50 text-muted-foreground"
       )}

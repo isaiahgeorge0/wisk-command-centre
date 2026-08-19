@@ -17,7 +17,7 @@ import {
 const SCOPE_META = [
   { key: "note_id" as const, label: "Notes", dot: "bg-indigo-500/80" },
   { key: "scope_key" as const, label: "Section", dot: "bg-emerald-500/80" },
-  { key: "general" as const, label: "Unscoped", dot: "bg-orange-500/70" },
+  { key: "general" as const, label: "Unscoped", dot: "bg-slate-500/70" },
 ];
 
 type ScopeKey = typeof SCOPE_META[number]["key"];
@@ -59,7 +59,7 @@ function StackedBucketRow({ point }: { point: WinstonEngagementPoint }) {
     {
       key: "general" as const,
       count: generalCount,
-      color: "bg-orange-500/70",
+      color: "bg-slate-500/70",
     },
   ] satisfies Array<{
     key: ScopeKey;
@@ -102,7 +102,7 @@ function StackedBucketRow({ point }: { point: WinstonEngagementPoint }) {
           Section: {sectionCount.toLocaleString()}
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="size-2 rounded-full bg-orange-500/70" aria-hidden />
+          <span className="size-2 rounded-full bg-slate-500/70" aria-hidden />
           Unscoped: {generalCount.toLocaleString()}
         </span>
       </div>

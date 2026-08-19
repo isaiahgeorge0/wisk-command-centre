@@ -29,6 +29,13 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type AdminQuickActionsProps = {
   users: AdminUser[];
@@ -172,21 +179,23 @@ export function AdminQuickActions({ users }: AdminQuickActionsProps) {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="user-picker">User</Label>
-              <select
-                id="user-picker"
+              <Select
                 value={selectedUserId}
-                onChange={(event) => setSelectedUserId(event.target.value)}
+                onValueChange={(v) => setSelectedUserId(v ?? "")}
                 disabled={isPending}
-                className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm"
               >
-                <option value="">Select a user…</option>
-                {filteredUsers.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {(user.name?.trim() || user.email.split("@")[0]) +
-                      ` (${user.email})`}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="user-picker">
+                  <SelectValue placeholder="Select a user…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredUsers.map((user) => (
+                    <SelectItem key={user.id} value={user.id}>
+                      {(user.name?.trim() || user.email.split("@")[0]) +
+                        ` (${user.email})`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex flex-wrap gap-2">
               <Button

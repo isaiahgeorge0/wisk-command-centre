@@ -43,7 +43,7 @@ function ActivityBadge({
         status === "active" &&
           "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
         status === "inactive" &&
-          "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+          "border-yellow-500/30 bg-yellow-500/10 text-yellow-700 dark:text-yellow-300",
         status === "dormant" && "border-border bg-muted text-muted-foreground"
       )}
     >
@@ -170,7 +170,7 @@ const PACKAGE_CLASS: Record<string, string> = {
   ai_pro: "border-wisk-lime/30 bg-wisk-lime/10 text-wisk-lime",
   social: "border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400",
   commerce:
-    "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400",
+    "border-yellow-500/30 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400",
   properties:
     "border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400",
   max: "border-wisk-turquoise/30 bg-wisk-turquoise/10 text-foreground",
@@ -274,11 +274,11 @@ export function UsersHealthClient({ users, summary }: UsersHealthClientProps) {
             {summary.active}
           </p>
         </div>
-        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">
+        <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 px-4 py-3">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Inactive (8–30 days)
           </p>
-          <p className="mt-1 text-2xl font-semibold text-amber-700 dark:text-amber-300">
+          <p className="mt-1 text-2xl font-semibold text-yellow-700 dark:text-yellow-300">
             {summary.inactive}
           </p>
         </div>
@@ -345,7 +345,7 @@ export function UsersHealthClient({ users, summary }: UsersHealthClientProps) {
                   <td className="px-4 py-3 font-medium">
                     <Link
                       href={`/admin/users/${user.id}`}
-                      className="inline-flex items-center gap-1 hover:text-orange-600 dark:hover:text-orange-300"
+                      className="inline-flex items-center gap-1 hover:text-foreground"
                     >
                       {user.name?.trim() || "—"}
                       <ExternalLink className="size-3 text-muted-foreground" aria-hidden />
