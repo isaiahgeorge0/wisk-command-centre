@@ -12,6 +12,7 @@ type WinstonEntryButtonProps = {
   pressed?: boolean;
   onClick: () => void;
   className?: string;
+  label?: string;
 };
 
 export function WinstonEntryButton({
@@ -19,9 +20,13 @@ export function WinstonEntryButton({
   pressed = false,
   onClick,
   className,
+  label: labelOverride,
 }: WinstonEntryButtonProps) {
-  const label = variant === "record" ? "Winston" : "Brainstorm with Winston";
-  const shortLabel = variant === "record" ? "Winston" : "Winston";
+  const label =
+    labelOverride ??
+    (variant === "record" ? "Winston" : "Brainstorm with Winston");
+  const shortLabel =
+    labelOverride ?? (variant === "record" ? "Winston" : "Winston");
 
   return (
     <button
@@ -48,9 +53,12 @@ export function WinstonEntryButton({
 export function WinstonSectionEntry({
   section,
   className,
+  label,
 }: {
   section: WinstonPageSection;
   className?: string;
+  /** Override the default "Brainstorm with Winston" label. */
+  label?: string;
 }) {
   const { open, trigger, toggleSidebar } = useWinstonSidebar();
   const pressed =
@@ -60,6 +68,7 @@ export function WinstonSectionEntry({
     <WinstonEntryButton
       className={className}
       pressed={pressed}
+      label={label}
       onClick={() => toggleSidebar({ tier: "section", section })}
     />
   );

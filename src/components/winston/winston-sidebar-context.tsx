@@ -15,6 +15,7 @@ type WinstonSidebarContextValue = {
   open: boolean;
   trigger: WinstonTrigger | null;
   canAccessWinston: boolean;
+  canAccessResearchPro: boolean;
   openSidebar: (trigger: WinstonTrigger) => void;
   closeSidebar: () => void;
   toggleSidebar: (trigger: WinstonTrigger) => void;
@@ -35,9 +36,11 @@ function triggerKey(trigger: WinstonTrigger | null): string {
 export function WinstonSidebarProvider({
   children,
   canAccessWinston,
+  canAccessResearchPro = false,
 }: {
   children: ReactNode;
   canAccessWinston: boolean;
+  canAccessResearchPro?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [trigger, setTrigger] = useState<WinstonTrigger | null>(null);
@@ -67,6 +70,7 @@ export function WinstonSidebarProvider({
       open,
       trigger,
       canAccessWinston,
+      canAccessResearchPro,
       openSidebar,
       closeSidebar,
       toggleSidebar,
@@ -75,6 +79,7 @@ export function WinstonSidebarProvider({
       open,
       trigger,
       canAccessWinston,
+      canAccessResearchPro,
       openSidebar,
       closeSidebar,
       toggleSidebar,

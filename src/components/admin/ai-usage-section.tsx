@@ -51,6 +51,7 @@ const FEATURE_LABELS: Record<string, string> = {
   lead_research_brief: "Lead Research Brief",
   research_competitor_check: "Research Competitor Check",
   research_place_lookup: "Research Place Lookup",
+  research_open_chat: "Research Open Chat",
 };
 
 const PROVIDER_LABELS: Record<string, string> = {

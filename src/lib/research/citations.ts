@@ -1,0 +1,56 @@
+import type {
+  LeadResearchCitation,
+  LeadResearchClaim,
+} from "@/lib/leads/types";
+import type { ExaSearchResult } from "@/lib/research/exa";
+import type { TavilySearchResult } from "@/lib/research/tavily";
+
+export type ResearchCitation = LeadResearchCitation;
+export type ResearchCitedClaim = LeadResearchClaim;
+
+export function truncateSnippet(text: string, max = 260): string {
+  const clean = text.replace(/\s+/g, " ").trim();
+  if (clean.length <= max) return clean;
+  return `${clean.slice(0, max - 1)}…`;
+}
+
+export function buildCitationsFromSearch(input: {
+  tavilyResults: TavilySearchResult[];
+  exaResults: ExaSearchResult[];
+  maxCitations?: number;
+}): ResearchCitation[] {
+  return [
+    ...input.tavilyResults.map((result) => ({
+      title: result.title,
+      url: result.url,
+      publisher: "Tavily",
+      snippet: truncateSnippet(result.content),
+    })),
+    ...input.exaResults.map((result) => ({
+      title: result.title,
+      url: result.url,
+      publisher: "Exa",
+      snippet: truncateSnippet(result.text),
+    })),
+  ].slice(0, input.maxCitations ?? 10);
+}
+
+/** Drop claims whose citationIndex is out of range — same discipline as lead briefs. */
+export function clampCitedClaims<T extends ResearchCitedClaim>(
+  claims: T[],
+  citationCount: number
+): T[] {
+  return claims.filter(
+    (claim) =>
+      claim.citationIndex >= 0 && claim.citationIndex < citationCount
+  );
+}
+
+export function formatCitationsBlock(citations: ResearchCitation[]): string {
+  return citations
+    .map(
+      (citation, index) =>
+        `[${index}] ${citation.title} | ${citation.url}\nSnippet: ${citation.snippet}`
+    )
+    .join("\n\n");
+}

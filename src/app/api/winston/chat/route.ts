@@ -18,9 +18,10 @@ import {
 } from "@/lib/ai/constants";
 import { countChatExchangesOnLocalDay } from "@/lib/ai/free-chat-cap";
 import { logUsage } from "@/lib/ai/usage-logger";
-import { hasAIAccess } from "@/lib/billing/access";
+import { hasAIAccess, hasPackageAccess } from "@/lib/billing/access";
 import { getAuthContext } from "@/lib/auth/get-auth-context";
 import { extractPlainTextFromNoteContent } from "@/lib/notes/utils";
+import { answerOpenResearchQuestion } from "@/lib/research/open-chat";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -196,6 +197,11 @@ export async function POST(request: Request) {
 
     // ── Rate limiting (admin client for cross-instance reliability) ───────────
     const admin = createAdminClient();
+    const canAccessResearchPro = await hasPackageAccess(
+      userId,
+      "research_pro",
+      admin
+    );
 
     if (!canAccessWinston) {
       const usedToday = await countChatExchangesOnLocalDay(
@@ -203,14 +209,17 @@ export async function POST(request: Request) {
         prefs?.timezone as string | null
       );
       if (usedToday >= WINSTON_FREE_DAILY_MESSAGE_CAP) {
-        return NextResponse.json(
-          {
-            error:
-              "That’s today’s free Winston messages. Upgrade to WISK AI for full conversations.",
-            limitType: "daily",
-          },
-          { status: 429 }
-        );
+        // Research Pro open chat has its own gate below; don't apply free chat cap.
+        if (scopeKey !== "research") {
+          return NextResponse.json(
+            {
+              error:
+                "That’s today’s free Winston messages. Upgrade to WISK AI for full conversations.",
+              limitType: "daily",
+            },
+            { status: 429 }
+          );
+        }
       }
     } else {
 
@@ -311,9 +320,19 @@ export async function POST(request: Request) {
       notePlainText = extractPlainTextFromNoteContent(note.content);
     }
 
-    if (!canAccessWinston && (noteId || scopeKey !== "global")) {
+    if (!canAccessWinston && (noteId || (scopeKey !== "global" && scopeKey !== "research"))) {
       return NextResponse.json(
         { error: "Winston access not enabled" },
+        { status: 403 }
+      );
+    }
+
+    if (scopeKey === "research" && !canAccessResearchPro) {
+      return NextResponse.json(
+        {
+          error:
+            "Open research chat needs WISK Research Pro. Upgrade to unlock cited research answers.",
+        },
         { status: 403 }
       );
     }
@@ -522,6 +541,100 @@ export async function POST(request: Request) {
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not set");
+
+    // Research Pro open chat: tool-routed Tavily/Exa answer with citation drop discipline.
+    if (scopeKey === "research") {
+      const conversationContext = historyMessages
+        .slice(-6)
+        .map((entry) => `${entry.role}: ${entry.content}`)
+        .join("\n");
+
+      const stream = new ReadableStream<Uint8Array>({
+        async start(controller) {
+          const send = (event: StreamEvent) => {
+            try {
+              controller.enqueue(encodeSse(event));
+            } catch {
+              // Client gone — keep persisting.
+            }
+          };
+
+          try {
+            send({ type: "meta", conversationId: activeConversationId });
+
+            const researchAnswer = await answerOpenResearchQuestion({
+              userId,
+              question: message,
+              conversationContext,
+            });
+
+            send({ type: "delta", text: researchAnswer.displayMessage });
+
+            const { error: assistantPersistError } = await supabase
+              .from("ai_conversation_messages")
+              .insert({
+                user_id: userId,
+                role: "assistant",
+                content: researchAnswer.displayMessage,
+                conversation_id: activeConversationId,
+              });
+
+            if (assistantPersistError) {
+              console.error(
+                "winston/chat: failed to persist research reply:",
+                assistantPersistError
+              );
+              send({
+                type: "error",
+                error: "Could not save Winston's reply. Please try again.",
+              });
+              controller.close();
+              return;
+            }
+
+            if (isFirstMessage) {
+              const generatedTitle = await generateConversationTitle(
+                apiKey,
+                message
+              );
+              if (generatedTitle) {
+                await supabase
+                  .from("ai_conversations")
+                  .update({ title: generatedTitle })
+                  .eq("id", activeConversationId)
+                  .eq("user_id", userId);
+                send({ type: "title", generatedTitle });
+              }
+            }
+
+            send({
+              type: "done",
+              conversationId: activeConversationId,
+              usedTokens: 0,
+            });
+            controller.close();
+          } catch (error) {
+            console.error("winston/chat research:", error);
+            send({
+              type: "error",
+              error:
+                error instanceof Error
+                  ? error.message
+                  : "Could not complete this research answer.",
+            });
+            controller.close();
+          }
+        },
+      });
+
+      return new Response(stream, {
+        headers: {
+          "Content-Type": "text/event-stream; charset=utf-8",
+          "Cache-Control": "no-cache, no-transform",
+          Connection: "keep-alive",
+        },
+      });
+    }
 
     const chatSystemPrompt = systemPromptForScope(scopeKey, Boolean(noteId));
 

@@ -80,12 +80,25 @@ function PanelHeader({
   );
 }
 
-function Teaser({ title, onClose }: { title: string; onClose: () => void }) {
+function Teaser({
+  title,
+  onClose,
+  variant = "ai",
+}: {
+  title: string;
+  onClose: () => void;
+  variant?: "ai" | "research_pro";
+}) {
+  const isResearch = variant === "research_pro";
   return (
     <>
       <PanelHeader
         title={title}
-        subtitle="Available on WISK AI and AI Pro"
+        subtitle={
+          isResearch
+            ? "Available on WISK Research Pro"
+            : "Available on WISK AI and AI Pro"
+        }
         onClose={onClose}
       />
       <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-10 text-center">
@@ -93,14 +106,17 @@ function Teaser({ title, onClose }: { title: string; onClose: () => void }) {
           <Lock className="size-5 text-wisk-section-winston" aria-hidden />
         </div>
         <p className="text-sm font-medium text-foreground">
-          This surface needs WISK AI
+          {isResearch
+            ? "Open research chat needs Research Pro"
+            : "This surface needs WISK AI"}
         </p>
         <p className="text-xs leading-relaxed text-muted-foreground">
-          The global Winston button still works on the free tier — this
-          section-level thread is part of the full product.
+          {isResearch
+            ? "Ask any market or competitor question and get a cited answer — Research Pro unlocks this thread."
+            : "The global Winston button still works on the free tier — this section-level thread is part of the full product."}
         </p>
         <Link
-          href="/upgrade/ai"
+          href={isResearch ? "/upgrade" : "/upgrade/ai"}
           className="inline-flex h-8 items-center justify-center rounded-lg bg-wisk-section-winston px-3 text-[0.8rem] font-medium text-wisk-section-winston-fg transition-opacity hover:opacity-90"
         >
           View plans
@@ -450,7 +466,8 @@ function ChatPane({
                   !isUser &&
                   Boolean(msg.content.trim()) &&
                   !isSending &&
-                  Boolean(conversationId);
+                  Boolean(conversationId) &&
+                  resolved.scopeKey !== "research";
                 return (
                   <motion.div
                     key={msg.id}
@@ -648,7 +665,13 @@ function PanelShell({
 }
 
 export function WinstonSidebar() {
-  const { open, trigger, canAccessWinston, closeSidebar } = useWinstonSidebar();
+  const {
+    open,
+    trigger,
+    canAccessWinston,
+    canAccessResearchPro,
+    closeSidebar,
+  } = useWinstonSidebar();
   const isMobile = useIsMobilePanel();
   const [tab, setTab] = useState<SidebarTab>("quick-add");
 
@@ -676,10 +699,16 @@ export function WinstonSidebar() {
   }, [open, closeSidebar]);
 
   const resolved = trigger ? resolveWinstonContext(trigger) : null;
+  const isResearchSection =
+    trigger?.tier === "section" && trigger.section === "research";
   const showChat =
     trigger &&
-    (trigger.tier === "global" || canAccessWinston);
-  const showTeaser = trigger && trigger.tier !== "global" && !canAccessWinston;
+    (trigger.tier === "global" ||
+      (isResearchSection ? canAccessResearchPro : canAccessWinston));
+  const showTeaser =
+    trigger &&
+    trigger.tier !== "global" &&
+    (isResearchSection ? !canAccessResearchPro : !canAccessWinston);
 
   return (
     <AnimatePresence>
@@ -687,7 +716,11 @@ export function WinstonSidebar() {
         <PanelShell key="winston-sidebar" isMobile={isMobile} onClose={closeSidebar}>
           <div className="flex min-h-0 flex-1 flex-col">
             {showTeaser ? (
-              <Teaser title={resolved.title} onClose={closeSidebar} />
+              <Teaser
+                title={resolved.title}
+                onClose={closeSidebar}
+                variant={isResearchSection ? "research_pro" : "ai"}
+              />
             ) : (
               <>
                 {resolved.showQuickAdd ? (
@@ -729,7 +762,10 @@ export function WinstonSidebar() {
                 ) : showChat ? (
                   <ChatPane
                     trigger={trigger}
-                    canAccessWinston={canAccessWinston}
+                    canAccessWinston={
+                      canAccessWinston ||
+                      (isResearchSection && canAccessResearchPro)
+                    }
                     onClose={closeSidebar}
                   />
                 ) : null}

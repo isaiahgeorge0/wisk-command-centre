@@ -21,6 +21,7 @@ export const WINSTON_PAGE_SCOPE_KEYS = [
   "ideas",
   "calendar",
   "content-calendar",
+  "research",
 ] as const;
 
 export type WinstonPageScopeKey = (typeof WINSTON_PAGE_SCOPE_KEYS)[number];
@@ -59,6 +60,7 @@ export const SCOPE_KEY_TITLES: Record<WinstonPageScopeKey, string> = {
   ideas: "Ideas brainstorm",
   calendar: "Calendar brainstorm",
   "content-calendar": "Content brainstorm",
+  research: "Research chat",
 };
 
 const RECORD_ENTITY_TITLES: Record<WinstonRecordScopeEntity, string> = {

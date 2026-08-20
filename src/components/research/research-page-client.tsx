@@ -5,11 +5,13 @@ import {
   ArrowRight,
   ArrowUpRight,
   Loader2,
+  Lock,
   MapPin,
   Minus,
   Search,
   Trash2,
 } from "lucide-react";
+import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 
 import {
@@ -28,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { WinstonSectionEntry } from "@/components/winston/winston-entry-button";
 import {
   formatLeadValue,
   formatPipelineValueSplit,
@@ -333,6 +336,51 @@ export function ResearchPageClient({ initialData }: ResearchPageClientProps) {
 
   return (
     <div className="space-y-6">
+      <Card>
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <CardTitle>Ask Winston</CardTitle>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Open-ended market and competitor research with cited sources.
+            </p>
+          </div>
+          {initialData.canAccessResearchPro ? (
+            <WinstonSectionEntry section="research" label="Ask Winston" />
+          ) : null}
+        </CardHeader>
+        <CardContent>
+          {initialData.canAccessResearchPro ? (
+            <p className="text-sm text-muted-foreground">
+              Open the Winston panel to ask any research question. Answers pull
+              from live search and only keep claims with valid citations.
+            </p>
+          ) : (
+            <div className="flex flex-col items-start gap-3 rounded-xl border border-border/60 bg-muted/30 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+                  <Lock className="size-4 text-muted-foreground" aria-hidden />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    Research Pro unlocks open research chat
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Your Research plan includes the watchlist and win-rate
+                    dashboard. Upgrade for cited answers to any market question.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/upgrade"
+                className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+              >
+                View plans
+              </Link>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <WinRateDashboardCard initialDashboard={initialData.winRate} />
 
       <Card>

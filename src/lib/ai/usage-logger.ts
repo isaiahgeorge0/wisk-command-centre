@@ -12,7 +12,8 @@ export type UsageFeature =
   | "morning_briefing"
   | "lead_research_brief"
   | "research_competitor_check"
-  | "research_place_lookup";
+  | "research_place_lookup"
+  | "research_open_chat";
 
 export async function logUsage(
   userId: string,
@@ -40,7 +41,8 @@ export async function logExternalUsage(input: {
   feature:
     | "lead_research_brief"
     | "research_competitor_check"
-    | "research_place_lookup";
+    | "research_place_lookup"
+    | "research_open_chat";
   provider: "tavily" | "exa" | "google_places";
   callCount?: number;
   estimatedCostUSD?: number;

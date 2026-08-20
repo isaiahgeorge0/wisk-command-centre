@@ -41,7 +41,7 @@ export default async function ResearchPage() {
       <div>
         <h1 className={PAGE_TITLE_CLASS}>Research</h1>
         <p className={PAGE_SUBTITLE_CLASS}>
-          Win-rate analytics and competitor watchlist
+          Win-rate analytics, competitor watchlist, and research chat
         </p>
       </div>
       <ResearchPageClient initialData={data} />

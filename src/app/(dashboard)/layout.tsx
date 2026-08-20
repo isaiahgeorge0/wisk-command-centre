@@ -65,6 +65,7 @@ export default async function DashboardLayout({
     unreadChangelogCount,
     hasProperties,
     aiPrefs,
+    hasResearchPro,
   ] = await Promise.all([
     getUserProfile(),
     getOrCreateUserPreferences(),
@@ -80,6 +81,7 @@ export default async function DashboardLayout({
       .select("ai_access")
       .eq("user_id", user.id)
       .maybeSingle(),
+    hasPackageAccess(user.id, "research_pro", supabase),
   ]);
 
   const canAccessWinston = await hasAIAccess(
@@ -127,6 +129,7 @@ export default async function DashboardLayout({
         }))}
         hasProperties={hasProperties}
         canAccessWinston={canAccessWinston}
+        canAccessResearchPro={hasResearchPro}
       >
         {children}
       </AppShell>

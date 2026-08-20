@@ -51,6 +51,7 @@ type AppShellProps = {
   usernameSet: boolean;
   hasProperties: boolean;
   canAccessWinston: boolean;
+  canAccessResearchPro?: boolean;
 };
 
 function GlobalTaskFormDialog({
@@ -106,6 +107,7 @@ export function AppShell({
   usernameSet,
   hasProperties,
   canAccessWinston,
+  canAccessResearchPro = false,
 }: AppShellProps) {
   const [showUsernamePrompt, setShowUsernamePrompt] = React.useState(
     !usernameSet
@@ -120,7 +122,10 @@ export function AppShell({
     <OnboardingProvider initialOpen={!onboardingCompleted}>
       <PreferencesProvider value={{ fieldVisibility, serviceTypes }}>
         <QuickAddProvider>
-          <WinstonSidebarProvider canAccessWinston={canAccessWinston}>
+          <WinstonSidebarProvider
+            canAccessWinston={canAccessWinston}
+            canAccessResearchPro={canAccessResearchPro}
+          >
           <MobileComposeFocusProvider>
           <NavModeProvider>
             <SpotlightTourProvider

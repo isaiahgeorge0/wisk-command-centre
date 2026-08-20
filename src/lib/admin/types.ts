@@ -90,7 +90,8 @@ export type UsageFeature =
   | "morning_briefing"
   | "lead_research_brief"
   | "research_competitor_check"
-  | "research_place_lookup";
+  | "research_place_lookup"
+  | "research_open_chat";
 
 export type AIUsageByFeature = {
   feature: UsageFeature;

@@ -58,6 +58,8 @@ export function mixedProposalScopeBias(scopeKey: string | null): string {
     case "tasks":
     case "notes":
       return "The user was talking about work planning — a project plus sibling tasks (linked with projectRef) is a natural shape when they described both.";
+    case "research":
+      return "The user was in Research chat — do not invent creation proposals from research answers; this surface is citation Q&A only.";
     default:
       return "";
   }
