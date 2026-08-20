@@ -73,6 +73,8 @@ function revalidateSubscriptionPaths() {
   revalidatePath("/");
   revalidatePath("/", "layout");
   revalidatePath("/properties");
+  revalidatePath("/research");
+  revalidatePath("/leads");
   revalidatePath("/upgrade/success");
 }
 
@@ -235,6 +237,8 @@ function getPriceDisplayString(priceId: string | undefined): string {
   if (priceId === process.env.STRIPE_PRICE_AI_PRO_MONTHLY) return "£19/month";
   if (priceId === process.env.STRIPE_PRICE_PROPERTIES_MONTHLY) return "£17/month";
   if (priceId === process.env.STRIPE_PRICE_PROPERTIES_PRO_MONTHLY) return "£32/month";
+  if (priceId === process.env.STRIPE_PRICE_RESEARCH_MONTHLY) return "£19/month";
+  if (priceId === process.env.STRIPE_PRICE_RESEARCH_PRO_MONTHLY) return "£39/month";
   return "";
 }
 

@@ -54,6 +54,19 @@ const PACKAGE_UNLOCKS: Partial<Record<WiskPackage, string[]>> = {
     "Tenant reliability scoring",
     "Financial reports",
   ],
+  research: [
+    "Cited lead intelligence briefs",
+    "Competitor watchlist + Focus signals",
+    "Google Places location layer",
+    "Win-rate analytics dashboard",
+  ],
+  research_pro: [
+    "Everything in WISK Research",
+    "Open-ended cited research chat",
+    "Findings → Winston proposals (review before create)",
+    "Add research findings to lead notes",
+    "Higher competitor watchlist cap",
+  ],
 };
 
 const PENDING_UNLOCKS = [
@@ -71,6 +84,9 @@ function getPrimaryCta(pkg: WiskPackage | null): { href: string; label: string }
   }
   if (pkg === "properties" || pkg === "properties_pro") {
     return { href: "/properties", label: "Go to Properties" };
+  }
+  if (pkg === "research" || pkg === "research_pro") {
+    return { href: "/research", label: "Go to Research" };
   }
   if (pkg) {
     return { href: "/", label: "Go to overview" };

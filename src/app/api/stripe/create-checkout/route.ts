@@ -30,6 +30,8 @@ export async function POST(request: Request) {
     const aiProPriceId = process.env.STRIPE_PRICE_AI_PRO_MONTHLY;
     const propertiesPriceId = process.env.STRIPE_PRICE_PROPERTIES_MONTHLY;
     const propertiesProPriceId = process.env.STRIPE_PRICE_PROPERTIES_PRO_MONTHLY;
+    const researchPriceId = process.env.STRIPE_PRICE_RESEARCH_MONTHLY;
+    const researchProPriceId = process.env.STRIPE_PRICE_RESEARCH_PRO_MONTHLY;
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
     if (!aiPriceId || !aiProPriceId || !siteUrl) {
@@ -71,11 +73,27 @@ export async function POST(request: Request) {
       );
     }
 
+    if (priceId === researchPriceId && !researchPriceId) {
+      return NextResponse.json(
+        { error: "Research billing not configured" },
+        { status: 500 }
+      );
+    }
+
+    if (priceId === researchProPriceId && !researchProPriceId) {
+      return NextResponse.json(
+        { error: "Research Pro billing not configured" },
+        { status: 500 }
+      );
+    }
+
     if (
       priceId !== aiPriceId &&
       priceId !== aiProPriceId &&
       priceId !== propertiesPriceId &&
-      priceId !== propertiesProPriceId
+      priceId !== propertiesProPriceId &&
+      priceId !== researchPriceId &&
+      priceId !== researchProPriceId
     ) {
       return NextResponse.json({ error: "Invalid price ID" }, { status: 400 });
     }
@@ -83,7 +101,44 @@ export async function POST(request: Request) {
     // ── Duplicate-subscription guard ────────────────────────────────────────────
     const admin = createAdminClient();
 
-    if (priceId === propertiesProPriceId) {
+    if (priceId === researchProPriceId) {
+      const { data: existingResearchPro } = await admin
+        .from("user_subscriptions")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("package", "research_pro")
+        .in("status", ["active", "trialing"])
+        .limit(1)
+        .maybeSingle();
+
+      if (existingResearchPro) {
+        return NextResponse.json(
+          { error: "Already subscribed" },
+          { status: 409 }
+        );
+      }
+    } else if (priceId === researchPriceId) {
+      const { data: existingResearch } = await admin
+        .from("user_subscriptions")
+        .select("id, package")
+        .eq("user_id", userId)
+        .in("package", ["research", "research_pro"])
+        .in("status", ["active", "trialing"])
+        .limit(1)
+        .maybeSingle();
+
+      if (existingResearch) {
+        return NextResponse.json(
+          {
+            error:
+              existingResearch.package === "research_pro"
+                ? "Already subscribed to Research Pro"
+                : "Already subscribed to Research",
+          },
+          { status: 400 }
+        );
+      }
+    } else if (priceId === propertiesProPriceId) {
       const { data: existingPropertiesPro } = await admin
         .from("user_subscriptions")
         .select("id")

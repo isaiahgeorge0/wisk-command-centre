@@ -13,6 +13,8 @@ export function resolveBillingPlan(
   if (active.some((sub) => sub.package === "max")) return "max";
   if (active.some((sub) => sub.package === "ai_pro")) return "ai_pro";
   if (active.some((sub) => sub.package === "ai")) return "ai";
+  if (active.some((sub) => sub.package === "research_pro")) return "research_pro";
+  if (active.some((sub) => sub.package === "research")) return "research";
   if (active.some((sub) => sub.package === "properties_pro")) return "properties_pro";
   if (active.some((sub) => sub.package === "properties")) return "properties";
 
@@ -25,6 +27,14 @@ export function getBillingPlanLabel(plan: BillingPlan): string {
       return "WISK AI";
     case "ai_pro":
       return "WISK AI Pro";
+    case "research":
+      return "WISK Research";
+    case "research_pro":
+      return "WISK Research Pro";
+    case "properties":
+      return "WISK Properties";
+    case "properties_pro":
+      return "WISK Properties Pro";
     case "max":
       return "WISK Max";
     default:

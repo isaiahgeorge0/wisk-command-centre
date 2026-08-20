@@ -3,7 +3,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Building2, Mail, Sparkles, X } from "lucide-react";
+import { Loader2, Building2, Mail, Search, Sparkles, X } from "lucide-react";
 import Link from "next/link";
 
 import { PageTransition } from "@/components/layout/page-transition";
@@ -20,6 +20,8 @@ type UpgradePageClientProps = {
   currentPeriodEnd: string | null;
   hasPropertiesSubscription: boolean;
   hasPropertiesProSubscription: boolean;
+  hasResearchSubscription: boolean;
+  hasResearchProSubscription: boolean;
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -61,6 +63,28 @@ const PROPERTIES_PRO_FEATURES = [
 
 const PROPERTIES_PRO_GRADIENT =
   "linear-gradient(135deg, #8b0010 0%, #e8001d 50%, #cc0016 100%)";
+
+const RESEARCH_FEATURES = [
+  "Cited lead intelligence briefs",
+  "Competitor watchlist + Focus signals",
+  "Google Places location layer",
+  "Win-rate analytics dashboard",
+];
+
+const RESEARCH_PRO_FEATURES = [
+  "Everything in WISK Research",
+  "Open-ended cited research chat",
+  "Propose content from competitor signals",
+  "Create this from research findings",
+  "Add findings to lead notes",
+  "Higher competitor watchlist cap",
+];
+
+const RESEARCH_GRADIENT =
+  "linear-gradient(135deg, #0e7490 0%, #06b6d4 50%, #0891b2 100%)";
+
+const RESEARCH_PRO_GRADIENT =
+  "linear-gradient(135deg, #0e7490 0%, #06b6d4 45%, #7c3aed 100%)";
 
 const PROPERTIES_FEATURES = [
   "Portfolio dashboard",
@@ -129,14 +153,16 @@ function ManageButton({
 }: {
   onClick: () => void;
   loading: boolean;
-  accentColor: "purple" | "teal" | "ferrari";
+  accentColor: "purple" | "teal" | "ferrari" | "cyan";
 }) {
   const styles =
     accentColor === "purple"
       ? "border-purple-500/30 bg-purple-500/8 text-purple-400 hover:bg-purple-500/15"
       : accentColor === "teal"
         ? "border-teal-500/30 bg-teal-500/8 text-teal-400 hover:bg-teal-500/15"
-        : "border-wisk-ferrari/30 bg-wisk-ferrari/10 text-wisk-ferrari hover:bg-wisk-ferrari/15";
+        : accentColor === "cyan"
+          ? "border-cyan-500/30 bg-cyan-500/8 text-cyan-400 hover:bg-cyan-500/15"
+          : "border-wisk-ferrari/30 bg-wisk-ferrari/10 text-wisk-ferrari hover:bg-wisk-ferrari/15";
 
   return (
     <button
@@ -162,6 +188,8 @@ export function UpgradePageClient({
   currentPeriodEnd,
   hasPropertiesSubscription,
   hasPropertiesProSubscription,
+  hasResearchSubscription,
+  hasResearchProSubscription,
 }: UpgradePageClientProps) {
   const searchParams = useSearchParams();
   const [portalLoading, setPortalLoading] = useState(false);
@@ -178,7 +206,9 @@ export function UpgradePageClient({
   const hasActivePlan =
     plan !== "free" ||
     hasPropertiesSubscription ||
-    hasPropertiesProSubscription;
+    hasPropertiesProSubscription ||
+    hasResearchSubscription ||
+    hasResearchProSubscription;
 
   async function openPortal() {
     if (portalLoading) return;
@@ -486,6 +516,174 @@ export function UpgradePageClient({
                 <GetStartedLink
                   href="/upgrade/ai-pro"
                   gradient="linear-gradient(135deg, #0f766e 0%, #016c81 50%, #22d3ee 100%)"
+                />
+              )}
+            </div>
+          </motion.div>
+
+          {/* ── WISK Research ──────────────────────────────────────────────── */}
+          {!hasResearchSubscription && !hasResearchProSubscription ? (
+            <motion.div
+              initial={noMotion ? false : { opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{
+                duration: 0.4,
+                delay: noMotion ? 0 : 0.15,
+                ease: MOTION_EASE.easeOut,
+              }}
+              whileHover={{ scale: 1.01 }}
+              className="group flex flex-col overflow-hidden rounded-2xl border border-cyan-500/20 bg-card/90 shadow-[0_4px_24px_-4px_rgba(6,182,212,0.12)] transition-shadow hover:border-cyan-500/30 hover:shadow-[0_8px_40px_-8px_rgba(6,182,212,0.25)]"
+            >
+              <div
+                aria-hidden
+                className="h-1 w-full shrink-0"
+                style={{
+                  background:
+                    "linear-gradient(to right, #0e7490, #06b6d4, #0891b2)",
+                }}
+              />
+
+              <div className="px-6 pt-6 pb-4">
+                <div className="mb-1 flex items-center gap-2">
+                  <div
+                    className="flex size-8 items-center justify-center rounded-lg"
+                    style={{
+                      background: "rgba(6,182,212,0.12)",
+                      border: "1px solid rgba(6,182,212,0.25)",
+                    }}
+                  >
+                    <Search className="size-4 text-cyan-500" aria-hidden />
+                  </div>
+                  <p className="text-sm font-semibold text-cyan-500">
+                    WISK Research
+                  </p>
+                </div>
+                <div className="mt-3 flex items-baseline gap-1">
+                  <span className="text-4xl font-bold tracking-tight text-foreground">
+                    £19
+                  </span>
+                  <span className="text-sm text-muted-foreground">/month</span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Billed monthly. Cancel any time.
+                </p>
+              </div>
+
+              <div className="flex-1 px-6 pb-5">
+                <ul className="space-y-2.5">
+                  {RESEARCH_FEATURES.map((feature) => (
+                    <li
+                      key={feature}
+                      className="flex items-center gap-2.5 text-sm text-muted-foreground"
+                    >
+                      <span
+                        className="size-1.5 shrink-0 rounded-full"
+                        style={{ background: "#06b6d4" }}
+                        aria-hidden
+                      />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="px-6 pb-6">
+                <GetStartedLink
+                  href="/upgrade/research"
+                  gradient={RESEARCH_GRADIENT}
+                />
+              </div>
+            </motion.div>
+          ) : null}
+
+          {/* ── WISK Research Pro ──────────────────────────────────────────── */}
+          <motion.div
+            initial={noMotion ? false : { opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{
+              duration: 0.4,
+              delay: noMotion ? 0 : 0.18,
+              ease: MOTION_EASE.easeOut,
+            }}
+            whileHover={{ scale: 1.01 }}
+            className="group relative flex flex-col overflow-hidden rounded-2xl border border-cyan-500/20 bg-card/90 shadow-[0_4px_24px_-4px_rgba(6,182,212,0.14)] transition-shadow hover:border-cyan-500/30 hover:shadow-[0_8px_40px_-8px_rgba(124,58,237,0.22)]"
+          >
+            <span
+              className="absolute top-4 right-4 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-cyan-400"
+              style={{
+                background: "rgba(6,182,212,0.12)",
+                border: "1px solid rgba(6,182,212,0.35)",
+              }}
+            >
+              Research Pro
+            </span>
+
+            <div
+              aria-hidden
+              className="h-1 w-full shrink-0"
+              style={{
+                background:
+                  "linear-gradient(to right, #0e7490, #06b6d4, #7c3aed)",
+              }}
+            />
+
+            <div className="px-6 pt-6 pb-4">
+              <div className="mb-1 flex items-center gap-2">
+                <div
+                  className="flex size-8 items-center justify-center rounded-lg"
+                  style={{
+                    background: "rgba(6,182,212,0.12)",
+                    border: "1px solid rgba(6,182,212,0.3)",
+                  }}
+                >
+                  <Search className="size-4 text-cyan-500" aria-hidden />
+                </div>
+                <p className="text-sm font-semibold text-cyan-500">
+                  WISK Research Pro
+                </p>
+              </div>
+              <div className="mt-3 flex items-baseline gap-1">
+                <span className="text-4xl font-bold tracking-tight text-foreground">
+                  £39
+                </span>
+                <span className="text-sm text-muted-foreground">/month</span>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Billed monthly. Cancel any time.
+              </p>
+            </div>
+
+            <div className="flex-1 px-6 pb-5">
+              <ul className="space-y-2.5">
+                {RESEARCH_PRO_FEATURES.map((feature) => (
+                  <li
+                    key={feature}
+                    className="flex items-center gap-2.5 text-sm text-muted-foreground"
+                  >
+                    <span
+                      className="size-1.5 shrink-0 rounded-full"
+                      style={{ background: "#06b6d4" }}
+                      aria-hidden
+                    />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="px-6 pb-6">
+              {hasResearchProSubscription ? (
+                <ManageButton
+                  onClick={openPortal}
+                  loading={portalLoading}
+                  accentColor="cyan"
+                />
+              ) : (
+                <GetStartedLink
+                  href="/upgrade/research-pro"
+                  gradient={RESEARCH_PRO_GRADIENT}
                 />
               )}
             </div>

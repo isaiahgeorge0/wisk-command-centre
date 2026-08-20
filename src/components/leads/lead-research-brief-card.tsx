@@ -1,6 +1,7 @@
 "use client";
 
-import { Building2, Loader2, Sparkles } from "lucide-react";
+import { Building2, Loader2, Lock, Sparkles } from "lucide-react";
+import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 
 import { generateLeadResearchBrief } from "@/app/(dashboard)/leads/actions";
@@ -113,10 +114,19 @@ export function LeadResearchBriefCard({
       />
 
       {!canAccessResearch ? (
-        <p className="text-xs text-muted-foreground">
-          Research package required. Upgrade once pricing is finalized to unlock
-          cited lead intelligence briefs.
-        </p>
+        <div className="space-y-3 rounded-lg border border-border/50 bg-muted/20 p-3">
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            WISK Research unlocks cited lead intelligence briefs — company
+            background, budget signals, and pain points before every call.
+          </p>
+          <Link
+            href="/upgrade/research"
+            className="inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-lg bg-cyan-600 px-3 text-xs font-medium text-white transition-opacity hover:opacity-90"
+          >
+            <Lock className="size-3" aria-hidden />
+            Upgrade to Research — £19/mo
+          </Link>
+        </div>
       ) : !selectedLead ? (
         <p className="text-xs text-muted-foreground">Select a lead to get started</p>
       ) : (

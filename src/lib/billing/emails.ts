@@ -54,6 +54,19 @@ const PACKAGE_FEATURES: Record<string, string[]> = {
     "Tenant reliability scoring",
     "Financial reports",
   ],
+  "WISK Research": [
+    "Cited lead intelligence briefs",
+    "Competitor watchlist + Focus signals",
+    "Google Places location layer",
+    "Win-rate analytics dashboard",
+  ],
+  "WISK Research Pro": [
+    "Everything in WISK Research",
+    "Open-ended cited research chat",
+    "Findings → Winston proposals",
+    "Add research findings to lead notes",
+    "Higher competitor watchlist cap",
+  ],
 };
 
 // ─── Package CTA destinations ─────────────────────────────────────────────────
@@ -64,6 +77,8 @@ function getPackageCtaUrl(packageName: string): string {
     "WISK AI Pro": emailUrl("/ai-digest"),
     "WISK Properties": emailUrl("/properties"),
     "WISK Properties Pro": emailUrl("/properties"),
+    "WISK Research": emailUrl("/research"),
+    "WISK Research Pro": emailUrl("/research"),
   };
   return urls[packageName] ?? emailUrl();
 }
@@ -78,7 +93,13 @@ function getPackageCtaLabel(packageName: string): string {
   ) {
     return "Go to Properties";
   }
-  return "Go to WISK";
+  if (
+    packageName === "WISK Research" ||
+    packageName === "WISK Research Pro"
+  ) {
+    return "Go to Research";
+  }
+  return "Open WISK";
 }
 
 // ─── Date formatting ──────────────────────────────────────────────────────────

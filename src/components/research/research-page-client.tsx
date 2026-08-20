@@ -431,10 +431,10 @@ export function ResearchPageClient({ initialData }: ResearchPageClientProps) {
                 </div>
               </div>
               <Link
-                href="/upgrade"
+                href="/upgrade/research-pro"
                 className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
               >
-                View plans
+                Upgrade to Research Pro
               </Link>
             </div>
           )}

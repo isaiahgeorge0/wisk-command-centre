@@ -136,10 +136,10 @@ function Teaser({
             : "The global Winston button still works on the free tier — this section-level thread is part of the full product."}
         </p>
         <Link
-          href={isResearch ? "/upgrade" : "/upgrade/ai"}
+          href={isResearch ? "/upgrade/research-pro" : "/upgrade/ai"}
           className="inline-flex h-8 items-center justify-center rounded-lg bg-wisk-section-winston px-3 text-[0.8rem] font-medium text-wisk-section-winston-fg transition-opacity hover:opacity-90"
         >
-          View plans
+          {isResearch ? "Upgrade to Research Pro" : "View plans"}
         </Link>
       </div>
     </>
