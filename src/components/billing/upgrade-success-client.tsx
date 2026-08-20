@@ -17,17 +17,40 @@ type UpgradeSuccessClientProps = {
   planLabel: string;
 };
 
+type ResearchSuccessCopy = {
+  headline: string;
+  body: string;
+  ctaLabel: string;
+  ctaHref: string;
+};
+
+const RESEARCH_SUCCESS: Record<"research" | "research_pro", ResearchSuccessCopy> =
+  {
+    research: {
+      headline: "You're in. Winston just got sharper.",
+      body: "Research is live on your account. Here's where to start: add your first competitor to the watchlist and Winston will flag anything worth knowing, a price change, a new post, a new location. Before your next sales call, open that lead and ask for a research brief, real company background, not guesswork. And check your win-rate dashboard now, so you've got a real baseline to compare against next month.",
+      ctaLabel: "Go to Research →",
+      ctaHref: "/research",
+    },
+    research_pro: {
+      headline: "You're in. Winston can go deeper now.",
+      body: "Research Pro is live. Everything in Research, plus: ask Winston anything about your market or a competitor in the open chat, every answer comes with real sources, not a guess. When something worth acting on turns up, Winston can turn it straight into a content idea or a talking point for a lead, you just review and approve. Start with your first competitor, or jump straight into a question you've been sitting on.",
+      ctaLabel: "Ask Winston →",
+      ctaHref: "/research?askWinston=1",
+    },
+  };
+
 // ─── Per-package unlock descriptions ──────────────────────────────────────────
 
 const PACKAGE_UNLOCKS: Partial<Record<WiskPackage, string[]>> = {
   ai: [
-    "AI Digest — your weekly business summary, every Sunday",
-    "WISK Chat — ask Winston anything about your business",
+    "AI Digest, your weekly business summary, every Sunday",
+    "WISK Chat, ask Winston anything about your business",
     "Smart suggestions on your Overview dashboard",
   ],
   ai_pro: [
     "Everything in WISK AI, activated immediately",
-    "Email integration — connect Gmail or Outlook from Settings",
+    "Email integration, connect Gmail or Outlook from Settings",
     "AI-organised inbox linked to your leads and clients",
     "Higher monthly token allowance",
   ],
@@ -54,23 +77,10 @@ const PACKAGE_UNLOCKS: Partial<Record<WiskPackage, string[]>> = {
     "Tenant reliability scoring",
     "Financial reports",
   ],
-  research: [
-    "Cited lead intelligence briefs",
-    "Competitor watchlist + Focus signals",
-    "Google Places location layer",
-    "Win-rate analytics dashboard",
-  ],
-  research_pro: [
-    "Everything in WISK Research",
-    "Open-ended cited research chat",
-    "Findings → Winston proposals (review before create)",
-    "Add research findings to lead notes",
-    "Higher competitor watchlist cap",
-  ],
 };
 
 const PENDING_UNLOCKS = [
-  "WISK Command Centre — projects, tasks, goals, leads, and more",
+  "WISK Command Centre, projects, tasks, goals, leads, and more",
 ];
 
 function getUnlocks(pkg: WiskPackage | null): string[] {
@@ -84,9 +94,6 @@ function getPrimaryCta(pkg: WiskPackage | null): { href: string; label: string }
   }
   if (pkg === "properties" || pkg === "properties_pro") {
     return { href: "/properties", label: "Go to Properties" };
-  }
-  if (pkg === "research" || pkg === "research_pro") {
-    return { href: "/research", label: "Go to Research" };
   }
   if (pkg) {
     return { href: "/", label: "Go to overview" };
@@ -102,9 +109,15 @@ export function UpgradeSuccessClient({
 }: UpgradeSuccessClientProps) {
   const { getInitial, transition, reduced } = useMotionSafe();
 
+  const researchCopy =
+    pkg === "research" || pkg === "research_pro"
+      ? RESEARCH_SUCCESS[pkg]
+      : null;
   const isActivePlan = pkg !== null;
   const unlocks = getUnlocks(pkg);
-  const primaryCta = getPrimaryCta(pkg);
+  const primaryCta = researchCopy
+    ? { href: researchCopy.ctaHref, label: researchCopy.ctaLabel }
+    : getPrimaryCta(pkg);
 
   const checkVariants = {
     hidden: { scale: 0.6, opacity: 0 },
@@ -130,7 +143,6 @@ export function UpgradeSuccessClient({
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 py-16 text-center">
-      {/* Animated check icon */}
       <motion.div
         initial={getInitial(checkVariants.hidden)}
         animate="visible"
@@ -146,56 +158,66 @@ export function UpgradeSuccessClient({
         </div>
       </motion.div>
 
-      {/* Heading and sub-content */}
       <motion.div
         initial={getInitial(contentVariants.hidden)}
         animate="visible"
         variants={contentVariants}
-        className="max-w-md space-y-6"
+        className="max-w-lg space-y-6"
         transition={transition}
       >
-        {/* Heading */}
-        <div className="space-y-2">
-          <h1 className="text-3xl font-semibold tracking-tight">
-            {isActivePlan ? (
-              <>
-                Welcome to{" "}
-                <span
-                  style={{
-                    backgroundImage: "linear-gradient(to right, #016c81, #c3ff32)",
-                    WebkitBackgroundClip: "text",
-                    backgroundClip: "text",
-                    color: "transparent",
-                  }}
-                >
-                  {planLabel}
-                </span>
-                .
-              </>
-            ) : (
-              "You\u2019re in."
-            )}
-          </h1>
-          <p className="text-base text-muted-foreground">
-            {isActivePlan
-              ? "Your subscription is active. Here\u2019s what\u2019s now unlocked."
-              : "Your payment was successful. Your new features will be available shortly."}
-          </p>
-        </div>
+        {researchCopy ? (
+          <div className="space-y-3">
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+              {researchCopy.headline}
+            </h1>
+            <p className="text-left text-base leading-relaxed text-muted-foreground">
+              {researchCopy.body}
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-2">
+              <h1 className="text-3xl font-semibold tracking-tight">
+                {isActivePlan ? (
+                  <>
+                    Welcome to{" "}
+                    <span
+                      style={{
+                        backgroundImage:
+                          "linear-gradient(to right, #016c81, #c3ff32)",
+                        WebkitBackgroundClip: "text",
+                        backgroundClip: "text",
+                        color: "transparent",
+                      }}
+                    >
+                      {planLabel}
+                    </span>
+                    .
+                  </>
+                ) : (
+                  "You\u2019re in."
+                )}
+              </h1>
+              <p className="text-base text-muted-foreground">
+                {isActivePlan
+                  ? "Your subscription is active. Here\u2019s what\u2019s now unlocked."
+                  : "Your payment was successful. Your new features will be available shortly."}
+              </p>
+            </div>
 
-        {/* Unlocks list */}
-        <ul className="space-y-2.5 text-left">
-          {unlocks.map((item) => (
-            <li key={item} className="flex items-start gap-3">
-              <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/10">
-                <Sparkles className="size-3 text-emerald-500" aria-hidden />
-              </span>
-              <span className="text-sm text-muted-foreground">{item}</span>
-            </li>
-          ))}
-        </ul>
+            <ul className="space-y-2.5 text-left">
+              {unlocks.map((item) => (
+                <li key={item} className="flex items-start gap-3">
+                  <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/10">
+                    <Sparkles className="size-3 text-emerald-500" aria-hidden />
+                  </span>
+                  <span className="text-sm text-muted-foreground">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
 
-        {/* CTAs */}
         <div className="flex flex-col items-center gap-3 pt-2">
           <Link
             href={primaryCta.href}

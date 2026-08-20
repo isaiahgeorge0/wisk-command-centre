@@ -9,11 +9,19 @@ import {
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { hasResearchAccess } from "@/lib/billing/access";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { OpenResearchWinstonOnQuery } from "@/components/research/open-research-winston-on-query";
 import { ResearchPageClient } from "@/components/research/research-page-client";
 
 import { getResearchPageData } from "./actions";
 
-export default async function ResearchPage() {
+type ResearchPageProps = {
+  searchParams: Promise<{ askWinston?: string }>;
+};
+
+export default async function ResearchPage({ searchParams }: ResearchPageProps) {
+  const { askWinston } = await searchParams;
+  const openAskWinston = askWinston === "1";
+
   const { userId } = await getScopedSupabase();
   const admin = createAdminClient();
   const canAccessResearch = await hasResearchAccess(userId, admin);
@@ -74,6 +82,9 @@ export default async function ResearchPage() {
 
   return (
     <div className="space-y-6">
+      {openAskWinston && data.canAccessResearchPro ? (
+        <OpenResearchWinstonOnQuery enabled />
+      ) : null}
       <div>
         <h1 className={PAGE_TITLE_CLASS}>Research</h1>
         <p className={PAGE_SUBTITLE_CLASS}>

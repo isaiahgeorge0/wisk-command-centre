@@ -169,6 +169,54 @@ function featureListHtml(features: string[]): string {
 
 // ─── Template 1: Subscription Confirmed ──────────────────────────────────────
 
+function isResearchPackageName(packageName: string): boolean {
+  return (
+    packageName === "WISK Research" || packageName === "WISK Research Pro"
+  );
+}
+
+function buildResearchSubscriptionConfirmedHtml({
+  displayName,
+  packageName,
+  price,
+  periodEnd,
+}: {
+  displayName: string;
+  packageName: string;
+  price: string;
+  periodEnd: Date;
+}): string {
+  const greeting = displayName.trim() || "there";
+  const tierLabel =
+    packageName === "WISK Research Pro" ? "Research Pro" : "Research";
+  const isPro = packageName === "WISK Research Pro";
+  const proSentence = isPro
+    ? " and if you've got a market question you've been meaning to look into, just ask Winston, it'll cite its sources."
+    : "";
+
+  const priceSection = price
+    ? `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:14px 18px;margin:20px 0 4px;">
+        <p style="color:#a1a1aa;font-size:13px;margin:0;">${price}, billed monthly &middot; renews ${formatDate(periodEnd)}</p>
+      </div>`
+    : "";
+
+  return `${SHARED_STYLES}
+      <h1 style="color:#f4f4f5;font-size:22px;font-weight:700;margin:0 0 8px;letter-spacing:-0.3px;">Research is live on your account.</h1>
+      <p style="color:#a1a1aa;font-size:15px;line-height:1.65;margin:0 0 20px;">Hey ${greeting}, you're set up, ${tierLabel} is active on your WISK account. Before you close this email, here's the fastest way to see it earn its keep this week: add one competitor to your watchlist, and pull a research brief on whichever lead you're closing next.${proSentence} This isn't a feature you'll remember to use later, the first five minutes are the ones that count.</p>
+      ${priceSection}
+      ${ctaButton(emailUrl("/research"), "Go to Research →")}
+      <p style="margin:0 0 20px;">
+        <a href="${emailUrl("/upgrade")}"
+           style="color:#a855f7;font-size:13px;text-decoration:none;
+                  border-bottom:1px solid rgba(168,85,247,0.3);
+                  padding-bottom:1px;">
+          Manage your subscription
+        </a>
+      </p>
+      <p style="color:#71717a;font-size:13px;line-height:1.5;border-top:1px solid rgba(255,255,255,0.07);padding-top:20px;margin:8px 0 0;">This is an investment in your business. Make the most of it.</p>
+  ${htmlFooter()}`;
+}
+
 function buildSubscriptionConfirmedHtml({
   displayName,
   packageName,
@@ -180,6 +228,15 @@ function buildSubscriptionConfirmedHtml({
   price: string;
   periodEnd: Date;
 }): string {
+  if (isResearchPackageName(packageName)) {
+    return buildResearchSubscriptionConfirmedHtml({
+      displayName,
+      packageName,
+      price,
+      periodEnd,
+    });
+  }
+
   const greeting = displayName.trim() || "there";
   const features = PACKAGE_FEATURES[packageName];
   const ctaUrl = getPackageCtaUrl(packageName);
@@ -201,7 +258,7 @@ function buildSubscriptionConfirmedHtml({
 
   return `${SHARED_STYLES}
       <h1 style="color:#f4f4f5;font-size:22px;font-weight:700;margin:0 0 8px;letter-spacing:-0.3px;">Welcome to ${packageName}.</h1>
-      <p style="color:#71717a;font-size:14px;margin:0 0 24px;">Hi ${greeting} — your subscription is active. Here's what you've unlocked.</p>
+      <p style="color:#71717a;font-size:14px;margin:0 0 24px;">Hi ${greeting}, your subscription is active. Here's what you've unlocked.</p>
       ${featuresSection}
       ${priceSection}
       ${ctaButton(ctaUrl, getPackageCtaLabel(packageName))}
@@ -233,7 +290,7 @@ function buildSubscriptionCancelledHtml({
 
   return `${SHARED_STYLES}
       <h1 style="color:#f4f4f5;font-size:22px;font-weight:700;margin:0 0 8px;letter-spacing:-0.3px;">Subscription cancelled.</h1>
-      <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin:0 0 20px;">Hi ${greeting} — your ${packageName} subscription has been cancelled. You'll keep full access until <strong style="color:#f4f4f5;">${dateStr}</strong>.</p>
+      <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin:0 0 20px;">Hi ${greeting}, your ${packageName} subscription has been cancelled. You'll keep full access until <strong style="color:#f4f4f5;">${dateStr}</strong>.</p>
       <div style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:16px 20px;margin:20px 0;">
         <p style="color:#fbbf24;font-size:12px;font-weight:600;margin:0 0 4px;text-transform:uppercase;letter-spacing:0.08em;">Access until</p>
         <p style="color:#f4f4f5;font-size:18px;font-weight:700;margin:0;">${dateStr}</p>
@@ -258,8 +315,8 @@ function buildPaymentFailedHtml({
 
   return `${SHARED_STYLES}
       <h1 style="color:#f4f4f5;font-size:22px;font-weight:700;margin:0 0 8px;letter-spacing:-0.3px;">We couldn't process your payment.</h1>
-      <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin:0 0 20px;">Hi ${greeting} — your payment for ${packageName} didn't go through. This can happen when a card expires or details change.</p>
-      <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin:0 0 20px;">Your access hasn't been affected yet — update your payment method to keep everything running.</p>
+      <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin:0 0 20px;">Hi ${greeting}, your payment for ${packageName} didn't go through. This can happen when a card expires or details change.</p>
+      <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin:0 0 20px;">Your access hasn't been affected yet, update your payment method to keep everything running.</p>
       ${ctaButton(portalUrl, "Update payment method")}
       <p style="color:#71717a;font-size:13px;line-height:1.5;border-top:1px solid rgba(255,255,255,0.07);padding-top:20px;margin:8px 0 0;">Need help? Reply to this email and we'll sort it out.</p>
   ${htmlFooter()}`;
@@ -283,7 +340,7 @@ function buildSubscriptionRenewedHtml({
 
   return `${SHARED_STYLES}
       <h1 style="color:#f4f4f5;font-size:22px;font-weight:700;margin:0 0 8px;letter-spacing:-0.3px;">Subscription renewed.</h1>
-      <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin:0 0 20px;">Hi ${greeting} — your ${packageName} subscription has renewed.</p>
+      <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin:0 0 20px;">Hi ${greeting}, your ${packageName} subscription has renewed.</p>
       <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:18px 20px;margin:0 0 8px;">
         <p style="color:#a1a1aa;font-size:14px;margin:0 0 8px;">Plan: <span style="color:#f4f4f5;font-weight:600;">${packageName}</span></p>
         ${price ? `<p style="color:#a1a1aa;font-size:14px;margin:0 0 8px;">Amount: <span style="color:#f4f4f5;font-weight:600;">${price}</span></p>` : ""}
@@ -315,10 +372,13 @@ export async function sendSubscriptionConfirmedEmail({
 
     const html = buildSubscriptionConfirmedHtml({ displayName, packageName, price, periodEnd });
     assertEmailHtmlSafe(html);
+    const subject = isResearchPackageName(packageName)
+      ? "Research is live on your account"
+      : `You're in. Welcome to ${packageName}.`;
     const { error } = await client.resend.emails.send({
       from: client.from,
       to: to.trim().toLowerCase(),
-      subject: `You're in. Welcome to ${packageName}.`,
+      subject,
       html,
     });
 
@@ -382,7 +442,7 @@ export async function sendPaymentFailedEmail({
     const { error } = await client.resend.emails.send({
       from: client.from,
       to: to.trim().toLowerCase(),
-      subject: `Action needed — payment failed for ${packageName}.`,
+      subject: `Action needed: payment failed for ${packageName}.`,
       html,
     });
 
