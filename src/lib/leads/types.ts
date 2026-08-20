@@ -25,6 +25,42 @@ export const LEAD_VALUE_TYPES = ["one_time", "monthly"] as const;
 
 export type LeadValueType = (typeof LEAD_VALUE_TYPES)[number];
 
+export type LeadResearchCitation = {
+  title: string;
+  url: string;
+  publisher?: string | null;
+  snippet: string;
+};
+
+export type LeadResearchClaim = {
+  text: string;
+  citationIndex: number;
+};
+
+/** Lighter automatic pass on lead create — not a full research brief. */
+export type LeadAutoEnrichmentLink = {
+  label: string;
+  url: string;
+  citationIndex: number;
+};
+
+export type LeadAutoEnrichment = {
+  companySize: LeadResearchClaim | null;
+  likelyRole: LeadResearchClaim | null;
+  links: LeadAutoEnrichmentLink[];
+  citations: LeadResearchCitation[];
+  generatedAt: string;
+};
+
+export function leadAutoEnrichmentHasContent(
+  enrichment: LeadAutoEnrichment | null | undefined
+): enrichment is LeadAutoEnrichment {
+  if (!enrichment) return false;
+  if (enrichment.companySize?.text.trim()) return true;
+  if (enrichment.likelyRole?.text.trim()) return true;
+  return enrichment.links.some((link) => link.url.trim().length > 0);
+}
+
 export type Lead = {
   id: string;
   user_id: string;
@@ -46,6 +82,9 @@ export type Lead = {
   research_brief_generated_at?: string | null;
   /** Short summary from the latest generated brief for Research hub index. */
   research_brief_summary?: string | null;
+  /** Quiet auto-enrichment from Research (on create). */
+  auto_enrichment?: LeadAutoEnrichment | null;
+  auto_enrichment_generated_at?: string | null;
 };
 
 export type LeadFormInput = {
@@ -163,18 +202,6 @@ export type PipelineHealthResult = {
   /** Precomputed from lead records; UI formats — do not parse from summary. */
   valueAtRisk: PipelineValueSplit;
   generatedAt: string;
-};
-
-export type LeadResearchCitation = {
-  title: string;
-  url: string;
-  publisher?: string | null;
-  snippet: string;
-};
-
-export type LeadResearchClaim = {
-  text: string;
-  citationIndex: number;
 };
 
 export type LeadResearchBrief = {

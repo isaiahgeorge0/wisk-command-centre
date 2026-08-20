@@ -57,6 +57,11 @@ const FEATURE_LABELS: Record<string, string> = {
   portal_triage: "Portal Triage",
   property_valuation: "Property Valuation",
   morning_briefing: "Morning Briefing",
+  lead_research_brief: "Lead Research Brief",
+  research_competitor_check: "Competitor Check",
+  research_place_lookup: "Place Lookup",
+  research_open_chat: "Research Open Chat",
+  lead_auto_enrichment: "Lead auto-enrichment",
 };
 
 const STATUS_CLASS: Record<string, string> = {

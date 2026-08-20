@@ -91,7 +91,8 @@ export type UsageFeature =
   | "lead_research_brief"
   | "research_competitor_check"
   | "research_place_lookup"
-  | "research_open_chat";
+  | "research_open_chat"
+  | "lead_auto_enrichment";
 
 export type AIUsageByFeature = {
   feature: UsageFeature;

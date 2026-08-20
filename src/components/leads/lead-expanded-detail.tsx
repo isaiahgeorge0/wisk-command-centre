@@ -7,6 +7,7 @@ import { useState, useTransition } from "react";
 import { updateLead } from "@/app/(dashboard)/leads/actions";
 import { ConvertLeadDialog } from "@/components/leads/convert-lead-dialog";
 import { LeadActivityTab } from "@/components/leads/lead-activity-tab";
+import { LeadAutoEnrichmentCard } from "@/components/leads/lead-auto-enrichment-card";
 import { LeadForm } from "@/components/leads/lead-form";
 import { LeadStatusMenu } from "@/components/leads/lead-status-menu";
 import { Button } from "@/components/ui/button";
@@ -177,6 +178,7 @@ export function LeadExpandedDetail({
                 {lead.notes}
               </p>
             ) : null}
+            <LeadAutoEnrichmentCard lead={lead} />
             <LeadStatusMenu
               currentStatus={status}
               onStatusChange={(nextStatus) => onStatusChange?.(nextStatus)}

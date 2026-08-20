@@ -359,6 +359,7 @@ const FEATURE_MODEL_MAP: Partial<Record<UsageFeature, "sonnet" | "haiku">> = {
   morning_briefing: "sonnet", // mixed, conservative upper bound
   lead_research_brief: "sonnet",
   research_open_chat: "sonnet",
+  lead_auto_enrichment: "sonnet",
 };
 
 const MODEL_PRICING_USD_PER_TOKEN: Record<

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { z } from "zod";
 
 import { cachedSystemParts } from "@/lib/ai/anthropic";
@@ -8,6 +9,10 @@ import { logUsage } from "@/lib/ai/usage-logger";
 import { hasResearchAccess } from "@/lib/billing/access";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { toSafeActionError } from "@/lib/errors/to-safe-action-error";
+import {
+  canAutoEnrichLead,
+  runLeadAutoEnrichment,
+} from "@/lib/leads/auto-enrichment";
 import { emptyToNull, parseLeadValue } from "@/lib/leads/format";
 import type {
   ActionResult,
@@ -158,8 +163,17 @@ export async function createLead(
     };
   }
 
+  const lead = data as Lead;
+
+  // Fire-and-forget: Research auto-enrichment must not slow create.
+  if (canAutoEnrichLead(lead)) {
+    after(() =>
+      runLeadAutoEnrichment({ userId, leadId: lead.id })
+    );
+  }
+
   revalidateLeadPaths();
-  return { success: true, data: data as Lead };
+  return { success: true, data: lead };
 }
 
 export async function updateLead(
