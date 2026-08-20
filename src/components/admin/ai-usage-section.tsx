@@ -54,6 +54,7 @@ const FEATURE_LABELS: Record<string, string> = {
   research_open_chat: "Research Open Chat",
   lead_auto_enrichment: "Lead auto-enrichment",
   research_document_analysis: "Research document analysis",
+  research_tech_stack_detection: "Research tech stack",
 };
 
 const PROVIDER_LABELS: Record<string, string> = {

@@ -1,6 +1,22 @@
 import type { ActionResult } from "@/lib/leads/types";
 import type { ResearchWinRateDashboard } from "@/lib/research/win-rate";
 
+export type ResearchTechStackTool = {
+  text: string;
+  citationIndex: number;
+};
+
+export type ResearchCompetitorTechStack = {
+  tools: ResearchTechStackTool[];
+  citations: Array<{
+    title: string;
+    url: string;
+    publisher?: string | null;
+    snippet: string;
+  }>;
+  checkedAt: string;
+};
+
 export type ResearchCompetitor = {
   id: string;
   user_id: string;
@@ -10,6 +26,9 @@ export type ResearchCompetitor = {
   google_place_label: string | null;
   created_at: string;
   updated_at: string;
+  /** On-demand tech-stack inference (search-based, citation-backed). */
+  tech_stack?: ResearchCompetitorTechStack | null;
+  tech_stack_checked_at?: string | null;
 };
 
 export type ResearchCheckSource = "tavily" | "google_places";
