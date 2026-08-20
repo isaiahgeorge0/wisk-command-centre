@@ -14,7 +14,9 @@ export type UsageFeature =
   | "research_competitor_check"
   | "research_place_lookup"
   | "research_open_chat"
-  | "lead_auto_enrichment";
+  | "lead_auto_enrichment"
+  | "research_document_analysis"
+  | "research_tech_stack_detection";
 
 export async function logUsage(
   userId: string,
@@ -44,7 +46,8 @@ export async function logExternalUsage(input: {
     | "research_competitor_check"
     | "research_place_lookup"
     | "research_open_chat"
-    | "lead_auto_enrichment";
+    | "lead_auto_enrichment"
+    | "research_tech_stack_detection";
   provider: "tavily" | "exa" | "google_places";
   callCount?: number;
   estimatedCostUSD?: number;

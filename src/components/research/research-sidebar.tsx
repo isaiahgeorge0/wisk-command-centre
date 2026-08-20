@@ -34,6 +34,7 @@ const RESEARCH_NAV: NavGroup[] = [
     items: [
       { label: "Win-rate", href: "/research/win-rate" },
       { label: "Lead Intelligence", href: "/research/leads" },
+      { label: "Documents", href: "/research/documents" },
     ],
   },
   {

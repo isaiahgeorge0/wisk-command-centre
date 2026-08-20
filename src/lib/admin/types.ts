@@ -92,7 +92,9 @@ export type UsageFeature =
   | "research_competitor_check"
   | "research_place_lookup"
   | "research_open_chat"
-  | "lead_auto_enrichment";
+  | "lead_auto_enrichment"
+  | "research_document_analysis"
+  | "research_tech_stack_detection";
 
 export type AIUsageByFeature = {
   feature: UsageFeature;

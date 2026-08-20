@@ -10,8 +10,11 @@ import { logExternalUsage } from "@/lib/ai/usage-logger";
 import type { Lead } from "@/lib/leads/types";
 import { searchGooglePlaces } from "@/lib/research/google-places";
 import { getResearchCompetitorCap, loadResearchCompetitors } from "@/lib/research/data";
+import { detectCompetitorTechStack } from "@/lib/research/tech-stack";
 import type {
   ResearchActionResult,
+  ResearchCompetitor,
+  ResearchCompetitorTechStack,
   ResearchLeadIntelligenceData,
   ResearchOverviewStats,
   ResearchPageData,
@@ -38,6 +41,10 @@ const removeCompetitorSchema = z.object({
   competitorId: z.string().uuid(),
 });
 
+const techStackCompetitorSchema = z.object({
+  competitorId: z.string().uuid(),
+});
+
 const placeSearchSchema = z.object({
   query: z.string().trim().min(2, "Enter at least 2 characters"),
 });
@@ -53,6 +60,7 @@ function revalidateResearchPaths() {
   revalidatePath("/research/chat");
   revalidatePath("/research/leads");
   revalidatePath("/research/signals");
+  revalidatePath("/research/documents");
   revalidatePath("/");
 }
 
@@ -380,6 +388,62 @@ export async function removeResearchCompetitor(
     return {
       success: false,
       error: toSafeActionError(error, "Could not remove this competitor."),
+    };
+  }
+}
+
+export async function checkCompetitorTechStack(
+  competitorId: string
+): Promise<ResearchActionResult<ResearchCompetitorTechStack>> {
+  const parsed = techStackCompetitorSchema.safeParse({ competitorId });
+  if (!parsed.success) {
+    return { success: false, error: "Invalid competitor." };
+  }
+
+  try {
+    const { supabase, userId } = await getScopedSupabase();
+    await assertResearchAccess(userId);
+
+    const { data: row, error: fetchError } = await supabase
+      .from("research_competitors")
+      .select("*")
+      .eq("id", parsed.data.competitorId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (fetchError || !row) {
+      return { success: false, error: "Competitor not found." };
+    }
+
+    const competitor = row as ResearchCompetitor;
+    const techStack = await detectCompetitorTechStack({
+      userId,
+      competitor,
+    });
+
+    const { error: updateError } = await supabase
+      .from("research_competitors")
+      .update({
+        tech_stack: techStack,
+        tech_stack_checked_at: techStack.checkedAt,
+      })
+      .eq("id", competitor.id)
+      .eq("user_id", userId);
+
+    if (updateError) {
+      throw updateError;
+    }
+
+    revalidatePath("/research/watchlist");
+    revalidatePath("/research");
+    return { success: true, data: techStack };
+  } catch (error) {
+    return {
+      success: false,
+      error: toSafeActionError(
+        error,
+        "Could not check this competitor's tech stack."
+      ),
     };
   }
 }

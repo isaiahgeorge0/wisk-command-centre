@@ -18,9 +18,10 @@ import {
 } from "@/lib/ai/constants";
 import { countChatExchangesOnLocalDay } from "@/lib/ai/free-chat-cap";
 import { logUsage } from "@/lib/ai/usage-logger";
-import { hasAIAccess, hasPackageAccess } from "@/lib/billing/access";
+import { hasAIAccess, hasPackageAccess, hasResearchAccess } from "@/lib/billing/access";
 import { getAuthContext } from "@/lib/auth/get-auth-context";
 import { extractPlainTextFromNoteContent } from "@/lib/notes/utils";
+import { formatResearchDocumentContext } from "@/lib/research/document-analysis";
 import { answerOpenResearchQuestion } from "@/lib/research/open-chat";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -28,6 +29,7 @@ import {
   BRAINSTORM_SURFACE_SCOPE,
   getScopeKeyTitle,
   isWinstonScopeKey,
+  parseResearchDocumentScope,
 } from "@/lib/winston/scope";
 import { systemPromptForScope } from "@/lib/winston/context-resolver";
 
@@ -80,6 +82,11 @@ function formatNoteContext(title: string, plainText: string): string {
 Note content:
 ${clipped.trim() || "(empty note)"}`;
 }
+
+const RESEARCH_DOCUMENT_SYSTEM_PROMPT = `You are Winston answering follow-up questions about one uploaded Research document.
+Ground every answer only in the document text provided. Do not use outside knowledge or invent facts.
+Number guardrail: any figure you restate must appear character-for-character in the document. Never infer, round, or recalculate numbers.
+Be concise and plain. If the document does not contain the answer, say so clearly.`;
 
 function encodeSse(event: StreamEvent): Uint8Array {
   return new TextEncoder().encode(`data: ${JSON.stringify(event)}\n\n`);
@@ -202,6 +209,10 @@ export async function POST(request: Request) {
       "research_pro",
       admin
     );
+    const canAccessResearch = await hasResearchAccess(userId, admin);
+    let researchDocumentScope = scopeKey
+      ? parseResearchDocumentScope(scopeKey)
+      : null;
 
     if (!canAccessWinston) {
       const usedToday = await countChatExchangesOnLocalDay(
@@ -209,8 +220,8 @@ export async function POST(request: Request) {
         prefs?.timezone as string | null
       );
       if (usedToday >= WINSTON_FREE_DAILY_MESSAGE_CAP) {
-        // Research Pro open chat has its own gate below; don't apply free chat cap.
-        if (scopeKey !== "research") {
+        // Research surfaces have their own gates below; don't apply free chat cap.
+        if (scopeKey !== "research" && !researchDocumentScope) {
           return NextResponse.json(
             {
               error:
@@ -279,10 +290,12 @@ export async function POST(request: Request) {
     }
     }
 
-    // ── Resolve note scope (optional) ─────────────────────────────────────────
+    // ── Resolve note / research-document scope (optional) ─────────────────────
     let noteId = incomingNoteId ?? null;
     let noteTitle = "";
     let notePlainText = "";
+    let researchDocumentName = "";
+    let researchDocumentText = "";
 
     if (incomingConversationId && !noteId && !scopeKey) {
       const { data: existingConv } = await supabase
@@ -304,6 +317,10 @@ export async function POST(request: Request) {
       }
     }
 
+    researchDocumentScope = scopeKey
+      ? parseResearchDocumentScope(scopeKey)
+      : null;
+
     if (noteId) {
       const { data: note, error: noteError } = await supabase
         .from("notes")
@@ -320,7 +337,49 @@ export async function POST(request: Request) {
       notePlainText = extractPlainTextFromNoteContent(note.content);
     }
 
-    if (!canAccessWinston && (noteId || (scopeKey !== "global" && scopeKey !== "research"))) {
+    if (researchDocumentScope) {
+      if (!canAccessResearch) {
+        return NextResponse.json(
+          { error: "Research access is required for document questions." },
+          { status: 403 }
+        );
+      }
+
+      const { data: researchDoc, error: researchDocError } = await supabase
+        .from("research_documents")
+        .select("id, name, extracted_text, status")
+        .eq("id", researchDocumentScope.documentId)
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (researchDocError || !researchDoc) {
+        return NextResponse.json(
+          { error: "Document not found" },
+          { status: 404 }
+        );
+      }
+
+      if (
+        researchDoc.status !== "ready" ||
+        !String(researchDoc.extracted_text ?? "").trim()
+      ) {
+        return NextResponse.json(
+          { error: "This document is not ready for questions yet." },
+          { status: 400 }
+        );
+      }
+
+      researchDocumentName = String(researchDoc.name ?? "Document");
+      researchDocumentText = String(researchDoc.extracted_text ?? "");
+    }
+
+    if (
+      !canAccessWinston &&
+      (noteId ||
+        (scopeKey !== "global" &&
+          scopeKey !== "research" &&
+          !researchDocumentScope))
+    ) {
       return NextResponse.json(
         { error: "Winston access not enabled" },
         { status: 403 }
@@ -636,9 +695,11 @@ export async function POST(request: Request) {
       });
     }
 
-    const chatSystemPrompt = systemPromptForScope(scopeKey, Boolean(noteId));
+    const chatSystemPrompt = researchDocumentScope
+      ? RESEARCH_DOCUMENT_SYSTEM_PROMPT
+      : systemPromptForScope(scopeKey, Boolean(noteId));
 
-    // Note-scoped chats stay grounded in the note only — no business digest.
+    // Note / research-document chats stay grounded in that source only — no business digest.
     const system = noteId
       ? cachedSystemParts([
           { text: chatSystemPrompt },
@@ -648,16 +709,28 @@ export async function POST(request: Request) {
             ttl: "5m",
           },
         ])
-      : cachedSystemParts([
-          { text: chatSystemPrompt },
-          {
-            text: `Here is the user's current business context:\n${formatBusinessContext(
-              await getCachedContext(userId, supabase)
-            )}`,
-            cache: true,
-            ttl: "1h",
-          },
-        ]);
+      : researchDocumentScope
+        ? cachedSystemParts([
+            { text: chatSystemPrompt },
+            {
+              text: formatResearchDocumentContext(
+                researchDocumentName,
+                researchDocumentText
+              ),
+              cache: true,
+              ttl: "5m",
+            },
+          ])
+        : cachedSystemParts([
+            { text: chatSystemPrompt },
+            {
+              text: `Here is the user's current business context:\n${formatBusinessContext(
+                await getCachedContext(userId, supabase)
+              )}`,
+              cache: true,
+              ttl: "1h",
+            },
+          ]);
 
     const claudeMessages = [
       ...historyMessages.map((m) => ({ role: m.role, content: m.content })),
@@ -799,7 +872,14 @@ export async function POST(request: Request) {
             return;
           }
 
-          await logUsage(userId, "chat", inputTokens, outputTokens);
+          await logUsage(
+            userId,
+            researchDocumentScope
+              ? "research_document_analysis"
+              : "chat",
+            inputTokens,
+            outputTokens
+          );
 
           send({
             type: "done",

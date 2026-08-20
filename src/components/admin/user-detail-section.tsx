@@ -62,6 +62,8 @@ const FEATURE_LABELS: Record<string, string> = {
   research_place_lookup: "Place Lookup",
   research_open_chat: "Research Open Chat",
   lead_auto_enrichment: "Lead auto-enrichment",
+  research_document_analysis: "Research document analysis",
+  research_tech_stack_detection: "Research tech stack",
 };
 
 const STATUS_CLASS: Record<string, string> = {

@@ -10,6 +10,8 @@
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+const RESEARCH_DOCUMENT_SCOPE_PREFIX = "research-doc-";
+
 export const WINSTON_PAGE_SCOPE_KEYS = [
   "global",
   "notes",
@@ -101,14 +103,33 @@ export function recordScopeKey(
   return `${entity}:${recordId}`;
 }
 
+/** Document-grounded Research Q&A: `research-doc-{uuid}`. */
+export function researchDocumentScopeKey(documentId: string): string {
+  return `${RESEARCH_DOCUMENT_SCOPE_PREFIX}${documentId}`;
+}
+
+export function parseResearchDocumentScope(
+  value: string
+): { documentId: string } | null {
+  if (!value.startsWith(RESEARCH_DOCUMENT_SCOPE_PREFIX)) return null;
+  const documentId = value.slice(RESEARCH_DOCUMENT_SCOPE_PREFIX.length);
+  if (!UUID_RE.test(documentId)) return null;
+  return { documentId };
+}
+
 export function isWinstonScopeKey(value: string): boolean {
-  return isWinstonPageScopeKey(value) || parseWinstonRecordScope(value) !== null;
+  return (
+    isWinstonPageScopeKey(value) ||
+    parseWinstonRecordScope(value) !== null ||
+    parseResearchDocumentScope(value) !== null
+  );
 }
 
 export function getScopeKeyTitle(scopeKey: string): string {
   if (isWinstonPageScopeKey(scopeKey)) return SCOPE_KEY_TITLES[scopeKey];
   const parsed = parseWinstonRecordScope(scopeKey);
   if (parsed) return `${RECORD_ENTITY_TITLES[parsed.entity]} brainstorm`;
+  if (parseResearchDocumentScope(scopeKey)) return "Document Q&A";
   return "Winston";
 }
 
