@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useWinstonSidebar } from "@/components/winston/winston-sidebar-context";
 
 /**
- * Opens research-scoped Winston when arriving via /research?askWinston=1
+ * Opens research-scoped Winston when arriving via /research/chat?askWinston=1
  * (e.g. Research Pro post-checkout CTA), then strips the query param.
  */
 export function OpenResearchWinstonOnQuery({
@@ -20,7 +20,7 @@ export function OpenResearchWinstonOnQuery({
   useEffect(() => {
     if (!enabled) return;
     openSidebar({ tier: "section", section: "research" });
-    router.replace("/research", { scroll: false });
+    router.replace("/research/chat", { scroll: false });
   }, [enabled, openSidebar, router]);
 
   return null;

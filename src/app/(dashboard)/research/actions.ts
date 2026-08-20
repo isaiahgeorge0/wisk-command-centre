@@ -12,6 +12,8 @@ import { searchGooglePlaces } from "@/lib/research/google-places";
 import { getResearchCompetitorCap, loadResearchCompetitors } from "@/lib/research/data";
 import type {
   ResearchActionResult,
+  ResearchLeadIntelligenceData,
+  ResearchOverviewStats,
   ResearchPageData,
   ResearchPlaceMatch,
 } from "@/lib/research/types";
@@ -46,6 +48,11 @@ const winRatePeriodSchema = z.object({
 
 function revalidateResearchPaths() {
   revalidatePath("/research");
+  revalidatePath("/research/watchlist");
+  revalidatePath("/research/win-rate");
+  revalidatePath("/research/chat");
+  revalidatePath("/research/leads");
+  revalidatePath("/research/signals");
   revalidatePath("/");
 }
 
@@ -80,20 +87,152 @@ async function loadLeadsForWinRate(
 }
 
 export async function getResearchPageData(): Promise<ResearchPageData | null> {
-  const { userId } = await getScopedSupabase();
-  const { admin, canAccessResearchPro } = await assertResearchAccess(userId);
+  try {
+    const { userId } = await getScopedSupabase();
+    const { admin, canAccessResearchPro } = await assertResearchAccess(userId);
 
-  const [competitors, leads] = await Promise.all([
-    loadResearchCompetitors(admin, userId),
-    loadLeadsForWinRate(userId),
-  ]);
+    const [competitors, leads] = await Promise.all([
+      loadResearchCompetitors(admin, userId),
+      loadLeadsForWinRate(userId),
+    ]);
 
-  return {
-    canAccessResearchPro,
-    competitorCap: getResearchCompetitorCap(canAccessResearchPro),
-    competitors,
-    winRate: buildResearchWinRateDashboard(leads, "this_month"),
-  };
+    return {
+      canAccessResearchPro,
+      competitorCap: getResearchCompetitorCap(canAccessResearchPro),
+      competitors,
+      winRate: buildResearchWinRateDashboard(leads, "this_month"),
+    };
+  } catch (error) {
+    console.error("getResearchPageData failed:", error);
+    return null;
+  }
+}
+
+export async function getResearchOverviewStats(): Promise<ResearchOverviewStats | null> {
+  try {
+    const { supabase, userId } = await getScopedSupabase();
+    const { admin, canAccessResearchPro } = await assertResearchAccess(userId);
+
+    const monthStart = new Date();
+    monthStart.setUTCDate(1);
+    monthStart.setUTCHours(0, 0, 0, 0);
+    const monthStartISO = monthStart.toISOString();
+
+    const [
+      competitors,
+      leads,
+      briefsThisMonthResult,
+      briefsTotalResult,
+      leadsWithoutBriefResult,
+    ] = await Promise.all([
+      loadResearchCompetitors(admin, userId),
+      loadLeadsForWinRate(userId),
+      supabase
+        .from("leads")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .gte("research_brief_generated_at", monthStartISO),
+      supabase
+        .from("leads")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .not("research_brief_generated_at", "is", null),
+      supabase
+        .from("leads")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .is("research_brief_generated_at", null),
+    ]);
+
+    const winRate = buildResearchWinRateDashboard(leads, "this_month");
+    const signalCount = competitors.reduce(
+      (sum, item) => sum + item.latestMeaningfulSignals.length,
+      0
+    );
+
+    return {
+      canAccessResearchPro,
+      competitorCap: getResearchCompetitorCap(canAccessResearchPro),
+      competitorCount: competitors.length,
+      signalCount,
+      winRatePercent: winRate.winRatePercent,
+      winRatePeriodLabel: winRate.periodLabel,
+      briefsThisMonth: briefsThisMonthResult.count ?? 0,
+      briefsTotal: briefsTotalResult.count ?? 0,
+      leadsWithoutBrief: leadsWithoutBriefResult.count ?? 0,
+    };
+  } catch (error) {
+    console.error("getResearchOverviewStats failed:", error);
+    return null;
+  }
+}
+
+export async function getResearchLeadIntelligence(): Promise<ResearchLeadIntelligenceData | null> {
+  try {
+    const { supabase, userId } = await getScopedSupabase();
+    await assertResearchAccess(userId);
+
+    const monthStart = new Date();
+    monthStart.setUTCDate(1);
+    monthStart.setUTCHours(0, 0, 0, 0);
+    const monthStartISO = monthStart.toISOString();
+
+    const [
+      briefsResult,
+      briefsThisMonthResult,
+      briefsTotalResult,
+      leadsWithoutBriefResult,
+    ] = await Promise.all([
+      supabase
+        .from("leads")
+        .select(
+          "id, name, status, service_interest, research_brief_summary, research_brief_generated_at"
+        )
+        .eq("user_id", userId)
+        .not("research_brief_generated_at", "is", null)
+        .order("research_brief_generated_at", { ascending: false })
+        .limit(50),
+      supabase
+        .from("leads")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .gte("research_brief_generated_at", monthStartISO),
+      supabase
+        .from("leads")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .not("research_brief_generated_at", "is", null),
+      supabase
+        .from("leads")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .is("research_brief_generated_at", null),
+    ]);
+
+    if (briefsResult.error) {
+      throw briefsResult.error;
+    }
+
+    return {
+      briefsThisMonth: briefsThisMonthResult.count ?? 0,
+      briefsTotal: briefsTotalResult.count ?? 0,
+      leadsWithoutBrief: leadsWithoutBriefResult.count ?? 0,
+      briefs: (briefsResult.data ?? []).map((row) => ({
+        id: row.id as string,
+        name: (row.name as string) || "Untitled lead",
+        status: (row.status as string) || "new",
+        serviceInterest: (row.service_interest as string) || "",
+        summary:
+          typeof row.research_brief_summary === "string"
+            ? row.research_brief_summary
+            : null,
+        generatedAt: row.research_brief_generated_at as string,
+      })),
+    };
+  } catch (error) {
+    console.error("getResearchLeadIntelligence failed:", error);
+    return null;
+  }
 }
 
 export async function getResearchWinRateDashboard(

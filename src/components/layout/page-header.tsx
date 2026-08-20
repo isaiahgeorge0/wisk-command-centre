@@ -44,6 +44,10 @@ const SECTION_ACCENT_CLASSES = {
     iconBg: "bg-wisk-section-notes/15",
     title: "text-wisk-section-notes",
   },
+  research: {
+    iconBg: "bg-wisk-section-research/15",
+    title: "text-wisk-section-research",
+  },
   properties: {
     iconBg: "bg-[#e8001d]/15",
     title: "text-[#e8001d]",

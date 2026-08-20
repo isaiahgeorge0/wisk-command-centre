@@ -63,6 +63,7 @@ const SECTION_COLOURS_DARK = {
   properties: "#e8001d",
   calendar: "#00c4b4",
   winston: "#8b00ff",
+  research: "#38bdf8",
 } as const;
 
 const SECTION_COLOURS_LIGHT = {
@@ -76,6 +77,7 @@ const SECTION_COLOURS_LIGHT = {
   properties: "#e8001d",
   calendar: "#007a70",
   winston: "#6200b3",
+  research: "#0369a1",
 } as const;
 
 const SUGGESTION_DOT_CLASSES: Record<string, string> = {

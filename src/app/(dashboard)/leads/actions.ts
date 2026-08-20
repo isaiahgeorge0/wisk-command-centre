@@ -566,6 +566,25 @@ Generate the lead intelligence brief JSON now.`;
       JSON.parse(synthesisResponse.jsonText)
     );
 
+    const generatedAt = new Date().toISOString();
+
+    // Stamp for Research hub Lead Intelligence index (does not change Leads UI).
+    const { error: stampError } = await supabase
+      .from("leads")
+      .update({
+        research_brief_generated_at: generatedAt,
+        research_brief_summary: synthesis.summary,
+      })
+      .eq("id", parsed.data.leadId)
+      .eq("user_id", userId);
+
+    if (stampError) {
+      console.error("lead research brief stamp failed:", stampError);
+    } else {
+      revalidatePath("/research");
+      revalidatePath("/research/leads");
+    }
+
     return {
       success: true,
       data: {
@@ -580,7 +599,7 @@ Generate the lead intelligence brief JSON now.`;
         ),
         painPoints: clampCitedClaims(synthesis.painPoints, citations.length),
         citations,
-        generatedAt: new Date().toISOString(),
+        generatedAt,
       },
     };
   } catch (error) {

@@ -36,7 +36,7 @@ const RESEARCH_SUCCESS: Record<"research" | "research_pro", ResearchSuccessCopy>
       headline: "You're in. Winston can go deeper now.",
       body: "Research Pro is live. Everything in Research, plus: ask Winston anything about your market or a competitor in the open chat, every answer comes with real sources, not a guess. When something worth acting on turns up, Winston can turn it straight into a content idea or a talking point for a lead, you just review and approve. Start with your first competitor, or jump straight into a question you've been sitting on.",
       ctaLabel: "Ask Winston →",
-      ctaHref: "/research?askWinston=1",
+      ctaHref: "/research/chat?askWinston=1",
     },
   };
 

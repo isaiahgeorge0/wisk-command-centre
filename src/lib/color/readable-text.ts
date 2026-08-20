@@ -67,6 +67,7 @@ export const SECTION_ACCENT_KEYS = [
   "winston",
   "email",
   "notes",
+  "research",
 ] as const;
 
 export type SectionAccentKey = (typeof SECTION_ACCENT_KEYS)[number];
@@ -84,6 +85,7 @@ export const SECTION_ACCENT_HEX = {
     winston: "#6200b3",
     email: "#3730a3",
     notes: "#a16207",
+    research: "#0369a1",
   },
   dark: {
     projects: "#aca0ff",
@@ -96,6 +98,7 @@ export const SECTION_ACCENT_HEX = {
     winston: "#8b00ff",
     email: "#818cf8",
     notes: "#fbbf24",
+    research: "#38bdf8",
   },
 } as const satisfies Record<
   "light" | "dark",

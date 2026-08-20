@@ -40,6 +40,7 @@
   --color-wisk-section-winston: var(--wisk-section-winston);
   --color-wisk-section-email: var(--wisk-section-email);
   --color-wisk-section-notes: var(--wisk-section-notes);
+  --color-wisk-section-research: var(--wisk-section-research);
   /* On-accent text — derived from section hex luminance (see src/lib/color/readable-text.ts) */
   --color-wisk-section-projects-fg: var(--wisk-section-projects-fg);
   --color-wisk-section-tasks-fg: var(--wisk-section-tasks-fg);
@@ -51,6 +52,7 @@
   --color-wisk-section-winston-fg: var(--wisk-section-winston-fg);
   --color-wisk-section-email-fg: var(--wisk-section-email-fg);
   --color-wisk-section-notes-fg: var(--wisk-section-notes-fg);
+  --color-wisk-section-research-fg: var(--wisk-section-research-fg);
   --color-wisk-dark: var(--wisk-dark);
   --color-wisk-coral: var(--wisk-coral);
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
@@ -133,6 +135,7 @@
   --wisk-section-winston: #6200b3;
   --wisk-section-email: #3730a3;
   --wisk-section-notes: #a16207;
+  --wisk-section-research: #0369a1;
   /* Solid fill text — getReadableTextColor() on the hex above */
   --wisk-section-projects-fg: #ffffff;
   --wisk-section-tasks-fg: #ffffff;
@@ -144,6 +147,7 @@
   --wisk-section-winston-fg: #ffffff;
   --wisk-section-email-fg: #ffffff;
   --wisk-section-notes-fg: #ffffff;
+  --wisk-section-research-fg: #ffffff;
   --wisk-dark: #141b27;
   --wisk-purple: var(--wisk-lilac);
   --wisk-teal: var(--wisk-turquoise);
@@ -203,6 +207,7 @@
   --wisk-section-winston: #8b00ff;
   --wisk-section-email: #818cf8;
   --wisk-section-notes: #fbbf24;
+  --wisk-section-research: #38bdf8;
   /* Solid fill text — getReadableTextColor() on the hex above */
   --wisk-section-projects-fg: #000000;
   --wisk-section-tasks-fg: #000000;
@@ -214,6 +219,7 @@
   --wisk-section-winston-fg: #ffffff;
   --wisk-section-email-fg: #000000;
   --wisk-section-notes-fg: #000000;
+  --wisk-section-research-fg: #000000;
   --wisk-dark: #141b27;
   --wisk-purple: var(--wisk-lilac);
   --wisk-teal: var(--wisk-turquoise);

@@ -61,4 +61,32 @@ export type ResearchPageData = {
   winRate: ResearchWinRateDashboard;
 };
 
+export type ResearchOverviewStats = {
+  canAccessResearchPro: boolean;
+  competitorCap: number;
+  competitorCount: number;
+  signalCount: number;
+  winRatePercent: number | null;
+  winRatePeriodLabel: string;
+  briefsThisMonth: number;
+  briefsTotal: number;
+  leadsWithoutBrief: number;
+};
+
+export type ResearchLeadBriefIndexItem = {
+  id: string;
+  name: string;
+  status: string;
+  serviceInterest: string;
+  summary: string | null;
+  generatedAt: string;
+};
+
+export type ResearchLeadIntelligenceData = {
+  briefsThisMonth: number;
+  briefsTotal: number;
+  briefs: ResearchLeadBriefIndexItem[];
+  leadsWithoutBrief: number;
+};
+
 export type ResearchActionResult<T = void> = ActionResult<T>;

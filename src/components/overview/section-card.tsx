@@ -30,6 +30,76 @@ type SectionCardProps = {
   isExpanded?: boolean;
 };
 
+/** Accent colour CSS vars used by SectionCard depth treatment. */
+export function sectionAccentStyle(accent: string): CSSProperties {
+  return {
+    "--section-accent-border": hexToRgba(accent, 0.3),
+    "--section-accent-shadow": hexToRgba(accent, 0.15),
+  } as CSSProperties;
+}
+
+/** Coloured icon chip matching Overview SectionCard. */
+export function SectionIconChip({
+  accent,
+  children,
+  className,
+}: {
+  accent: string;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex size-8 items-center justify-center rounded-lg md:size-10",
+        className
+      )}
+      style={{ background: hexToRgba(accent, 0.08) }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/**
+ * Non-expandable surface with the same depth treatment as SectionCard
+ * (accent top bar, border/shadow via hexToRgba). Use for section pages
+ * that need Overview-style cards without the expand/modal interaction.
+ */
+export function SectionSurface({
+  accent,
+  cardId,
+  children,
+  className,
+  lit = true,
+}: {
+  accent: string;
+  cardId?: string;
+  children: ReactNode;
+  className?: string;
+  /** When true, applies a soft always-on accent border/shadow (Research). */
+  lit?: boolean;
+}) {
+  return (
+    <motion.div
+      layoutId={cardId ? `surface-${cardId}` : undefined}
+      className={cn(
+        "relative flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card/60 p-5 transition-all duration-200 md:p-6",
+        lit &&
+          "border-[color:var(--section-accent-border)] shadow-[0_0_24px_-6px_var(--section-accent-shadow)]",
+        className
+      )}
+      style={sectionAccentStyle(accent)}
+    >
+      <div
+        className="absolute inset-x-0 top-0 h-[2px] rounded-t-2xl"
+        style={{ background: accent }}
+      />
+      {children}
+    </motion.div>
+  );
+}
+
 export function SectionCard({
   title,
   accent,
@@ -43,10 +113,7 @@ export function SectionCard({
   onExpand,
   isExpanded = false,
 }: SectionCardProps) {
-  const accentStyles = {
-    "--section-accent-border": hexToRgba(accent, 0.3),
-    "--section-accent-shadow": hexToRgba(accent, 0.15),
-  } as CSSProperties;
+  const accentStyles = sectionAccentStyle(accent);
 
   return (
     <motion.div
@@ -71,12 +138,7 @@ export function SectionCard({
 
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center">
-          <div
-            className="flex size-8 items-center justify-center rounded-lg md:size-10"
-            style={{ background: hexToRgba(accent, 0.08) }}
-          >
-            {icon}
-          </div>
+          <SectionIconChip accent={accent}>{icon}</SectionIconChip>
           <span className="ml-2 text-sm font-semibold text-foreground">
             {title}
           </span>

@@ -42,6 +42,10 @@ export type Lead = {
   follow_up_date: string | null;
   created_at: string;
   updated_at: string;
+  /** Set when a Research lead intelligence brief is generated (index stamp). */
+  research_brief_generated_at?: string | null;
+  /** Short summary from the latest generated brief for Research hub index. */
+  research_brief_summary?: string | null;
 };
 
 export type LeadFormInput = {
