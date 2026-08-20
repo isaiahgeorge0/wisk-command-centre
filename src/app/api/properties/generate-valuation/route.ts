@@ -108,7 +108,7 @@ export async function POST(request: Request) {
         confidence: rentalUnavailable ? "low" : result.confidence,
         search_level: result.search_level,
         reasoning: rentalUnavailable
-          ? "Unable to generate estimate — the market analysis could not be parsed from the AI response. Please try again or add manual comparables."
+          ? "Unable to generate estimate. The market analysis could not be parsed from the AI response. Please try again or add manual comparables."
           : result.reasoning,
         web_sources: result.web_sources.length > 0 ? result.web_sources : null,
         manual_comparables:

@@ -56,7 +56,7 @@ export function buildDeadlineTeaser(
   pastDeadlineCount: number
 ): string {
   const invitation =
-    "I've put together an overview of what matters most today — want to see it?";
+    "I've put together an overview of what matters most today, want to see it?";
 
   if (pastDeadlineCount > 0 && approachingCount > 0) {
     const pastLabel =
@@ -86,5 +86,5 @@ export function buildDeadlineTeaser(
     return `${greetingLine}. ${approachingLabel}. ${invitation}`;
   }
 
-  return `${greetingLine}. Here's a clear look at what matters most today — want to see it?`;
+  return `${greetingLine}. Here's a clear look at what matters most today, want to see it?`;
 }

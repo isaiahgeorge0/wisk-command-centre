@@ -90,7 +90,7 @@ function buildCertificateDocumentName(
   certificateType: CertificateType,
   propertyName: string
 ): string {
-  return `${getCertificateTypeDisplayName(certificateType)} Certificate — ${propertyName}`;
+  return `${getCertificateTypeDisplayName(certificateType)} Certificate, ${propertyName}`;
 }
 
 function validateSelectedFile(file: File): string | null {

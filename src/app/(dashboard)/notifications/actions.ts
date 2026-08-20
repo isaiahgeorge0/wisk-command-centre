@@ -203,7 +203,7 @@ export async function createAwaitingDateNotification(input: {
       type: "awaiting_date",
       reference_id: parsed.data.referenceId,
       title: "This idea needs a date",
-      message: `“${parsed.data.title}” — set one when you're ready.`,
+      message: `“${parsed.data.title}”, set one when you're ready.`,
       link_to: parsed.data.linkTo,
     },
     { onConflict: "user_id,type,reference_id", ignoreDuplicates: true }

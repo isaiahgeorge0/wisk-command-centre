@@ -128,7 +128,7 @@ export function WinstonQuickAdd({
     return (
       <div className="flex min-h-0 flex-1 flex-col px-4 py-4">
         <p className="mb-3 text-xs text-muted-foreground">
-          Add something in a few fields — no chat required.
+          Add something in a few fields, no chat required.
         </p>
         <div className="grid grid-cols-2 gap-2">
           {KINDS.map((item) => (

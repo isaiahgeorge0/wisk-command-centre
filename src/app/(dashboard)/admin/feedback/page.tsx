@@ -10,7 +10,7 @@ export default async function AdminFeedbackPage() {
       <div>
         <h1 className={PAGE_TITLE_CLASS}>Feedback</h1>
         <p className={PAGE_SUBTITLE_CLASS}>
-          User submissions — bugs, feature requests, and general feedback.
+          User submissions, bugs, feature requests, and general feedback.
         </p>
       </div>
       <FeedbackClient feedback={feedback} />

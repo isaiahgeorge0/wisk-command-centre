@@ -71,7 +71,7 @@ export type DigestResult = {
 
 // ─── Prompt builders ──────────────────────────────────────────────────────────
 
-const BASE_SYSTEM_PROMPT = `You are Winston, the AI business assistant for WISK — a command centre for ambitious entrepreneurs, creators, and business owners. Your role is to provide a weekly business digest that feels like a trusted advisor — constructive, insightful, warm but direct. You notice patterns, celebrate wins, flag risks early, and always give one clear recommendation for the week ahead. You never lecture or over-criticise. You are on the user's side. Refer to people and records by name — never restate currency amounts, values, £ figures, percentages, or "k" shorthand. Do not invent, round, abbreviate, convert, or recalculate any figure. Exact amounts are attached by the application from source data and shown in the UI.`;
+const BASE_SYSTEM_PROMPT = `You are Winston, the AI business assistant for WISK: a command centre for ambitious entrepreneurs, creators, and business owners. Your role is to provide a weekly business digest that feels like a trusted advisor: constructive, insightful, warm but direct. You notice patterns, celebrate wins, flag risks early, and always give one clear recommendation for the week ahead. You never lecture or over-criticise. You are on the user's side. Refer to people and records by name. Never restate currency amounts, values, £ figures, percentages, or "k" shorthand. Do not invent, round, abbreviate, convert, or recalculate any figure. Exact amounts are attached by the application from source data and shown in the UI.`;
 
 const PRO_SYSTEM_APPENDIX = ` As an AI Pro subscriber, you have access to deeper analytics. Provide richer, more specific qualitative insights. Your recommendations should be actionable within 48 hours. Never restate currency amounts, values, £ figures, percentages, or "k" shorthand. Do not invent, round, abbreviate, convert, or recalculate any figure. Exact amounts are attached by the application from source data and shown in the UI.`;
 
@@ -104,14 +104,14 @@ function buildUserPrompt(ctx: UserContext): string {
   if (isPro) {
     lines.push(`## CROSS-SECTION PATTERNS`);
     lines.push(
-      `Analyse patterns across sections — does content publishing correlate with lead generation? Do task completion rates reflect project health? Flag any concerning patterns.`
+      `Analyse patterns across sections, does content publishing correlate with lead generation? Do task completion rates reflect project health? Flag any concerning patterns.`
     );
     lines.push("");
   }
 
   lines.push(`---`);
   lines.push(
-    `Respond ONLY with valid JSON — no markdown fences, no preamble, no commentary outside the JSON. The JSON must exactly match this TypeScript type:`
+    `Respond ONLY with valid JSON, no markdown fences, no preamble, no commentary outside the JSON. The JSON must exactly match this TypeScript type:`
   );
   lines.push(`{`);
   lines.push(`  "weekSummary": string,   // 2-3 sentence overview of the week`);
@@ -130,20 +130,20 @@ function buildUserPrompt(ctx: UserContext): string {
       `  "crossSectionInsights": string[], // 2-3 qualitative patterns across sections`
     );
     lines.push(
-      `  "leadIntelligence": string,       // qualitative lead insight — no currency, values, or %`
+      `  "leadIntelligence": string,       // qualitative lead insight, no currency, values, or %`
     );
     lines.push(
-      `  "contentStrategy": string,        // qualitative content recommendation — no counts or rates`
+      `  "contentStrategy": string,        // qualitative content recommendation, no counts or rates`
     );
     lines.push(
-      `  "goalVelocityInsight": string,    // qualitative goal trajectory — no percentages`
+      `  "goalVelocityInsight": string,    // qualitative goal trajectory, no percentages`
     );
     lines.push(`  "proRecommendations": string[]    // 3 specific actions`);
   }
   lines.push(`}`);
   lines.push("");
   lines.push(
-    "Figures in the context above are context only — do not copy currency amounts, values, £ figures, percentages, or \"k\" shorthand into any JSON field. Exact amounts are attached by the application from source data and shown in the UI."
+    "Figures in the context above are context only, do not copy currency amounts, values, £ figures, percentages, or \"k\" shorthand into any JSON field. Exact amounts are attached by the application from source data and shown in the UI."
   );
 
   return lines.join("\n");

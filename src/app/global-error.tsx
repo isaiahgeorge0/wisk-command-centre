@@ -38,7 +38,7 @@ export default function GlobalError({
               Something went wrong
             </h1>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
-              We&apos;ve hit an unexpected error. Try refreshing the page — if
+              We&apos;ve hit an unexpected error. Try refreshing the page. If
               it keeps happening, let us know.
             </p>
 

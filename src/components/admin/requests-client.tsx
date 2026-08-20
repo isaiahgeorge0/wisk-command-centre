@@ -207,7 +207,7 @@ export function RequestsClient({ requests }: RequestsClientProps) {
                           {waitingDays}d
                         </span>
                       ) : (
-                        "—"
+                        "-"
                       )}
                     </td>
                     <td className="px-4 py-3">
@@ -260,7 +260,7 @@ export function RequestsClient({ requests }: RequestsClientProps) {
                           </Button>
                         </div>
                       ) : (
-                        <span className="text-muted-foreground">—</span>
+                        <span className="text-muted-foreground">-</span>
                       )}
                     </td>
                   </tr>

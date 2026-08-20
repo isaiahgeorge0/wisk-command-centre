@@ -257,7 +257,7 @@ export function SignInForm() {
               ) : null}
               {magicSent ? (
                 <p className="text-sm text-wisk-lime">
-                  Magic link sent — check your inbox.
+                  Magic link sent, check your inbox.
                 </p>
               ) : null}
 

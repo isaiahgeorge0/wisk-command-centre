@@ -9,7 +9,7 @@ export function assertMorningBriefingCronAllowed(
 ): void {
   if (process.env.ALLOW_LOCAL_MORNING_BRIEFING_CRON === "true") {
     console.warn(
-      `[morning-briefing/${action}] ALLOW_LOCAL_MORNING_BRIEFING_CRON=true — running outside production`
+      `[morning-briefing/${action}] ALLOW_LOCAL_MORNING_BRIEFING_CRON=true, running outside production`
     );
     return;
   }

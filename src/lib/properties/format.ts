@@ -16,7 +16,7 @@ export function parseOptionalNumber(
 export function formatPropertyCurrency(
   value: number | null | undefined
 ): string {
-  if (value == null) return "—";
+  if (value == null) return "-";
   return new Intl.NumberFormat("en-GB", {
     style: "currency",
     currency: "GBP",
@@ -52,12 +52,12 @@ export function calculateAnnualYield(
 }
 
 export function formatYieldPercent(yieldPercent: number | null): string {
-  if (yieldPercent == null) return "—";
+  if (yieldPercent == null) return "-";
   return `${yieldPercent.toFixed(1)}%`;
 }
 
 export function formatPropertyDate(date: string | null | undefined): string {
-  if (!date) return "—";
+  if (!date) return "-";
   return new Intl.DateTimeFormat("en-GB", {
     day: "numeric",
     month: "short",
@@ -129,7 +129,7 @@ export function daysUntilExpiryClass(days: number | null): string {
 }
 
 export function formatFileSize(bytes: number | null | undefined): string {
-  if (bytes == null || bytes <= 0) return "—";
+  if (bytes == null || bytes <= 0) return "-";
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;

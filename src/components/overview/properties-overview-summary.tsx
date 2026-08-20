@@ -107,7 +107,7 @@ export function PropertiesOverviewSummary({
   rentDueFlags.forEach((flag) => {
     timelineEvents.push({
       date: flag.due_date,
-      label: `${flag.tenant_name} — ${formatPropertyCurrency(flag.amount)}`,
+      label: `${flag.tenant_name}, ${formatPropertyCurrency(flag.amount)}`,
       sublabel: flag.property_address,
       type: "rent",
       href: "/properties/dashboard",
@@ -145,7 +145,7 @@ export function PropertiesOverviewSummary({
     if (mortgage.fixed_rate_end_date) {
       timelineEvents.push({
         date: mortgage.fixed_rate_end_date,
-        label: `${mortgage.lender} — fixed rate ends`,
+        label: `${mortgage.lender}, fixed rate ends`,
         sublabel: mortgage.properties?.name ?? "Property",
         type: "mortgage",
         href: "/properties/finances",
@@ -186,7 +186,7 @@ export function PropertiesOverviewSummary({
     .filter((f) => f.days_overdue > 0)
     .forEach((f) => {
       needsAttention.push({
-        label: `Rent overdue — ${f.tenant_name}`,
+        label: `Rent overdue, ${f.tenant_name}`,
         sublabel: `${f.days_overdue} day${f.days_overdue === 1 ? "" : "s"} overdue · ${formatPropertyCurrency(f.amount)}`,
         href: "/properties/dashboard",
         severity: "high",
@@ -206,7 +206,7 @@ export function PropertiesOverviewSummary({
 
   pendingAccessRequests.forEach((r) => {
     needsAttention.push({
-      label: `Access request — ${accessRequestContractorName(r)}`,
+      label: `Access request, ${accessRequestContractorName(r)}`,
       sublabel: `${r.job_sheets?.maintenance_tickets?.title ?? "Maintenance"} · ${formatPropertyDate(r.requested_date)}`,
       href: "/properties/maintenance",
       severity: "medium",
@@ -219,7 +219,7 @@ export function PropertiesOverviewSummary({
       const days = daysUntilDate(c.expiry_date);
       needsAttention.push({
         label: `${getCertificateTypeDisplayName(c.certificate_type)} expiring`,
-        sublabel: `${c.properties?.name ?? "Property"} · ${days ?? "—"} days`,
+        sublabel: `${c.properties?.name ?? "Property"} · ${days ?? "-"} days`,
         href: `/properties/${c.property_id}?tab=certificates`,
         severity: "medium",
       });

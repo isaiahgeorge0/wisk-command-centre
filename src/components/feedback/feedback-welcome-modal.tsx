@@ -82,7 +82,7 @@ export function FeedbackWelcomeModal({
             </span>
           </h2>
           <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
-            Thanks for joining — you&apos;re one of the first people to use this
+            Thanks for joining, you&apos;re one of the first people to use this
             and your feedback genuinely matters. If anything feels off, we&apos;d
             love to hear it.
           </p>

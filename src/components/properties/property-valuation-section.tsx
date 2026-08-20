@@ -56,7 +56,7 @@ function confidenceBadgeClass(confidence: PropertyValuation["confidence"]): stri
 function formatPriceRange(min: number | null, max: number | null, suffix = ""): string {
   if (min == null && max == null) return "Estimate unavailable";
   if (min != null && max != null) {
-    return `${formatPropertyCurrency(min)} — ${formatPropertyCurrency(max)}${suffix}`;
+    return `${formatPropertyCurrency(min)}, ${formatPropertyCurrency(max)}${suffix}`;
   }
   return `${formatPropertyCurrency(min ?? max)}${suffix}`;
 }
@@ -216,7 +216,7 @@ export function PropertyValuationSection({
               <Badge variant="outline">
                 {valuation.search_level === "postcode"
                   ? "Postcode data"
-                  : "Town data — limited evidence"}
+                  : "Town data, limited evidence"}
               </Badge>
               <Badge
                 variant="outline"
@@ -276,7 +276,7 @@ export function PropertyValuationSection({
                 <p className="mt-2 text-2xl font-semibold tabular-nums text-foreground">
                   {valuation.sale_min != null || valuation.sale_max != null
                     ? formatPriceRange(valuation.sale_min, valuation.sale_max)
-                    : "—"}
+                    : "-"}
                 </p>
                 <p className="mt-2 text-xs text-muted-foreground">
                   Total property value

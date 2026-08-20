@@ -11,16 +11,16 @@ import type {
 } from "./actions";
 
 function formatDateTime(iso: string | null): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return "-";
   return d.toLocaleString();
 }
 
 function formatExpiresAt(expiresAt: number | null): string {
-  if (expiresAt === null) return "—";
+  if (expiresAt === null) return "-";
   const d = new Date(expiresAt);
-  if (Number.isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return "-";
   return d.toLocaleString();
 }
 
@@ -172,14 +172,14 @@ export default async function AdminIntegrationsPage() {
                             {row.userName ?? row.userEmail ?? row.userId}
                           </span>
                           <span className="text-sm text-muted-foreground">
-                            {row.userEmail ?? "—"}
+                            {row.userEmail ?? "-"}
                           </span>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
                         <div className="flex flex-col">
-                          <span>{row.accountEmail ?? "—"}</span>
-                          <span>{row.accountLabel ?? "—"}</span>
+                          <span>{row.accountEmail ?? "-"}</span>
+                          <span>{row.accountLabel ?? "-"}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3">

@@ -56,7 +56,7 @@ For each actionable email return:
 - emailId: the email id
 - action: short description of what needs doing (max 10 words)
 - urgency: 'high' | 'medium' | 'low'
-- suggestTask: boolean — whether this should become a WISK task
+- suggestTask: boolean (whether this should become a WISK task)
 
 Return ONLY a JSON array. No explanation. No markdown.`;
 

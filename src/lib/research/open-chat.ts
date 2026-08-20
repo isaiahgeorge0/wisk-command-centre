@@ -44,7 +44,7 @@ function formatDisplayMessage(
   const sourceLines = citations
     .map(
       (citation, index) =>
-        `[${index}] ${citation.title} — ${citation.url}`
+        `[${index}] ${citation.title}, ${citation.url}`
     )
     .join("\n");
 

@@ -85,7 +85,7 @@ export function ConvertIdeaDialog({
                 <div className="flex items-baseline justify-between gap-4">
                   <span className="text-xs text-muted-foreground">Type</span>
                   <span className="text-sm text-foreground">
-                    {idea.category?.trim() || "—"}
+                    {idea.category?.trim() || "-"}
                   </span>
                 </div>
                 <div className="flex items-baseline justify-between gap-4">
@@ -104,7 +104,7 @@ export function ConvertIdeaDialog({
                     Description
                   </span>
                   <span className="text-sm text-foreground">
-                    {idea.description?.trim() || "—"}
+                    {idea.description?.trim() || "-"}
                   </span>
                 </div>
                 <div className="flex items-baseline justify-between gap-4">

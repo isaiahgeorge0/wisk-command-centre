@@ -64,7 +64,7 @@ export function diffTavilySnapshot(input: {
   if (pricingShift) {
     return {
       meaningful: true,
-      summary: "Tavily content change — pricing-related search results shifted.",
+      summary: "Tavily content change, pricing-related search results shifted.",
       urgency: "high",
     };
   }
@@ -72,7 +72,7 @@ export function diffTavilySnapshot(input: {
   if (newUrls.length >= 2) {
     return {
       meaningful: true,
-      summary: "Tavily content change — multiple new public pages or updates appeared.",
+      summary: "Tavily content change, multiple new public pages or updates appeared.",
       urgency: "medium",
     };
   }
@@ -80,7 +80,7 @@ export function diffTavilySnapshot(input: {
   if (reviewShift) {
     return {
       meaningful: true,
-      summary: "Tavily content change — review activity mentions increased.",
+      summary: "Tavily content change, review activity mentions increased.",
       urgency: "medium",
     };
   }
@@ -108,7 +108,7 @@ export function diffGooglePlaceSnapshot(input: {
   ) {
     return {
       meaningful: true,
-      summary: `Google Places rating change — ${previous.rating.toFixed(1)} to ${current.rating.toFixed(1)}.`,
+      summary: `Google Places rating change, ${previous.rating.toFixed(1)} to ${current.rating.toFixed(1)}.`,
       urgency: current.rating < previous.rating ? "high" : "medium",
     };
   }
@@ -128,7 +128,7 @@ export function diffGooglePlaceSnapshot(input: {
   if (current.locationMatchCount > previous.locationMatchCount) {
     return {
       meaningful: true,
-      summary: "Google Places location change — additional matching location detected.",
+      summary: "Google Places location change, additional matching location detected.",
       urgency: "medium",
     };
   }
@@ -165,7 +165,7 @@ export function researchSignalToFocusSignal(
   return {
     id: `research-${signal.checkId}`,
     category: "research",
-    label: `${signal.competitorName} — ${signal.summary}`,
+    label: `${signal.competitorName}, ${signal.summary}`,
     detail: signal.detail,
     href: "/research",
     urgency: signal.urgency,

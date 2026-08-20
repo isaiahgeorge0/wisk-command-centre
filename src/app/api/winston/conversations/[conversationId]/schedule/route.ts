@@ -183,7 +183,7 @@ export async function POST(
     if (!transcript.trim() && !focusedContent) {
       return NextResponse.json({
         found: false,
-        message: "Chat a bit more first — there isn’t enough to schedule yet.",
+        message: "Chat a bit more first. There isn’t enough to schedule yet.",
       });
     }
 
@@ -265,7 +265,7 @@ export async function POST(
         found: false,
         message:
           parsed.data.noActionableReason?.trim() ||
-          "Not enough detail yet — keep chatting.",
+          "Not enough detail yet. Keep chatting.",
       });
     }
 
@@ -283,7 +283,7 @@ export async function POST(
         found: false,
         message:
           parsed.data.noActionableReason?.trim() ||
-          "Not enough detail yet — keep chatting.",
+          "Not enough detail yet. Keep chatting.",
       });
     }
 

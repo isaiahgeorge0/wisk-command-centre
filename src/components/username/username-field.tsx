@@ -120,7 +120,7 @@ export function UsernameField({
         </p>
       ) : (
         <p className="text-xs text-muted-foreground">
-          3–20 characters. Letters, numbers, underscores, hyphens.
+          3-20 characters. Letters, numbers, underscores, hyphens.
         </p>
       )}
     </div>

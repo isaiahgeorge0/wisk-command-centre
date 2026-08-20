@@ -90,11 +90,11 @@ export function PropertyCard({
           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
               <BedDouble className="size-4" aria-hidden />
-              {property.bedrooms ?? "—"} bed
+              {property.bedrooms ?? "-"} bed
             </span>
             <span className="inline-flex items-center gap-1.5">
               <Bath className="size-4" aria-hidden />
-              {property.bathrooms ?? "—"} bath
+              {property.bathrooms ?? "-"} bath
             </span>
             <span className="inline-flex items-center gap-1.5">
               <PoundSterling className="size-4" aria-hidden />

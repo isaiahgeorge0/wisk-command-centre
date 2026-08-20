@@ -64,7 +64,7 @@ export function GoalProgressBar({
       </div>
       <div className="flex items-center justify-between text-xs">
         <span className="text-[10px] uppercase tracking-wide text-muted-foreground/60">
-          {current} of {target ?? "—"}
+          {current} of {target ?? "-"}
         </span>
       </div>
     </div>

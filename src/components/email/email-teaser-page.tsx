@@ -12,7 +12,7 @@ const FAKE_EMAILS = [
   {
     from: "Sarah Mitchell",
     subject: "Re: Brand refresh timeline",
-    preview: "Thanks for sending this over — the direction looks great. Can we lock the palette before Friday?",
+    preview: "Thanks for sending this over, the direction looks great. Can we lock the palette before Friday?",
     time: "2h",
     unread: true,
   },
@@ -33,7 +33,7 @@ const FAKE_EMAILS = [
   {
     from: "Alex Chen",
     subject: "Content calendar for June",
-    preview: "I've mapped the first two weeks — let me know if the LinkedIn cadence feels right.",
+    preview: "I've mapped the first two weeks, let me know if the LinkedIn cadence feels right.",
     time: "Sun",
     unread: false,
   },

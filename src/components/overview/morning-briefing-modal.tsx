@@ -154,7 +154,7 @@ export function MorningBriefingModal({
 
           {!free && briefing.encouragement ? (
             <p className="mt-5 text-center text-xs italic text-muted-foreground/60">
-              &ldquo;{briefing.encouragement}&rdquo; — Winston
+              &ldquo;{briefing.encouragement}&rdquo; Winston
             </p>
           ) : null}
 

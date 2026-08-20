@@ -182,7 +182,7 @@ function SubscriptionBadges({
   subscriptions: ActiveSubscriptionSummary[];
 }) {
   if (subscriptions.length === 0) {
-    return <span className="text-muted-foreground/40">—</span>;
+    return <span className="text-muted-foreground/40">-</span>;
   }
 
   return (
@@ -276,7 +276,7 @@ export function UsersHealthClient({ users, summary }: UsersHealthClientProps) {
         </div>
         <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 px-4 py-3">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Inactive (8–30 days)
+            Inactive (8-30 days)
           </p>
           <p className="mt-1 text-2xl font-semibold text-yellow-700 dark:text-yellow-300">
             {summary.inactive}
@@ -347,7 +347,7 @@ export function UsersHealthClient({ users, summary }: UsersHealthClientProps) {
                       href={`/admin/users/${user.id}`}
                       className="inline-flex items-center gap-1 hover:text-foreground"
                     >
-                      {user.name?.trim() || "—"}
+                      {user.name?.trim() || "-"}
                       <ExternalLink className="size-3 text-muted-foreground" aria-hidden />
                     </Link>
                   </td>
@@ -357,7 +357,7 @@ export function UsersHealthClient({ users, summary }: UsersHealthClientProps) {
                         @{user.username}
                       </span>
                     ) : (
-                      <span className="text-muted-foreground/40">—</span>
+                      <span className="text-muted-foreground/40">-</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
@@ -391,7 +391,7 @@ export function UsersHealthClient({ users, summary }: UsersHealthClientProps) {
                     {user.ai_access ? (
                       <GenerateDigestButton userId={user.id} />
                     ) : (
-                      <span className="text-xs text-muted-foreground/40">—</span>
+                      <span className="text-xs text-muted-foreground/40">-</span>
                     )}
                   </td>
                   <td className="px-4 py-3">

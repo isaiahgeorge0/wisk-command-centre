@@ -29,12 +29,12 @@ const CAPABILITIES: CapItem[] = [
   {
     Icon: Scale,
     title: "Tax-ready reporting.",
-    body: "SA105 tax summaries and financial reports built for UK landlords — no spreadsheet wrangling at year end.",
+    body: "SA105 tax summaries and financial reports built for UK landlords, no spreadsheet wrangling at year end.",
   },
   {
     Icon: FileText,
     title: "Legal notice templates.",
-    body: "Section 8 notice templates ready when you need them. Section 21 is gone — stay compliant with the right paperwork.",
+    body: "Section 8 notice templates ready when you need them. Section 21 is gone, stay compliant with the right paperwork.",
   },
   {
     Icon: Sparkles,
@@ -44,7 +44,7 @@ const CAPABILITIES: CapItem[] = [
   {
     Icon: BarChart3,
     title: "Everything in Properties.",
-    body: "Full portfolio dashboard, tenants, maintenance, rent tracking, certificates, and contractor portal — all included.",
+    body: "Full portfolio dashboard, tenants, maintenance, rent tracking, certificates, and contractor portal, all included.",
   },
 ];
 
@@ -141,7 +141,7 @@ function CheckoutButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      aria-label={loading ? "Redirecting to Stripe" : `${label} — secure checkout`}
+      aria-label={loading ? "Redirecting to Stripe" : `${label}, secure checkout`}
       className={cn(
         "group relative overflow-hidden rounded-xl text-sm font-semibold text-white",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wisk-ferrari focus-visible:ring-offset-2",

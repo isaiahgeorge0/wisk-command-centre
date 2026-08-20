@@ -512,7 +512,7 @@ export async function POST(request: Request) {
   }
 
   console.log(
-    `check-certificate-alerts: complete — processed ${processed} users, sent ${alertsSent} alerts`
+    `check-certificate-alerts: complete, processed ${processed} users, sent ${alertsSent} alerts`
   );
 
   return NextResponse.json({ processed, alertsSent });

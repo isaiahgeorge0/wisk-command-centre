@@ -280,12 +280,12 @@ function OverviewTab({
         />
         <StatCard
           label="Bedrooms"
-          value={property.bedrooms != null ? String(property.bedrooms) : "—"}
+          value={property.bedrooms != null ? String(property.bedrooms) : "-"}
           icon={BedDouble}
         />
         <StatCard
           label="Bathrooms"
-          value={property.bathrooms != null ? String(property.bathrooms) : "—"}
+          value={property.bathrooms != null ? String(property.bathrooms) : "-"}
           icon={Bath}
         />
         <StatCard

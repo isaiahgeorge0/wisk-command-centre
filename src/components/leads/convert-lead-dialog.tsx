@@ -152,7 +152,7 @@ export function ConvertLeadDialog({
             {monthlySource ? (
               <p className="text-xs text-muted-foreground">
                 Pre-filled as {monthlySource} × 12 (annualized). Projects store a
-                one-time value — edit if needed.
+                one-time value, edit if needed.
               </p>
             ) : null}
           </div>

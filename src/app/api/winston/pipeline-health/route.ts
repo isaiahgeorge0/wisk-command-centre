@@ -43,9 +43,9 @@ Return ONLY valid JSON with this shape:
 Rules:
 - focuses: 0-5 items max, most important first
 - Never say a lead needs attention without saying why
-- Refer to leads by name ("this lead", "Acme Ltd") — never restate currency amounts, values, £ figures, or "k" shorthand in issue, suggestedAction, or summary
+- Refer to leads by name ("this lead", "Acme Ltd"). Never restate currency amounts, values, £ figures, or "k" shorthand in issue, suggestedAction, or summary
 - Do not invent, round, abbreviate, convert, or recalculate any figure. Exact amounts are attached by the application from source data and shown in the UI
-- Do not mention "value at risk" totals or pipeline £ totals in the summary — those are rendered separately from source data
+- Do not mention "value at risk" totals or pipeline £ totals in the summary. Those are rendered separately from source data
 - Do not repeat dashboard stat labels unless they materially change the recommendation
 - If the pipeline is broadly healthy, keep the summary calm and return an empty focuses array
 - Keep the tone direct, premium, and practical`;
@@ -99,7 +99,7 @@ function buildUserPrompt(
   return `Metrics:
 - stalled threshold: ${metrics.stalledDaysThreshold} days
 - stalled leads count: ${metrics.stalledLeads.length}
-- VALUE_AT_RISK_LABEL (context only — do not copy into JSON output): ${metrics.valueAtRiskLabel}
+- VALUE_AT_RISK_LABEL (context only, do not copy into JSON output): ${metrics.valueAtRiskLabel}
 - average days in stage: ${metrics.averageDaysInStage ?? "n/a"}
 
 Trends (pipeline value is annualized for comparison: monthly × 12 + upfront; do not restate these £ figures in output):
@@ -109,7 +109,7 @@ Trends (pipeline value is annualized for comparison: monthly × 12 + upfront; do
 Stage conversion rates:
 ${stageRates}
 
-Flagged leads (no currency figures — amounts are attached in code):
+Flagged leads (no currency figures, amounts are attached in code):
 ${stalledLeads}`;
 }
 

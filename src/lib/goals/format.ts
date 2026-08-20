@@ -40,7 +40,7 @@ export function formatGoalDeadline(
   deadline: string | null | undefined
 ): string {
   if (!deadline) {
-    return "—";
+    return "-";
   }
 
   return new Intl.DateTimeFormat("en-GB", {

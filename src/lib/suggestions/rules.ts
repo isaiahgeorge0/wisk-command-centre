@@ -363,7 +363,7 @@ export function generateSuggestions(
       priority: "low",
       title: `You have ${data.ideas.length} unexplored ideas`,
       description:
-        "Your ideas bank is building up. Worth reviewing — one of these could be your next project or piece of content.",
+        "Your ideas bank is building up. Worth reviewing, one of these could be your next project or piece of content.",
       actionLabel: "View ideas",
       actionHref: "/ideas",
       icon: "Lightbulb",

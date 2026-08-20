@@ -41,7 +41,7 @@ const callNotesResultSchema = z.object({
   taskSuggestions: z.array(z.string()).max(3),
 });
 
-const SYSTEM_PROMPT = `You are Winston, WISK's AI business assistant. You are analysing call notes or a transcript from a business call with a lead. Extract structured information and provide actionable insights. Always respond with valid JSON only — no markdown, no preamble.`;
+const SYSTEM_PROMPT = `You are Winston, WISK's AI business assistant. You are analysing call notes or a transcript from a business call with a lead. Extract structured information and provide actionable insights. Always respond with valid JSON only, no markdown, no preamble.`;
 
 function stripMarkdownFences(text: string): string {
   const trimmed = text.trim();

@@ -136,7 +136,7 @@ export function PlanCheckoutClient({ plan, showUpsell }: PlanCheckoutClientProps
 
       {/* ── Two-column layout ─────────────────────────────────────────────────── */}
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
-        {/* ── LEFT — Plan details ───────────────────────────────────────────── */}
+        {/* ── LEFT. Plan details ───────────────────────────────────────────── */}
         <div className="space-y-8">
           {/* Features */}
           <Card className={cn("bg-card/80 shadow-sm", accent.border)}>
@@ -180,7 +180,7 @@ export function PlanCheckoutClient({ plan, showUpsell }: PlanCheckoutClientProps
           </Card>
         </div>
 
-        {/* ── RIGHT — Order summary + upsell ───────────────────────────────────── */}
+        {/* ── RIGHT. Order summary + upsell ───────────────────────────────────── */}
         <div className="space-y-4">
           {/* Order summary */}
           <Card className={cn("bg-card/80 shadow-sm", accent.border)}>
@@ -233,7 +233,7 @@ export function PlanCheckoutClient({ plan, showUpsell }: PlanCheckoutClientProps
             </CardContent>
           </Card>
 
-          {/* Upsell — AI only */}
+          {/* Upsell. AI only */}
           {showUpsell && (
             <Card className="border-wisk-lime/20 bg-wisk-lime/5 shadow-sm">
               <CardContent className="px-5 py-4">

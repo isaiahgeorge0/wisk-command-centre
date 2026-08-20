@@ -88,7 +88,7 @@ async function isPersonalisationCompleted(userId: string): Promise<boolean> {
 
     if (data === null) {
       console.log(
-        "[middleware] no user_preferences row — not personalised, userId:",
+        "[middleware] no user_preferences row, not personalised, userId:",
         userId
       );
       return false;

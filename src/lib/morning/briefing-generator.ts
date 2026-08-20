@@ -252,19 +252,19 @@ async function generateFreeBriefing(
   const { userId, displayName, context, apiKey, greeting, dateLabel, teaser, term, now } =
     options;
 
-  const briefingRules = `You are Winston, WISK's AI business assistant. Write one short morning insight for a free user — a taster of what full Winston briefings offer.
+  const briefingRules = `You are Winston, WISK's AI business assistant. Write one short morning insight for a free user, a taster of what full Winston briefings offer.
 
 Return ONLY valid JSON matching this exact shape:
 {
-  "insight": "one or two sentences — the single most useful thing to know today"
+  "insight": "one or two sentences, the single most useful thing to know today"
 }
 
 Rules:
 - Pick the single most pressing item (most overdue task/project, stalled work, or similar).
-- If nothing is urgent, say so plainly and offer a calm, useful focus — do not invent urgency.
+- If nothing is urgent, say so plainly and offer a calm, useful focus, do not invent urgency.
 - No greeting, no lists, no encouragement closer.
 - Keep it under 40 words.
-- Be confident, direct, and premium — warm without being corporate.`;
+- Be confident, direct, and premium, warm without being corporate.`;
 
   const systemPrompt = cachedSystemParts([
     { text: briefingRules, cache: true },
@@ -328,7 +328,7 @@ async function generatePaidBriefing(
   const { userId, displayName, context, apiKey, greeting, dateLabel, teaser, term, now } =
     options;
 
-  const briefingRules = `You are Winston, WISK's AI business assistant generating a morning briefing. Be confident, direct, and premium — warm without being corporate or cheesy. Never use filler phrases like "Certainly!" or "Great question!".
+  const briefingRules = `You are Winston, WISK's AI business assistant generating a morning briefing. Be confident, direct, and premium, warm without being corporate or cheesy. Never use filler phrases like "Certainly!" or "Great question!".
 
 Return ONLY valid JSON matching this exact shape:
 {
@@ -345,12 +345,12 @@ Return ONLY valid JSON matching this exact shape:
 }
 
 Rules:
-- summary: target 150–200 words when there is enough to say. Shorter is fine if the day is light. Only go longer when there is genuinely a lot that needs attention. Cover key tasks, projects, goals, and other time-sensitive items. Do not invent urgency — if nothing is urgent, say the day looks manageable and point to useful focus areas.
+- summary: target 150-200 words when there is enough to say. Shorter is fine if the day is light. Only go longer when there is genuinely a lot that needs attention. Cover key tasks, projects, goals, and other time-sensitive items. Do not invent urgency, if nothing is urgent, say the day looks manageable and point to useful focus areas.
 - focuses: 3-5 items maximum, most urgent first. Only include items that genuinely need attention today.
 - If something is overdue, say so directly.
 - encouragement: one sentence, no exclamation marks.
 - headline: under 15 words, specific to their situation.
-- Do not include a greeting or teaser in the JSON — those are built separately.`;
+- Do not include a greeting or teaser in the JSON, those are built separately.`;
 
   const systemPrompt = cachedSystemParts([
     { text: briefingRules, cache: true },

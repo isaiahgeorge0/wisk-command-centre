@@ -79,12 +79,12 @@ function formatDateTime(value: string) {
 }
 
 function formatPercent(value: number | null): string {
-  if (value == null) return "—";
+  if (value == null) return "-";
   return `${value}%`;
 }
 
 function formatCurrency(value: number | null): string {
-  if (value == null) return "—";
+  if (value == null) return "-";
   return new Intl.NumberFormat("en-GB", {
     style: "currency",
     currency: "GBP",
@@ -174,7 +174,7 @@ function WinRateDashboardCard({
         <div>
           <CardTitle>Win-rate dashboard</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
-            Computed from your closed Leads (Won / Lost). Figures are data-driven —
+            Computed from your closed Leads (Won / Lost). Figures are data-driven 
             not AI estimates.
           </p>
         </div>

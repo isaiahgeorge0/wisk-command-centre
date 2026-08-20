@@ -161,7 +161,7 @@ export function TasksList({
         </div>
       ) : (
         <p className="rounded-xl border border-border/60 bg-card px-4 py-6 text-center text-sm text-muted-foreground shadow-sm">
-          No open tasks — you&apos;re all caught up.
+          No open tasks, you&apos;re all caught up.
         </p>
       )}
 

@@ -78,7 +78,7 @@ export async function POST(request: Request) {
   }
 
   console.log(
-    `ai-digest/generate: complete — ${generated} generated, ${failed} failed`
+    `ai-digest/generate: complete, ${generated} generated, ${failed} failed`
   );
 
   return NextResponse.json({ success: true, generated, failed });

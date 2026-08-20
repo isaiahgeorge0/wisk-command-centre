@@ -46,11 +46,11 @@ Only draft a response if the email genuinely warrants one:
 
 If the email is a newsletter, notification, automated message, or does not require a personal response, say so briefly and do not draft a reply.
 
-When you do draft, be concise — most business emails need 3-5 sentences, not paragraphs. Do not over-explain.
+When you do draft, be concise, most business emails need 3-5 sentences, not paragraphs. Do not over-explain.
 
 If you determine this email does not need a reply, respond with exactly: NO_REPLY_NEEDED: [brief reason]
 
-Otherwise, return ONLY the email body — include the greeting and message content, but no subject line or sign-off/signature.`;
+Otherwise, return ONLY the email body, include the greeting and message content, but no subject line or sign-off/signature.`;
 
 function buildSystemPrompt(options: {
   displayName: string;
@@ -162,7 +162,7 @@ export async function generateEmailDraft(
       lastActivity?.title?.trim() ||
       "No recent notes";
 
-    leadContext = `This sender is a lead in their pipeline — status: ${stageLabel}, last note: ${lastNote}.`;
+    leadContext = `This sender is a lead in their pipeline, status: ${stageLabel}, last note: ${lastNote}.`;
   }
 
   const systemPrompt = buildSystemPrompt({

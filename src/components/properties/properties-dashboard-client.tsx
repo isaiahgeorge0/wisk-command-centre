@@ -516,7 +516,7 @@ export function PropertiesDashboardClient({
                             ? "Expires tomorrow"
                             : days != null
                               ? `${days} days`
-                              : "—"}
+                              : "-"}
                       </span>
                     </Link>
                   );

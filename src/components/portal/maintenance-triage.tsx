@@ -186,7 +186,7 @@ export function MaintenanceTriage({ open, onClose }: MaintenanceTriageProps) {
                   setStep("confirm");
                 }}
               >
-                Skip Winston — report directly
+                Skip Winston, report directly
               </button>
             </>
           ) : null}
@@ -233,7 +233,7 @@ export function MaintenanceTriage({ open, onClose }: MaintenanceTriageProps) {
                 className="text-sm text-[var(--portal-muted)] underline-offset-2 hover:underline"
                 onClick={() => setStep("confirm")}
               >
-                Skip Winston — report directly
+                Skip Winston, report directly
               </button>
             </>
           ) : null}

@@ -98,7 +98,7 @@ export function PortalSetupForm({
           Welcome
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-[var(--portal-muted)]">
-          Hi {tenantName} — set up your account for{" "}
+          Hi {tenantName}, set up your account for{" "}
           <span className="font-medium text-[var(--portal-text)]">
             {propertyAddress}
           </span>

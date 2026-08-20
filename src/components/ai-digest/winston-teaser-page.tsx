@@ -22,7 +22,7 @@ const FAKE_DIGEST = {
   weekSummary:
     "You made solid progress across three active projects this week and closed two new leads. Task completion is up compared to last week, and your content streak is holding strong at 12 days running.",
   wins: [
-    "Completed 8 tasks — highest week in the last month",
+    "Completed 8 tasks, highest week in the last month",
     "Branding Refresh project moved to 70% complete",
     "Two leads moved to proposal stage",
     "Published 3 pieces of content across platforms",
@@ -30,7 +30,7 @@ const FAKE_DIGEST = {
   ],
   needsAttention: [
     "Website Redesign has had no update in 9 days",
-    "4 overdue tasks — oldest is 5 days past due",
+    "4 overdue tasks, oldest is 5 days past due",
     "Lead 'Oakwood Studio' stalled for 16 days",
   ],
   weekAhead: [
@@ -40,9 +40,9 @@ const FAKE_DIGEST = {
     "Goal deadline: Monthly Revenue goal closes Sunday",
   ],
   insight:
-    "Your best task-completion weeks happen when you have a content post due — the external deadline seems to create a broader momentum. This week follows that pattern.",
+    "Your best task-completion weeks happen when you have a content post due, the external deadline seems to create a broader momentum. This week follows that pattern.",
   recommendation:
-    "Reach out to Oakwood Studio today with a brief check-in. Leads left untouched for 14+ days have a significantly lower conversion rate — one message this week could recover the opportunity.",
+    "Reach out to Oakwood Studio today with a brief check-in. Leads left untouched for 14+ days have a significantly lower conversion rate, one message this week could recover the opportunity.",
 };
 
 // ─── Shared card component (mirrors real digest layout) ──────────────────────
@@ -133,7 +133,7 @@ function DigestPreview() {
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <span className="text-sm font-medium text-foreground">
-            Week of 2–8 June 2026
+            Week of 2-8 June 2026
           </span>
           <span className="text-xs text-muted-foreground">
             · Generated every Sunday
@@ -231,7 +231,7 @@ export function WinstonTeaserPage() {
       transition={pageTransition}
     >
       <div className="relative min-h-[70vh]">
-        {/* Layer 1 — blurred digest preview */}
+        {/* Layer 1, blurred digest preview */}
         <div
           className="w-full"
           style={{ filter: "blur(8px)" }}
@@ -246,7 +246,7 @@ export function WinstonTeaserPage() {
           aria-hidden="true"
         />
 
-        {/* Layer 2 — foreground content */}
+        {/* Layer 2, foreground content */}
         <div className="absolute inset-0 flex items-center justify-center">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -270,7 +270,7 @@ export function WinstonTeaserPage() {
 
             <p className="mt-4 max-w-md text-sm leading-relaxed text-foreground/80">
               Winston knows your business. Every project, every task, every
-              lead, every goal — Winston reads it all and turns it into
+              lead, every goal. Winston reads it all and turns it into
               something you can actually act on.
             </p>
 
@@ -290,7 +290,7 @@ export function WinstonTeaserPage() {
                 },
                 {
                   name: "Email Intelligence (AI Pro)",
-                  desc: "connect Gmail or Outlook and Winston organises your inbox automatically. Leads, clients, admin — grouped, summarised, and linked to your WISK records.",
+                  desc: "connect Gmail or Outlook and Winston organises your inbox automatically. Leads, clients, admin, grouped, summarised, and linked to your WISK records.",
                 },
               ].map(({ name, desc }) => (
                 <li key={name} className="flex items-start gap-2.5 pl-1">
@@ -300,7 +300,7 @@ export function WinstonTeaserPage() {
                   />
                   <span className="text-sm leading-relaxed">
                     <span className="font-medium text-foreground">{name}</span>
-                    <span className="text-muted-foreground"> — {desc}</span>
+                    <span className="text-muted-foreground">, {desc}</span>
                   </span>
                 </li>
               ))}

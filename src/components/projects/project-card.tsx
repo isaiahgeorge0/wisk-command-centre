@@ -233,7 +233,7 @@ export function ProjectCard({
               Project type
             </span>
             <span className="truncate text-right text-sm font-medium text-foreground">
-              {project.service_type ?? "—"}
+              {project.service_type ?? "-"}
             </span>
           </div>
         ) : null}
@@ -248,7 +248,7 @@ export function ProjectCard({
               </span>
             ) : (
               <span className="line-clamp-2 text-right text-sm font-medium text-foreground/90">
-                —
+                
               </span>
             )}
           </div>

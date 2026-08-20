@@ -17,7 +17,7 @@ const FEATURES = [
     icon: ShieldCheck,
     title: "Reliability score",
     description:
-      "0–100 score based on payment history, timeliness, and consistency.",
+      "0-100 score based on payment history, timeliness, and consistency.",
   },
   {
     icon: Award,
@@ -66,7 +66,7 @@ export function ReliabilityTeaser() {
           Tenant Reliability Scoring
         </h1>
         <p className="mx-auto mt-3 max-w-lg text-base text-muted-foreground">
-          Know exactly which tenants are reliable and which need attention —
+          Know exactly which tenants are reliable and which need attention 
           before it becomes a problem.
         </p>
 

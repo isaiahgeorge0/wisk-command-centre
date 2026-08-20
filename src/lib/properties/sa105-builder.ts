@@ -232,18 +232,18 @@ export function buildSA105Summary(
       label: "Legal, management and other professional fees",
       amount: box27,
       description:
-        "Not tracked by WISK — add manually if you paid letting agent commission or legal fees.",
+        "Not tracked by WISK, add manually if you paid letting agent commission or legal fees.",
     },
     {
       boxNumber: "29",
       label: "Other allowable property expenses",
       amount: box29,
       description:
-        "Not tracked by WISK — add manually if applicable (e.g. travel, phone, admin costs).",
+        "Not tracked by WISK, add manually if applicable (e.g. travel, phone, admin costs).",
     },
     {
       boxNumber: "36",
-      label: "Costs of replacing domestic items — residential lettings only",
+      label: "Costs of replacing domestic items, residential lettings only",
       amount: box36,
       description:
         "Maintenance records identified as appliance or furniture replacements rather than repairs.",
@@ -263,7 +263,7 @@ export function buildSA105Summary(
       label: "Residential property finance costs",
       amount: box44,
       description:
-        "Mortgage interest apportioned to this period. Not deducted from profit — generates a separate 20% tax credit.",
+        "Mortgage interest apportioned to this period. Not deducted from profit, generates a separate 20% tax credit.",
     },
   ];
 
@@ -323,7 +323,7 @@ export function generateSA105Insights(
   insights.push({
     type: "warning",
     title: "Letting agent and legal fees not included",
-    body: "WISK doesn't currently track letting agent commission or legal fees as a separate field. If you paid these, add them manually to Box 27 before filing — they're a commonly claimed and often significant deduction.",
+    body: "WISK doesn't currently track letting agent commission or legal fees as a separate field. If you paid these, add them manually to Box 27 before filing, they're a commonly claimed and often significant deduction.",
   });
 
   if (summary.isLoss) {
@@ -337,7 +337,7 @@ export function generateSA105Insights(
   if (largeCostTicketCount > 0) {
     insights.push({
       type: "warning",
-      title: "Large repair costs — check for capital improvements",
+      title: "Large repair costs, check for capital improvements",
       body: `${largeCostTicketCount} repair(s) in this period cost over £1,500. HMRC may query large repair figures. Make sure these were genuine repairs (restoring the property to its previous condition) rather than improvements (e.g. a new kitchen, an extension, or upgraded fittings beyond like-for-like), which are capital costs and not deductible against rental income.`,
     });
   }

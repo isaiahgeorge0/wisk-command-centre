@@ -322,7 +322,7 @@ export function FinancesPageClient({
         <div className="mb-8">
           <PropertiesProTeaser
             title="Portfolio financial overview"
-            description="See your complete financial picture — net income, mortgage costs, insurance, yield performance, and upcoming renewals across your entire portfolio."
+            description="See your complete financial picture, net income, mortgage costs, insurance, yield performance, and upcoming renewals across your entire portfolio."
             features={[
               "Net income tracking (monthly and annual)",
               "Mortgage and insurance cost summaries",

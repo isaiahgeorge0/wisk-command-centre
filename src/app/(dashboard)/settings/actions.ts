@@ -385,7 +385,7 @@ export async function removeServiceType(
     const names = affected.map((p) => p.projectName).join(", ");
     return {
       success: false,
-      error: `Cannot delete "${trimmed}" — used by: ${names}`,
+      error: `Cannot delete "${trimmed}" because it is used by: ${names}`,
     };
   }
 

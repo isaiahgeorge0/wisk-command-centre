@@ -196,7 +196,7 @@ export async function commitWinstonProposal(
       const fromRef = projectIdByTempId.get(projectRef);
       if (!fromRef) {
         result.errors.push(
-          `Task “${title}” linked to a project that wasn’t created — create the project or clear the link`
+          `Task “${title}” linked to a project that wasn’t created, create the project or clear the link`
         );
         continue;
       }
@@ -207,7 +207,7 @@ export async function commitWinstonProposal(
         project_id = linkedNew;
       } else if (!isProposalUuid(existingProjectId)) {
         result.errors.push(
-          `Task “${title}” has an invalid project link — create the project in this proposal or pick an existing one`
+          `Task “${title}” has an invalid project link, create the project in this proposal or pick an existing one`
         );
         continue;
       } else {
@@ -243,7 +243,7 @@ export async function commitWinstonProposal(
     const date = asString(item.fields.date).trim();
     if (!title || !date) {
       result.errors.push(
-        `Skipped a calendar event${title ? ` “${title}”` : ""} — title and date are required`
+        `Skipped a calendar event${title ? ` “${title}”` : ""}, title and date are required`
       );
       continue;
     }

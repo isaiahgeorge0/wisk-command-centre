@@ -38,8 +38,8 @@ function formatPeriodEnd(iso: string | null): string | null {
 // ─── Plan card data ───────────────────────────────────────────────────────────
 
 const AI_FEATURES = [
-  "AI Digest — weekly business summary",
-  "WISK Chat — ask Winston anything",
+  "AI Digest, weekly business summary",
+  "WISK Chat, ask Winston anything",
   "Smart suggestions across your workspace",
   "100,000 tokens per month",
 ];
@@ -237,7 +237,7 @@ export function UpgradePageClient({
           className="mb-6 flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm"
         >
           <p className="flex-1 text-muted-foreground">
-            No worries — you can upgrade any time.
+            No worries, you can upgrade any time.
           </p>
           <button
             onClick={() => setShowCancelled(false)}
@@ -269,7 +269,7 @@ export function UpgradePageClient({
           }}
         />
 
-        {/* Ambient orbs — purple left, teal right */}
+        {/* Ambient orbs, purple left, teal right */}
         <div
           aria-hidden
           className="pointer-events-none absolute -top-32 -left-32 size-80 rounded-full blur-3xl"

@@ -93,7 +93,7 @@ export function PortalHome({
               value={
                 tenant.deposit_amount != null
                   ? formatPropertyCurrency(tenant.deposit_amount)
-                  : "—"
+                  : "-"
               }
               trailing={
                 tenant.deposit_amount != null ? (

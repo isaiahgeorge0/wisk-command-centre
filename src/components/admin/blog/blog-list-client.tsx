@@ -167,11 +167,11 @@ export function BlogListClient({ posts: initialPosts }: BlogListClientProps) {
                           {formatBlogDate(post.scheduled_for)}
                         </span>
                       ) : (
-                        "—"
+                        "-"
                       )}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
-                      {tagsToString(post.tags) || "—"}
+                      {tagsToString(post.tags) || "-"}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-2">

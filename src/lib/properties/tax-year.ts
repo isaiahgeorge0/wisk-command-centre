@@ -36,7 +36,7 @@ export function formatTaxYearLabel(start: Date, end: Date): string {
       month: "short",
       year: "numeric",
     });
-  return `${format(start)} – ${format(end)}`;
+  return `${format(start)}, ${format(end)}`;
 }
 
 export function parseLocalDate(dateStr: string): Date {

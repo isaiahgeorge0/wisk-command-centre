@@ -151,8 +151,8 @@ export function TenantsPageClient({
                   {tenant.property_name}
                 </p>
                 <div className="text-sm text-muted-foreground">
-                  <p>{tenant.email ?? "—"}</p>
-                  <p>{tenant.phone ?? "—"}</p>
+                  <p>{tenant.email ?? "-"}</p>
+                  <p>{tenant.phone ?? "-"}</p>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {formatPropertyDate(tenant.tenancy_start)}

@@ -229,7 +229,7 @@ export function PropertyDocumentsTab({
                             (c) => c.id === linkedCertificateId
                           );
                           return cert
-                            ? `${getCertificateTypeDisplayName(cert.certificate_type)} — expires ${formatPropertyDate(cert.expiry_date)}`
+                            ? `${getCertificateTypeDisplayName(cert.certificate_type)}, expires ${formatPropertyDate(cert.expiry_date)}`
                             : "None";
                         })()
                       : "None"}
@@ -239,7 +239,7 @@ export function PropertyDocumentsTab({
                   <SelectItem value="none">None</SelectItem>
                   {certificates.map((cert) => (
                     <SelectItem key={cert.id} value={cert.id}>
-                      {getCertificateTypeDisplayName(cert.certificate_type)} —
+                      {getCertificateTypeDisplayName(cert.certificate_type)} 
                       expires {formatPropertyDate(cert.expiry_date)}
                     </SelectItem>
                   ))}
@@ -390,7 +390,7 @@ function DocumentRow({
               <button
                 type="button"
                 onClick={onNavigateToCertificates}
-                title={`Linked to ${getCertificateTypeDisplayName(doc.certificate_type)}${doc.certificate_expiry ? ` — expires ${formatPropertyDate(doc.certificate_expiry)}` : ""}`}
+                title={`Linked to ${getCertificateTypeDisplayName(doc.certificate_type)}${doc.certificate_expiry ? `, expires ${formatPropertyDate(doc.certificate_expiry)}` : ""}`}
                 className="inline-flex"
               >
                 <Badge

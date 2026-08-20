@@ -107,7 +107,7 @@ export function buildNotificationCandidates(
         type: "deadline_approaching",
         reference_id: project.id,
         title: "Deadline approaching",
-        message: `${project.project_name} — due in ${days} day${days === 1 ? "" : "s"}`,
+        message: `${project.project_name}, due in ${days} day${days === 1 ? "" : "s"}`,
         link_to: "/projects",
       });
     }
@@ -117,7 +117,7 @@ export function buildNotificationCandidates(
         type: "stalled_project",
         reference_id: project.id,
         title: "Stalled project",
-        message: `${project.project_name} — no updates in 14+ days`,
+        message: `${project.project_name}, no updates in 14+ days`,
         link_to: "/projects",
       });
     }
@@ -136,7 +136,7 @@ export function buildNotificationCandidates(
         type: "deadline_approaching",
         reference_id: goal.id,
         title: "Deadline approaching",
-        message: `${goal.title} — due in ${days} day${days === 1 ? "" : "s"}`,
+        message: `${goal.title}, due in ${days} day${days === 1 ? "" : "s"}`,
         link_to: "/goals",
       });
     }
@@ -152,7 +152,7 @@ export function buildNotificationCandidates(
         type: "goal_no_progress",
         reference_id: goal.id,
         title: "Goal needs attention",
-        message: `${goal.title} — still at 0% with deadline in ${days} day${days === 1 ? "" : "s"}`,
+        message: `${goal.title}, still at 0% with deadline in ${days} day${days === 1 ? "" : "s"}`,
         link_to: "/goals",
       });
     }
@@ -168,7 +168,7 @@ export function buildNotificationCandidates(
       type: "follow_up_overdue",
       reference_id: lead.id,
       title: "Follow up overdue",
-      message: `${lead.name} — follow up was due ${lead.follow_up_date}`,
+      message: `${lead.name}, follow up was due ${lead.follow_up_date}`,
       link_to: "/leads",
     });
   }

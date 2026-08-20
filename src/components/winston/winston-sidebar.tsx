@@ -132,8 +132,8 @@ function Teaser({
         </p>
         <p className="text-xs leading-relaxed text-muted-foreground">
           {isResearch
-            ? "Ask any market or competitor question and get a cited answer — Research Pro unlocks this thread."
-            : "The global Winston button still works on the free tier — this section-level thread is part of the full product."}
+            ? "Ask any market or competitor question and get a cited answer. Research Pro unlocks this thread."
+            : "The global Winston button still works on the free tier, this section-level thread is part of the full product."}
         </p>
         <Link
           href={isResearch ? "/upgrade/research-pro" : "/upgrade/ai"}
@@ -284,7 +284,7 @@ function ChatPane({
       }
       if (!data.found || !data.proposal) {
         setScheduleError(
-          data.message ?? "Not enough detail yet — keep chatting."
+          data.message ?? "Not enough detail yet. Keep chatting."
         );
         return;
       }
@@ -735,7 +735,7 @@ function ChatPane({
             <DialogTitle>Add to lead notes</DialogTitle>
             <DialogDescription>
               Appends this research finding to the lead&apos;s notes. Talking
-              points don&apos;t map to a Winston proposal type — this keeps them
+              points don&apos;t map to a Winston proposal type, this keeps them
               on the lead without inventing a task or idea.
             </DialogDescription>
           </DialogHeader>

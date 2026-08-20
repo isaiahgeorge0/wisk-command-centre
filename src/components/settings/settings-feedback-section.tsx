@@ -126,7 +126,7 @@ export function SettingsFeedbackSection() {
           ) : null}
           {success ? (
             <p className="text-sm text-wisk-turquoise">
-              Thanks for your feedback — we really appreciate it.
+              Thanks for your feedback, we really appreciate it.
             </p>
           ) : null}
 

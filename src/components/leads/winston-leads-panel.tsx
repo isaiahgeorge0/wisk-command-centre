@@ -87,7 +87,7 @@ function TeaserContent({ onClose }: { onClose: () => void }) {
     {
       title: "Call notes processor",
       description:
-        "Paste a transcript — Winston extracts key details, next steps, and updates the lead automatically.",
+        "Paste a transcript. Winston extracts key details, next steps, and updates the lead automatically.",
     },
     {
       title: "AI email drafting",
@@ -108,7 +108,7 @@ function TeaserContent({ onClose }: { onClose: () => void }) {
         <p className="text-sm leading-relaxed text-muted-foreground">
           Winston brings AI intelligence to your pipeline. Process call notes in
           seconds, get AI-drafted follow-up emails, and let Winston analyse your
-          pipeline health — all without leaving your leads section.
+          pipeline health, all without leaving your leads section.
         </p>
 
         <div className="space-y-3">

@@ -232,7 +232,7 @@ function FollowUpReminder({ leadId, followUpDate, onDateChange }: FollowUpProps)
               isOverdue ? "text-orange-500" : "text-foreground"
             )}
           >
-            {isOverdue ? "Overdue — " : ""}
+            {isOverdue ? "Overdue, " : ""}
             {new Date(followUpDate + "T12:00:00").toLocaleDateString("en-GB", {
               weekday: "short",
               day: "numeric",
@@ -302,7 +302,7 @@ function ActivityItem({ activity, onDelete }: ActivityItemProps) {
             <span className="text-[10px] text-muted-foreground/60 whitespace-nowrap">
               {relativeTime(activity.created_at)}
             </span>
-            {/* Delete — always visible on mobile, hover on desktop */}
+            {/* Delete, always visible on mobile, hover on desktop */}
             {confirmDelete ? (
               <>
                 <button

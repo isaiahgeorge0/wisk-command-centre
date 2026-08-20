@@ -181,17 +181,17 @@ export function YieldAnalyticsClient({
                   <td className="px-4 py-3 tabular-nums text-muted-foreground">
                     {property.monthly_rent != null
                       ? formatPropertyCurrency(property.monthly_rent)
-                      : "—"}
+                      : "-"}
                   </td>
                   <td className="px-4 py-3 tabular-nums text-muted-foreground">
                     {property.purchase_price != null
                       ? formatPropertyCurrency(property.purchase_price)
-                      : "—"}
+                      : "-"}
                   </td>
                   <td className="px-4 py-3 tabular-nums text-muted-foreground">
                     {property.current_value != null
                       ? formatPropertyCurrency(property.current_value)
-                      : "—"}
+                      : "-"}
                   </td>
                   <td className="px-4 py-3">
                     <YieldValue value={annual.gross_yield} />
@@ -226,7 +226,7 @@ export function YieldAnalyticsClient({
                   <dd className="tabular-nums">
                     {property.monthly_rent != null
                       ? formatPropertyCurrency(property.monthly_rent)
-                      : "—"}
+                      : "-"}
                   </dd>
                 </div>
                 <div>
@@ -415,7 +415,7 @@ function YieldValue({ value }: { value: number | null }) {
   if (value == null) {
     return (
       <div>
-        <span className="text-muted-foreground">—</span>
+        <span className="text-muted-foreground">-</span>
         <p className="text-[11px] text-muted-foreground">Add value to calculate</p>
       </div>
     );

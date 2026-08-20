@@ -348,7 +348,7 @@ const winstonEngagementDateRangeSchema = z
  * Last verified: 2026-08-19
  */
 const FEATURE_MODEL_MAP: Partial<Record<UsageFeature, "sonnet" | "haiku">> = {
-  chat: "sonnet", // mixed — conservative upper bound
+  chat: "sonnet", // mixed, conservative upper bound
   digest: "sonnet",
   email_draft: "haiku",
   property_insights: "sonnet",
@@ -356,7 +356,7 @@ const FEATURE_MODEL_MAP: Partial<Record<UsageFeature, "sonnet" | "haiku">> = {
   pipeline_health: "sonnet",
   portal_triage: "haiku",
   property_valuation: "sonnet",
-  morning_briefing: "sonnet", // mixed — conservative upper bound
+  morning_briefing: "sonnet", // mixed, conservative upper bound
   lead_research_brief: "sonnet",
   research_open_chat: "sonnet",
 };

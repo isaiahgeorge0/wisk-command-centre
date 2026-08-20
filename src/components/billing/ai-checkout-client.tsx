@@ -56,7 +56,7 @@ const CAPABILITIES: CapItem[] = [
 
 const FEATURES = [
   "AI Digest every Sunday",
-  "WISK Chat — ask anything",
+  "WISK Chat, ask anything",
   "Smart suggestions across your workspace",
   "100,000 tokens per month",
 ];
@@ -147,7 +147,7 @@ function CheckoutButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      aria-label={loading ? "Redirecting to Stripe" : `${label} — secure checkout`}
+      aria-label={loading ? "Redirecting to Stripe" : `${label}, secure checkout`}
       className={cn(
         "group relative overflow-hidden rounded-xl text-sm font-semibold text-white",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2",
@@ -328,7 +328,7 @@ export function AICheckoutClient({ priceId }: Props) {
             transition={{ duration: 0.35, delay: noMotion ? 0 : 0.75, ease: MOTION_EASE.easeOut }}
             className="mx-auto mb-8 max-w-xl text-base leading-relaxed text-white/65 md:text-lg"
           >
-            Winston reads your entire business — projects, tasks, leads, goals, content — and tells you what it means. Every week. On demand. Without you having to ask.
+            Winston reads your entire business, projects, tasks, leads, goals, content, and tells you what it means. Every week. On demand. Without you having to ask.
           </motion.p>
 
           {/* Trust signals */}
@@ -435,7 +435,7 @@ export function AICheckoutClient({ priceId }: Props) {
             ))}
           </ul>
 
-          {/* Main CTA — observed by IntersectionObserver */}
+          {/* Main CTA, observed by IntersectionObserver */}
           <div ref={ctaRef}>
             <CheckoutButton
               loading={loading}
@@ -463,7 +463,7 @@ export function AICheckoutClient({ priceId }: Props) {
             Want more?
           </p>
           <p className="mb-3 text-sm leading-relaxed text-muted-foreground">
-            WISK AI Pro adds Gmail and Outlook integration — Winston reads your inbox, surfaces action items from client emails, and connects your conversations to your pipeline. £10 more per month.
+            WISK AI Pro adds Gmail and Outlook integration. Winston reads your inbox, surfaces action items from client emails, and connects your conversations to your pipeline. £10 more per month.
           </p>
           <Link
             href="/upgrade/ai-pro"

@@ -4,7 +4,7 @@
  * drifts, Winston will honestly refuse to create records.
  */
 
-export const WINSTON_CHAT_CREATION_PROMPT = `CREATION (this is wired — never claim you cannot write):
+export const WINSTON_CHAT_CREATION_PROMPT = `CREATION (this is wired; never claim you cannot write):
 You cannot mutate records yourself. Each of your replies has a "Create this" action that turns this conversation into a reviewable proposal. After the user confirms, the app creates: project, task, calendar_event, content_post, idea.
 - Mixed types are allowed. Multiple items of the same type in one turn are expected (e.g. five content posts, or a project plus several tasks).
 - When they ask to add or schedule something, draft the items clearly in this reply (titles, dates, platforms, etc.) and tell them to tap Create this to review and confirm. Do not say you can only read Content, Calendar, Projects, or Tasks.
@@ -45,19 +45,19 @@ Field schemas:
 - project: project_name, service_type, status ("active"), optional deadline (YYYY-MM-DD), client_name, notes, next_action.
 - task: title, priority ("low"|"medium"|"high"), optional due_date (YYYY-MM-DD), optional projectRef (new project tempId) OR projectId (existing UUID), raw_content.
 - calendar_event: title, date (YYYY-MM-DD), event_type ("lifestyle"|"other"), optional end_date, notes.
-- content_post: title, platforms (array of exact values: TikTok, Instagram, YouTube, LinkedIn, Twitter/X, Facebook, Other), content_type (Video|Reel|Short|Post|Story|Article|Thread|Other), status ("scheduled" when a date is known, otherwise "idea"), optional scheduled_date (YYYY-MM-DD only — no time), description, hook, tags (comma-separated string). Capture the actual hook/caption/description/tag ideas Winston generated in structured fields rather than leaving them only in the chat prose. If they named a time of day, put it in description. One post per date/platform-set they asked for.
+- content_post: title, platforms (array of exact values: TikTok, Instagram, YouTube, LinkedIn, Twitter/X, Facebook, Other), content_type (Video|Reel|Short|Post|Story|Article|Thread|Other), status ("scheduled" when a date is known, otherwise "idea"), optional scheduled_date (YYYY-MM-DD only, no time), description, hook, tags (comma-separated string). Capture the actual hook/caption/description/tag ideas Winston generated in structured fields rather than leaving them only in the chat prose. If they named a time of day, put it in description. One post per date/platform-set they asked for.
 - idea: title, optional description, category, status ("awaiting-date" when no date).`;
 
 export function mixedProposalScopeBias(scopeKey: string | null): string {
   switch (scopeKey) {
     case "calendar":
-      return "The user was on Calendar — prefer calendar_event or idea if that fits, but do not refuse other types.";
+      return "The user was on Calendar, prefer calendar_event or idea if that fits, but do not refuse other types.";
     case "content-calendar":
-      return "The user was on Content — prefer content_post if that fits, including several posts from one instruction. Do not refuse other types.";
+      return "The user was on Content, prefer content_post if that fits, including several posts from one instruction. Do not refuse other types.";
     case "projects":
     case "tasks":
     case "notes":
-      return "The user was talking about work planning — a project plus sibling tasks (linked with projectRef) is a natural shape when they described both.";
+      return "The user was talking about work planning, a project plus sibling tasks (linked with projectRef) is a natural shape when they described both.";
     case "research":
       return `The user was in Research chat. Prefer content_post when the finding supports a content angle; tasks/ideas/calendar_event/project are allowed when the conversation clearly asks for them.
 - Ground every item in the research answer and its Sources block. Do not invent filler.

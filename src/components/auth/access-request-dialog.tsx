@@ -75,7 +75,7 @@ export function AccessRequestDialog({
             <DialogHeader>
               <DialogTitle>Request received</DialogTitle>
               <DialogDescription>
-                Thanks — we&apos;ll review your request and be in touch if access
+                Thanks, we&apos;ll review your request and be in touch if access
                 is approved.
               </DialogDescription>
             </DialogHeader>

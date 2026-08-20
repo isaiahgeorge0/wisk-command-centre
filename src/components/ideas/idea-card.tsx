@@ -165,7 +165,7 @@ export function IdeaCard({ idea, onDelete }: IdeaCardProps) {
                     : "text-muted-foreground/50 italic"
                 )}
               >
-                {descriptionPreview || "No description yet — tap to add one."}
+                {descriptionPreview || "No description yet, tap to add one."}
               </p>
               <p className="mt-3 text-xs text-wisk-section-ideas/50 transition-colors group-hover:text-wisk-section-ideas/70">
                 Tap to expand →

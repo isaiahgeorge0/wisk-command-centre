@@ -7,7 +7,7 @@ export function emptyToNull(value: string | undefined): string | null {
 
 export function formatTaskDueDate(dueDate: string | null | undefined): string {
   if (!dueDate) {
-    return "—";
+    return "-";
   }
 
   return new Intl.DateTimeFormat("en-GB", {

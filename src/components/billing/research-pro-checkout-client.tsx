@@ -33,7 +33,7 @@ const CAPABILITIES: CapItem[] = [
   {
     Icon: FilePlus2,
     title: "Findings become proposals.",
-    body: "Competitor shifts and chat insights route through the same Winston review → commit loop — never auto-created.",
+    body: "Competitor shifts and chat insights route through the same Winston review → commit loop, never auto-created.",
   },
   {
     Icon: Telescope,
@@ -43,7 +43,7 @@ const CAPABILITIES: CapItem[] = [
   {
     Icon: Sparkles,
     title: "Distinctly WISK.",
-    body: "Research that writes into Content, Tasks, and lead notes — not a bolted-on research tab.",
+    body: "Research that writes into Content, Tasks, and lead notes, not a bolted-on research tab.",
   },
 ];
 
@@ -77,7 +77,7 @@ function CheckoutButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      aria-label={loading ? "Redirecting to Stripe" : `${label} — secure checkout`}
+      aria-label={loading ? "Redirecting to Stripe" : `${label}, secure checkout`}
       className={cn(
         "group relative overflow-hidden rounded-xl text-sm font-semibold text-white",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2",
@@ -172,7 +172,7 @@ export function ResearchProCheckoutClient({ priceId }: Props) {
             Ask anything. Review every action. Citations stay attached.
           </h1>
           <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-            Open research chat plus findings that become Winston proposals —
+            Open research chat plus findings that become Winston proposals 
             £39/month. Cancel anytime.
           </p>
           <div ref={ctaRef} className="mt-8 max-w-sm">

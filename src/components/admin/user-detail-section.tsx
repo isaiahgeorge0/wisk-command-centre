@@ -24,7 +24,7 @@ type UserDetailSectionProps = {
 };
 
 function formatDate(iso: string | null) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleDateString(undefined, {
     year: "numeric",
     month: "short",
@@ -312,7 +312,7 @@ function IntegrationsSection({
               <tr key={i} className="border-b last:border-0">
                 <td className="py-2 font-medium capitalize">{row.provider}</td>
                 <td className="py-2 font-mono text-xs">
-                  {row.accountEmail ?? "—"}
+                  {row.accountEmail ?? "-"}
                 </td>
                 <td className="py-2">
                   <Badge

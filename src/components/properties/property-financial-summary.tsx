@@ -126,7 +126,7 @@ export function PropertyFinancialSummary({
           value={
             summary.gross_yield != null
               ? formatYieldPercent(summary.gross_yield)
-              : "—"
+              : "-"
           }
         />
         <StatCard
@@ -134,13 +134,13 @@ export function PropertyFinancialSummary({
           value={
             summary.net_yield != null
               ? formatYieldPercent(summary.net_yield)
-              : "—"
+              : "-"
           }
         />
         <StatCard
           label="ROI"
           value={
-            summary.roi != null ? formatYieldPercent(summary.roi) : "—"
+            summary.roi != null ? formatYieldPercent(summary.roi) : "-"
           }
         />
       </div>

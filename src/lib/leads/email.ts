@@ -14,14 +14,14 @@ export function buildLeadEmailUrl(
 
 export function getDefaultEmailSubject(lead: Lead): string {
   const subjects: Record<string, string> = {
-    new: `Following up — ${lead.service_interest ?? "your enquiry"}`,
+    new: `Following up on ${lead.service_interest ?? "your enquiry"}`,
     contacted: "Following up on our conversation",
     qualified: `Next steps for ${lead.service_interest ?? "your project"}`,
     proposal_sent: "Following up on your proposal",
-    won: `Welcome — next steps for ${lead.service_interest ?? "your project"}`,
+    won: `Welcome. Next steps for ${lead.service_interest ?? "your project"}`,
     lost: "Checking in",
   };
-  return subjects[lead.status] ?? `Following up — ${lead.name}`;
+  return subjects[lead.status] ?? `Following up with ${lead.name}`;
 }
 
 export function getDefaultEmailBody(lead: Lead): string {

@@ -72,7 +72,7 @@ function buildPayload() {
     mailer_subjects_invite: "You're invited to WISK",
     mailer_templates_invite_content: buttonTemplate({
       heading: "You've been invited",
-      body: "WISK is invite-only — someone thought you'd be a good fit. Accept your invite to get started.",
+      body: "WISK is invite-only. Someone thought you'd be a good fit. Accept your invite to get started.",
       cta: "Accept invite",
       footer:
         "This invite was sent by a WISK user. If you weren't expecting this, you can ignore it.",
@@ -101,7 +101,7 @@ function buildPayload() {
       body: "We received a request to reset your password. Choose a new one below.",
       cta: "Reset password",
       footer:
-        "If you didn't request this, you can safely ignore this email — your password won't change.",
+        "If you didn't request this, you can safely ignore this email and your password won't change.",
     }),
 
     mailer_subjects_reauthentication: `${TOKEN} is your WISK verification code`,

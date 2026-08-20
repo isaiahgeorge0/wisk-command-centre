@@ -41,7 +41,7 @@ function formatWeekRange(generatedAt: string): string {
   const startDay = weekStart.getDate();
   const endFormatted = fmt.format(weekEnd);
   // "Week of 9–15 June 2026"
-  return `Week of ${startDay}–${endFormatted}`;
+  return `Week of ${startDay}-${endFormatted}`;
 }
 
 function SourceFiguresLine({ children }: { children: React.ReactNode }) {
@@ -66,7 +66,7 @@ function formatLeadIntelligenceFigures(
   if (figures.overdueFollowUpCount > 0) {
     parts.push(`${figures.overdueFollowUpCount} overdue follow-up${figures.overdueFollowUpCount === 1 ? "" : "s"}`);
   }
-  return parts.filter((part) => part !== "—").join(" · ");
+  return parts.filter((part) => part !== "-").join(" · ");
 }
 
 function formatTimestamp(iso: string): string {
@@ -171,7 +171,7 @@ function EmptyState() {
       </h2>
       <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
         Winston generates your weekly business summary every Sunday morning.
-        Check back then — or ask your admin to trigger one manually.
+        Check back then, or ask your admin to trigger one manually.
       </p>
     </div>
   );
@@ -201,7 +201,7 @@ export function WinstonDigestPageClient({
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
 
-          {/* 1 — Week in Review */}
+          {/* 1. Week in Review */}
           <DigestCard
             icon={<BarChart2 className="size-4" />}
             iconClass="text-muted-foreground"
@@ -213,7 +213,7 @@ export function WinstonDigestPageClient({
             </p>
           </DigestCard>
 
-          {/* 2 — Wins */}
+          {/* 2. Wins */}
           <DigestCard
             icon={<Trophy className="size-4" />}
             iconClass="text-amber-400"
@@ -222,7 +222,7 @@ export function WinstonDigestPageClient({
             <WinList items={digest.wins} />
           </DigestCard>
 
-          {/* 3 — Needs attention */}
+          {/* 3. Needs attention */}
           <DigestCard
             icon={<AlertCircle className="size-4" />}
             iconClass="text-red-400"
@@ -231,7 +231,7 @@ export function WinstonDigestPageClient({
             <AttentionList items={digest.needsAttention} />
           </DigestCard>
 
-          {/* 4 — Week ahead */}
+          {/* 4. Week ahead */}
           <DigestCard
             icon={<Calendar className="size-4" />}
             iconClass="text-wisk-section-winston"
@@ -240,7 +240,7 @@ export function WinstonDigestPageClient({
             <WeekAheadList items={digest.weekAhead} />
           </DigestCard>
 
-          {/* 5 — Insight */}
+          {/* 5. Insight */}
           <DigestCard
             icon={<Lightbulb className="size-4" />}
             iconClass="text-wisk-section-winston"
@@ -254,7 +254,7 @@ export function WinstonDigestPageClient({
             </div>
           </DigestCard>
 
-          {/* 6 — Recommendation (most prominent) */}
+          {/* 6. Recommendation (most prominent) */}
           <div className="sm:col-span-2 xl:col-span-3 rounded-xl border border-wisk-section-winston/30 bg-gradient-to-br from-wisk-section-winston/[0.06] to-wisk-section-winston/[0.06] p-5 shadow-sm">
             <div className="mb-3 flex items-center gap-2.5">
               <div className="flex size-7 items-center justify-center rounded-lg bg-wisk-section-winston text-wisk-section-winston-fg">

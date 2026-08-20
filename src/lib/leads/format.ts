@@ -23,7 +23,7 @@ export function formatLeadValue(
   value: number | null | undefined,
   valueType: LeadValueType | string | null | undefined = "one_time"
 ): string {
-  if (value == null) return "—";
+  if (value == null) return "-";
   const formatted = new Intl.NumberFormat("en-GB", {
     style: "currency",
     currency: "GBP",
@@ -45,7 +45,7 @@ export function formatPipelineValueSplit(
   if (split.monthly > 0) {
     parts.push(`Recurring: ${formatLeadValue(split.monthly, "monthly")}`);
   }
-  return parts.length > 0 ? parts.join(" · ") : "—";
+  return parts.length > 0 ? parts.join(" · ") : "-";
 }
 
 export function annualizeLeadValue(

@@ -83,7 +83,7 @@ export async function submitPortalMaintenanceRequest(
 
   const admin = createAdminClient();
 
-  const taskTitle = `Maintenance: ${parsed.data.title} — ${formatPropertyAddress(property)}`;
+  const taskTitle = `Maintenance: ${parsed.data.title} (${formatPropertyAddress(property)})`;
   const winstonResolved = parsed.data.winstonAttempted === true;
   const isEmergency = parsed.data.priority === "emergency";
   const taskNotes = [

@@ -39,12 +39,12 @@ const CAPABILITIES: CapItem[] = [
   {
     Icon: BarChart3,
     title: "Win-rate dashboard.",
-    body: "See conversion and deal value from the leads you already track — no new data entry.",
+    body: "See conversion and deal value from the leads you already track, no new data entry.",
   },
   {
     Icon: Search,
     title: "Built for small operators.",
-    body: "Research that feeds your pipeline and content — not a bolted-on CI tool with ops chrome.",
+    body: "Research that feeds your pipeline and content, not a bolted-on CI tool with ops chrome.",
   },
 ];
 
@@ -76,7 +76,7 @@ function CheckoutButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      aria-label={loading ? "Redirecting to Stripe" : `${label} — secure checkout`}
+      aria-label={loading ? "Redirecting to Stripe" : `${label}, secure checkout`}
       className={cn(
         "group relative overflow-hidden rounded-xl text-sm font-semibold text-white",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2",
@@ -168,10 +168,10 @@ export function ResearchCheckoutClient({ priceId }: Props) {
             WISK Research
           </motion.p>
           <h1 className="max-w-2xl text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-            Cited research that feeds your pipeline — not another browser tab.
+            Cited research that feeds your pipeline, not another browser tab.
           </h1>
           <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-            Lead briefs, competitor signals, and win-rate analytics — £19/month.
+            Lead briefs, competitor signals, and win-rate analytics, £19/month.
             Cancel anytime.
           </p>
           <div ref={ctaRef} className="mt-8 max-w-sm">

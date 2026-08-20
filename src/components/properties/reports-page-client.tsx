@@ -294,7 +294,7 @@ function ReportHeader({
   return (
     <header className="mb-6 print:mb-4">
       <h2 className="text-xl font-bold text-foreground print:text-[14pt]">
-        WISK Properties — Financial Report
+        WISK Properties. Financial Report
       </h2>
       <p className="mt-1 text-sm text-muted-foreground">{periodHeading}</p>
       <p className="mt-1 text-xs text-muted-foreground">
@@ -688,7 +688,7 @@ function PropertyReportView({
                     className="border-b border-border/40 last:border-0 print:border-[#e5e7eb]"
                   >
                     <td className="px-4 py-3">
-                      {tenantNameByPaymentId[payment.id] ?? "—"}
+                      {tenantNameByPaymentId[payment.id] ?? "-"}
                     </td>
                     <td className="px-4 py-3">
                       {formatPropertyDate(payment.due_date)}
@@ -743,7 +743,7 @@ function PropertyReportView({
                     <td className="px-4 py-3 tabular-nums">
                       {mortgage.interest_rate != null
                         ? `${mortgage.interest_rate}%`
-                        : "—"}
+                        : "-"}
                     </td>
                     <td className="px-4 py-3">
                       {formatPropertyDate(mortgage.fixed_rate_end_date)}

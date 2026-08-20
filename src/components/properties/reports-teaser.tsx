@@ -17,7 +17,7 @@ const FEATURES = [
     icon: FileText,
     title: "Tax year reports",
     description:
-      "Generate reports aligned to the UK tax year (6 April – 5 April).",
+      "Generate reports aligned to the UK tax year (6 April, 5 April).",
   },
   {
     icon: Building2,
@@ -67,7 +67,7 @@ export function ReportsTeaser() {
           Financial Reports
         </h1>
         <p className="mx-auto mt-3 max-w-lg text-base text-muted-foreground">
-          Professional financial reports for your portfolio — ready for your
+          Professional financial reports for your portfolio, ready for your
           accountant or self-assessment.
         </p>
 

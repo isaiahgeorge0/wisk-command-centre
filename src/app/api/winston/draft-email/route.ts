@@ -31,7 +31,7 @@ const bodySchema = z.object({
     .optional(),
 });
 
-const SYSTEM_PROMPT = `You are Winston, WISK's AI business assistant. Draft a short, professional follow-up email for a business lead. Keep it concise (3-4 sentences max), warm but professional. Return only the email body text — no subject line, no greeting salutation, no sign-off. Just the body paragraphs. When pipeline health context is provided, ground the email in that specific situation — do not write a generic nudge. When a lead value is provided, restate that exact pre-formatted figure — do not invent, round, abbreviate, convert, or recalculate it. Never rewrite a value as "k" shorthand (e.g. do not write "£15k" for a £15 opportunity).`;
+const SYSTEM_PROMPT = `You are Winston, WISK's AI business assistant. Draft a short, professional follow-up email for a business lead. Keep it concise (3-4 sentences max), warm but professional. Return only the email body text: no subject line, no greeting salutation, no sign-off. Just the body paragraphs. When pipeline health context is provided, ground the email in that specific situation. Do not write a generic nudge. When a lead value is provided, restate that exact pre-formatted figure. Do not invent, round, abbreviate, convert, or recalculate it. Never rewrite a value as "k" shorthand (for example do not write "£15k" for a £15 opportunity).`;
 
 export async function POST(request: Request) {
   try {
@@ -131,14 +131,14 @@ export async function POST(request: Request) {
 Pipeline health context (why this lead needs a follow-up right now):
 - Issue: ${pipelineContext.issue}
 - Suggested action: ${pipelineContext.suggestedAction}
-Reference this specific situation in the email — e.g. time since last contact, proposal stage, overdue follow-up — without inventing details not listed here.
+Reference this specific situation in the email, e.g. time since last contact, proposal stage, overdue follow-up, without inventing details not listed here.
 `
       : "";
 
     const userPrompt = `Lead name: ${lead.name}
 Stage: ${stageLabel} (${lead.status})
 Service interest: ${lead.service_interest}
-Value (restate this exact figure if you mention it — do not reword, round, or abbreviate): ${
+Value (restate this exact figure if you mention it, do not reword, round, or abbreviate): ${
   lead.value != null
     ? formatLeadValue(lead.value, lead.value_type)
     : "Not set"

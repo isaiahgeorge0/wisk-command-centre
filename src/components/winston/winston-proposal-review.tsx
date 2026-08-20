@@ -595,7 +595,7 @@ export function WinstonProposalReview({
       <div className="shrink-0 space-y-1 border-b border-border/60 px-4 py-3">
         <h2 className="text-sm font-semibold text-foreground">{title}</h2>
         <p className="text-xs text-muted-foreground">
-          Edit, deselect, or remove items — nothing is created until you
+          Edit, deselect, or remove items, nothing is created until you
           confirm.
         </p>
         <p className="text-xs font-medium tabular-nums text-foreground/80">

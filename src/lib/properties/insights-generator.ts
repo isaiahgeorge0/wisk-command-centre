@@ -105,7 +105,7 @@ export type ProPropertyPortfolioContext = PropertyPortfolioContext & {
 };
 
 const FIGURES_CONTEXT_NOTE =
-  "Figures above are context only — do not copy currency amounts, values, £ figures, percentages, scores, or \"k\" shorthand into any JSON field. Exact amounts are attached by the application from source data and shown in the UI.";
+  "Figures above are context only, do not copy currency amounts, values, £ figures, percentages, scores, or \"k\" shorthand into any JSON field. Exact amounts are attached by the application from source data and shown in the UI.";
 
 const BASE_SYSTEM_PROMPT = `You are Winston, an AI property management assistant for WISK. Analyse this landlord's portfolio and provide a structured digest.
 
@@ -120,14 +120,14 @@ Return a JSON object with these sections:
 }
 
 Rules:
-- Refer to properties and tenants by name — never restate currency amounts, values, £ figures, percentages, scores, or "k" shorthand in any field
+- Refer to properties and tenants by name, never restate currency amounts, values, £ figures, percentages, scores, or "k" shorthand in any field
 - Do not invent, round, abbreviate, convert, or recalculate any figure. Exact amounts are attached by the application from source data and shown in the UI
-- Do not mention rent totals, yields, or cost totals in prose — those are rendered separately from source data
+- Do not mention rent totals, yields, or cost totals in prose, those are rendered separately from source data
 - Keep the tone direct, premium, and practical
 
 Return ONLY valid JSON. No markdown, no explanation.`;
 
-const PRO_SYSTEM_APPENDIX = ` This landlord is on Properties Pro. You have access to yield analytics, tenant reliability scores, and detailed financial data. Provide specific, data-backed qualitative insights. Identify patterns and risks the landlord might not have noticed. Refer to properties and tenants by name — never restate currency amounts, values, £ figures, percentages, scores, or "k" shorthand. Do not invent, round, abbreviate, convert, or recalculate any figure. Exact amounts are attached by the application from source data and shown in the UI.`;
+const PRO_SYSTEM_APPENDIX = ` This landlord is on Properties Pro. You have access to yield analytics, tenant reliability scores, and detailed financial data. Provide specific, data-backed qualitative insights. Identify patterns and risks the landlord might not have noticed. Refer to properties and tenants by name, never restate currency amounts, values, £ figures, percentages, scores, or "k" shorthand. Do not invent, round, abbreviate, convert, or recalculate any figure. Exact amounts are attached by the application from source data and shown in the UI.`;
 
 export function getSystemPrompt(isProPlan: boolean): string {
   if (!isProPlan) return BASE_SYSTEM_PROMPT;
@@ -535,7 +535,7 @@ function buildBaseUserPrompt(ctx: PropertyPortfolioContext): string {
   if (ctx.openMaintenance.length === 0) lines.push("- No open tickets");
   lines.push("");
 
-  lines.push("## RENT THIS MONTH (context only — do not restate these £ figures in output)");
+  lines.push("## RENT THIS MONTH (context only, do not restate these £ figures in output)");
   lines.push(`Paid: £${ctx.rentPayments.paidThisMonth}`);
   lines.push(`Outstanding: £${ctx.rentPayments.outstandingThisMonth}`);
   lines.push(`Total due: £${ctx.rentPayments.totalDueThisMonth}`);
@@ -555,7 +555,7 @@ function buildBaseUserPrompt(ctx: PropertyPortfolioContext): string {
 function buildProUserPrompt(ctx: ProPropertyPortfolioContext): string {
   const lines = [buildBaseUserPrompt(ctx), ""];
 
-  lines.push("## YIELD ANALYTICS (context only — do not restate these % figures in output)");
+  lines.push("## YIELD ANALYTICS (context only, do not restate these % figures in output)");
   lines.push(
     `Portfolio gross yield: ${ctx.portfolioGrossYield != null ? `${ctx.portfolioGrossYield.toFixed(1)}%` : "n/a"}`
   );
@@ -573,7 +573,7 @@ function buildProUserPrompt(ctx: ProPropertyPortfolioContext): string {
   }
   lines.push("");
 
-  lines.push("## TENANT RELIABILITY (context only — grades and scores are attached in code)");
+  lines.push("## TENANT RELIABILITY (context only, grades and scores are attached in code)");
   const reliabilitySorted = [...ctx.tenantReliabilityScores].sort((a, b) => {
     const gradeWeight: Record<string, number> = {
       F: 0,
@@ -586,7 +586,7 @@ function buildProUserPrompt(ctx: ProPropertyPortfolioContext): string {
   });
   for (const tenant of reliabilitySorted.slice(0, 20)) {
     lines.push(
-      `${tenant.tenantName} at ${tenant.propertyName}: Grade ${tenant.grade} (${tenant.score}/100) — ${tenant.label}. Missed: ${tenant.missedCount}, Late: ${tenant.lateCount}.`
+      `${tenant.tenantName} at ${tenant.propertyName}: Grade ${tenant.grade} (${tenant.score}/100), ${tenant.label}. Missed: ${tenant.missedCount}, Late: ${tenant.lateCount}.`
     );
   }
   if (ctx.tenantReliabilityScores.length > 20) {
@@ -609,7 +609,7 @@ function buildProUserPrompt(ctx: ProPropertyPortfolioContext): string {
   );
   lines.push("");
 
-  lines.push("## FINANCIAL OVERVIEW (context only — do not restate these £ figures in output)");
+  lines.push("## FINANCIAL OVERVIEW (context only, do not restate these £ figures in output)");
   lines.push(`Annual net income: £${ctx.totalNetIncomeAnnual}`);
   lines.push(`Mortgage costs: £${ctx.totalMortgageCostAnnual}/yr`);
   lines.push(`Insurance costs: £${ctx.totalInsuranceCostAnnual}/yr`);
@@ -642,7 +642,7 @@ function buildProUserPrompt(ctx: ProPropertyPortfolioContext): string {
 
   lines.push("---");
   lines.push(
-    "Respond ONLY with valid JSON. Include the base fields plus these Pro fields. All strings are qualitative reasoning only — no currency, percentages, or scores:"
+    "Respond ONLY with valid JSON. Include the base fields plus these Pro fields. All strings are qualitative reasoning only, no currency, percentages, or scores:"
   );
   lines.push(`{`);
   lines.push(`  "portfolio_health": string,`);

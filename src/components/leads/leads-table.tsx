@@ -304,11 +304,11 @@ export function LeadsTable({
                             )}
                           >
                             {followUp.isOverdue
-                              ? `Overdue — ${followUp.label}`
+                              ? `Overdue, ${followUp.label}`
                               : followUp.label}
                           </span>
                         ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
+                          <span className="text-xs text-muted-foreground">-</span>
                         )}
                       </td>
                       <td
@@ -411,7 +411,7 @@ export function LeadsTable({
                       )}
                     >
                       {followUp.isOverdue
-                        ? `Overdue — ${followUp.label}`
+                        ? `Overdue, ${followUp.label}`
                         : followUp.label}
                     </span>
                   ) : (

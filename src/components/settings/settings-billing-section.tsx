@@ -79,7 +79,7 @@ export function SettingsBillingSection({
           </p>
 
           <p className="text-xs text-muted-foreground">
-            Billing powered by Stripe — coming soon.
+            Billing powered by Stripe, coming soon.
           </p>
         </CardContent>
       </Card>

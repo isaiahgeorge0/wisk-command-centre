@@ -15,7 +15,7 @@ export function parseTagsInput(value: string | undefined): string[] | null {
 }
 
 export function formatContentDate(dateISO: string | null): string {
-  if (!dateISO) return "—";
+  if (!dateISO) return "-";
   return new Intl.DateTimeFormat("en-GB", {
     day: "numeric",
     month: "short",

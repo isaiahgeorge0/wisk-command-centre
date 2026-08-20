@@ -26,7 +26,7 @@ const modelResponseSchema = z.object({
 });
 
 const SYSTEM_PROMPT = `You are Winston, WISK's AI business assistant.
-Turn one competitor watchlist signal into a reviewable content_post proposal — never invent filler.
+Turn one competitor watchlist signal into a reviewable content_post proposal, never invent filler.
 
 Return ONLY valid JSON:
 {

@@ -75,7 +75,7 @@ export function SettingsPersonalisationSection({
       <CardHeader>
         <CardTitle>Winston greetings</CardTitle>
         <CardDescription>
-          Optional. Used in morning briefings and similar Winston copy —
+          Optional. Used in morning briefings and similar Winston copy 
           collected for personalisation only.
         </CardDescription>
       </CardHeader>

@@ -50,7 +50,7 @@ const FALLBACK_RESULT: Omit<ValuationResult, "inputTokens" | "outputTokens"> = {
   confidence: "low",
   search_level: "town",
   reasoning:
-    "Unable to generate estimate — Winston could not parse a complete market analysis from the response. Please try again later or add manual comparables to improve the next estimate.",
+    "Unable to generate estimate. Winston could not parse a complete market analysis from the response. Please try again later or add manual comparables to improve the next estimate.",
   low_evidence_warning: true,
   web_sources: [],
 };
@@ -62,7 +62,7 @@ function buildSystemPrompt(property: Property): string {
   return `You are Winston, a property market analyst. Analyse the provided property details and market data to give rental and sale price recommendations for a UK landlord.
 
 You have access to web search. Search for:
-1. Current rental prices for similar properties in ${property.postcode} — if fewer than 3 results found at postcode level, search at town/city level (${property.city})
+1. Current rental prices for similar properties in ${property.postcode}, if fewer than 3 results found at postcode level, search at town/city level (${property.city})
 2. Recent sale prices for similar properties in the same area
 
 After searching, provide your analysis.

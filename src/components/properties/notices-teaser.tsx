@@ -68,7 +68,7 @@ export function NoticesTeaser() {
         </h1>
         <p className="mx-auto mt-3 max-w-lg text-base text-muted-foreground">
           Prepare Section 8 and Section 13 notices using the official government
-          forms — pre-filled with your tenant and property data.
+          forms, pre-filled with your tenant and property data.
         </p>
 
         <div className="mt-10 grid w-full max-w-xl grid-cols-1 gap-4 sm:grid-cols-2">
@@ -88,7 +88,7 @@ export function NoticesTeaser() {
 
         <p className="mt-6 max-w-lg text-xs text-muted-foreground">
           This tool prepares official forms using your data. It does not provide
-          legal advice — always verify with a solicitor for contested cases.
+          legal advice, always verify with a solicitor for contested cases.
         </p>
 
         <div className="mt-8 flex flex-col items-center gap-3">

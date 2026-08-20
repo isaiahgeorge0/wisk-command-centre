@@ -129,7 +129,7 @@ function buildPaidEmailHtml(content: MorningBriefingContent): string {
               <p style="margin:0;font-size:14px;color:rgba(255,255,255,0.45);font-style:italic;line-height:1.6;">
                 &ldquo;${escapeHtml(content.encouragement)}&rdquo;
               </p>
-              <p style="margin:8px 0 0;font-size:12px;color:rgba(255,255,255,0.25);">— Winston</p>
+              <p style="margin:8px 0 0;font-size:12px;color:rgba(255,255,255,0.25);">Winston</p>
             </td>
           </tr>
           <tr>
@@ -272,8 +272,8 @@ export async function sendMorningBriefingEmail({
     from: process.env.RESEND_FROM_EMAIL ?? "WISK <hello@wiskapp.com>",
     to: to.trim().toLowerCase(),
     subject: free
-      ? `Good morning, ${displayName} — a note from Winston`
-      : `Good morning, ${displayName} — your WISK briefing`,
+      ? `Good morning, ${displayName}. A note from Winston`
+      : `Good morning, ${displayName}. Your WISK briefing`,
     html,
   });
 

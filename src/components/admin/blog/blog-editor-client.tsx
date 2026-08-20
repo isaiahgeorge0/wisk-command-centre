@@ -365,7 +365,7 @@ export function BlogEditorClient({
             </div>
           </div>
 
-          {/* Scheduled datetime — shown only when "scheduled" is selected */}
+          {/* Scheduled datetime, shown only when "scheduled" is selected */}
           {status === "scheduled" ? (
             <div className="grid gap-2">
               <Label htmlFor="blog-scheduled-for">Scheduled date & time</Label>

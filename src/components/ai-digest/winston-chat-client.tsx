@@ -172,7 +172,7 @@ function ConversationsSidebar({
         )}
       </AnimatePresence>
 
-      {/* Sidebar panel — desktop: static width push; mobile: fixed overlay */}
+      {/* Sidebar panel, desktop: static width push; mobile: fixed overlay */}
       <AnimatePresence initial={false}>
         {open && (
           <motion.aside
@@ -707,7 +707,7 @@ export function WinstonChatClient({
         return;
       }
       if (!data.found || !data.proposal) {
-        setScheduleError(data.message ?? "Not enough detail yet — keep chatting.");
+        setScheduleError(data.message ?? "Not enough detail yet. Keep chatting.");
         return;
       }
       setProposal(data.proposal);

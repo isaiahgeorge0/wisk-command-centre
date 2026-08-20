@@ -243,7 +243,7 @@ export function LeadCallNotes({
     return (
       <div className="rounded-xl border border-dashed border-border/50 bg-muted/10 px-3 py-2.5 text-center">
         <p className="text-xs text-muted-foreground">
-          Process call notes with Winston — available on{" "}
+          Process call notes with Winston, available on{" "}
           <Link
             href="/upgrade"
             className="font-medium text-wisk-section-leads underline-offset-2 hover:underline"

@@ -81,7 +81,7 @@ function DisclaimerBox() {
         />
         <div>
           <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
-            Legal disclaimer — please read
+            Legal disclaimer, please read
           </p>
           <p className="mt-1 text-xs leading-relaxed text-amber-700/80 dark:text-amber-400/80">
             {DISCLAIMER_TEXT}
@@ -304,7 +304,7 @@ export function NoticesPageClient({
             <FileWarning className="size-7 text-wisk-ferrari" aria-hidden />
             <div>
               <p className="font-semibold text-foreground">
-                Section 8 — Notice seeking possession
+                Section 8. Notice seeking possession
               </p>
               <p className="mt-1 text-[13px] text-muted-foreground">
                 For rent arrears, breach of tenancy, or other grounds to end a
@@ -323,7 +323,7 @@ export function NoticesPageClient({
             <TrendingUp className="size-7 text-wisk-ferrari" aria-hidden />
             <div>
               <p className="font-semibold text-foreground">
-                Section 13 — Rent increase notice
+                Section 13. Rent increase notice
               </p>
               <p className="mt-1 text-[13px] text-muted-foreground">
                 Propose a new rent to your tenant with the correct legal notice
@@ -360,7 +360,7 @@ export function NoticesPageClient({
         </button>
 
         <h2 className="mb-6 text-lg font-semibold text-foreground">
-          Section 8 — Select tenant and grounds
+          Section 8. Select tenant and grounds
         </h2>
 
         <DisclaimerBox />
@@ -387,7 +387,7 @@ export function NoticesPageClient({
               {tenants.map((tenant) => (
                 <option key={tenant.id} value={tenant.id}>
                   {tenant.first_name} {tenant.last_name}
-                  {tenant.property_name ? ` — ${tenant.property_name}` : ""}
+                  {tenant.property_name ? `, ${tenant.property_name}` : ""}
                 </option>
               ))}
             </select>
@@ -478,7 +478,7 @@ export function NoticesPageClient({
                           />
                           <div className="flex-1">
                             <p className="text-sm font-medium text-foreground">
-                              Ground {ground.number} — {ground.name}
+                              Ground {ground.number}, {ground.name}
                             </p>
                             <p className="mt-1 text-xs text-muted-foreground">
                               {ground.explanation}
@@ -526,7 +526,7 @@ export function NoticesPageClient({
                         />
                         <div>
                           <p className="text-sm font-medium text-foreground">
-                            Ground {ground.number} — {ground.name}
+                            Ground {ground.number}, {ground.name}
                           </p>
                           <p className="mt-1 text-xs text-muted-foreground">
                             {ground.explanation}
@@ -589,7 +589,7 @@ export function NoticesPageClient({
         </button>
 
         <h2 className="mb-6 text-lg font-semibold text-foreground">
-          Section 8 — Review and generate
+          Section 8. Review and generate
         </h2>
 
         <div className="space-y-6">
@@ -634,7 +634,7 @@ export function NoticesPageClient({
           {/* Explanations per ground */}
           <div className="space-y-4">
             <p className="text-sm font-medium text-foreground">
-              Question 4.3 — Your explanation (required)
+              Question 4.3. Your explanation (required)
             </p>
             <p className="text-xs text-muted-foreground">
               You must explain in your own words why you believe you can use
@@ -647,7 +647,7 @@ export function NoticesPageClient({
               return (
                 <div key={groundId} className="space-y-2">
                   <label className="block text-sm font-medium text-foreground">
-                    Ground {ground.number} — {ground.name}
+                    Ground {ground.number}, {ground.name}
                   </label>
                   <textarea
                     rows={4}
@@ -712,7 +712,7 @@ export function NoticesPageClient({
         </button>
 
         <h2 className="mb-6 text-lg font-semibold text-foreground">
-          Section 13 — Select tenant and propose rent
+          Section 13. Select tenant and propose rent
         </h2>
 
         <DisclaimerBox />
@@ -733,7 +733,7 @@ export function NoticesPageClient({
               {tenants.map((tenant) => (
                 <option key={tenant.id} value={tenant.id}>
                   {tenant.first_name} {tenant.last_name}
-                  {tenant.property_name ? ` — ${tenant.property_name}` : ""}
+                  {tenant.property_name ? `, ${tenant.property_name}` : ""}
                 </option>
               ))}
             </select>
@@ -858,7 +858,7 @@ export function NoticesPageClient({
         </button>
 
         <h2 className="mb-6 text-lg font-semibold text-foreground">
-          Section 13 — Review and generate
+          Section 13. Review and generate
         </h2>
 
         <div className="space-y-6">

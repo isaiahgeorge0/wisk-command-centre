@@ -25,7 +25,7 @@ type Props = { priceId: string };
 
 const BASE_FEATURES = [
   "AI Digest every Sunday",
-  "WISK Chat — ask anything",
+  "WISK Chat, ask anything",
   "Smart suggestions",
   "100,000 tokens per month",
 ];
@@ -43,7 +43,7 @@ const HOW_IT_WORKS = [
     Icon: Mail,
     step: "01",
     title: "Connect your inbox",
-    body: "Link Gmail or Outlook in one click. Your emails stay private — Winston only reads what you allow.",
+    body: "Link Gmail or Outlook in one click. Your emails stay private. Winston only reads what you allow.",
   },
   {
     Icon: Inbox,
@@ -55,13 +55,13 @@ const HOW_IT_WORKS = [
     Icon: Zap,
     step: "03",
     title: "Action items surface in WISK",
-    body: "Emails from known leads link to their pipeline card. Follow-ups, proposals, replies — all visible where they matter.",
+    body: "Emails from known leads link to their pipeline card. Follow-ups, proposals, replies, all visible where they matter.",
   },
 ];
 
 const ALL_FEATURES = [
   "Everything in WISK AI",
-  "Email integration — Gmail and Outlook",
+  "Email integration. Gmail and Outlook",
   "AI-organised inbox linked to your leads",
   "Higher usage limits",
   "Priority support",
@@ -188,7 +188,7 @@ function CheckoutButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      aria-label={loading ? "Redirecting to Stripe" : `${label} — secure checkout`}
+      aria-label={loading ? "Redirecting to Stripe" : `${label}, secure checkout`}
       className={cn(
         "group relative overflow-hidden rounded-xl text-sm font-semibold text-white",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2",
@@ -399,7 +399,7 @@ export function AIProCheckoutClient({ priceId }: Props) {
         </motion.p>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          {/* Base WISK AI — muted */}
+          {/* Base WISK AI, muted */}
           <motion.div
             initial={noMotion ? false : { opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -423,7 +423,7 @@ export function AIProCheckoutClient({ priceId }: Props) {
             </ul>
           </motion.div>
 
-          {/* Pro additions — highlighted */}
+          {/* Pro additions, highlighted */}
           <motion.div
             initial={noMotion ? false : { opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -587,7 +587,7 @@ export function AIProCheckoutClient({ priceId }: Props) {
             ))}
           </ul>
 
-          {/* Main CTA — observed by IntersectionObserver */}
+          {/* Main CTA, observed by IntersectionObserver */}
           <div ref={ctaRef}>
             <CheckoutButton
               loading={loading}

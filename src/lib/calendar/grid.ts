@@ -126,7 +126,7 @@ export function formatWeekRange(date: Date): string {
       month: "long",
       year: "numeric",
     }).format(endDate);
-    return `${startDate.getDate()}–${endDate.getDate()} ${monthYear}`;
+    return `${startDate.getDate()}-${endDate.getDate()} ${monthYear}`;
   }
 
   const startLabel = new Intl.DateTimeFormat("en-GB", {
@@ -138,7 +138,7 @@ export function formatWeekRange(date: Date): string {
     month: "short",
     year: "numeric",
   }).format(endDate);
-  return `${startLabel} – ${endLabel}`;
+  return `${startLabel} to ${endLabel}`;
 }
 
 export function formatFullDay(date: Date): string {

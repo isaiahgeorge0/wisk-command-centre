@@ -33,7 +33,7 @@ export function TenantReliabilityBadge({
         )}
       >
         <span className="text-xs font-bold">
-          {isNoHistory ? "—" : score.grade}
+          {isNoHistory ? "-" : score.grade}
         </span>
       </span>
     );
@@ -48,7 +48,7 @@ export function TenantReliabilityBadge({
     >
       <div className="flex items-baseline">
         <span className="text-sm font-bold">
-          {isNoHistory ? "—" : score.grade}
+          {isNoHistory ? "-" : score.grade}
         </span>
         {!isNoHistory ? (
           <span className="ml-1 text-xs opacity-70">{score.score}</span>

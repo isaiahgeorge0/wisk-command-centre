@@ -12,7 +12,7 @@ export function parseTagsInput(input: string): string[] {
 }
 
 export function formatBlogDate(iso: string | null | undefined): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
 
   return new Date(iso).toLocaleDateString(undefined, {
     year: "numeric",

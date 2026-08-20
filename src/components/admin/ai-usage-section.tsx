@@ -177,7 +177,7 @@ export function AIUsageSection({ initialData }: AIUsageSectionProps) {
         <CardHeader>
           <CardTitle>By Model</CardTitle>
           <CardDescription>
-            Model is inferred from feature — chat and morning briefing use Sonnet
+            Model is inferred from feature, chat and morning briefing use Sonnet
             (paid) or Haiku (free); cost shown is conservative upper bound.
           </CardDescription>
         </CardHeader>
@@ -264,7 +264,7 @@ export function AIUsageSection({ initialData }: AIUsageSectionProps) {
         <CardHeader>
           <CardTitle>By Feature / Surface</CardTitle>
           <CardDescription>
-            Tracked via the feature column in ai_usage_log — attribution is per-API-call.
+            Tracked via the feature column in ai_usage_log, attribution is per-API-call.
           </CardDescription>
         </CardHeader>
         <CardContent>

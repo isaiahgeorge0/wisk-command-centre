@@ -37,7 +37,7 @@ export function LeadsStatsBar({ stats }: LeadsStatsBarProps) {
         value={
           stats.averageResponseDays != null
             ? `${stats.averageResponseDays} days`
-            : "—"
+            : "-"
         }
         accent="#2dd4bf"
       />

@@ -57,7 +57,7 @@ export function buildStalledLeadFocusSignals(leads: Lead[]): FocusSignal[] {
       return {
         id: `lead-stalled-${lead.id}`,
         category: "leads" as const,
-        label: `${lead.name} — no activity for ${daysSince} days`,
+        label: `${lead.name}, no activity for ${daysSince} days`,
         detail: lead.follow_up_date
           ? `Follow-up was ${new Date(lead.follow_up_date).toLocaleDateString()}`
           : undefined,
@@ -145,7 +145,7 @@ export function buildPropertiesFocusSignals(
     signals.push({
       id: `cert-expiring-${cert.id}`,
       category: "properties",
-      label: `${cert.certificate_type} — ${propertyName}`,
+      label: `${cert.certificate_type}, ${propertyName}`,
       detail: expired
         ? "Expired"
         : daysUntil !== null
@@ -161,7 +161,7 @@ export function buildPropertiesFocusSignals(
     signals.push({
       id: `maintenance-${ticket.id}`,
       category: "properties",
-      label: `Open ticket — ${propertyName}`,
+      label: `Open ticket, ${propertyName}`,
       detail: ticket.title ?? undefined,
       href: "/properties/maintenance",
       urgency: "medium",
@@ -172,7 +172,7 @@ export function buildPropertiesFocusSignals(
     signals.push({
       id: `rent-due-${flag.tenant_id}-${flag.due_date}`,
       category: "properties",
-      label: `Rent due — ${flag.tenant_name}`,
+      label: `Rent due, ${flag.tenant_name}`,
       detail: flag.days_overdue > 0
         ? `${flag.days_overdue} days overdue`
         : `Due ${new Date(flag.due_date).toLocaleDateString()}`,

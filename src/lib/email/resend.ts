@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 
-const APPROVAL_SUBJECT = "You're in — your WISK access has been approved";
-const ACCESS_REQUEST_SUBJECT = "We've received your request — WISK";
+const APPROVAL_SUBJECT = "You're in, your WISK access has been approved";
+const ACCESS_REQUEST_SUBJECT = "We've received your request. WISK";
 
 function buildAccessRequestConfirmationHtml(name: string): string {
   const greeting = name.trim() || "there";
@@ -20,9 +20,9 @@ function buildAccessRequestConfirmationHtml(name: string): string {
       <h1 style="color:#f4f4f5;font-size:20px;font-weight:600;margin:0 0 12px;">We've received your request.</h1>
       <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin:0 0 20px;">Thanks ${greeting}, we've received your request to join WISK. We'll review it shortly and be in touch once a decision has been made.</p>
       <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin:0 0 20px;">In the meantime, follow our journey at <a href="https://wiskapp.com" style="color:#14b8a6;text-decoration:none;">wiskapp.com</a>.</p>
-      <p style="color:#71717a;font-size:13px;line-height:1.5;border-top:1px solid rgba(255,255,255,0.07);padding-top:20px;margin:8px 0 0;">WISK is invite-only — we'll email you again when there's an update on your request.</p>
+      <p style="color:#71717a;font-size:13px;line-height:1.5;border-top:1px solid rgba(255,255,255,0.07);padding-top:20px;margin:8px 0 0;">WISK is invite-only, we'll email you again when there's an update on your request.</p>
     </div>
-    <div style="margin-top:32px;color:#52525b;font-size:12px;text-align:center;">Built by IGC. — <a href="https://wiskapp.com" style="color:#52525b;text-decoration:none;">wiskapp.com</a></div>
+    <div style="margin-top:32px;color:#52525b;font-size:12px;text-align:center;">Built by IGC. <a href="https://wiskapp.com" style="color:#52525b;text-decoration:none;">wiskapp.com</a></div>
   </div>
 </body>
 </html>`;
@@ -42,10 +42,10 @@ function buildApprovalNotificationHtml(): string {
     <div style="background:#111118;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:36px 32px;">
       <h1 style="color:#f4f4f5;font-size:20px;font-weight:600;margin:0 0 12px;">You're in.</h1>
       <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin:0 0 20px;">Your request to access WISK has been approved. You'll receive a separate email shortly with a link to set up your password and access your command centre.</p>
-      <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin:0 0 20px;">WISK is your single place to manage projects, tasks, goals, content, leads, and ideas — everything whisked together.</p>
-      <p style="color:#71717a;font-size:13px;line-height:1.5;border-top:1px solid rgba(255,255,255,0.07);padding-top:20px;margin:8px 0 0;">Keep an eye on your inbox — your invite link is on its way.</p>
+      <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin:0 0 20px;">WISK is your single place to manage projects, tasks, goals, content, leads, and ideas, everything whisked together.</p>
+      <p style="color:#71717a;font-size:13px;line-height:1.5;border-top:1px solid rgba(255,255,255,0.07);padding-top:20px;margin:8px 0 0;">Keep an eye on your inbox, your invite link is on its way.</p>
     </div>
-    <div style="margin-top:32px;color:#52525b;font-size:12px;text-align:center;">Built by IGC. — <a href="https://wiskapp.com" style="color:#52525b;text-decoration:none;">wiskapp.com</a></div>
+    <div style="margin-top:32px;color:#52525b;font-size:12px;text-align:center;">Built by IGC. <a href="https://wiskapp.com" style="color:#52525b;text-decoration:none;">wiskapp.com</a></div>
   </div>
 </body>
 </html>`;

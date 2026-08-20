@@ -44,7 +44,7 @@ const CAPABILITIES: CapItem[] = [
   {
     Icon: FileText,
     title: "Never miss a certificate.",
-    body: "Gas safety, EPC, EICR — Winston tracks expiry dates and alerts you before they lapse.",
+    body: "Gas safety, EPC, EICR. Winston tracks expiry dates and alerts you before they lapse.",
   },
 ];
 
@@ -140,7 +140,7 @@ function CheckoutButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      aria-label={loading ? "Redirecting to Stripe" : `${label} — secure checkout`}
+      aria-label={loading ? "Redirecting to Stripe" : `${label}, secure checkout`}
       className={cn(
         "group relative overflow-hidden rounded-xl text-sm font-semibold text-white",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wisk-ferrari focus-visible:ring-offset-2",

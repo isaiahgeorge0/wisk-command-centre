@@ -241,7 +241,7 @@ export function ContractorPortalClient({
             </h1>
             <p className="mt-2 flex items-start gap-1.5 text-sm text-[var(--portal-muted)]">
               <MapPin className="mt-0.5 size-3.5 shrink-0" />
-              {property ? formatPropertyAddress(property) : "—"}
+              {property ? formatPropertyAddress(property) : "-"}
             </p>
           </div>
           <JobSheetStatusBadge status={jobSheet.status} className="text-sm" />
@@ -293,7 +293,7 @@ export function ContractorPortalClient({
           </ul>
         ) : (
           <p className="mt-3 text-sm text-[var(--portal-muted)]">
-            No updates yet — add the first one below.
+            No updates yet, add the first one below.
           </p>
         )}
         <div className="mt-4 space-y-2">
@@ -402,7 +402,7 @@ export function ContractorPortalClient({
               id="access-time"
               value={accessTime}
               onChange={(e) => setAccessTime(e.target.value)}
-              placeholder="e.g. 9am–12pm"
+              placeholder="e.g. 9am-12pm"
               className="mt-1 min-h-11 border-[var(--portal-border)] bg-[var(--portal-bg)]"
             />
           </div>

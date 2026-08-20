@@ -73,4 +73,4 @@ export type UserHealthSummary = {
 };
 
 export const DEFAULT_INVITE_WELCOME_MESSAGE =
-  "Welcome to WISK Command Centre — we're glad to have you. Set your password using the link below and you'll be up and running in minutes.";
+  "Welcome to WISK Command Centre, we're glad to have you. Set your password using the link below and you'll be up and running in minutes.";

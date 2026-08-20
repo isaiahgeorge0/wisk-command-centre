@@ -1,6 +1,6 @@
 export function formatProjectValue(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) {
-    return "—";
+    return "-";
   }
 
   return new Intl.NumberFormat("en-GB", {
@@ -12,7 +12,7 @@ export function formatProjectValue(value: number | null | undefined): string {
 
 export function formatProjectDeadline(deadline: string | null | undefined): string {
   if (!deadline) {
-    return "—";
+    return "-";
   }
 
   return new Intl.DateTimeFormat("en-GB", {

@@ -116,7 +116,7 @@ export function LeadResearchBriefCard({
       {!canAccessResearch ? (
         <div className="space-y-3 rounded-lg border border-border/50 bg-muted/20 p-3">
           <p className="text-xs leading-relaxed text-muted-foreground">
-            WISK Research unlocks cited lead intelligence briefs — company
+            WISK Research unlocks cited lead intelligence briefs, company
             background, budget signals, and pain points before every call.
           </p>
           <Link
@@ -124,7 +124,7 @@ export function LeadResearchBriefCard({
             className="inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-lg bg-cyan-600 px-3 text-xs font-medium text-white transition-opacity hover:opacity-90"
           >
             <Lock className="size-3" aria-hidden />
-            Upgrade to Research — £19/mo
+            Upgrade to Research, £19/mo
           </Link>
         </div>
       ) : !selectedLead ? (

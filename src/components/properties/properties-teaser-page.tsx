@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 function PortfolioPreview() {
   const rows = [
     { name: "Flat 2, Crown Street", status: "Occupied", rent: "£1,250" },
-    { name: "12 Oak Lane", status: "Vacant", rent: "—" },
+    { name: "12 Oak Lane", status: "Vacant", rent: "-" },
     { name: "Riverside HMO", status: "Maintenance", rent: "£2,400" },
   ];
 
@@ -84,7 +84,7 @@ export function PropertiesTeaserPage() {
             </h1>
 
             <p className="mt-4 max-w-md text-sm leading-relaxed text-foreground/80">
-              WISK Properties gives landlords a complete command centre — tenants,
+              WISK Properties gives landlords a complete command centre, tenants,
               maintenance, rent tracking, certificates, and Winston AI insights. All
               in one place.
             </p>

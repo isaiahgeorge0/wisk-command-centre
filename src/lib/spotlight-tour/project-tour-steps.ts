@@ -27,7 +27,7 @@ export const PROJECT_TOUR_STEPS: ProjectTourStep[] = [
   {
     target: "status",
     title: "Where are things right now?",
-    body: "Set the current status of this project. Update it as the project progresses — Active, Paused, Completed.",
+    body: "Set the current status of this project. Update it as the project progresses. Active, Paused, Completed.",
     cta: "Next",
   },
   {

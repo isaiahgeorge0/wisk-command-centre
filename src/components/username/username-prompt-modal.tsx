@@ -82,7 +82,7 @@ export function UsernamePromptModal({ onComplete }: UsernamePromptModalProps) {
           </Button>
 
           <p className="text-center text-xs text-muted-foreground">
-            Your display name stays the same — username is only used for
+            Your display name stays the same, username is only used for
             collaboration.
           </p>
         </form>

@@ -63,7 +63,7 @@ function DisclaimerBox({ taxYearLabel }: { taxYearLabel: string }) {
         />
         <div>
           <p className="text-sm font-semibold text-amber-700 dark:text-amber-400 print:text-black">
-            Tax disclaimer — please read
+            Tax disclaimer, please read
           </p>
           <p className="mt-1 text-xs leading-relaxed text-amber-700/80 dark:text-amber-400/80 print:text-black">
             {getDisclaimerText(taxYearLabel)}
@@ -400,9 +400,9 @@ export function SA105PageClient({
                     box.boxNumber === "27" || box.boxNumber === "29";
                   const manualNote =
                     box.boxNumber === "27"
-                      ? "Enter manually — letting agent fees, legal and professional costs not tracked by WISK"
+                      ? "Enter manually, letting agent fees, legal and professional costs not tracked by WISK"
                       : box.boxNumber === "29"
-                        ? "Enter manually — travel, phone, admin and other costs not tracked by WISK"
+                        ? "Enter manually, travel, phone, admin and other costs not tracked by WISK"
                         : null;
 
                   return (
@@ -487,7 +487,7 @@ export function SA105PageClient({
             {box44 ? (
               <div className="rounded-xl border border-sky-500/30 bg-sky-500/5 p-4 print:border print:border-[#e5e7eb]">
                 <p className="text-xs font-semibold uppercase tracking-wider text-sky-700 dark:text-sky-400">
-                  Box 44 — Not deducted from profit
+                  Box 44. Not deducted from profit
                 </p>
                 <p className="mt-1 text-sm font-medium text-foreground">
                   {box44.label}
@@ -496,7 +496,7 @@ export function SA105PageClient({
                   {formatPropertyCurrency(box44.amount)}
                 </p>
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Generates a 20% tax credit instead — see insight below.
+                  Generates a 20% tax credit instead, see insight below.
                 </p>
               </div>
             ) : null}

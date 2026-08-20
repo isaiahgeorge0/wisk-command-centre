@@ -146,7 +146,7 @@ export async function POST(request: Request) {
   }
 
   console.log(
-    `generate-insights: complete — ${generated} generated, ${skipped} skipped, ${failed} failed`
+    `generate-insights: complete, ${generated} generated, ${skipped} skipped, ${failed} failed`
   );
 
   return NextResponse.json({ success: true, generated, skipped, failed });
