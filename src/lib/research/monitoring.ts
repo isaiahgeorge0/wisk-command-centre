@@ -145,6 +145,7 @@ export function researchCheckToSignal(
   }
 
   return {
+    checkId: check.id,
     competitorId: competitor.id,
     competitorName: competitor.name,
     source: check.source,
@@ -162,7 +163,7 @@ export function researchSignalToFocusSignal(
   signal: ResearchSignal
 ): FocusSignal {
   return {
-    id: `research-${signal.source}-${signal.competitorId}-${signal.checkedAt}`,
+    id: `research-${signal.checkId}`,
     category: "research",
     label: `${signal.competitorName} — ${signal.summary}`,
     detail: signal.detail,

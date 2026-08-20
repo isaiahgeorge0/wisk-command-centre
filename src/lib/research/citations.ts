@@ -54,3 +54,15 @@ export function formatCitationsBlock(citations: ResearchCitation[]): string {
     )
     .join("\n\n");
 }
+
+/**
+ * Pull the trailing "Sources:" block from a Research open-chat display message
+ * so citations survive into the proposal review step.
+ */
+export function extractSourcesFromDisplayMessage(
+  content: string
+): string | null {
+  const match = content.match(/(?:^|\n)Sources:\s*\n([\s\S]+)$/i);
+  const block = match?.[1]?.trim();
+  return block || null;
+}

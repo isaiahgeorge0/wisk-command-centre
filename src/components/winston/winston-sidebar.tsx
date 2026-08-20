@@ -6,6 +6,7 @@ import {
   FilePlus,
   Loader2,
   Lock,
+  NotebookPen,
   Send,
   Sparkles,
   X,
@@ -19,10 +20,29 @@ import {
   getOrCreateNoteConversation,
   getOrCreateScopedConversation,
 } from "@/app/(dashboard)/ai-digest/actions";
+import {
+  appendResearchFindingToLead,
+  listLeadsForResearchNotes,
+} from "@/app/(dashboard)/research/actions";
 import { useIsMobilePanel } from "@/components/calendar/use-is-mobile-panel";
 import { MobileSendCompose } from "@/components/layout/mobile-send-compose";
 import { MobileSheetShell } from "@/components/layout/mobile-sheet-shell";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { WinstonProposalReview } from "@/components/winston/winston-proposal-review";
 import { WinstonProposalSuccessToast } from "@/components/winston/proposal-success-toast";
 import { WinstonQuickAdd } from "@/components/winston/winston-quick-add";
@@ -152,9 +172,21 @@ function ChatPane({
   const [scheduleError, setScheduleError] = useState<string | null>(null);
   const [proposal, setProposal] = useState<WinstonProposal | null>(null);
   const [proposalSummary, setProposalSummary] = useState<string | null>(null);
+  const [proposalCitations, setProposalCitations] = useState<string | null>(
+    null
+  );
   const [proposalToast, setProposalToast] =
     useState<WinstonProposalCommitResult | null>(null);
   const [insertedIds, setInsertedIds] = useState<Set<string>>(new Set());
+  const [leadNoteMessage, setLeadNoteMessage] =
+    useState<ConversationMessage | null>(null);
+  const [leadOptions, setLeadOptions] = useState<
+    Array<{ id: string; name: string }>
+  >([]);
+  const [selectedLeadId, setSelectedLeadId] = useState("");
+  const [leadNoteError, setLeadNoteError] = useState<string | null>(null);
+  const [isSavingLeadNote, setIsSavingLeadNote] = useState(false);
+  const [leadNoteSaved, setLeadNoteSaved] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { scrollRef, stickToBottom } = useChatScrollFollow([
     messages,
@@ -173,7 +205,11 @@ function ChatPane({
     setConversationId(null);
     setProposal(null);
     setProposalSummary(null);
+    setProposalCitations(null);
     setScheduleError(null);
+    setLeadNoteMessage(null);
+    setLeadNoteError(null);
+    setLeadNoteSaved(null);
     setLimitHit(null);
     setInsertedIds(new Set());
     stickToBottom();
@@ -226,12 +262,19 @@ function ChatPane({
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({}),
+          body: JSON.stringify({
+            messageId: message.id.startsWith("optimistic-") ||
+              message.id.startsWith("reply-")
+              ? undefined
+              : message.id,
+            focusMessageContent: message.content,
+          }),
         }
       );
       const data = (await res.json()) as {
         found?: boolean;
         message?: string | null;
+        citations?: string | null;
         proposal?: WinstonProposal;
         error?: string;
       };
@@ -247,10 +290,48 @@ function ChatPane({
       }
       setProposal(data.proposal);
       setProposalSummary(data.message ?? null);
+      setProposalCitations(data.citations?.trim() || null);
     } catch {
       setScheduleError("Could not reach Winston. Please try again.");
     } finally {
       setSchedulingId(null);
+    }
+  }
+
+  async function openLeadNotesDialog(message: ConversationMessage) {
+    setLeadNoteMessage(message);
+    setLeadNoteError(null);
+    setLeadNoteSaved(null);
+    setSelectedLeadId("");
+    const result = await listLeadsForResearchNotes();
+    if (!result.success || !result.data) {
+      setLeadNoteError(result.success ? "Could not load leads" : result.error);
+      setLeadOptions([]);
+      return;
+    }
+    setLeadOptions(result.data);
+  }
+
+  async function handleAppendLeadNotes() {
+    if (!leadNoteMessage || !selectedLeadId || isSavingLeadNote) return;
+    setIsSavingLeadNote(true);
+    setLeadNoteError(null);
+    try {
+      const result = await appendResearchFindingToLead({
+        leadId: selectedLeadId,
+        content: leadNoteMessage.content,
+      });
+      if (!result.success) {
+        setLeadNoteError(result.error);
+        return;
+      }
+      const leadName =
+        leadOptions.find((lead) => lead.id === selectedLeadId)?.name ?? "lead";
+      setLeadNoteSaved(`Added to ${leadName}'s notes`);
+      setLeadNoteMessage(null);
+      router.refresh();
+    } finally {
+      setIsSavingLeadNote(false);
     }
   }
 
@@ -390,9 +471,11 @@ function ChatPane({
             allowedEntityTypes={[...WINSTON_PROPOSAL_ENTITY_TYPES]}
             title="Review Winston’s proposals"
             commitLabel="Create selected"
+            contextNote={proposalCitations}
             onCancel={() => {
               setProposal(null);
               setProposalSummary(null);
+              setProposalCitations(null);
             }}
             onCommitted={(result) => {
               setProposalToast(result);
@@ -400,6 +483,7 @@ function ChatPane({
               if (result.errors.length === 0) {
                 setProposal(null);
                 setProposalSummary(null);
+                setProposalCitations(null);
               }
             }}
           />
@@ -462,12 +546,12 @@ function ChatPane({
             <AnimatePresence initial={false}>
               {messages.map((msg) => {
                 const isUser = msg.role === "user";
+                const isResearchScope = resolved.scopeKey === "research";
                 const canAct =
                   !isUser &&
                   Boolean(msg.content.trim()) &&
                   !isSending &&
-                  Boolean(conversationId) &&
-                  resolved.scopeKey !== "research";
+                  Boolean(conversationId);
                 return (
                   <motion.div
                     key={msg.id}
@@ -521,6 +605,16 @@ function ChatPane({
                               ? "Building proposal…"
                               : "Create this"}
                           </button>
+                          {isResearchScope ? (
+                            <button
+                              type="button"
+                              onClick={() => void openLeadNotesDialog(msg)}
+                              className="inline-flex items-center gap-1 text-[11px] font-medium text-wisk-section-winston hover:underline"
+                            >
+                              <NotebookPen className="size-3" aria-hidden />
+                              Add to lead notes
+                            </button>
+                          ) : null}
                           {onInsertText ? (
                             <button
                               type="button"
@@ -557,6 +651,12 @@ function ChatPane({
       {scheduleError ? (
         <div className="mx-4 mb-2 rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
           {scheduleError}
+        </div>
+      ) : null}
+
+      {leadNoteSaved ? (
+        <div className="mx-4 mb-2 rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-xs text-foreground">
+          {leadNoteSaved}
         </div>
       ) : null}
 
@@ -624,6 +724,62 @@ function ChatPane({
         result={proposalToast}
         onDismiss={() => setProposalToast(null)}
       />
+      <Dialog
+        open={Boolean(leadNoteMessage)}
+        onOpenChange={(open) => {
+          if (!open) setLeadNoteMessage(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add to lead notes</DialogTitle>
+            <DialogDescription>
+              Appends this research finding to the lead&apos;s notes. Talking
+              points don&apos;t map to a Winston proposal type — this keeps them
+              on the lead without inventing a task or idea.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Select
+              value={selectedLeadId || undefined}
+              onValueChange={(value) => setSelectedLeadId(value ?? "")}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Choose a lead" />
+              </SelectTrigger>
+              <SelectContent>
+                {leadOptions.map((lead) => (
+                  <SelectItem key={lead.id} value={lead.id}>
+                    {lead.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {leadNoteError ? (
+              <p className="text-xs text-destructive">{leadNoteError}</p>
+            ) : null}
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setLeadNoteMessage(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={() => void handleAppendLeadNotes()}
+              disabled={!selectedLeadId || isSavingLeadNote}
+            >
+              {isSavingLeadNote ? (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              ) : null}
+              Add to notes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

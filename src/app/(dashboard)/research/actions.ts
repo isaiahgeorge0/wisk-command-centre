@@ -244,3 +244,127 @@ export async function removeResearchCompetitor(
     };
   }
 }
+
+const appendLeadNotesSchema = z.object({
+  leadId: z.string().uuid(),
+  content: z.string().trim().min(1).max(20000),
+});
+
+export async function listLeadsForResearchNotes(): Promise<
+  ResearchActionResult<Array<{ id: string; name: string }>>
+> {
+  try {
+    const { supabase, userId } = await getScopedSupabase();
+    const { canAccessResearchPro } = await assertResearchAccess(userId);
+    if (!canAccessResearchPro) {
+      return {
+        success: false,
+        error: "Adding research findings to leads needs WISK Research Pro.",
+      };
+    }
+
+    const { data, error } = await supabase
+      .from("leads")
+      .select("id, name")
+      .eq("user_id", userId)
+      .order("updated_at", { ascending: false })
+      .limit(100);
+
+    if (error) {
+      throw error;
+    }
+
+    return {
+      success: true,
+      data: (data ?? []).map((row) => ({
+        id: row.id as string,
+        name: (row.name as string) || "Untitled lead",
+      })),
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: toSafeActionError(error, "Could not load leads."),
+    };
+  }
+}
+
+/**
+ * Append a research chat finding to a lead's notes.
+ * Talking points don't map cleanly to WinstonProposal entityTypes (tasks/ideas
+ * have no lead_id), so this explicit append is the honest path.
+ */
+export async function appendResearchFindingToLead(input: {
+  leadId: string;
+  content: string;
+}): Promise<ResearchActionResult> {
+  const parsed = appendLeadNotesSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+
+  try {
+    const { supabase, userId } = await getScopedSupabase();
+    const { canAccessResearchPro } = await assertResearchAccess(userId);
+    if (!canAccessResearchPro) {
+      return {
+        success: false,
+        error: "Adding research findings to leads needs WISK Research Pro.",
+      };
+    }
+
+    const { data: existing, error: existingError } = await supabase
+      .from("leads")
+      .select("id, notes")
+      .eq("id", parsed.data.leadId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (existingError || !existing) {
+      return { success: false, error: "Lead not found" };
+    }
+
+    const timestamp = new Date().toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+    const entry = `\n\n---\nWinston research notes (${timestamp})\n${parsed.data.content.trim()}`;
+    const currentNotes =
+      typeof existing.notes === "string" ? existing.notes.trim() : "";
+    const notes = currentNotes
+      ? `${currentNotes}${entry}`
+      : parsed.data.content.trim();
+
+    const { error: updateError } = await supabase
+      .from("leads")
+      .update({ notes })
+      .eq("id", parsed.data.leadId)
+      .eq("user_id", userId);
+
+    if (updateError) {
+      return {
+        success: false,
+        error: toSafeActionError(
+          updateError,
+          "Could not save research notes to this lead."
+        ),
+      };
+    }
+
+    revalidatePath("/leads");
+    revalidatePath("/research");
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: toSafeActionError(
+        error,
+        "Could not save research notes to this lead."
+      ),
+    };
+  }
+}

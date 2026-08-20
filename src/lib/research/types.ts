@@ -44,6 +44,7 @@ export type ResearchCompetitorListItem = {
 };
 
 export type ResearchSignal = {
+  checkId: string;
   competitorId: string;
   competitorName: string;
   source: ResearchCheckSource;

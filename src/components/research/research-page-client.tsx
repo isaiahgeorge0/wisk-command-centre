@@ -9,9 +9,11 @@ import {
   MapPin,
   Minus,
   Search,
+  Sparkles,
   Trash2,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 
 import {
@@ -22,6 +24,13 @@ import {
 } from "@/app/(dashboard)/research/actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -30,6 +39,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { WinstonProposalReview } from "@/components/winston/winston-proposal-review";
+import { WinstonProposalSuccessToast } from "@/components/winston/proposal-success-toast";
 import { WinstonSectionEntry } from "@/components/winston/winston-entry-button";
 import {
   formatLeadValue,
@@ -38,12 +49,17 @@ import {
 import type {
   ResearchPageData,
   ResearchPlaceMatch,
+  ResearchSignal,
 } from "@/lib/research/types";
 import {
   RESEARCH_WIN_RATE_PERIODS,
   type ResearchWinRateDashboard,
   type ResearchWinRatePeriod,
 } from "@/lib/research/win-rate";
+import type {
+  WinstonProposal,
+  WinstonProposalCommitResult,
+} from "@/lib/winston/proposal";
 import { cn } from "@/lib/utils";
 
 type ResearchPageClientProps = {
@@ -261,6 +277,7 @@ function WinRateDashboardCard({
 }
 
 export function ResearchPageClient({ initialData }: ResearchPageClientProps) {
+  const router = useRouter();
   const [competitors, setCompetitors] = useState(initialData.competitors);
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
@@ -270,6 +287,14 @@ export function ResearchPageClient({ initialData }: ResearchPageClientProps) {
   const [isSearching, startSearch] = useTransition();
   const [isSaving, startSave] = useTransition();
   const [isRemoving, startRemove] = useTransition();
+  const [proposingCheckId, setProposingCheckId] = useState<string | null>(null);
+  const [proposalError, setProposalError] = useState<string | null>(null);
+  const [proposalSummary, setProposalSummary] = useState<string | null>(null);
+  const [activeProposal, setActiveProposal] = useState<WinstonProposal | null>(
+    null
+  );
+  const [proposalToast, setProposalToast] =
+    useState<WinstonProposalCommitResult | null>(null);
 
   const slotsRemaining = useMemo(
     () => initialData.competitorCap - competitors.length,
@@ -332,6 +357,41 @@ export function ResearchPageClient({ initialData }: ResearchPageClientProps) {
         current.filter((item) => item.competitor.id !== competitorId)
       );
     });
+  }
+
+  async function handleProposeContent(signal: ResearchSignal) {
+    if (!initialData.canAccessResearchPro || proposingCheckId) return;
+    setProposingCheckId(signal.checkId);
+    setProposalError(null);
+    try {
+      const response = await fetch("/api/winston/research/propose-content", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ checkId: signal.checkId }),
+      });
+      const data = (await response.json()) as {
+        found?: boolean;
+        message?: string | null;
+        proposal?: WinstonProposal;
+        error?: string;
+      };
+      if (!response.ok) {
+        setProposalError(data.error ?? "Could not build a content proposal");
+        return;
+      }
+      if (!data.found || !data.proposal) {
+        setProposalError(
+          data.message ?? "No clear content angle from this signal yet."
+        );
+        return;
+      }
+      setActiveProposal(data.proposal);
+      setProposalSummary(data.message ?? null);
+    } catch {
+      setProposalError("Could not reach Winston. Please try again.");
+    } finally {
+      setProposingCheckId(null);
+    }
   }
 
   return (
@@ -537,7 +597,7 @@ export function ResearchPageClient({ initialData }: ResearchPageClientProps) {
                   {item.latestMeaningfulSignals.length > 0 ? (
                     item.latestMeaningfulSignals.map((signal) => (
                       <div
-                        key={`${signal.source}-${signal.checkedAt}`}
+                        key={signal.checkId}
                         className="rounded-lg bg-muted/40 px-3 py-2"
                       >
                         <p className="text-sm font-medium text-foreground">
@@ -546,6 +606,25 @@ export function ResearchPageClient({ initialData }: ResearchPageClientProps) {
                         <p className="mt-1 text-xs text-muted-foreground">
                           {signal.detail} · {formatDateTime(signal.checkedAt)}
                         </p>
+                        {initialData.canAccessResearchPro ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="mt-2 h-7 px-2 text-xs text-wisk-section-winston"
+                            disabled={proposingCheckId === signal.checkId}
+                            onClick={() => void handleProposeContent(signal)}
+                          >
+                            {proposingCheckId === signal.checkId ? (
+                              <Loader2 className="mr-1.5 size-3 animate-spin" />
+                            ) : (
+                              <Sparkles className="mr-1.5 size-3" />
+                            )}
+                            {proposingCheckId === signal.checkId
+                              ? "Building proposal…"
+                              : "Propose content"}
+                          </Button>
+                        ) : null}
                       </div>
                     ))
                   ) : (
@@ -557,8 +636,61 @@ export function ResearchPageClient({ initialData }: ResearchPageClientProps) {
               </div>
             ))
           )}
+          {proposalError ? (
+            <p className="text-sm text-destructive">{proposalError}</p>
+          ) : null}
         </CardContent>
       </Card>
+
+      <Dialog
+        open={Boolean(activeProposal)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setActiveProposal(null);
+            setProposalSummary(null);
+          }
+        }}
+      >
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Review content proposal</DialogTitle>
+            <DialogDescription>
+              Nothing is created until you confirm. Same Winston review → commit
+              loop used elsewhere in the app.
+            </DialogDescription>
+          </DialogHeader>
+          {proposalSummary ? (
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              {proposalSummary}
+            </p>
+          ) : null}
+          {activeProposal ? (
+            <WinstonProposalReview
+              proposal={activeProposal}
+              allowedEntityTypes={["content_post"]}
+              title="Review content proposal"
+              commitLabel="Create selected"
+              onCancel={() => {
+                setActiveProposal(null);
+                setProposalSummary(null);
+              }}
+              onCommitted={(result) => {
+                setProposalToast(result);
+                router.refresh();
+                if (result.errors.length === 0) {
+                  setActiveProposal(null);
+                  setProposalSummary(null);
+                }
+              }}
+            />
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <WinstonProposalSuccessToast
+        result={proposalToast}
+        onDismiss={() => setProposalToast(null)}
+      />
     </div>
   );
 }

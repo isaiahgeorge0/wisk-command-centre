@@ -6,6 +6,9 @@ import { cachedSystemPrompt } from "@/lib/ai/anthropic";
 import { ANTHROPIC_STREAM_TIMEOUT_MS } from "@/lib/ai/constants";
 import { logUsage } from "@/lib/ai/usage-logger";
 import { getAuthContext } from "@/lib/auth/get-auth-context";
+import { hasPackageAccess } from "@/lib/billing/access";
+import { extractSourcesFromDisplayMessage } from "@/lib/research/citations";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getLocalDateKey, formatLocalDate } from "@/lib/morning/timezone";
 import {
@@ -32,6 +35,10 @@ const paramsSchema = z.object({
 
 const bodySchema = z.object({
   surface: z.enum(["calendar", "content"]).optional(),
+  /** When set, bias proposal generation toward this assistant message. */
+  messageId: z.string().uuid().optional(),
+  /** Client-held content for optimistic messages that may not be persisted yet. */
+  focusMessageContent: z.string().trim().min(1).max(20000).optional(),
 });
 
 const mixedItemSchema = z.object({
@@ -88,7 +95,7 @@ export async function POST(
     if (!parsedBody.success) {
       return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
-    const { surface } = parsedBody.data;
+    const { surface, messageId, focusMessageContent } = parsedBody.data;
 
     const supabase = await createClient();
     const { user } = await getAuthContext();
@@ -112,6 +119,24 @@ export async function POST(
       (typeof conversation.scope_key === "string" && conversation.scope_key) ||
       (surface ? BRAINSTORM_SURFACE_SCOPE[surface] : null);
 
+    if (scopeKey === "research") {
+      const admin = createAdminClient();
+      const canAccessResearchPro = await hasPackageAccess(
+        userId,
+        "research_pro",
+        admin
+      );
+      if (!canAccessResearchPro) {
+        return NextResponse.json(
+          {
+            error:
+              "Proposing from research findings needs WISK Research Pro.",
+          },
+          { status: 403 }
+        );
+      }
+    }
+
     const { data: prefs } = await supabase
       .from("user_preferences")
       .select("timezone")
@@ -123,7 +148,7 @@ export async function POST(
 
     const { data: history, error: historyError } = await supabase
       .from("ai_conversation_messages")
-      .select("role, content")
+      .select("id, role, content")
       .eq("user_id", userId)
       .eq("conversation_id", conversationId)
       .order("created_at", { ascending: true })
@@ -137,11 +162,25 @@ export async function POST(
       );
     }
 
-    const transcript = (history ?? [])
+    const historyRows = history ?? [];
+    const focusedRow = messageId
+      ? historyRows.find((row) => row.id === messageId)
+      : null;
+    const focusedContent =
+      (typeof focusedRow?.content === "string" && focusedRow.content.trim()) ||
+      focusMessageContent?.trim() ||
+      null;
+
+    const citations =
+      scopeKey === "research" && focusedContent
+        ? extractSourcesFromDisplayMessage(focusedContent)
+        : null;
+
+    const transcript = historyRows
       .map((row) => `${row.role === "user" ? "User" : "Winston"}: ${row.content}`)
       .join("\n\n");
 
-    if (!transcript.trim()) {
+    if (!transcript.trim() && !focusedContent) {
       return NextResponse.json({
         found: false,
         message: "Chat a bit more first — there isn’t enough to schedule yet.",
@@ -154,6 +193,13 @@ export async function POST(
     Sentry.setUser({ id: userId });
 
     const scopeBias = mixedProposalScopeBias(scopeKey);
+    const focusBlock = focusedContent
+      ? `\n\nFocus on this Winston reply the user tapped Create this on:\n${focusedContent}`
+      : "";
+    const citationsBlock = citations
+      ? `\n\nSources from that reply (must remain visible in item reasoning when used):\n${citations}`
+      : "";
+
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -168,7 +214,7 @@ export async function POST(
         messages: [
           {
             role: "user",
-            content: `${scopeBias ? `${scopeBias}\n\n` : ""}Today is ${todayLabel} (${todayISO}). Resolve relative weekdays against this date.\n\nConversation transcript:\n${transcript}`,
+            content: `${scopeBias ? `${scopeBias}\n\n` : ""}Today is ${todayLabel} (${todayISO}). Resolve relative weekdays against this date.\n\nConversation transcript:\n${transcript || "(empty)"}${focusBlock}${citationsBlock}`,
           },
         ],
       }),
@@ -251,6 +297,7 @@ export async function POST(
     return NextResponse.json({
       found: true,
       message: parsed.data.summary?.trim() || null,
+      citations,
       proposal,
     });
   } catch (error) {

@@ -59,7 +59,10 @@ export function mixedProposalScopeBias(scopeKey: string | null): string {
     case "notes":
       return "The user was talking about work planning — a project plus sibling tasks (linked with projectRef) is a natural shape when they described both.";
     case "research":
-      return "The user was in Research chat — do not invent creation proposals from research answers; this surface is citation Q&A only.";
+      return `The user was in Research chat. Prefer content_post when the finding supports a content angle; tasks/ideas/calendar_event/project are allowed when the conversation clearly asks for them.
+- Ground every item in the research answer and its Sources block. Do not invent filler.
+- Number guardrail: never invent, round, abbreviate, convert, or recalculate figures. If a number appears in the research text, copy it character-for-character when you must mention it; prefer qualitative framing.
+- Put source grounding in each item's reasoning (cite [n] indexes from the Sources block when present).`;
     default:
       return "";
   }

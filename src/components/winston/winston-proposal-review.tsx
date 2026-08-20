@@ -41,6 +41,8 @@ type WinstonProposalReviewProps = {
   allowedEntityTypes?: WinstonProposalEntityType[];
   title?: string;
   commitLabel?: string;
+  /** Extra context shown above items (e.g. research Sources citations). */
+  contextNote?: string | null;
   onCancel: () => void;
   onCommitted: (result: WinstonProposalCommitResult) => void;
 };
@@ -479,6 +481,7 @@ export function WinstonProposalReview({
   allowedEntityTypes,
   title = "Review Winston’s proposals",
   commitLabel = "Create selected",
+  contextNote,
   onCancel,
   onCommitted,
 }: WinstonProposalReviewProps) {
@@ -598,6 +601,16 @@ export function WinstonProposalReview({
         <p className="text-xs font-medium tabular-nums text-foreground/80">
           {summary}
         </p>
+        {contextNote?.trim() ? (
+          <div className="mt-2 rounded-lg border border-border/50 bg-muted/30 px-3 py-2">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              Sources
+            </p>
+            <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-muted-foreground">
+              {contextNote.trim()}
+            </p>
+          </div>
+        ) : null}
       </div>
 
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-3 md:px-4 md:py-4">
