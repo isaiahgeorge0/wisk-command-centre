@@ -361,7 +361,6 @@ const FEATURE_MODEL_MAP: Partial<Record<UsageFeature, "sonnet" | "haiku">> = {
   research_open_chat: "sonnet",
   lead_auto_enrichment: "sonnet",
   research_document_analysis: "sonnet",
-  research_tech_stack_detection: "sonnet",
 };
 
 const MODEL_PRICING_USD_PER_TOKEN: Record<
