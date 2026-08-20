@@ -64,6 +64,7 @@ const FEATURE_LABELS: Record<string, string> = {
   lead_auto_enrichment: "Lead auto-enrichment",
   research_document_analysis: "Research document analysis",
   research_tech_stack_detection: "Research tech stack",
+  research_competitor_snapshot: "Research competitor snapshot",
 };
 
 const STATUS_CLASS: Record<string, string> = {

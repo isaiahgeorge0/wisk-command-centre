@@ -17,6 +17,30 @@ export type ResearchCompetitorTechStack = {
   checkedAt: string;
 };
 
+export type ResearchCompetitorSnapshotClaim = {
+  text: string;
+  citationIndex: number;
+};
+
+export type ResearchCompetitorSnapshotMove = ResearchCompetitorSnapshotClaim & {
+  at?: string | null;
+};
+
+export type ResearchCompetitorSnapshot = {
+  pricingPositioning: ResearchCompetitorSnapshotClaim[];
+  recentMoves: ResearchCompetitorSnapshotMove[];
+  citations: Array<{
+    title: string;
+    url: string;
+    publisher?: string | null;
+    snippet: string;
+  }>;
+  generatedAt: string;
+  /** How this snapshot was produced. */
+  source: "signal_history" | "seed_search" | "refresh";
+  emptyReason?: string | null;
+};
+
 export type ResearchCompetitor = {
   id: string;
   user_id: string;
@@ -29,6 +53,9 @@ export type ResearchCompetitor = {
   /** On-demand tech-stack inference (search-based, citation-backed). */
   tech_stack?: ResearchCompetitorTechStack | null;
   tech_stack_checked_at?: string | null;
+  /** Research Pro snapshot: pricing/positioning + recent moves. */
+  competitor_snapshot?: ResearchCompetitorSnapshot | null;
+  competitor_snapshot_at?: string | null;
 };
 
 export type ResearchCheckSource = "tavily" | "google_places";

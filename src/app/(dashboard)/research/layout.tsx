@@ -19,10 +19,10 @@ export default async function ResearchLayout({
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)]">
+    <div className="-mx-4 flex min-h-screen md:-mx-6 lg:-mx-8">
       <ResearchSidebar />
-      <div className="min-w-0 flex-1 pt-14 md:pt-0">
-        <PageTransition className="p-5 md:p-8">{children}</PageTransition>
+      <div className="min-w-0 flex-1 pt-16 md:pt-0">
+        <PageTransition className="p-6 md:p-8">{children}</PageTransition>
       </div>
     </div>
   );

@@ -27,6 +27,17 @@ export const CONTENT_TYPE_LABELS: Record<ContentType, string> = {
   Other: "Other",
 };
 
+/** Short labels for dense board cards — keep scannable across many cards. */
+export const PLATFORM_ABBREVIATIONS: Record<ContentPlatform, string> = {
+  TikTok: "TT",
+  Instagram: "IG",
+  YouTube: "YT",
+  LinkedIn: "LI",
+  "Twitter/X": "X",
+  Facebook: "FB",
+  Other: "OT",
+};
+
 export const PLATFORM_BADGE_CLASS: Record<ContentPlatform, string> = {
   TikTok: "border-wisk-coral/30 bg-wisk-coral/15 text-wisk-coral",
   Instagram: "border-wisk-purple/30 bg-wisk-purple/15 text-wisk-purple",
@@ -35,6 +46,20 @@ export const PLATFORM_BADGE_CLASS: Record<ContentPlatform, string> = {
   "Twitter/X": "border-sky-500/30 bg-sky-500/15 text-sky-400",
   Facebook: "border-blue-700/30 bg-blue-700/15 text-blue-300",
   Other: "border-border bg-muted text-muted-foreground",
+};
+
+/**
+ * Solid brand-tint badges for Content board density.
+ * Strong fill so platforms read at a glance across a packed column.
+ */
+export const PLATFORM_COMPACT_BADGE_CLASS: Record<ContentPlatform, string> = {
+  TikTok: "bg-zinc-950 text-[#25F4EE] ring-1 ring-[#FE2C55]/50",
+  Instagram: "bg-[#E1306C] text-white",
+  YouTube: "bg-[#FF0000] text-white",
+  LinkedIn: "bg-[#0A66C2] text-white",
+  "Twitter/X": "bg-zinc-900 text-white",
+  Facebook: "bg-[#1877F2] text-white",
+  Other: "bg-muted text-muted-foreground ring-1 ring-border",
 };
 
 export const PLATFORM_DOT_CLASS: Record<ContentPlatform, string> = {

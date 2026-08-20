@@ -23,13 +23,13 @@ export function buildCitationsFromSearch(input: {
     ...input.tavilyResults.map((result) => ({
       title: result.title,
       url: result.url,
-      publisher: "Tavily",
+      publisher: "Web",
       snippet: truncateSnippet(result.content),
     })),
     ...input.exaResults.map((result) => ({
       title: result.title,
       url: result.url,
-      publisher: "Exa",
+      publisher: "Company source",
       snippet: truncateSnippet(result.text),
     })),
   ].slice(0, input.maxCitations ?? 10);

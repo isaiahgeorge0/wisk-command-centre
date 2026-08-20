@@ -58,4 +58,4 @@ export const STAGE_ACCENT: Record<ContentStatus, StageAccent> = {
   },
 };
 
-export const CONTENT_CARD_WIDTH_CLASS = "w-[280px] shrink-0";
+export const CONTENT_CARD_WIDTH_CLASS = "w-[220px] shrink-0";

@@ -1094,7 +1094,7 @@ export function WinstonChatClient({
               }
               disabled={isSending || monthlyLimitHit}
               rows={1}
-              className="flex-1 resize-none rounded-xl border border-border/60 bg-background px-4 py-2.5 text-base leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-wisk-section-winston/40 disabled:opacity-50"
+              className="flex-1 resize-none rounded-xl border border-border/60 bg-background px-4 py-2.5 text-base leading-relaxed text-foreground placeholder:text-muted-foreground outline-none origin-center transition-[transform,box-shadow,background-color,border-color] duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] focus-visible:scale-[1.015] focus-visible:border-ring focus-visible:shadow-[0_10px_28px_-12px_rgba(0,0,0,0.22)] focus-visible:ring-1 focus-visible:ring-wisk-section-winston/40 disabled:opacity-50"
               style={{ maxHeight: "96px", overflowY: "auto" }}
             />
             <button

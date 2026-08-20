@@ -27,7 +27,6 @@ What is missing or underdeveloped, with a priority rating (High/Medium/Low) per 
 
 Features committed to building before Phase 3 begins.
 
-- Recurring events on calendar (content recurrence is live)
 - Week view
 - Winston brainstorming — COMPLETE
 

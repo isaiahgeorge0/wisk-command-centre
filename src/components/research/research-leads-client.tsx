@@ -136,7 +136,8 @@ export function ResearchLeadsClient({ data }: ResearchLeadsClientProps) {
             <div className="mt-4 rounded-xl border border-dashed border-wisk-section-research/30 bg-wisk-section-research/5 px-4 py-3">
               <p className="text-sm text-foreground">
                 {data.leadsWithoutBrief} lead
-                {data.leadsWithoutBrief === 1 ? "" : "s"} still need a brief
+                {data.leadsWithoutBrief === 1 ? "" : "s"} still{" "}
+                {data.leadsWithoutBrief === 1 ? "needs" : "need"} a brief
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Generate from the Lead intelligence card in the Leads Winston

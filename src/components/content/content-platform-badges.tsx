@@ -6,12 +6,14 @@ import { cn } from "@/lib/utils";
 type ContentPlatformBadgesProps = {
   platforms?: ContentPlatform[];
   post?: ContentPost;
+  compact?: boolean;
   className?: string;
 };
 
 export function ContentPlatformBadges({
   platforms,
   post,
+  compact = false,
   className,
 }: ContentPlatformBadgesProps) {
   const resolved = platforms ?? (post ? getPostPlatforms(post) : []);
@@ -19,9 +21,19 @@ export function ContentPlatformBadges({
   if (resolved.length === 0) return null;
 
   return (
-    <div className={cn("flex flex-wrap items-center gap-1", className)}>
+    <div
+      className={cn(
+        "flex flex-wrap items-center",
+        compact ? "gap-1" : "gap-1",
+        className
+      )}
+    >
       {resolved.map((platform) => (
-        <ContentPlatformBadge key={platform} platform={platform} />
+        <ContentPlatformBadge
+          key={platform}
+          platform={platform}
+          compact={compact}
+        />
       ))}
     </div>
   );

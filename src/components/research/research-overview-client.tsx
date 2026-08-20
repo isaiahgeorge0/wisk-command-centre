@@ -146,7 +146,7 @@ export function ResearchOverviewClient({ stats }: ResearchOverviewClientProps) {
               ...(stats.leadsWithoutBrief > 0
                 ? [
                     {
-                      label: `${stats.leadsWithoutBrief} lead${stats.leadsWithoutBrief === 1 ? "" : "s"} still need a brief`,
+                      label: `${stats.leadsWithoutBrief} lead${stats.leadsWithoutBrief === 1 ? "" : "s"} still ${stats.leadsWithoutBrief === 1 ? "needs" : "need"} a brief`,
                     },
                   ]
                 : [{ label: "Generate briefs from the Leads panel" }]),

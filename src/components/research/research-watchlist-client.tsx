@@ -1,12 +1,23 @@
 "use client";
 
-import { Cpu, Loader2, Lock, Radar, Search, Trash2 } from "lucide-react";
+import {
+  Camera,
+  Cpu,
+  Loader2,
+  Lock,
+  Radar,
+  RefreshCw,
+  Search,
+  Trash2,
+} from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 
 import {
   addResearchCompetitor,
   checkCompetitorTechStack,
+  getCompetitorSnapshot,
+  refreshCompetitorSnapshot,
   removeResearchCompetitor,
   searchResearchCompetitorPlaces,
 } from "@/app/(dashboard)/research/actions";
@@ -17,9 +28,17 @@ import {
 } from "@/components/overview/section-card";
 import { useResearchAccent } from "@/components/research/use-research-accent";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import type {
   ResearchCompetitorListItem,
+  ResearchCompetitorSnapshot,
   ResearchCompetitorTechStack,
   ResearchPlaceMatch,
 } from "@/lib/research/types";
@@ -88,6 +107,77 @@ function TechStackTags({
   );
 }
 
+function formatSnapshotSource(
+  source: ResearchCompetitorSnapshot["source"]
+): string {
+  if (source === "signal_history") return "From watchlist signal history";
+  if (source === "refresh") return "Fresh search";
+  return "Seeded from a first search";
+}
+
+function formatMoveDate(at: string | null | undefined): string | null {
+  if (!at) return null;
+  const date = new Date(at);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function SnapshotClaimList({
+  title,
+  claims,
+  citations,
+  emptyLabel,
+}: {
+  title: string;
+  claims: Array<{ text: string; citationIndex: number; at?: string | null }>;
+  citations: ResearchCompetitorSnapshot["citations"];
+  emptyLabel: string;
+}) {
+  return (
+    <div>
+      <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {title}
+      </h3>
+      {claims.length === 0 ? (
+        <p className="mt-2 text-sm text-muted-foreground">{emptyLabel}</p>
+      ) : (
+        <ul className="mt-2 space-y-2">
+          {claims.map((claim, index) => {
+            const citation = citations[claim.citationIndex];
+            const dateLabel = formatMoveDate(claim.at);
+            return (
+              <li
+                key={`${claim.text}-${index}`}
+                className="rounded-lg border border-border/50 bg-background/40 px-3 py-2"
+              >
+                <p className="text-sm text-foreground">{claim.text}</p>
+                <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
+                  {dateLabel ? <span>{dateLabel}</span> : null}
+                  {citation ? (
+                    <a
+                      href={citation.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-wisk-section-research hover:underline"
+                      title={citation.snippet}
+                    >
+                      [{claim.citationIndex + 1}] {citation.title}
+                    </a>
+                  ) : null}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export function ResearchWatchlistClient({
   competitors: initialCompetitors,
   competitorCap,
@@ -104,10 +194,27 @@ export function ResearchWatchlistClient({
   const [error, setError] = useState<string | null>(null);
   const [rowError, setRowError] = useState<Record<string, string>>({});
   const [checkingId, setCheckingId] = useState<string | null>(null);
+  const [snapshotCompetitorId, setSnapshotCompetitorId] = useState<
+    string | null
+  >(null);
+  const [snapshot, setSnapshot] = useState<ResearchCompetitorSnapshot | null>(
+    null
+  );
+  const [snapshotError, setSnapshotError] = useState<string | null>(null);
   const [isSearching, startSearch] = useTransition();
   const [isSaving, startSave] = useTransition();
   const [isRemoving, startRemove] = useTransition();
   const [isChecking, startCheck] = useTransition();
+  const [isSnapshotLoading, startSnapshotLoad] = useTransition();
+  const [isSnapshotRefreshing, startSnapshotRefresh] = useTransition();
+
+  const snapshotCompetitorName = useMemo(() => {
+    if (!snapshotCompetitorId) return null;
+    return (
+      competitors.find((item) => item.competitor.id === snapshotCompetitorId)
+        ?.competitor.name ?? null
+    );
+  }, [competitors, snapshotCompetitorId]);
 
   const slotsRemaining = useMemo(
     () => competitorCap - competitors.length,
@@ -210,11 +317,74 @@ export function ResearchWatchlistClient({
     });
   }
 
+  function applySnapshotToCompetitor(
+    competitorId: string,
+    nextSnapshot: ResearchCompetitorSnapshot
+  ) {
+    setSnapshot(nextSnapshot);
+    setCompetitors((current) =>
+      current.map((item) =>
+        item.competitor.id === competitorId
+          ? {
+              ...item,
+              competitor: {
+                ...item.competitor,
+                competitor_snapshot: nextSnapshot,
+                competitor_snapshot_at: nextSnapshot.generatedAt,
+              },
+            }
+          : item
+      )
+    );
+  }
+
+  function handleOpenSnapshot(competitorId: string) {
+    if (!canAccessResearchPro) return;
+    setSnapshotError(null);
+    setSnapshotCompetitorId(competitorId);
+    const existing = competitors.find(
+      (item) => item.competitor.id === competitorId
+    )?.competitor.competitor_snapshot;
+    setSnapshot(existing ?? null);
+    startSnapshotLoad(async () => {
+      const result = await getCompetitorSnapshot(competitorId);
+      if (!result.success || !result.data) {
+        setSnapshotError(
+          result.success ? "Could not load snapshot." : result.error
+        );
+        return;
+      }
+      applySnapshotToCompetitor(competitorId, result.data);
+    });
+  }
+
+  function handleRefreshSnapshot() {
+    if (!snapshotCompetitorId) return;
+    setSnapshotError(null);
+    startSnapshotRefresh(async () => {
+      const result = await refreshCompetitorSnapshot(snapshotCompetitorId);
+      if (!result.success || !result.data) {
+        setSnapshotError(
+          result.success ? "Could not refresh snapshot." : result.error
+        );
+        return;
+      }
+      applySnapshotToCompetitor(snapshotCompetitorId, result.data);
+    });
+  }
+
+  function handleCloseSnapshot(open: boolean) {
+    if (open) return;
+    setSnapshotCompetitorId(null);
+    setSnapshot(null);
+    setSnapshotError(null);
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Competitor Watchlist"
-        subtitle="Track competitors. Daily Tavily and Google Places checks flag what matters."
+        subtitle="Track competitors and get flagged the moment something worth knowing changes."
         accent="research"
         icon={
           <Radar className="size-5 text-wisk-section-research" aria-hidden />
@@ -290,7 +460,7 @@ export function ResearchWatchlistClient({
               ) : (
                 <Search className="mr-2 size-4" />
               )}
-              Find Google Place
+              Find location
             </Button>
             <Button
               onClick={handleAddCompetitor}
@@ -306,7 +476,7 @@ export function ResearchWatchlistClient({
           {placeResults.length > 0 ? (
             <div className="space-y-2 rounded-xl border border-border/50 bg-background/40 p-3">
               <p className="text-sm font-medium text-foreground">
-                Link a Google Place
+                Link a location
               </p>
               <div className="space-y-2">
                 {placeResults.map((place) => {
@@ -372,6 +542,20 @@ export function ResearchWatchlistClient({
                         ) : null}
                       </div>
                       <div className="flex flex-wrap items-center gap-1">
+                        {canAccessResearchPro ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              handleOpenSnapshot(item.competitor.id)
+                            }
+                            disabled={isRemoving || isThisChecking}
+                          >
+                            <Camera className="mr-2 size-3.5" />
+                            Snapshot
+                          </Button>
+                        ) : null}
                         <Button
                           type="button"
                           variant="outline"
@@ -429,21 +613,140 @@ export function ResearchWatchlistClient({
           )}
 
           {!canAccessResearchPro ? (
-            <div className="flex items-start gap-2 rounded-lg border border-border/50 bg-background/40 p-3 text-xs text-muted-foreground">
-              <Lock className="mt-0.5 size-3.5 shrink-0 text-wisk-section-research" />
-              <p>
-                Research Pro raises the watchlist cap to 15.{" "}
-                <Link
-                  href="/upgrade/research-pro"
-                  className="font-medium text-wisk-section-research hover:underline"
-                >
-                  Upgrade
-                </Link>
-              </p>
+            <div className="space-y-2">
+              <div className="flex items-start gap-2 rounded-lg border border-border/50 bg-background/40 p-3 text-xs text-muted-foreground">
+                <Lock className="mt-0.5 size-3.5 shrink-0 text-wisk-section-research" />
+                <p>
+                  Research Pro raises the watchlist cap to 15.{" "}
+                  <Link
+                    href="/upgrade/research-pro"
+                    className="font-medium text-wisk-section-research hover:underline"
+                  >
+                    Upgrade
+                  </Link>
+                </p>
+              </div>
+              <div className="flex items-start gap-2 rounded-lg border border-border/50 bg-background/40 p-3 text-xs text-muted-foreground">
+                <Camera className="mt-0.5 size-3.5 shrink-0 text-wisk-section-research" />
+                <p>
+                  Competitor snapshots (pricing/positioning + recent moves from
+                  watchlist signals) are a Research Pro feature.{" "}
+                  <Link
+                    href="/upgrade/research-pro"
+                    className="font-medium text-wisk-section-research hover:underline"
+                  >
+                    Upgrade
+                  </Link>
+                </p>
+              </div>
             </div>
           ) : null}
         </div>
       </SectionSurface>
+
+      <Dialog
+        open={snapshotCompetitorId != null}
+        onOpenChange={handleCloseSnapshot}
+      >
+        <DialogContent className="md:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {snapshotCompetitorName
+                ? `${snapshotCompetitorName} snapshot`
+                : "Competitor snapshot"}
+            </DialogTitle>
+            <DialogDescription>
+              Pricing and positioning as best understood from public signals,
+              plus a short timeline of recent moves.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[11px] text-muted-foreground">
+              {snapshot
+                ? formatSnapshotSource(snapshot.source)
+                : isSnapshotLoading
+                  ? "Loading from signal history…"
+                  : null}
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleRefreshSnapshot}
+              disabled={
+                isSnapshotLoading ||
+                isSnapshotRefreshing ||
+                !snapshotCompetitorId
+              }
+            >
+              {isSnapshotRefreshing ? (
+                <Loader2 className="mr-2 size-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="mr-2 size-3.5" />
+              )}
+              Refresh now
+            </Button>
+          </div>
+
+          {isSnapshotLoading && !snapshot ? (
+            <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" />
+              Building snapshot…
+            </div>
+          ) : null}
+
+          {snapshotError ? (
+            <p className="text-sm text-destructive">{snapshotError}</p>
+          ) : null}
+
+          {snapshot ? (
+            snapshot.emptyReason &&
+            snapshot.pricingPositioning.length === 0 &&
+            snapshot.recentMoves.length === 0 ? (
+              <p className="rounded-lg border border-border/50 bg-background/40 px-3 py-4 text-sm text-muted-foreground">
+                {snapshot.emptyReason}
+              </p>
+            ) : (
+              <div className="space-y-5">
+                <SnapshotClaimList
+                  title="Pricing & positioning"
+                  claims={snapshot.pricingPositioning}
+                  citations={snapshot.citations}
+                  emptyLabel="No clear pricing or positioning signals yet."
+                />
+                <SnapshotClaimList
+                  title="Recent moves"
+                  claims={snapshot.recentMoves}
+                  citations={snapshot.citations}
+                  emptyLabel="No recent moves flagged yet."
+                />
+                {snapshot.citations.length > 0 ? (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Sources
+                    </h3>
+                    <ol className="mt-2 list-decimal space-y-1 pl-4 text-[11px] text-muted-foreground">
+                      {snapshot.citations.map((citation, index) => (
+                        <li key={`${citation.url}-${index}`}>
+                          <a
+                            href={citation.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-wisk-section-research hover:underline"
+                          >
+                            {citation.title}
+                          </a>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                ) : null}
+              </div>
+            )
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

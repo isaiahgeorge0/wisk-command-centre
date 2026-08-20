@@ -1,6 +1,6 @@
 # WISK — Roadmap & Feature Status
 
-Last updated: August 2026 (second sync this month — a full day of Winston/AI feature work, reliability fixes, and cost optimization)
+Last updated: August 2026 (Phase 2 status verified against live code — four core items were already shipped but missing from this doc; per-feature specs were already accurate)
 
 ---
 
@@ -116,6 +116,23 @@ See Sync Notes above and `winston.md` for full detail. No longer `ai_pro`/`max`-
 
 ---
 
+## Phase 2 — Core product (mostly complete)
+
+Verified against live code. These four were already shipped; this doc had not been listing them. Detail lives in the per-feature specs (`tasks.md`, `leads.md`, `ideas.md`, `projects.md`) — do not treat this section as a second source of truth for behaviour.
+
+### Done
+- **Task filtering and sorting** — `TaskFiltersBar` + `applyTaskFilters` on `/tasks` (status, priority, project, due date, search; sort by date added / due date / priority / project / title).
+- **Lead → project conversion** — `ConvertLeadDialog` → `convertLeadToProject` on the lead detail view.
+- **Idea → project conversion** — `ConvertIdeaDialog` → `convertIdeaToProject` on idea cards.
+- **Project filtering and sorting** — `ProjectFiltersBar` + `applyProjectFilters` on `/projects` (search, status, service type, sort, status grouping).
+
+### Still open
+Tracked under Pending / Outstanding below:
+- **Task file attachments** — UI scaffold only; deliberately deferred, not scheduled — will pick up when ready, gated on Supabase Storage / Pro upgrade.
+- **Recurring `calendar_events`** — content recurrence is already live; standalone calendar events are not. Deliberately deferred, not scheduled — see Pending item 6.
+
+---
+
 ## Phase 3.3 — Social Media Integration (Next)
 
 Build order: YouTube → Instagram/Meta → LinkedIn → TikTok (last, most restrictive API)
@@ -139,6 +156,7 @@ Note: Create developer accounts on all platforms early to surface surprises
 3. Vercel Pro upgrade — enables frequent crons (`*/5`, `*/15`). Morning briefing's window-gate logic is already built to use this the moment it's available — flip `MORNING_BRIEFING_FREQUENT_CRON` to `true` once upgraded, don't rebuild the feature.
 4. Google OAuth CASA Tier 2 verification (~£1,500-3,000, fund from revenue)
 5. SA105 and legal template professional review
+6. Recurring calendar events — **`calendar_events` only.** That table has no recurrence fields or UI (`title`, `date`, `end_date`, `event_type`, `notes`). `content_posts` already has working recurrence (`recurrence_rule` / `recurrence_end_date`, expanded via `expandRecurringOccurrences` onto both calendars). What is missing is standalone lifestyle/other event recurrence, not content recurrence. See `calendar.md`.
 
 ### Handled directly by Zay, not tracked here:
 - Companies House registration (£50) + ICO registration (£47/year, Tier 1)
@@ -146,6 +164,7 @@ Note: Create developer accounts on all platforms early to surface surprises
 ### Phase 4 — Speculative
 - Collaboration & Sharing (item_shares table exists)
 - Team features
+- Research / Research Pro package — spec saved in `docs/product/wisk-research-package-spec.md`; blocked on Focus being complete and Vercel Pro for longer-running/frequent research jobs
 - React Native/Expo mobile app (scoped: Overview, Tasks, Projects, Goals, Notifications)
 - WISK Stays (short-term rental management)
 - Fitness coaching package

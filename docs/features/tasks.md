@@ -20,7 +20,7 @@ What is built and working today.
 
 What is missing or underdeveloped, with a priority rating (High/Medium/Low) per item.
 
-- File attachments — **High**
+- File attachments — **High — deferred, not scheduled**
 - Custom status beyond complete/incomplete — **Medium**
 - Subtasks — **Medium**
 - Recurring tasks — **Medium**
@@ -33,7 +33,6 @@ What is missing or underdeveloped, with a priority rating (High/Medium/Low) per 
 
 Features committed to building before Phase 3 begins.
 
-- File attachments (Supabase Storage)
 - Subtasks
 
 ## Future Considerations (Phase 3+)

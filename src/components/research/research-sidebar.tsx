@@ -91,7 +91,7 @@ function SidebarContent({
         </div>
       </div>
 
-      <div className="mt-6 flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-2 pb-6">
+      <div className="mt-6 flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-2 pb-6">
         {RESEARCH_NAV.map((group) => (
           <div key={group.label}>
             <p className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -151,7 +151,7 @@ export function ResearchSidebar() {
         </MobileSheetShell>
       ) : null}
 
-      <aside className="hidden md:flex md:w-64 md:flex-col md:border-r md:border-border/60 md:bg-surface/90 md:backdrop-blur lg:w-72">
+      <aside className="hidden md:flex md:w-72 md:flex-col md:border-r md:border-border/60 md:bg-surface/90 md:backdrop-blur">
         <SidebarContent pathname={pathname} />
       </aside>
     </>

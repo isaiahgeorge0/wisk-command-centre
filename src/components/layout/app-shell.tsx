@@ -14,6 +14,7 @@ import { NavModeProvider } from "@/components/layout/nav-mode-context";
 import { WinstonFab } from "@/components/layout/winston-fab";
 import { WinstonSidebar } from "@/components/winston/winston-sidebar";
 import { WinstonSidebarProvider } from "@/components/winston/winston-sidebar-context";
+import { ScrollToTopOnNavigate } from "@/components/layout/scroll-to-top-on-navigate";
 import { TopNav } from "@/components/layout/top-nav";
 import { LandlordPresenceTracker } from "@/components/presence/landlord-presence-tracker";
 import { PreferencesProvider } from "@/components/preferences/preferences-context";
@@ -132,7 +133,8 @@ export function AppShell({
               hasProjects={hasProjects}
               projectTourCompleted={projectTourCompleted}
             >
-            <div className="min-h-screen overflow-x-hidden">
+            <div className="min-h-screen overflow-x-clip">
+              <ScrollToTopOnNavigate />
               <LandlordPresenceTracker />
               <TopNav
                 userEmail={userEmail}

@@ -9,11 +9,14 @@ import { toSafeActionError } from "@/lib/errors/to-safe-action-error";
 import { logExternalUsage } from "@/lib/ai/usage-logger";
 import type { Lead } from "@/lib/leads/types";
 import { searchGooglePlaces } from "@/lib/research/google-places";
+import { buildCompetitorSnapshot } from "@/lib/research/competitor-snapshot";
 import { getResearchCompetitorCap, loadResearchCompetitors } from "@/lib/research/data";
 import { detectCompetitorTechStack } from "@/lib/research/tech-stack";
 import type {
   ResearchActionResult,
   ResearchCompetitor,
+  ResearchCompetitorCheck,
+  ResearchCompetitorSnapshot,
   ResearchCompetitorTechStack,
   ResearchLeadIntelligenceData,
   ResearchOverviewStats,
@@ -42,6 +45,10 @@ const removeCompetitorSchema = z.object({
 });
 
 const techStackCompetitorSchema = z.object({
+  competitorId: z.string().uuid(),
+});
+
+const snapshotCompetitorSchema = z.object({
   competitorId: z.string().uuid(),
 });
 
@@ -296,7 +303,7 @@ export async function searchResearchCompetitorPlaces(
   } catch (error) {
     return {
       success: false,
-      error: toSafeActionError(error, "Could not search Google Places."),
+      error: toSafeActionError(error, "Could not search for locations."),
     };
   }
 }
@@ -443,6 +450,185 @@ export async function checkCompetitorTechStack(
       error: toSafeActionError(
         error,
         "Could not check this competitor's tech stack."
+      ),
+    };
+  }
+}
+
+async function loadCompetitorChecksForSnapshot(
+  supabase: Awaited<ReturnType<typeof getScopedSupabase>>["supabase"],
+  userId: string,
+  competitorId: string
+): Promise<ResearchCompetitorCheck[]> {
+  const { data, error } = await supabase
+    .from("research_competitor_checks")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("competitor_id", competitorId)
+    .order("checked_at", { ascending: false })
+    .limit(40);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []) as ResearchCompetitorCheck[];
+}
+
+async function persistCompetitorSnapshot(input: {
+  supabase: Awaited<ReturnType<typeof getScopedSupabase>>["supabase"];
+  userId: string;
+  competitorId: string;
+  snapshot: ResearchCompetitorSnapshot;
+}): Promise<void> {
+  const { error } = await input.supabase
+    .from("research_competitors")
+    .update({
+      competitor_snapshot: input.snapshot,
+      competitor_snapshot_at: input.snapshot.generatedAt,
+    })
+    .eq("id", input.competitorId)
+    .eq("user_id", input.userId);
+
+  if (error) {
+    throw error;
+  }
+}
+
+/**
+ * Research Pro: open/auto-refresh snapshot from stored check history
+ * (seed search only when history has nothing citable).
+ */
+export async function getCompetitorSnapshot(
+  competitorId: string
+): Promise<ResearchActionResult<ResearchCompetitorSnapshot>> {
+  const parsed = snapshotCompetitorSchema.safeParse({ competitorId });
+  if (!parsed.success) {
+    return { success: false, error: "Invalid competitor." };
+  }
+
+  try {
+    const { supabase, userId } = await getScopedSupabase();
+    const { canAccessResearchPro } = await assertResearchAccess(userId);
+    if (!canAccessResearchPro) {
+      return {
+        success: false,
+        error: "Competitor snapshots need WISK Research Pro.",
+      };
+    }
+
+    const { data: row, error: fetchError } = await supabase
+      .from("research_competitors")
+      .select("*")
+      .eq("id", parsed.data.competitorId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (fetchError || !row) {
+      return { success: false, error: "Competitor not found." };
+    }
+
+    const competitor = row as ResearchCompetitor;
+    const checks = await loadCompetitorChecksForSnapshot(
+      supabase,
+      userId,
+      competitor.id
+    );
+    const cached =
+      competitor.competitor_snapshot &&
+      typeof competitor.competitor_snapshot === "object"
+        ? (competitor.competitor_snapshot as ResearchCompetitorSnapshot)
+        : null;
+
+    const snapshot = await buildCompetitorSnapshot({
+      userId,
+      competitor,
+      checks,
+      mode: "auto",
+      cached,
+    });
+
+    await persistCompetitorSnapshot({
+      supabase,
+      userId,
+      competitorId: competitor.id,
+      snapshot,
+    });
+
+    revalidatePath("/research/watchlist");
+    return { success: true, data: snapshot };
+  } catch (error) {
+    return {
+      success: false,
+      error: toSafeActionError(
+        error,
+        "Could not load this competitor snapshot."
+      ),
+    };
+  }
+}
+
+/**
+ * Research Pro: force a fresh seed search + synthesis (manual Refresh now).
+ */
+export async function refreshCompetitorSnapshot(
+  competitorId: string
+): Promise<ResearchActionResult<ResearchCompetitorSnapshot>> {
+  const parsed = snapshotCompetitorSchema.safeParse({ competitorId });
+  if (!parsed.success) {
+    return { success: false, error: "Invalid competitor." };
+  }
+
+  try {
+    const { supabase, userId } = await getScopedSupabase();
+    const { canAccessResearchPro } = await assertResearchAccess(userId);
+    if (!canAccessResearchPro) {
+      return {
+        success: false,
+        error: "Competitor snapshots need WISK Research Pro.",
+      };
+    }
+
+    const { data: row, error: fetchError } = await supabase
+      .from("research_competitors")
+      .select("*")
+      .eq("id", parsed.data.competitorId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (fetchError || !row) {
+      return { success: false, error: "Competitor not found." };
+    }
+
+    const competitor = row as ResearchCompetitor;
+    const checks = await loadCompetitorChecksForSnapshot(
+      supabase,
+      userId,
+      competitor.id
+    );
+
+    const snapshot = await buildCompetitorSnapshot({
+      userId,
+      competitor,
+      checks,
+      mode: "refresh",
+    });
+
+    await persistCompetitorSnapshot({
+      supabase,
+      userId,
+      competitorId: competitor.id,
+      snapshot,
+    });
+
+    revalidatePath("/research/watchlist");
+    return { success: true, data: snapshot };
+  } catch (error) {
+    return {
+      success: false,
+      error: toSafeActionError(
+        error,
+        "Could not refresh this competitor snapshot."
       ),
     };
   }

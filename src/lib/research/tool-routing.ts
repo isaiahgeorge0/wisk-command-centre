@@ -63,7 +63,11 @@ export async function routeAndSearchResearchTools(input: {
   userId: string;
   usageFeature: Extract<
     UsageFeature,
-    "lead_research_brief" | "research_open_chat" | "lead_auto_enrichment" | "research_tech_stack_detection"
+    | "lead_research_brief"
+    | "research_open_chat"
+    | "lead_auto_enrichment"
+    | "research_tech_stack_detection"
+    | "research_competitor_snapshot"
   >;
   routingUserPrompt: string;
   fallbackTavilyQuery: string;

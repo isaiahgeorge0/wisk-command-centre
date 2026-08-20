@@ -52,10 +52,15 @@ What is built and working today.
 - **Winston:** portfolio insights; rental/sale valuations
   via Claude web search; manual comparables; 3-month
   regeneration cooldown; dev-only valuation reset.
-  Insight cards follow the Pipeline Health number
-  rule — rent, yield, and cost figures are attached
-  from source data after generation and rendered by
-  the UI; Winston's prose is qualitative only.
+  Insight cards follow the same number-restatement
+  guardrail as Pipeline Health: Winston's prose is
+  qualitative only. After generation,
+  `attachSourceValues()` (`src/lib/properties/insights-generator.ts`)
+  stamps rent, yield, cost, tenant-grade, and
+  net-income figures from the live portfolio
+  context; the UI shows them on a separate
+  `SourceFiguresLine` (`properties-winston-client.tsx`),
+  never parsed from the model's text.
 - **Certificate alerts:** 90/30/7-day pre-expiry,
   on expiry, and post-expiry overdue emails
 - **Mortgage & insurance alerts:** renewal reminders

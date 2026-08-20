@@ -94,7 +94,8 @@ export type UsageFeature =
   | "research_open_chat"
   | "lead_auto_enrichment"
   | "research_document_analysis"
-  | "research_tech_stack_detection";
+  | "research_tech_stack_detection"
+  | "research_competitor_snapshot";
 
 export type AIUsageByFeature = {
   feature: UsageFeature;

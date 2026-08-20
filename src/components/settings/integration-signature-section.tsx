@@ -86,7 +86,7 @@ export function IntegrationSignatureSection({
     editorProps: {
       attributes: {
         class:
-          "min-h-[120px] px-3 py-2 text-sm leading-relaxed focus:outline-none",
+          "min-h-[120px] px-3 py-2 text-base leading-relaxed focus:outline-none",
       },
     },
   });

@@ -104,16 +104,17 @@ export function MobileInputShell({ children, className }: MobileInputShellProps)
         className={cn(
           className,
           expanded &&
-            "fixed inset-x-0 z-[45] border-t border-border/60 bg-card/95 px-4 py-3 shadow-[0_-10px_30px_rgba(0,0,0,0.14)] backdrop-blur-md"
+            "fixed inset-x-0 z-[45] border-t border-border/60 bg-card/95 px-4 py-3 shadow-[0_-12px_36px_-8px_rgba(0,0,0,0.22)] backdrop-blur-md"
         )}
         style={expanded ? { bottom: sheetBottom } : undefined}
         initial={false}
         animate={{
-          y: expanded && !reduced ? [32, 0] : 0,
+          y: expanded && !reduced ? [28, 0] : 0,
+          scale: expanded && !reduced ? 1.01 : 1,
           opacity: 1,
         }}
         transition={{
-          duration: expanded && !reduced ? MOTION_DURATION.normal : 0,
+          duration: expanded && !reduced ? MOTION_DURATION.slow : 0,
           ease: MOTION_EASE.smooth,
         }}
         onFocusCapture={handleFocus}

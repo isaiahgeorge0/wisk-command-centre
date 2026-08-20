@@ -5,15 +5,23 @@
 @custom-variant dark (&:is(.dark *));
 
 @layer base {
-  /* Prevent iOS/Android auto-zoom on focus (requires >= 16px). */
-  @media (max-width: 767px) {
-    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
-        [type="file"]
-      ):not([type="hidden"]):not([type="color"]),
-    textarea,
-    select {
-      font-size: 16px;
-    }
+  /*
+   * iOS Safari zooms focused fields under 16px, and often fails to reset
+   * cleanly on blur. Force 16px on every text-like control so Tailwind
+   * utilities such as text-sm/text-xs cannot reintroduce zoom.
+   * !important is intentional: dozens of one-off fields still pass text-sm.
+   * Also covers TipTap / contenteditable (not matched by input/textarea).
+   */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
+      [type="file"]
+    ):not([type="hidden"]):not([type="color"]):not([type="button"]):not(
+      [type="submit"]
+    ):not([type="reset"]):not([type="image"]),
+  textarea,
+  select,
+  [contenteditable="true"],
+  .ProseMirror {
+    font-size: 16px !important;
   }
 }
 

@@ -16,7 +16,10 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
-import { formatContentDate, truncateHook } from "@/lib/content/format";
+import {
+  formatContentDate,
+  formatContentDateShort,
+} from "@/lib/content/format";
 import { postToFormInput } from "@/lib/content/form";
 import type {
   ContentFormInput,
@@ -53,7 +56,6 @@ export function ContentPostCard({
   const [isPending, startTransition] = useTransition();
   const formId = `edit-content-${post.id}`;
   const status = (post.status as ContentStatus) ?? "idea";
-  const hookPreview = truncateHook(post.hook);
 
   const cancelEdit = () => {
     setValues(postToFormInput(post));
@@ -87,12 +89,12 @@ export function ContentPostCard({
   if (editing) {
     return (
       <Card className="border-border/70 border-wisk-section-content/25 bg-card/90 shadow-sm">
-        <CardHeader className="gap-2 px-4 pb-2 pt-4">
+        <CardHeader className="gap-2 px-3 pb-2 pt-3">
           <p className="text-sm font-medium text-muted-foreground">
             Editing content
           </p>
         </CardHeader>
-        <CardContent className="px-4">
+        <CardContent className="px-3">
           <form id={formId} onSubmit={handleSave}>
             <ContentForm
               formId={formId}
@@ -106,7 +108,7 @@ export function ContentPostCard({
             ) : null}
           </form>
         </CardContent>
-        <CardFooter className="gap-2 border-t border-border/60 px-4 pb-4 pt-4">
+        <CardFooter className="gap-2 border-t border-border/60 px-3 pb-3 pt-3">
           <Button
             type="button"
             variant="outline"
@@ -136,38 +138,41 @@ export function ContentPostCard({
       )}
       onClick={isDragOverlay ? undefined : handleCardClick}
     >
-      <CardHeader className="gap-1.5 px-4 pb-2 pt-4">
-        <h3 className="text-sm font-semibold text-foreground leading-snug">
+      <CardHeader className="space-y-1.5 px-3 pb-0 pt-2.5">
+        <h3 className="text-sm font-semibold leading-snug text-foreground line-clamp-2">
           {post.title}
         </h3>
-        <ContentPlatformBadges post={post} />
+        <div className="flex items-center justify-between gap-2">
+          <ContentPlatformBadges post={post} compact />
+          <p className="shrink-0 text-[11px] leading-none text-muted-foreground">
+            {post.scheduled_date ? (
+              formatContentDateShort(post.scheduled_date)
+            ) : (
+              <span className="text-wisk-section-content">No date</span>
+            )}
+          </p>
+        </div>
       </CardHeader>
 
-      <CardContent className="space-y-2 px-4 pb-4 text-sm">
-        <div className="flex flex-wrap items-center gap-2">
-          <ContentTypeBadge contentType={post.content_type} />
-          {post.scheduled_date ? (
-            <span className="text-xs text-muted-foreground">
-              {formatContentDate(post.scheduled_date)}
-            </span>
-          ) : (
-            <span className="rounded-full border border-wisk-section-content/30 bg-wisk-section-content/10 px-2 py-0.5 text-[10px] font-medium text-wisk-section-content">
-              Awaiting a date
-            </span>
-          )}
-        </div>
-
-        {hookPreview ? (
-          <p className="line-clamp-2 text-xs italic text-muted-foreground">
-            &ldquo;{hookPreview}&rdquo;
-          </p>
-        ) : null}
-
+      <CardContent className={cn("px-3 pb-2.5", expanded ? "pt-1.5" : "pt-0")}>
         <ExpandableSection
           open={expanded}
-          className="space-y-3 border-t border-border/50 pt-3"
+          className="space-y-3 border-t border-border/50 pt-2.5"
         >
           <div onClick={(e) => e.stopPropagation()} className="space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <ContentTypeBadge contentType={post.content_type} />
+              {post.scheduled_date ? (
+                <span className="text-xs text-muted-foreground">
+                  {formatContentDate(post.scheduled_date)}
+                </span>
+              ) : null}
+            </div>
+            {post.hook?.trim() ? (
+              <p className="text-xs italic text-muted-foreground">
+                &ldquo;{post.hook.trim()}&rdquo;
+              </p>
+            ) : null}
             {post.description?.trim() ? (
               <p className="whitespace-pre-wrap text-xs text-foreground">
                 {post.description}
@@ -211,10 +216,6 @@ export function ContentPostCard({
             </div>
           </div>
         </ExpandableSection>
-
-        {!expanded ? (
-          <p className="text-xs text-muted-foreground">Click to expand</p>
-        ) : null}
       </CardContent>
     </Card>
   );

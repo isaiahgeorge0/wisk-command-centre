@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import { ThemeProvider } from "@/components/theme-provider";
+import { IosViewportZoomReset } from "@/components/layout/ios-viewport-zoom-reset";
 
 import "./globals.css";
 
@@ -25,6 +26,9 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  // Do not set maximumScale — pinch-to-zoom must stay available for
+  // low-vision users. iOS focus-zoom is prevented via 16px form controls
+  // (+ blur viewport reset fallback).
   viewportFit: "cover",
 };
 
@@ -38,7 +42,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
       >
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <IosViewportZoomReset />
+          {children}
+        </ThemeProvider>
         <Analytics />
         <SpeedInsights />
       </body>

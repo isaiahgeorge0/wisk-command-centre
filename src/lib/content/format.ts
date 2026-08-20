@@ -23,6 +23,15 @@ export function formatContentDate(dateISO: string | null): string {
   }).format(new Date(`${dateISO}T12:00:00`));
 }
 
+/** Board-dense date: day + month only. */
+export function formatContentDateShort(dateISO: string | null): string {
+  if (!dateISO) return "-";
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+  }).format(new Date(`${dateISO}T12:00:00`));
+}
+
 export function todayDateISO(now: Date = new Date()): string {
   return toDateISO(now);
 }

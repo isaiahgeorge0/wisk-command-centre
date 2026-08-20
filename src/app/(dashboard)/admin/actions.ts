@@ -362,6 +362,7 @@ const FEATURE_MODEL_MAP: Partial<Record<UsageFeature, "sonnet" | "haiku">> = {
   lead_auto_enrichment: "sonnet",
   research_document_analysis: "sonnet",
   research_tech_stack_detection: "sonnet",
+  research_competitor_snapshot: "sonnet",
 };
 
 const MODEL_PRICING_USD_PER_TOKEN: Record<
