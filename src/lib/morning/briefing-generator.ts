@@ -1,6 +1,10 @@
 import { ANTHROPIC_TIMEOUT_MS } from "@/lib/ai/constants";
 import { cachedSystemParts } from "@/lib/ai/anthropic";
 import { logUsage } from "@/lib/ai/usage-logger";
+import type {
+  FocusSignal,
+  FocusSourceFigure,
+} from "@/lib/overview/focus-signals";
 import {
   buildDeadlineTeaser,
   buildGreetingLine,
@@ -29,6 +33,10 @@ export type MorningBriefingContent = {
     href: string;
     urgency: "high" | "medium" | "low";
   }>;
+  focusPlan?: {
+    summary: string;
+    sourceFigures: FocusSourceFigure[];
+  };
   encouragement: string;
   generatedAt: string;
 };
@@ -55,6 +63,10 @@ type GeneratedFocus = {
   category?: unknown;
   item?: unknown;
   urgency?: unknown;
+};
+
+type GeneratedFocusPlan = {
+  summary?: unknown;
 };
 
 const CATEGORY_HREFS: Record<string, string> = {
@@ -211,6 +223,20 @@ function extractText(data: AnthropicResponse): string {
     .replace(/```json/g, "")
     .replace(/```/g, "")
     .trim();
+}
+
+function buildFocusPromptSignals(signals: FocusSignal[]): string {
+  if (signals.length === 0) {
+    return "No current focus signals.";
+  }
+
+  return signals
+    .slice(0, 12)
+    .map((signal, index) => {
+      const detail = signal.detail ? ` (${signal.detail})` : "";
+      return `${index + 1}. [${signal.urgency.toUpperCase()}] ${signal.category}: ${signal.label}${detail}`;
+    })
+    .join("\n");
 }
 
 async function generateFreeBriefing(
@@ -399,6 +425,78 @@ Generate the morning briefing JSON.`;
     focuses,
     encouragement: parsed.encouragement,
     generatedAt: now.toISOString(),
+  };
+}
+
+export async function generateFocusPlan(input: {
+  userId: string;
+  displayName: string;
+  signals: FocusSignal[];
+  sourceFigures: FocusSourceFigure[];
+}): Promise<{ summary: string; sourceFigures: FocusSourceFigure[] } | null> {
+  const { userId, displayName, signals, sourceFigures } = input;
+  if (signals.length === 0) return null;
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error("ANTHROPIC_API_KEY is not configured");
+  }
+
+  const systemPrompt = cachedSystemParts([
+    {
+      text: `You are Winston, WISK's AI business assistant. Write a short Focus plan that reasons across a list of already-identified signals.
+
+Return ONLY valid JSON matching this exact shape:
+{
+  "summary": "2-3 sentences connecting the signals into a sensible plan"
+}
+
+Rules:
+- This is the paid Focus layer that sits above a raw signal list.
+- Reason across the signals. Prioritise and connect them. Do not just restate the list item by item.
+- Do NOT invent any new facts, dates, counts, money amounts, or durations.
+- Avoid exact figures entirely in the prose. Use qualitative phrasing like "several", "multiple", "a few days", or "later this week" instead.
+- Do not quote or paraphrase the source-figures line; the UI shows verified figures separately.
+- Keep it concise: 2-3 sentences, under 90 words total.
+- Tone: direct, calm, premium, useful. No hype, no filler, no exclamation marks.`,
+      cache: true,
+    },
+    {
+      text: `The user's display name on file is ${displayName}.`,
+    },
+  ]);
+
+  const userPrompt = `Verified source figures (shown separately in UI):
+${sourceFigures.map((figure) => `- ${figure.label}: ${figure.value}`).join("\n")}
+
+Current Focus signals:
+${buildFocusPromptSignals(signals)}
+
+Generate the JSON.`;
+
+  const data = await callAnthropic({
+    apiKey,
+    model: PAID_MODEL,
+    maxTokens: 220,
+    system: systemPrompt,
+    userPrompt,
+  });
+
+  const parsed = JSON.parse(extractText(data)) as GeneratedFocusPlan;
+  if (typeof parsed.summary !== "string" || !parsed.summary.trim()) {
+    throw new Error("Anthropic returned an invalid Focus plan");
+  }
+
+  await logUsage(
+    userId,
+    "morning_briefing",
+    data.usage?.input_tokens ?? 0,
+    data.usage?.output_tokens ?? 0
+  );
+
+  return {
+    summary: parsed.summary.trim(),
+    sourceFigures,
   };
 }
 

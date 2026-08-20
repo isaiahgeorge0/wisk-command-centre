@@ -14,6 +14,7 @@ import { useIsMobilePanel } from "@/components/calendar/use-is-mobile-panel";
 import { MobileSheetShell } from "@/components/layout/mobile-sheet-shell";
 import { LeadCallNotes } from "@/components/leads/lead-call-notes";
 import { PipelineHealthCard } from "@/components/leads/pipeline-health-card";
+import { LeadResearchBriefCard } from "@/components/leads/lead-research-brief-card";
 import { LeadSelector } from "@/components/leads/lead-selector";
 import {
   WinstonEmailDraftCard,
@@ -29,6 +30,7 @@ type WinstonLeadsPanelProps = {
   open: boolean;
   onClose: () => void;
   canAccessWinston: boolean;
+  canAccessResearch: boolean;
   leads: Lead[];
   onLeadUpdate: (lead: Lead) => void;
   onFocusLead: (leadId: string) => void;
@@ -200,12 +202,14 @@ function CallNotesCard({
 
 function AccessContent({
   leads,
+  canAccessResearch,
   onLeadUpdate,
   onClose,
   panelOpen,
   onFocusLead,
 }: {
   leads: Lead[];
+  canAccessResearch: boolean;
   onLeadUpdate: (lead: Lead) => void;
   onClose: () => void;
   panelOpen: boolean;
@@ -228,6 +232,10 @@ function AccessContent({
           leads={leads}
           seed={draftSeed}
           onSeedConsumed={() => setDraftSeed(null)}
+        />
+        <LeadResearchBriefCard
+          leads={leads}
+          canAccessResearch={canAccessResearch}
         />
         <PipelineHealthCard
           open={panelOpen}
@@ -280,6 +288,7 @@ export function WinstonLeadsPanel({
   open,
   onClose,
   canAccessWinston,
+  canAccessResearch,
   leads,
   onLeadUpdate,
   onFocusLead,
@@ -316,6 +325,7 @@ export function WinstonLeadsPanel({
             {canAccessWinston ? (
               <AccessContent
                 leads={leads}
+                canAccessResearch={canAccessResearch}
                 onLeadUpdate={onLeadUpdate}
                 onClose={onClose}
                 panelOpen={open}

@@ -6,6 +6,8 @@ import type { WiskPackage } from "@/lib/billing/types";
 const MAX_INCLUDES: WiskPackage[] = [
   "ai",
   "ai_pro",
+  "research",
+  "research_pro",
   "social",
   "commerce",
   "properties",
@@ -32,7 +34,8 @@ export async function hasPackageAccess(
       sub.package === pkg ||
       (sub.package === "max" &&
         (pkg === "max" || MAX_INCLUDES.includes(pkg as WiskPackage))) ||
-      (sub.package === "properties_pro" && pkg === "properties")
+      (sub.package === "properties_pro" && pkg === "properties") ||
+      (sub.package === "research_pro" && pkg === "research")
   );
 }
 
@@ -47,4 +50,14 @@ export async function hasAIAccess(
   if (hasAi) return true;
 
   return hasPackageAccess(userId, "ai_pro", supabase);
+}
+
+export async function hasResearchAccess(
+  userId: string,
+  supabase: SupabaseClient
+): Promise<boolean> {
+  const hasResearch = await hasPackageAccess(userId, "research", supabase);
+  if (hasResearch) return true;
+
+  return hasPackageAccess(userId, "research_pro", supabase);
 }

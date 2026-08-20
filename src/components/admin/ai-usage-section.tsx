@@ -7,6 +7,7 @@ import type {
   AIUsageBreakdown,
   AIUsageByFeature,
   AIUsageByModel,
+  AIUsageByProvider,
   AIUsageTopUser,
 } from "@/lib/admin/types";
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,16 @@ const FEATURE_LABELS: Record<string, string> = {
   portal_triage: "Portal Triage",
   property_valuation: "Property Valuation",
   morning_briefing: "Morning Briefing",
+  lead_research_brief: "Lead Research Brief",
+  research_competitor_check: "Research Competitor Check",
+  research_place_lookup: "Research Place Lookup",
+};
+
+const PROVIDER_LABELS: Record<string, string> = {
+  anthropic: "Anthropic",
+  tavily: "Tavily",
+  exa: "Exa",
+  google_places: "Google Places",
 };
 
 function todayISO() {
@@ -197,6 +208,47 @@ export function AIUsageSection({ initialData }: AIUsageSectionProps) {
               {data.byModel.length === 0 && (
                 <tr>
                   <td colSpan={4} className="py-4 text-center text-muted-foreground">
+                    No usage in this period.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Vendor Spend</CardTitle>
+          <CardDescription>
+            Includes estimated external vendor costs from `ai_usage_log.provider` and
+            `external_cost_usd`.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b text-left text-muted-foreground">
+                <th className="pb-2 font-medium">Provider</th>
+                <th className="pb-2 text-right font-medium">Calls</th>
+                <th className="pb-2 text-right font-medium">Est. Cost</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.byProvider.map((row: AIUsageByProvider) => (
+                <tr key={row.provider} className="border-b last:border-0">
+                  <td className="py-2">
+                    {PROVIDER_LABELS[row.provider] ?? row.provider}
+                  </td>
+                  <td className="py-2 text-right">{row.rowCount.toLocaleString()}</td>
+                  <td className="py-2 text-right">
+                    {formatUSD(row.estimatedCostUSD)}
+                  </td>
+                </tr>
+              ))}
+              {data.byProvider.length === 0 && (
+                <tr>
+                  <td colSpan={3} className="py-4 text-center text-muted-foreground">
                     No usage in this period.
                   </td>
                 </tr>

@@ -17,6 +17,7 @@ import { useEffect, useState } from "react";
 
 import { PageTransition } from "@/components/layout/page-transition";
 import { useNavMode } from "@/components/layout/nav-mode-context";
+import { FocusSection } from "@/components/overview/focus-section";
 import { MorningBriefing } from "@/components/overview/morning-briefing";
 import { MorningBriefingModal } from "@/components/overview/morning-briefing-modal";
 import { OverviewHeader } from "@/components/overview/overview-header";
@@ -35,8 +36,10 @@ import type { Idea } from "@/lib/ideas/types";
 import { formatLeadValue } from "@/lib/leads/format";
 import type { Lead } from "@/lib/leads/types";
 import type { MorningBriefingContent } from "@/lib/morning/briefing-generator";
+import { buildFocusSignals } from "@/lib/overview/focus-signals";
 import type { OverviewSnapshot } from "@/lib/overview/selectors";
 import type { Project } from "@/lib/projects/types";
+import type { ResearchSignal } from "@/lib/research/types";
 import type {
   ContractorAccessRequestWithDetails,
   MaintenanceTicketWithJobSheet,
@@ -121,8 +124,10 @@ type EmailIntegration = {
 type OverviewPageClientProps = {
   snapshot: OverviewSnapshot;
   suggestions: SmartSuggestion[];
+  canAccessWinston: boolean;
   canAccessWhileAway: boolean;
   morningBriefing: MorningBriefingContent | null;
+  researchSignals: ResearchSignal[];
   awaySummary: AwaySummary | null;
   lastSyncedAt: string | null;
   lastActiveAt: string | null;
@@ -145,8 +150,10 @@ type OverviewPageClientProps = {
 export function OverviewPageClient({
   snapshot,
   suggestions,
+  canAccessWinston,
   canAccessWhileAway,
   morningBriefing,
+  researchSignals,
   awaySummary,
   lastSyncedAt,
   lastActiveAt,
@@ -204,6 +211,17 @@ export function OverviewPageClient({
       document.body.style.overflow = "";
     };
   }, [expandedCard]);
+
+  const focusSignals = buildFocusSignals({
+    snapshot,
+    leads,
+    hasProperties,
+    expiringCertificates,
+    openMaintenanceTickets,
+    rentDueFlags,
+    morningBriefing,
+    researchSignals,
+  });
 
   const projectItems = snapshot.recentProjects.slice(0, 3).map((project) => {
     const taskStats = snapshot.projectTaskStats[project.id];
@@ -863,6 +881,12 @@ export function OverviewPageClient({
                 />
               ) : null}
             </div>
+
+            <FocusSection
+              signals={focusSignals}
+              canAccessSynthesis={canAccessWinston}
+              synthesis={morningBriefing?.focusPlan ?? null}
+            />
 
             {canAccessWhileAway ? (
               <div className="mt-5">

@@ -38,6 +38,15 @@ export function sanitizeBriefingContent(
     insight: content.insight != null ? scrub(content.insight) : content.insight,
     headline: scrub(content.headline),
     summary: content.summary != null ? scrub(content.summary) : content.summary,
+    focusPlan: content.focusPlan
+      ? {
+          summary: scrub(content.focusPlan.summary),
+          sourceFigures: (content.focusPlan.sourceFigures ?? []).map((figure) => ({
+            label: scrub(figure.label),
+            value: scrub(figure.value),
+          })),
+        }
+      : content.focusPlan,
     encouragement: scrub(content.encouragement ?? ""),
     focuses: (content.focuses ?? []).map((focus) => ({
       ...focus,

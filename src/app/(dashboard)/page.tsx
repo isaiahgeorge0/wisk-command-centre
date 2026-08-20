@@ -22,13 +22,14 @@ import { resolveDisplayName } from "@/lib/auth/resolve-display-name";
 import { getUserProfile } from "@/lib/auth/get-user-profile";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { getAwaySummary } from "@/lib/away/away-store";
-import { hasAIAccess, hasPackageAccess } from "@/lib/billing/access";
+import { hasAIAccess, hasPackageAccess, hasResearchAccess } from "@/lib/billing/access";
 import { shouldShowUpgradeBanner } from "@/lib/billing/banner";
 import { getUserBillingSummary } from "@/lib/billing/plan";
 import { getTodaysBriefing } from "@/lib/morning/briefing-store";
 import { normaliseTimezone } from "@/lib/morning/timezone";
 import { getOrCreateUserPreferences } from "@/lib/preferences/get-user-preferences";
 import { buildPortfolioStats } from "@/lib/properties/selectors";
+import { loadResearchFocusSignals } from "@/lib/research/data";
 import { buildOverviewSnapshot } from "@/lib/overview/selectors";
 import { buildSuggestions } from "@/lib/suggestions";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -50,6 +51,7 @@ export default async function OverviewPage() {
     billing,
     hasProperties,
     hasPropertiesPro,
+    hasResearch,
     hasAiPro,
     awaySummaryResult,
     todaysBriefing,
@@ -72,6 +74,7 @@ export default async function OverviewPage() {
     getUserBillingSummary(userId),
     hasPackageAccess(userId, "properties", admin),
     hasPackageAccess(userId, "properties_pro", admin),
+    hasResearchAccess(userId, admin),
     hasPackageAccess(userId, "ai_pro", admin),
     getAwaySummary(userId),
     getTodaysBriefing(userId),
@@ -154,6 +157,9 @@ export default async function OverviewPage() {
   const suggestions = canAccessWinston
     ? await buildSuggestions(userId, supabase)
     : [];
+  const researchSignals = hasResearch
+    ? await loadResearchFocusSignals(supabase, userId)
+    : [];
 
   const displayName = resolveDisplayName({
     displayName: preferences.displayName,
@@ -179,8 +185,10 @@ export default async function OverviewPage() {
       <OverviewPageClient
         snapshot={snapshot}
         suggestions={suggestions}
+        canAccessWinston={canAccessWinston}
         canAccessWhileAway={hasAiPro}
         morningBriefing={todaysBriefing}
+        researchSignals={researchSignals}
         awaySummary={awaySummaryResult.summary}
         lastSyncedAt={
           awaySummaryResult.lastSyncedAt?.toISOString() ?? null

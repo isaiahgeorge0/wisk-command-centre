@@ -160,3 +160,24 @@ export type PipelineHealthResult = {
   valueAtRisk: PipelineValueSplit;
   generatedAt: string;
 };
+
+export type LeadResearchCitation = {
+  title: string;
+  url: string;
+  publisher?: string | null;
+  snippet: string;
+};
+
+export type LeadResearchClaim = {
+  text: string;
+  citationIndex: number;
+};
+
+export type LeadResearchBrief = {
+  summary: string;
+  companyBackground: LeadResearchClaim[];
+  budgetSignals: LeadResearchClaim[];
+  painPoints: LeadResearchClaim[];
+  citations: LeadResearchCitation[];
+  generatedAt: string;
+};

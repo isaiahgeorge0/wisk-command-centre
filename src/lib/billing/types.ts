@@ -1,6 +1,8 @@
 export type WiskPackage =
   | "ai"
   | "ai_pro"
+  | "research"
+  | "research_pro"
   | "social"
   | "commerce"
   | "properties"
@@ -29,6 +31,8 @@ export type BillingPlan =
   | "free"
   | "ai"
   | "ai_pro"
+  | "research"
+  | "research_pro"
   | "properties"
   | "properties_pro"
   | "max";

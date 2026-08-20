@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 
 import { buildBriefingContext } from "@/lib/morning/briefing-context";
-import { generateMorningBriefing } from "@/lib/morning/briefing-generator";
+import {
+  generateFocusPlan,
+  generateMorningBriefing,
+} from "@/lib/morning/briefing-generator";
 import { isMorningBriefingFrequentCronEnabled } from "@/lib/morning/cron";
 import { normalizeGender } from "@/lib/morning/greeting";
+import { buildCachedFocusSignals } from "@/lib/overview/focus-signal-cache";
+import { buildFocusSourceFigures } from "@/lib/overview/focus-signals";
 import {
   getTodaysBriefing,
   storeMorningBriefing,
@@ -16,6 +21,8 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const PAID_AI_PACKAGES = ["ai", "ai_pro", "max"] as const;
+const PROPERTIES_PACKAGES = ["properties", "properties_pro", "max"] as const;
+const RESEARCH_PACKAGES = ["research", "research_pro", "max"] as const;
 
 function isAuthorised(request: Request): boolean {
   const auth = request.headers.get("authorization");
@@ -55,7 +62,10 @@ export async function GET(request: Request) {
     supabase
       .from("user_subscriptions")
       .select("user_id, package")
-      .in("package", [...PAID_AI_PACKAGES])
+      .in(
+        "package",
+        [...new Set([...PAID_AI_PACKAGES, ...PROPERTIES_PACKAGES, ...RESEARCH_PACKAGES])]
+      )
       .in("status", ["active", "trialing"]),
   ]);
 
@@ -111,7 +121,25 @@ export async function GET(request: Request) {
   );
   const usersById = new Map((users ?? []).map((user) => [user.id, user]));
   const paidUserIds = new Set(
-    (subscriptions ?? []).map((subscription) => subscription.user_id)
+    (subscriptions ?? [])
+      .filter((subscription) =>
+        (PAID_AI_PACKAGES as readonly string[]).includes(subscription.package)
+      )
+      .map((subscription) => subscription.user_id)
+  );
+  const propertiesUserIds = new Set(
+    (subscriptions ?? [])
+      .filter((subscription) =>
+        (PROPERTIES_PACKAGES as readonly string[]).includes(subscription.package)
+      )
+      .map((subscription) => subscription.user_id)
+  );
+  const researchUserIds = new Set(
+    (subscriptions ?? [])
+      .filter((subscription) =>
+        (RESEARCH_PACKAGES as readonly string[]).includes(subscription.package)
+      )
+      .map((subscription) => subscription.user_id)
   );
 
   let generated = 0;
@@ -160,6 +188,24 @@ export async function GET(request: Request) {
         timezone,
         tier,
       });
+      if (tier === "paid") {
+        const focusSignals = await buildCachedFocusSignals({
+          userId,
+          hasProperties: propertiesUserIds.has(userId),
+          hasResearch: researchUserIds.has(userId),
+          morningBriefing: content,
+        });
+        const sourceFigures = buildFocusSourceFigures(focusSignals);
+        const focusPlan = await generateFocusPlan({
+          userId,
+          displayName,
+          signals: focusSignals,
+          sourceFigures,
+        });
+        if (focusPlan) {
+          content.focusPlan = focusPlan;
+        }
+      }
       await storeMorningBriefing(userId, content, timezone, now);
       generated += 1;
       if (tier === "free") freeGenerated += 1;

@@ -3,6 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { ANTHROPIC_TIMEOUT_MS, WINSTON_PAID_CHAT_MODEL } from "@/lib/ai/constants";
+import { cachedSystemParts } from "@/lib/ai/anthropic";
+import { logExternalUsage, logUsage } from "@/lib/ai/usage-logger";
+import { hasResearchAccess } from "@/lib/billing/access";
 import { getScopedSupabase } from "@/lib/auth/scoped-supabase";
 import { toSafeActionError } from "@/lib/errors/to-safe-action-error";
 import { emptyToNull, parseLeadValue } from "@/lib/leads/format";
@@ -13,10 +17,16 @@ import type {
   ConvertLeadToProjectInput,
   Lead,
   LeadActivity,
+  LeadResearchBrief,
+  LeadResearchCitation,
+  LeadResearchClaim,
   LeadActivityFormInput,
   LeadFormInput,
   LeadWithActivity,
 } from "@/lib/leads/types";
+import { searchExa } from "@/lib/research/exa";
+import { searchTavily, type TavilySearchDepth } from "@/lib/research/tavily";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   LEAD_ACTIVITY_TYPES,
   LEAD_SOURCES,
@@ -398,6 +408,370 @@ const activityFormSchema = z.object({
   title: z.string().trim().min(1, "Title is required").max(200),
   content: z.string().optional(),
 });
+
+const leadResearchInputSchema = z.object({
+  leadId: z.string().uuid(),
+});
+
+const tavilySearchDepthSchema = z.enum(["basic", "advanced"]);
+
+const leadResearchRoutingSchema = z.object({
+  useTavily: z.boolean(),
+  useExa: z.boolean(),
+  tavilyQuery: z.string().trim().min(3).optional(),
+  exaQuery: z.string().trim().min(3).optional(),
+  tavilyDepth: tavilySearchDepthSchema.optional(),
+});
+
+const leadResearchOutputSchema = z.object({
+  summary: z.string().trim().min(1),
+  companyBackground: z.array(
+    z.object({
+      text: z.string().trim().min(1),
+      citationIndex: z.number().int().nonnegative(),
+    })
+  ),
+  budgetSignals: z.array(
+    z.object({
+      text: z.string().trim().min(1),
+      citationIndex: z.number().int().nonnegative(),
+    })
+  ),
+  painPoints: z.array(
+    z.object({
+      text: z.string().trim().min(1),
+      citationIndex: z.number().int().nonnegative(),
+    })
+  ),
+});
+
+type AnthropicResponse = {
+  content?: Array<{ type: string; text?: string }>;
+  usage?: { input_tokens: number; output_tokens: number };
+  error?: { message?: string };
+};
+
+async function callAnthropicJson(input: {
+  system: ReturnType<typeof cachedSystemParts>;
+  userPrompt: string;
+  model?: string;
+  maxTokens?: number;
+}): Promise<{ jsonText: string; usage: { input: number; output: number } }> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error("ANTHROPIC_API_KEY is not configured");
+  }
+
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: input.model ?? WINSTON_PAID_CHAT_MODEL,
+      max_tokens: input.maxTokens ?? 1200,
+      system: input.system,
+      messages: [{ role: "user", content: input.userPrompt }],
+    }),
+    signal: AbortSignal.timeout(ANTHROPIC_TIMEOUT_MS),
+  });
+
+  const data = (await response.json()) as AnthropicResponse;
+  if (!response.ok) {
+    throw new Error(data.error?.message ?? "Anthropic request failed");
+  }
+
+  const jsonText = (data.content ?? [])
+    .filter((block) => block.type === "text")
+    .map((block) => block.text ?? "")
+    .join("")
+    .replace(/```json/g, "")
+    .replace(/```/g, "")
+    .trim();
+
+  return {
+    jsonText,
+    usage: {
+      input: data.usage?.input_tokens ?? 0,
+      output: data.usage?.output_tokens ?? 0,
+    },
+  };
+}
+
+function truncateSnippet(text: string, max = 260): string {
+  const clean = text.replace(/\s+/g, " ").trim();
+  if (clean.length <= max) return clean;
+  return `${clean.slice(0, max - 1)}…`;
+}
+
+function formatLeadContext(lead: Lead, recentActivities: LeadActivity[]): string {
+  const activities =
+    recentActivities.length > 0
+      ? recentActivities
+          .slice(0, 5)
+          .map((activity) => {
+            const detail = activity.content ? `: ${activity.content}` : "";
+            return `- [${activity.activity_type}] ${activity.title}${detail}`;
+          })
+          .join("\n")
+      : "No recent lead activities.";
+
+  return `Lead profile:
+- Name: ${lead.name}
+- Service interest: ${lead.service_interest}
+- Stage: ${lead.status}
+- Value: ${lead.value ?? "not set"} (${lead.value_type ?? "one_time"})
+- Notes: ${lead.notes?.trim() || "none"}
+- Email: ${lead.email ?? "none"}
+- Phone: ${lead.phone ?? "none"}
+
+Recent lead activity:
+${activities}`;
+}
+
+export async function generateLeadResearchBrief(
+  input: { leadId: string }
+): Promise<ActionResult<LeadResearchBrief>> {
+  const parsed = leadResearchInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
+  }
+
+  try {
+    const { supabase, userId } = await getScopedSupabase();
+    const admin = createAdminClient();
+    const canAccessResearch = await hasResearchAccess(userId, admin);
+
+    if (!canAccessResearch) {
+      return {
+        success: false,
+        error: "Research access not enabled for this account.",
+      };
+    }
+
+    const { data: leadRow, error: leadError } = await supabase
+      .from("leads")
+      .select("*")
+      .eq("id", parsed.data.leadId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (leadError || !leadRow) {
+      return { success: false, error: "Lead not found." };
+    }
+
+    const lead = leadRow as Lead;
+    const activitiesResult = await getLeadActivities(lead.id);
+    const recentActivities = activitiesResult.success
+      ? (activitiesResult.data ?? [])
+      : [];
+
+    const routingSystem = cachedSystemParts([
+      {
+        text: `You are Winston routing lead research tools.
+Return ONLY valid JSON:
+{
+  "useTavily": true|false,
+  "useExa": true|false,
+  "tavilyQuery": "string when useTavily=true",
+  "exaQuery": "string when useExa=true",
+  "tavilyDepth": "basic|advanced"
+}
+Rules:
+- Tavily is better for real-time/news/current web signals.
+- Exa is better for company/people background.
+- Use one or both tools based on evidence needs.
+- If uncertain, use both.
+- Do not include commentary.`,
+        cache: true,
+      },
+    ]);
+
+    const routingUserPrompt = `${formatLeadContext(
+      lead,
+      recentActivities
+    )}
+
+Decide the best search plan for producing a lead intelligence brief with company background, budget signals, and pain points.`;
+
+    const routingResponse = await callAnthropicJson({
+      system: routingSystem,
+      userPrompt: routingUserPrompt,
+      maxTokens: 220,
+    });
+
+    const routingParsed = leadResearchRoutingSchema.parse(
+      JSON.parse(routingResponse.jsonText)
+    );
+
+    await logUsage(
+      userId,
+      "lead_research_brief",
+      routingResponse.usage.input,
+      routingResponse.usage.output
+    );
+
+    const useTavily = routingParsed.useTavily || !routingParsed.useExa;
+    const useExa = routingParsed.useExa || !routingParsed.useTavily;
+    const tavilyDepth: TavilySearchDepth = routingParsed.tavilyDepth ?? "basic";
+
+    const [tavilyResults, exaResults] = await Promise.all([
+      useTavily
+        ? searchTavily({
+            query:
+              routingParsed.tavilyQuery ??
+              `${lead.name} company latest news pricing services`,
+            searchDepth: tavilyDepth,
+            maxResults: 5,
+          })
+        : Promise.resolve([]),
+      useExa
+        ? searchExa({
+            query:
+              routingParsed.exaQuery ??
+              `${lead.name} company profile team industry customers`,
+            numResults: 5,
+          })
+        : Promise.resolve([]),
+    ]);
+
+    if (useTavily) {
+      await logExternalUsage({
+        userId,
+        feature: "lead_research_brief",
+        provider: "tavily",
+        callCount: 1,
+        estimatedCostUSD: tavilyDepth === "advanced" ? 0.016 : 0.008,
+        metadata: { depth: tavilyDepth, resultCount: tavilyResults.length },
+      });
+    }
+    if (useExa) {
+      await logExternalUsage({
+        userId,
+        feature: "lead_research_brief",
+        provider: "exa",
+        callCount: 1,
+        estimatedCostUSD: 0.007,
+        metadata: { resultCount: exaResults.length },
+      });
+    }
+
+    const citations: LeadResearchCitation[] = [
+      ...tavilyResults.map((result) => ({
+        title: result.title,
+        url: result.url,
+        publisher: "Tavily",
+        snippet: truncateSnippet(result.content),
+      })),
+      ...exaResults.map((result) => ({
+        title: result.title,
+        url: result.url,
+        publisher: "Exa",
+        snippet: truncateSnippet(result.text),
+      })),
+    ].slice(0, 10);
+
+    if (citations.length === 0) {
+      return {
+        success: false,
+        error: "No research sources were found for this lead.",
+      };
+    }
+
+    const synthesisSystem = cachedSystemParts([
+      {
+        text: `You are Winston generating a lead intelligence brief.
+Return ONLY valid JSON:
+{
+  "summary": "1-2 sentence high-level read",
+  "companyBackground": [{ "text": "claim", "citationIndex": 0 }],
+  "budgetSignals": [{ "text": "claim", "citationIndex": 0 }],
+  "painPoints": [{ "text": "claim", "citationIndex": 0 }]
+}
+Rules:
+- Every claim must cite exactly one source index from the provided source list.
+- No claim without citation.
+- Keep each claim concise and specific.
+- Use only facts from sources; do not invent.
+- If a section has weak evidence, return an empty array for that section.
+- Do not include markdown.`,
+        cache: true,
+      },
+    ]);
+
+    const citationsBlock = citations
+      .map(
+        (citation, index) =>
+          `[${index}] ${citation.title} | ${citation.url}\nSnippet: ${citation.snippet}`
+      )
+      .join("\n\n");
+
+    const synthesisPrompt = `${formatLeadContext(
+      lead,
+      recentActivities
+    )}
+
+Sources:
+${citationsBlock}
+
+Generate the lead intelligence brief JSON now.`;
+
+    const synthesisResponse = await callAnthropicJson({
+      system: synthesisSystem,
+      userPrompt: synthesisPrompt,
+      maxTokens: 1000,
+    });
+
+    await logUsage(
+      userId,
+      "lead_research_brief",
+      synthesisResponse.usage.input,
+      synthesisResponse.usage.output
+    );
+
+    const synthesis = leadResearchOutputSchema.parse(
+      JSON.parse(synthesisResponse.jsonText)
+    );
+
+    const clampClaim = (claim: LeadResearchClaim): LeadResearchClaim | null => {
+      if (claim.citationIndex < 0 || claim.citationIndex >= citations.length) {
+        return null;
+      }
+      return claim;
+    };
+
+    return {
+      success: true,
+      data: {
+        summary: synthesis.summary,
+        companyBackground: synthesis.companyBackground
+          .map(clampClaim)
+          .filter((claim): claim is LeadResearchClaim => claim !== null),
+        budgetSignals: synthesis.budgetSignals
+          .map(clampClaim)
+          .filter((claim): claim is LeadResearchClaim => claim !== null),
+        painPoints: synthesis.painPoints
+          .map(clampClaim)
+          .filter((claim): claim is LeadResearchClaim => claim !== null),
+        citations,
+        generatedAt: new Date().toISOString(),
+      },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: toSafeActionError(
+        error,
+        "Could not generate this lead intelligence brief."
+      ),
+    };
+  }
+}
 
 export async function addLeadActivity(
   leadId: string,

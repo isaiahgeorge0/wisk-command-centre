@@ -87,6 +87,8 @@ const ACTIVE_SUBSCRIPTION_STATUSES = ["active", "trialing"] as const;
 const ALL_PACKAGES: WiskPackage[] = [
   "ai",
   "ai_pro",
+  "research",
+  "research_pro",
   "properties",
   "properties_pro",
   "social",
@@ -137,6 +139,8 @@ async function getPackagePriceMapGBP(): Promise<Record<WiskPackage, number | nul
   const prices: Record<WiskPackage, number | null> = {
     ai: null,
     ai_pro: null,
+    research: null,
+    research_pro: null,
     properties: null,
     properties_pro: null,
     social: null,
@@ -343,7 +347,7 @@ const winstonEngagementDateRangeSchema = z
  * Pricing source: https://platform.claude.com/docs/en/about-claude/pricing
  * Last verified: 2026-08-19
  */
-const FEATURE_MODEL_MAP: Record<UsageFeature, "sonnet" | "haiku"> = {
+const FEATURE_MODEL_MAP: Partial<Record<UsageFeature, "sonnet" | "haiku">> = {
   chat: "sonnet", // mixed — conservative upper bound
   digest: "sonnet",
   email_draft: "haiku",
@@ -353,6 +357,7 @@ const FEATURE_MODEL_MAP: Record<UsageFeature, "sonnet" | "haiku"> = {
   portal_triage: "haiku",
   property_valuation: "sonnet",
   morning_briefing: "sonnet", // mixed — conservative upper bound
+  lead_research_brief: "sonnet",
 };
 
 const MODEL_PRICING_USD_PER_TOKEN: Record<
@@ -366,8 +371,13 @@ const MODEL_PRICING_USD_PER_TOKEN: Record<
 function estimateCostUSD(
   feature: UsageFeature,
   inputTokens: number,
-  outputTokens: number
+  outputTokens: number,
+  provider: string,
+  externalCostUSD = 0
 ): number {
+  if (provider !== "anthropic") {
+    return externalCostUSD;
+  }
   const model = FEATURE_MODEL_MAP[feature] ?? "sonnet";
   const pricing = MODEL_PRICING_USD_PER_TOKEN[model];
   return inputTokens * pricing.input + outputTokens * pricing.output;
@@ -376,8 +386,10 @@ function estimateCostUSD(
 type UsageRow = {
   user_id: string;
   feature: string;
+  provider: string;
   input_tokens: number;
   output_tokens: number;
+  external_cost_usd: number | null;
 };
 
 export async function getAIUsageBreakdown(
@@ -389,7 +401,7 @@ export async function getAIUsageBreakdown(
 
   const { data, error } = await supabase
     .from("ai_usage_log")
-    .select("user_id, feature, input_tokens, output_tokens")
+    .select("user_id, feature, provider, input_tokens, output_tokens, external_cost_usd")
     .gte("created_at", `${dateFrom}T00:00:00Z`)
     .lt("created_at", `${dateTo}T23:59:59.999Z`);
 
@@ -403,6 +415,7 @@ export async function getAIUsageBreakdown(
       totalEstimatedCostUSD: 0,
       byFeature: [],
       byModel: [],
+      byProvider: [],
       topUsers: [],
     };
   }
@@ -412,14 +425,26 @@ export async function getAIUsageBreakdown(
   // --- By feature ---
   const featureMap = new Map<
     UsageFeature,
-    { input: number; output: number; count: number }
+    { input: number; output: number; count: number; cost: number }
   >();
   for (const row of rows) {
     const f = row.feature as UsageFeature;
-    const existing = featureMap.get(f) ?? { input: 0, output: 0, count: 0 };
+    const existing = featureMap.get(f) ?? {
+      input: 0,
+      output: 0,
+      count: 0,
+      cost: 0,
+    };
     existing.input += row.input_tokens;
     existing.output += row.output_tokens;
     existing.count += 1;
+    existing.cost += estimateCostUSD(
+      f,
+      row.input_tokens,
+      row.output_tokens,
+      row.provider,
+      row.external_cost_usd ?? 0
+    );
     featureMap.set(f, existing);
   }
   const byFeature: AIUsageByFeature[] = Array.from(featureMap.entries()).map(
@@ -427,7 +452,7 @@ export async function getAIUsageBreakdown(
       feature,
       inputTokens: agg.input,
       outputTokens: agg.output,
-      estimatedCostUSD: estimateCostUSD(feature, agg.input, agg.output),
+      estimatedCostUSD: agg.cost,
       rowCount: agg.count,
     })
   );
@@ -436,7 +461,8 @@ export async function getAIUsageBreakdown(
   // --- By model ---
   const modelMap = new Map<string, { input: number; output: number }>();
   for (const row of rows) {
-    const model = FEATURE_MODEL_MAP[row.feature as UsageFeature] ?? "sonnet";
+    const model = FEATURE_MODEL_MAP[row.feature as UsageFeature];
+    if (!model) continue;
     const existing = modelMap.get(model) ?? { input: 0, output: 0 };
     existing.input += row.input_tokens;
     existing.output += row.output_tokens;
@@ -456,6 +482,32 @@ export async function getAIUsageBreakdown(
   );
   byModel.sort((a, b) => b.estimatedCostUSD - a.estimatedCostUSD);
 
+  // --- By provider ---
+  const providerMap = new Map<
+    "anthropic" | "tavily" | "exa" | "google_places",
+    { cost: number; count: number }
+  >();
+  for (const row of rows) {
+    const provider = row.provider as "anthropic" | "tavily" | "exa" | "google_places";
+    const existing = providerMap.get(provider) ?? { cost: 0, count: 0 };
+    existing.cost += estimateCostUSD(
+      row.feature as UsageFeature,
+      row.input_tokens,
+      row.output_tokens,
+      provider,
+      row.external_cost_usd ?? 0
+    );
+    existing.count += 1;
+    providerMap.set(provider, existing);
+  }
+  const byProvider = Array.from(providerMap.entries())
+    .map(([provider, agg]) => ({
+      provider,
+      estimatedCostUSD: agg.cost,
+      rowCount: agg.count,
+    }))
+    .sort((a, b) => b.estimatedCostUSD - a.estimatedCostUSD);
+
   // --- Top users ---
   const userMap = new Map<string, { tokens: number; cost: number }>();
   for (const row of rows) {
@@ -464,7 +516,9 @@ export async function getAIUsageBreakdown(
     existing.cost += estimateCostUSD(
       row.feature as UsageFeature,
       row.input_tokens,
-      row.output_tokens
+      row.output_tokens,
+      row.provider,
+      row.external_cost_usd ?? 0
     );
     userMap.set(row.user_id, existing);
   }
@@ -511,6 +565,7 @@ export async function getAIUsageBreakdown(
     totalEstimatedCostUSD: Number(totalEstimatedCostUSD.toFixed(4)),
     byFeature,
     byModel,
+    byProvider,
     topUsers,
   };
 }
@@ -2225,23 +2280,37 @@ export async function getUserDetail(
     // ── AI usage (all-time for this user) ─────────────────────────────────
     const { data: usageRows } = await supabase
       .from("ai_usage_log")
-      .select("feature, input_tokens, output_tokens")
+      .select("feature, provider, input_tokens, output_tokens, external_cost_usd")
       .eq("user_id", uid);
 
     const featureMap = new Map<
       UsageFeature,
-      { input: number; output: number; count: number }
+      { input: number; output: number; count: number; cost: number }
     >();
     for (const row of (usageRows ?? []) as Array<{
       feature: string;
+      provider: string;
       input_tokens: number;
       output_tokens: number;
+      external_cost_usd: number | null;
     }>) {
       const f = row.feature as UsageFeature;
-      const existing = featureMap.get(f) ?? { input: 0, output: 0, count: 0 };
+      const existing = featureMap.get(f) ?? {
+        input: 0,
+        output: 0,
+        count: 0,
+        cost: 0,
+      };
       existing.input += row.input_tokens;
       existing.output += row.output_tokens;
       existing.count += 1;
+      existing.cost += estimateCostUSD(
+        f,
+        row.input_tokens,
+        row.output_tokens,
+        row.provider,
+        row.external_cost_usd ?? 0
+      );
       featureMap.set(f, existing);
     }
 
@@ -2251,7 +2320,7 @@ export async function getUserDetail(
       feature,
       inputTokens: agg.input,
       outputTokens: agg.output,
-      estimatedCostUSD: estimateCostUSD(feature, agg.input, agg.output),
+      estimatedCostUSD: agg.cost,
       rowCount: agg.count,
     }));
     byFeature.sort((a, b) => b.estimatedCostUSD - a.estimatedCostUSD);

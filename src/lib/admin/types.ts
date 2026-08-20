@@ -87,7 +87,10 @@ export type UsageFeature =
   | "pipeline_health"
   | "portal_triage"
   | "property_valuation"
-  | "morning_briefing";
+  | "morning_briefing"
+  | "lead_research_brief"
+  | "research_competitor_check"
+  | "research_place_lookup";
 
 export type AIUsageByFeature = {
   feature: UsageFeature;
@@ -111,6 +114,12 @@ export type AIUsageTopUser = {
   estimatedCostUSD: number;
 };
 
+export type AIUsageByProvider = {
+  provider: "anthropic" | "tavily" | "exa" | "google_places";
+  estimatedCostUSD: number;
+  rowCount: number;
+};
+
 export type AIUsageBreakdown = {
   dateFrom: string;
   dateTo: string;
@@ -119,6 +128,7 @@ export type AIUsageBreakdown = {
   totalEstimatedCostUSD: number;
   byFeature: AIUsageByFeature[];
   byModel: AIUsageByModel[];
+  byProvider: AIUsageByProvider[];
   topUsers: AIUsageTopUser[];
 };
 

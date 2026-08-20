@@ -8,6 +8,8 @@ import type { WiskPackage } from "@/lib/billing/types";
 const PACKAGE_DISPLAY_NAMES: Record<WiskPackage, string> = {
   ai: "WISK AI",
   ai_pro: "WISK AI Pro",
+  research: "WISK Research",
+  research_pro: "WISK Research Pro",
   social: "WISK Social",
   commerce: "WISK Commerce",
   properties: "WISK Properties",

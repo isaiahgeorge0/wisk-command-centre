@@ -53,6 +53,7 @@ const LEADS_VIEW_STORAGE_KEY = "wisk-leads-view";
 type LeadsPageClientProps = {
   initialLeads: LeadWithActivity[];
   canAccessWinston: boolean;
+  canAccessResearch: boolean;
 };
 
 const CELEBRATION_PARTICLES = [
@@ -151,6 +152,7 @@ function WonLeadCelebrationOverlay({
 export function LeadsPageClient({
   initialLeads,
   canAccessWinston,
+  canAccessResearch,
 }: LeadsPageClientProps) {
   const router = useRouter();
   const { leadAddOpen, setLeadAddOpen, openLeadAdd } = useQuickAdd();
@@ -457,6 +459,7 @@ export function LeadsPageClient({
             open={winstonOpen}
             onClose={() => setWinstonOpen(false)}
             canAccessWinston={canAccessWinston}
+            canAccessResearch={canAccessResearch}
             leads={leads}
             onLeadUpdate={handleLeadUpdate}
             onFocusLead={handleFocusLead}

@@ -170,10 +170,3 @@ function groupTasksByDueDate(
     .map(([date, grouped]) => ({ date, tasks: grouped }));
 }
 
-export function hasNeedsAttention(snapshot: OverviewSnapshot): boolean {
-  return (
-    snapshot.overdueTasks.length > 0 ||
-    snapshot.projectsMissingNextAction.length > 0 ||
-    snapshot.goalsAtZeroWithDeadline.length > 0
-  );
-}

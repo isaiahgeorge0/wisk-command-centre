@@ -80,6 +80,12 @@ export const DESKTOP_DROPDOWN_GROUPS: NavDropdownGroupConfig[] = [
         description: "Content calendar and board",
         icon: "CalendarDays",
       },
+      {
+        label: "Research",
+        href: "/research",
+        description: "Competitor watchlist and signals",
+        icon: "TrendingUp",
+      },
     ],
   },
 ];
@@ -140,6 +146,7 @@ export const NAV_GROUPS: NavGroup[] = [
     children: [
       { label: "Leads", href: "/leads" },
       { label: "Content", href: "/content" },
+      { label: "Research", href: "/research" },
     ],
   },
   {
@@ -169,6 +176,7 @@ export const NAV_ITEMS = [
   { label: "Calendar", href: "/calendar" },
   { label: "Leads", href: "/leads" },
   { label: "Content", href: "/content" },
+  { label: "Research", href: "/research" },
   { label: "Email", href: "/email" },
   { label: "Winston", href: "/ai-digest" },
   { label: "Properties", href: "/properties" },
