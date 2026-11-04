@@ -220,8 +220,16 @@ export async function middleware(request: NextRequest) {
   return withPathnameHeader(supabaseResponse, pathname);
 }
 
+// Routes skipped entirely (besides static assets):
+// - /monitoring: the Sentry tunnel. Sentry requires it to bypass middleware,
+//   and every browser error/trace event was paying for a session lookup.
+// - Cron, webhook and alert endpoints that authenticate with a bearer secret
+//   or Stripe signature and never read the user session. Running middleware
+//   on them only cost CPU; for any not in PUBLIC_PATHS (/api/cron/*,
+//   /api/research/competitor-checks) it also redirected the job to /sign-in.
+// Their PUBLIC_PATHS entries are kept as a fallback.
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|monitoring(?:/|$)|api/stripe/webhook$|api/cron/|api/morning-briefing/(?:generate|send)$|api/away-sync/run$|api/research/competitor-checks$|api/ai-digest/generate$|api/properties/(?:check-certificate-alerts|generate-insights)$|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
